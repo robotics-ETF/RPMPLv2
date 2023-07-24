@@ -1,0 +1,37 @@
+# Filename: visualizer_app.kv
+
+
+<AppRoot>:
+    GridLayout:
+        cols: 2
+        AnchorLayout:
+            size_hint: (0.1, 1.0)
+            pos_hint: {'x':0, 'top':0}
+            BoxLayout:
+                orientation: "vertical"
+                spacing: 10
+                Button:
+                    id: openBtn
+                    text: "Open Scenario"
+                    on_release: print("Open Scenario")
+
+                Button:
+                    id: playLoop
+                    text: "Play Scenario"
+                    on_release: print("Play Scenario")
+                
+                Button:
+                    id: stepForward
+                    text: ">>"
+                    on_release: print(">>")
+
+                Button:
+                    id: stepBack
+                    text: "<<"
+                    on_release: print("<<")
+            
+        VisualizationCanvas:
+            canvas:
+                Color: 
+                    rgba: (1,0,0,1)
+            

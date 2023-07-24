@@ -1,0 +1,17 @@
+obstacles:
+  - box:
+      dim: [0.5, 0.5, 0.1]
+      trans: [1, 0.5, 0]
+      rot: [0, 0, 0, 0]
+  - box:
+      dim: [0.5, 0.5, 0.1]
+      trans: [1, -0.5, 0]
+      rot: [0, 0, 0, 0]
+      
+robot:
+  type: "planar_10DOF"
+  urdf: "/data/planar_10dof/planar_10dof.urdf"
+  space: "RealVectorSpaceFCL"
+  dimensions: 10
+  start: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  goal: [3.1415, 0, 0, 0, 0, 0, 0, 0, 0, 0]
