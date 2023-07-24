@@ -18,7 +18,7 @@ cd ~/
 ```
 DO NOT omit "--recursive"，or the source code of dependent submodules will not be downloaded:
 ```
-git clone https://github.com/roboticsETF/xarm6-etf-lab.git --recursive
+git clone https://github.com/roboticsETF/RPMPLv2.git --recursive
 ```
 
 ## 2.2 Update "RPMPLv2" repository
@@ -124,23 +124,22 @@ Visualize plannar_2dof robot:
 ```
 python3 visualizer/run_visualizer_planar_2dof.py
 ```
-![scenario2_planar_2dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/03e63cce-93ee-4436-a296-706ca1551acc)
-![scenario_test_planar_2dof_nice_example](https://github.com/roboticsETF/RPMPLv2/assets/126081373/fd9f4ab3-73ee-4617-ba4d-1a887620eca0)
+![scenario2_planar_2dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/89c7e908-ca23-4bdc-9b89-9803051749a5)
+![scenario_test_planar_2dof_nice_example](https://github.com/roboticsETF/RPMPLv2/assets/126081373/cfc0aba7-4b0c-4b4f-bfaf-d10afc184f4b)
 
 Visualize plannar_10dof robot:
 ```
 python3 visualizer/run_visualizer_planar_10dof.py
 ```
-![scenario1_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/555087c0-83e3-4ebb-89b5-c8658d2c61e1)
-![scenario2_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/ecd2f76a-d80b-443e-b3f8-e663f31f58b7)
+![scenario1_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/209d7ec7-f91d-4ce7-a339-df1705e71fc4)
+![scenario2_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/24e6bde6-841a-4a64-b3b0-7254f41d7e07)
 
 Visualize xarm6 robot:
 ```
 python3 visualizer/run_visualizer_xarm6.py
 ```
-![scenario1_xarm6_v1](https://github.com/roboticsETF/RPMPLv2/assets/126081373/d0c93b82-93cc-40ee-ba2c-04284f4fd2f2)
-![scenario2_xarm6_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/683e53fb-08da-43da-9dfa-6977490d7425)
-![scenario_test_xarm6_nice_example_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/6850facc-faf2-4f07-8e8a-34e8ec834b05)
+![scenario1_xarm6_v1](https://github.com/roboticsETF/RPMPLv2/assets/126081373/cc3bd662-8d6e-4ecc-a992-8646e2808490)
+![scenario2_xarm6_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/40e71a54-a7b3-4546-a4c6-f052a7c426d4)
+![scenario_test_xarm6_nice_example_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/2289cdba-4b2b-49b7-a517-79ed6387d988)
 
 The visualization gif files will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
-
