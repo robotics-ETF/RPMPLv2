@@ -63,23 +63,28 @@ robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs)
 std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
-	KDL::TreeFkSolverPos_recursive treefksolver = KDL::TreeFkSolverPos_recursive(robot_tree);
-	std::shared_ptr<std::vector<KDL::Frame>> framesFK = std::make_shared<std::vector<KDL::Frame>>();
+	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = std::make_shared<std::vector<KDL::Frame>>();
 	robot_tree.getChain("base_link", "tool", robot_chain);
-	KDL::JntArray jointpositions = KDL::JntArray(q->getDimensions());
+	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
 
 	for (size_t i = 0; i < q->getDimensions(); ++i)
-		jointpositions(i) = q->getCoord()(i);
+		joint_pos(i) = q->getCoord(i);
 	
 	for (size_t i = 0; i < robot_tree.getNrOfSegments(); ++i)
 	{
-		KDL::Frame cartpos;
-		bool kinematics_status = treefksolver.JntToCart(jointpositions, cartpos, robot_chain.getSegment(i).getName());
+		KDL::Frame cart_pos;
+		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		if (kinematics_status >= 0)
-			framesFK->emplace_back(cartpos);
+			frames_fk->emplace_back(cart_pos);
 	}
-	return framesFK;
+	return frames_fk;
     
+}
+
+std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p)
+{
+	// TODO (if needed)
 }
 
 std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared_ptr<base::State> q)
@@ -111,12 +116,12 @@ float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shar
 
 void robots::Planar2DOF::setState(std::shared_ptr<base::State> q)
 {
-	KDL::JntArray jointpositions = KDL::JntArray(q->getDimensions());
-	std::shared_ptr<std::vector<KDL::Frame>> framesFK = computeForwardKinematics(q);
+	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
 	for (size_t i = 0; i < parts.size(); ++i)
 	{
-		tf = framesFK->at(i) * init_poses[i];
+		tf = frames_fk->at(i) * init_poses[i];
 		//LOG(INFO) << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
 						
 		//LOG(INFO) << "fcl\n";

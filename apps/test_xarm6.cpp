@@ -10,25 +10,72 @@ int main(int argc, char **argv)
 	google::InitGoogleLogging(argv[0]);
 	FLAGS_logtostderr = true;
 	
+	std::string project_path(__FILE__);
+    for (int i = 0; i < 2; i++)
+        project_path = project_path.substr(0, project_path.find_last_of("/\\"));
+
+	std::shared_ptr<robots::xARM6> robot = std::make_shared<robots::xARM6>(project_path + "/data/xarm6/xarm6.urdf");
+
+	// LOG(INFO) << robot->getRobotTree().getNrOfSegments();
+	// LOG(INFO) << robot->getParts().size();
+	// LOG(INFO) << robot->getParts().at(0)->getCollisionGeometry()->computeVolume();
+	// LOG(INFO) << robot->getParts().at(0)->getAABB().height() << ";" 
+	// 		  << robot->getParts().at(0)->getAABB().depth() << ";" 
+	// 		  << robot->getParts().at(0)->getAABB().width();
+
+	// Eigen::VectorXf q = Eigen::VectorXf::Zero(6);
+	// q << 0, 0, 0, M_PI, M_PI_2, 0;
+	// q << 90, 33, -96, 0, 63, 0; q *= M_PI / 180;
+	// std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(q);
+	// LOG(INFO) << "State: " << state;
+	// robot->setState(state);
+	// robot->test();
 	
-	std::shared_ptr<robots::xARM6> robot = std::make_shared<robots::xARM6>("/data/xarm6/xarm6.urdf");
 
-	/*LOG(INFO) << robot->getRobotTree().getNrOfSegments();
-	LOG(INFO) << robot->getParts().size();
-	LOG(INFO) << robot->getParts().at(0)->getCollisionGeometry()->computeVolume();
-	LOG(INFO) << robot->getParts().at(0)->getAABB().height() << ";" << robot->getParts().at(0)->getAABB().depth() << ";" <<
-				 robot->getParts().at(0)->getAABB().width();
+	// Test inverse kinematics
+	srand((unsigned int) time(0));
+	const std::vector<std::vector<float>> limits = robot->getLimits();
+	for (int k = 0; k < 100000; k++)
+	{
+		LOG(INFO) << "k = " << k;
+		Eigen::VectorXf rand = Eigen::VectorXf::Random(6);
+		for (size_t i = 0; i < 6; i++)
+			rand(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
+		std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(rand);
+		// LOG(INFO) << "State: " << state;
+				
+		std::shared_ptr<std::vector<KDL::Frame>> frames = robot->computeForwardKinematics(state);
+		KDL::Rotation R = frames->back().M;
+		KDL::Vector p = frames->back().p;
+		// LOG(INFO) << "R:\n" << R;
+		// LOG(INFO) << "p: " << p;
 
-	*/
+		std::shared_ptr<base::State> state_new = robot->computeInverseKinematics(R, p);
+		// LOG(INFO) << "State new: " << state_new;
 
-	//std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({0, 0}));
-	//robot->setState(state);
-	//robot->test();
+		std::shared_ptr<std::vector<KDL::Frame>> frames_new = robot->computeForwardKinematics(state_new);
+		KDL::Rotation R_new = frames_new->back().M;
+		KDL::Vector p_new = frames_new->back().p;
+		// LOG(INFO) << "R_new:\n" << R_new;
+		// LOG(INFO) << "p_new: " << p_new;
 
-	std::shared_ptr<base::State> state1 = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({M_PI/2, -M_PI/2}));
-	robot->setState(state1);
-	robot->test();
-
+		float error = 0;
+		for (int i = 0; i < 9; i++)
+			error += std::pow(R.data[i] - R_new.data[i], 2);
+		for (int i = 0; i < 3; i++)
+			error += std::pow(p.data[i] - p_new.data[i], 2);
+		if (error > 1e-5)
+		{
+			LOG(INFO) << "****************** DIFFERENT ******************";
+			LOG(INFO) << "State: " << state;
+			LOG(INFO) << "State new: " << state_new;
+			LOG(INFO) << "R:\n" << R;
+			LOG(INFO) << "R_new:\n" << R_new;
+			LOG(INFO) << "p: " << p;
+			LOG(INFO) << "p_new: " << p_new;
+			break;
+		}
+	}
 
 	return 0;
 }

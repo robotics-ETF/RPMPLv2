@@ -72,28 +72,94 @@ robots::xARM6::xARM6(std::string robot_desc)
 		}
 	}
 	//LOG(INFO) << "constructor----------------------\n";
-	setState(std::make_shared<base::RealVectorSpaceState>(Eigen::VectorXf::Zero(robot_chain.getNrOfJoints())));
+	Eigen::VectorXf state = Eigen::VectorXf::Zero(robot_chain.getNrOfJoints());
+	state << 0, 0, 0, M_PI, M_PI_2, 0; 		// This is the starting configuration in case the gripper is attached
+	setState(std::make_shared<base::RealVectorSpaceState>(state));
 }
 
 std::shared_ptr<std::vector<KDL::Frame>> robots::xARM6::computeForwardKinematics(std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
-	KDL::TreeFkSolverPos_recursive treefksolver = KDL::TreeFkSolverPos_recursive(robot_tree);
-	std::shared_ptr<std::vector<KDL::Frame>> framesFK = std::make_shared<std::vector<KDL::Frame>>();
+	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = std::make_shared<std::vector<KDL::Frame>>();
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
-	KDL::JntArray jointpositions = KDL::JntArray(q->getDimensions());
+	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
 
 	for (size_t i = 0; i < q->getDimensions(); ++i)
-		jointpositions(i) = q->getCoord()(i);
+		joint_pos(i) = q->getCoord(i);
 
 	for (size_t i = 0; i < robot_chain.getNrOfJoints(); ++i)
 	{
-		KDL::Frame cartpos;
-		bool kinematics_status = treefksolver.JntToCart(jointpositions, cartpos, robot_chain.getSegment(i).getName());
+		KDL::Frame cart_pos;
+		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		if (kinematics_status >= 0)
-			framesFK->emplace_back(cartpos);		
+			frames_fk->emplace_back(cart_pos);		
 	}
-	return framesFK;
+	return frames_fk;
+}
+
+std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p)
+{
+	robot_tree.getChain("link_base", "link_eef", robot_chain);
+	KDL::ChainFkSolverPos_recursive fk_solver(robot_chain);
+	KDL::ChainIkSolverVel_pinv ik_solver(robot_chain);
+	KDL::ChainIkSolverPos_NR ik_solver_pos(robot_chain, fk_solver, ik_solver, 1000, 1e-5);
+
+	KDL::JntArray q_in(robot_chain.getNrOfJoints());
+	KDL::JntArray q_out(robot_chain.getNrOfJoints());
+	KDL::Frame goal_frame(R, p);
+	Eigen::VectorXf q_result(robot_chain.getNrOfJoints());
+
+	srand((unsigned int) time(0));
+	float error = INFINITY;
+	int num = 0;
+	while (error > 1e-5)
+	{
+		Eigen::VectorXf rand = Eigen::VectorXf::Random(robot_chain.getNrOfJoints());
+		for (size_t i = 0; i < robot_chain.getNrOfJoints(); i++)
+			q_in.data(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
+
+		ik_solver_pos.CartToJnt(q_in, goal_frame, q_out);
+		error = ik_solver_pos.getError();
+		// std::cout << "error: " << error << "\n";
+		for (int i = 0; i < robot_chain.getNrOfJoints(); i++)
+		{
+			// Set the angle between -PI and PI
+			q_result(i) = q_out.data(i) - int(q_out.data(i) / (2*M_PI)) * 2*M_PI;
+			if (q_result(i) < -M_PI)
+				q_result(i) += 2*M_PI;
+			else if (q_result(i) > M_PI)
+				q_result(i) -= 2*M_PI;
+
+			if (q_result(i) > limits[i][1])
+			{
+				q_result(i) -= 2*M_PI;
+				if (q_result(i) < limits[i][0])
+				{
+					error = INFINITY; 	// Try to compute IK again.
+					break;
+				}
+			}
+			else if (q_result(i) < limits[i][0])
+			{
+				q_result(i) += 2*M_PI;
+				if (q_result(i) > limits[i][1])
+				{
+					error = INFINITY;	// Try to compute IK again.
+					break;
+				}
+			}
+		}
+
+		if (num++ > 1000)
+		{
+			std::cout << "Unable to compute inverse kinematics for the given input frame! \n";
+			return nullptr;
+		}
+		// std::cout << "num: " << num << "\n";
+	}
+
+	return std::make_shared<base::RealVectorSpaceState>(q_result);
 }
 
 std::shared_ptr<Eigen::MatrixXf> robots::xARM6::computeSkeleton(std::shared_ptr<base::State> q)
@@ -166,12 +232,12 @@ float robots::xARM6::getEnclosingRadius(std::shared_ptr<Eigen::MatrixXf> skeleto
 
 void robots::xARM6::setState(std::shared_ptr<base::State> q)
 {
-	KDL::JntArray jointpositions = KDL::JntArray(q->getDimensions());
-	std::shared_ptr<std::vector<KDL::Frame>> framesFK = computeForwardKinematics(q);
+	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
 	for (size_t i = 0; i < parts.size(); ++i)
 	{
-		tf = framesFK->at(i);
+		tf = frames_fk->at(i);
 		// LOG(INFO) << "kdl\n" << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
 		// fcl::Transform3f tf_fcl = KDL2fcl(tf);
 		// LOG(INFO) << "fcl\n" << tf_fcl.translation().transpose() << "\t;\n" << tf_fcl.linear() << "\n..................................\n";

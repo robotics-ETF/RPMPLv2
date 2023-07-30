@@ -42,14 +42,16 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	std::string project_path(__FILE__);
+    for (int i = 0; i < 2; i++)
+        project_path = project_path.substr(0, project_path.find_last_of("/\\"));
+
 	ConfigurationReader::initConfiguration();
-
-	scenario::Scenario scenario(scenario_file_path);
-
+	scenario::Scenario scenario(project_path + scenario_file_path);
 	std::shared_ptr<base::RealVectorSpaceFCL> ss = std::dynamic_pointer_cast<base::RealVectorSpaceFCL>(scenario.getStateSpace());
 
 	std::shared_ptr<robots::Planar2DOF> robot =  std::dynamic_pointer_cast<robots::Planar2DOF>(scenario.getRobot());
-	std::shared_ptr<base::State> testState = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1.35,-2.0}));
+	std::shared_ptr<base::State> testState = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1.35, -2.0}));
 	robot->setState(testState);
 	std::shared_ptr<fcl::CollisionObject<float>> ob = scenario.getEnvironment()->getParts()[0];
 
