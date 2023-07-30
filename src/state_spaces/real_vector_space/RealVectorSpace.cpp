@@ -40,7 +40,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::randomState(std::shared_ptr<
 	Eigen::VectorXf rand = Eigen::VectorXf::Random(dimensions);
 	std::vector<std::vector<float>> limits = robot->getLimits();
 	for (size_t i = 0; i < dimensions; ++i)
-		rand[i] = ((limits[i][1] - limits[i][0]) * rand[i] + limits[i][0] + limits[i][1]) / 2;
+		rand(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
 
 	if (q_center == nullptr)
 		state->setCoord(rand);

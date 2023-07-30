@@ -13,6 +13,9 @@
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/chainiksolverpos_nr.hpp>
 
 namespace robots
 {
@@ -31,6 +34,7 @@ namespace robots
 		void setState(std::shared_ptr<base::State> q_) override;
 
 		std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) override;
+		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p) override;
 		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) override;
 		float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi,
 						  std::shared_ptr<Eigen::MatrixXf> skeleton) override;
