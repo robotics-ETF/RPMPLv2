@@ -36,7 +36,8 @@ namespace robots
 		void setConfiguration(std::shared_ptr<base::State> q_) { q = q_; }
 
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) = 0;
-		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p) = 0;
+		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p,
+			std::shared_ptr<base::State> q_init = nullptr) = 0;
 		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) = 0;
 		virtual float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
 								  std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
