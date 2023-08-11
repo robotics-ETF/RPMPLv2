@@ -34,7 +34,8 @@ namespace robots
 		void setState(std::shared_ptr<base::State> q_) override;
 
 		std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) override;
-		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p) override;
+		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
+			std::shared_ptr<base::State> q_init = nullptr) override;
 		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) override;
 		float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi,
 						  std::shared_ptr<Eigen::MatrixXf> skeleton) override;
@@ -50,9 +51,11 @@ namespace robots
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
 		std::vector<std::vector<float>> limits;
-		// const std::vector<float> radii = {0.0776, 0.0940, 0.0812, 0.0812, 0.0530, 0.0380}; 	// Radii of all enclosing cylinders
-		const std::vector<float> radii = {0.08, 0.13, 0.12, 0.11, 0.05, 0.1}; 	// Radii of all enclosing cylinders. Gripper is attached.
 		const int dim = 3;
+		// const std::vector<float> radii = {0.047, 0.12, 0.11, 0.09, 0.05, 0.0380}; 	// Radii of all enclosing cylinders
+		const std::vector<float> radii = {0.047, 0.12, 0.11, 0.09, 0.05, 0.075}; 	// Radii of all enclosing cylinders. Gripper is attached.
+		const bool gripper_attached = true;
+		const float gripper_length = 0.15; 		// Gripper length is 0.15 [m]
 	};
 
 }
