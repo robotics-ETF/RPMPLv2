@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #include <iostream>
@@ -82,7 +83,8 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
     
 }
 
-std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p)
+std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
+	std::shared_ptr<base::State> q_init)
 {
 	// TODO (if needed)
 }

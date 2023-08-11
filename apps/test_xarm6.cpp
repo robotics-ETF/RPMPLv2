@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	// Test inverse kinematics
 	srand((unsigned int) time(0));
 	const std::vector<std::vector<float>> limits = robot->getLimits();
-	for (int k = 0; k < 100000; k++)
+	for (int k = 0; k < 10000; k++)
 	{
 		LOG(INFO) << "k = " << k;
 		Eigen::VectorXf rand = Eigen::VectorXf::Random(6);
@@ -52,6 +52,8 @@ int main(int argc, char **argv)
 
 		std::shared_ptr<base::State> state_new = robot->computeInverseKinematics(R, p);
 		// LOG(INFO) << "State new: " << state_new;
+		if (state_new == nullptr)
+			break;
 
 		std::shared_ptr<std::vector<KDL::Frame>> frames_new = robot->computeForwardKinematics(state_new);
 		KDL::Rotation R_new = frames_new->back().M;

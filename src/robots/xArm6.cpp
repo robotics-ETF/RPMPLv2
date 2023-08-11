@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #include <iostream>
@@ -73,7 +74,8 @@ robots::xARM6::xARM6(std::string robot_desc)
 	}
 	//LOG(INFO) << "constructor----------------------\n";
 	Eigen::VectorXf state = Eigen::VectorXf::Zero(robot_chain.getNrOfJoints());
-	state << 0, 0, 0, M_PI, M_PI_2, 0; 		// This is the starting configuration in case the gripper is attached
+	if (gripper_attached)
+		state << 0, 0, 0, M_PI, M_PI_2, 0; 		// This is the starting configuration in case the gripper is attached
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
 }
 
@@ -93,13 +95,28 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xARM6::computeForwardKinematics
 		KDL::Frame cart_pos;
 		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		if (kinematics_status >= 0)
-			frames_fk->emplace_back(cart_pos);		
+		{
+			frames_fk->emplace_back(cart_pos);
+			// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
+			// std::cout << "Frame p" << i << ": " << frames_fk->at(i).p << std::endl;
+		}
 	}
+	
+	if (gripper_attached)
+		frames_fk->back().p += gripper_length * frames_fk->back().M.UnitZ();
+
 	return frames_fk;
 }
 
-std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p)
+std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
+	std::shared_ptr<base::State> q_init)
 {
+	KDL::Vector p_new;
+	if (gripper_attached)
+		p_new = p - gripper_length * R.UnitZ();
+	else
+		p_new = p;
+
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	KDL::ChainFkSolverPos_recursive fk_solver(robot_chain);
 	KDL::ChainIkSolverVel_pinv ik_solver(robot_chain);
@@ -107,7 +124,7 @@ std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::
 
 	KDL::JntArray q_in(robot_chain.getNrOfJoints());
 	KDL::JntArray q_out(robot_chain.getNrOfJoints());
-	KDL::Frame goal_frame(R, p);
+	KDL::Frame goal_frame(R, p_new);
 	Eigen::VectorXf q_result(robot_chain.getNrOfJoints());
 
 	srand((unsigned int) time(0));
@@ -115,13 +132,21 @@ std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::
 	int num = 0;
 	while (error > 1e-5)
 	{
-		Eigen::VectorXf rand = Eigen::VectorXf::Random(robot_chain.getNrOfJoints());
-		for (size_t i = 0; i < robot_chain.getNrOfJoints(); i++)
-			q_in.data(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
+		if (q_init == nullptr)
+		{
+			Eigen::VectorXf rand = Eigen::VectorXf::Random(robot_chain.getNrOfJoints());
+			for (size_t i = 0; i < robot_chain.getNrOfJoints(); i++)
+				q_in.data(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
+		}
+		else
+		{
+			for (size_t i = 0; i < robot_chain.getNrOfJoints(); i++)
+				q_in.data(i) = q_init->getCoord(i);
+		}
 
 		ik_solver_pos.CartToJnt(q_in, goal_frame, q_out);
 		error = ik_solver_pos.getError();
-		// std::cout << "error: " << error << "\n";
+		// std::cout << "error: " << error << std::endl;
 		for (int i = 0; i < robot_chain.getNrOfJoints(); i++)
 		{
 			// Set the angle between -PI and PI
@@ -151,12 +176,12 @@ std::shared_ptr<base::State> robots::xARM6::computeInverseKinematics(const KDL::
 			}
 		}
 
+		// std::cout << "num: " << num << std::endl;
 		if (num++ > 1000)
 		{
 			std::cout << "Unable to compute inverse kinematics for the given input frame! \n";
 			return nullptr;
 		}
-		// std::cout << "num: " << num << "\n";
 	}
 
 	return std::make_shared<base::RealVectorSpaceState>(q_result);
@@ -170,19 +195,21 @@ std::shared_ptr<Eigen::MatrixXf> robots::xARM6::computeSkeleton(std::shared_ptr<
 	skeleton->col(1) << frames->at(1).p(0), frames->at(1).p(1), frames->at(1).p(2);
 	skeleton->col(2) << frames->at(2).p(0), frames->at(2).p(1), frames->at(2).p(2);
 
-	KDL::Vector i2(frames->at(2).M(0,0), frames->at(2).M(1,0), frames->at(2).M(2,0));
-	KDL::Vector p3 = frames->at(2).p + i2 * 0.0775;
+	// KDL::Vector p3 = frames->at(2).p + frames->at(2).M.UnitX() * 0.0775;
+	KDL::Vector p3 = frames->at(3).p - frames->at(3).M.UnitZ() * 0.25;
 	skeleton->col(3) << p3(0), p3(1), p3(2);
 	skeleton->col(4) << frames->at(4).p(0), frames->at(4).p(1), frames->at(4).p(2);
 
-	KDL::Vector i4(frames->at(4).M(0,0), frames->at(4).M(1,0), frames->at(4).M(2,0));
-	KDL::Vector p5 = frames->at(4).p + i4 * 0.076;
+	KDL::Vector p5 = frames->at(4).p + frames->at(4).M.UnitX() * 0.076;
 	skeleton->col(5) << p5(0), p5(1), p5(2);
 	skeleton->col(6) << frames->at(5).p(0), frames->at(5).p(1), frames->at(5).p(2);
 
     // Correct the last skeleton point regarding the attached gripper.
-	// Please comment this line if you do not include gripper.
-    skeleton->col(6) += 0.1 * (skeleton->col(6) - skeleton->col(5)) / (skeleton->col(6) - skeleton->col(5)).norm(); 	// Gripper length is 0.1 [m]
+	if (gripper_attached)
+	{
+		KDL::Vector a = frames->back().M.UnitZ();
+    	skeleton->col(6) -= 0.3 * gripper_length * Eigen::Vector3f(a.x(), a.y(), a.z());
+	}
 
 	return skeleton;
 }
