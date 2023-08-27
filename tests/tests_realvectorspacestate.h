@@ -9,13 +9,13 @@ TEST(RealVectorSpaceStateTest, testConstructor)
 {
 std::shared_ptr<base::State> ss = std::make_shared<base::RealVectorSpaceState>(2);
 
-ASSERT_EQ(ss->getDimensions(), 2);
+ASSERT_EQ(ss->getNumDimensions(), 2);
 }
 
 TEST(RealVectorSpaceStateTest, testConstructor1)
 {
 std::shared_ptr<base::State> ss = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1,2}));
 
-ASSERT_EQ(ss->getDimensions(), 2);
+ASSERT_EQ(ss->getNumDimensions(), 2);
 ASSERT_EQ(ss->getCoord(), Eigen::Vector2f({1,2}));
 }

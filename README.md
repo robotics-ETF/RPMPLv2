@@ -63,7 +63,23 @@ MAX_PLANNING_TIME: 10000
 ## 3.2 Set scenario parameters
 Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario yaml files.
 
-For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set obstacles details (dimensions, translation and rotation of the box obstacle). You can set as many obstacles as you want. Moreover, some details about the used robot (robot type, urdf file location, configuration space type, dimensions of the configuration space, and start and goal configurations) can be set.
+For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many obstacles as you want. For now, only box obstacles are supported, and you can set:
+- ```dim```: Dimensions (x, y and z in [m]), 
+- ```trans```: Translation (x, y and z in [m]),
+- ```rot```: Rotation (quaternion). 
+
+Moreover, some details about the used robot can be set, such as:
+- ```type```: Robot type, 
+- ```urdf```: Urdf file location, 
+- ```space```: Configuration space type (RealVectorSpace or RealVectorSpaceFCL), 
+- ```num_DOFs```: Number of DOFs (number of dimensions of the configuration space), 
+- ```start```: Start configuration,
+- ```goal```: Goal configuration,
+- ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached), 
+- ```capsules_radius```: Radius of each capsule in [m] that approximates robot links,
+- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'.
+
+Note that the last three options are only available for ```/xarm6``` robot.
 
 For example, if you do not want to use FCL (Flexible Collision Library) in planning, just set:
 ```
@@ -143,4 +159,3 @@ python3 visualizer/run_visualizer_xarm6.py
 ![scenario_test_xarm6_nice_example_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/2289cdba-4b2b-49b7-a517-79ed6387d988)
 
 The visualization gif files will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
-

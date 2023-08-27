@@ -4,16 +4,16 @@ from math import pi
 
 
 class RealVectorSpace(StateSpace):
-    def __init__(self, dimensions) -> None:
-        self.dimensions = dimensions
+    def __init__(self, num_dimensions) -> None:
+        self.num_dimensions = num_dimensions
         self.range = [-pi, pi]
 
     def get_dimensions(self) -> int:
-        return self.dimensions
+        return self.num_dimensions
 
     def get_qrand(self):
         return np.random.uniform(self.range[0], self.range[1],
-                                 size=self.dimensions)
+                                 size=self.num_dimensions)
 
     def get_qnew(self, qnear, qrand, eps):
         a = qnear

@@ -15,13 +15,13 @@ namespace base
 	class RealVectorSpace : public base::StateSpace
 	{
 	public:
-		int dimensions;
+		int num_dimensions;
 
-		RealVectorSpace(int dimensions_);
-		RealVectorSpace(int dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, const std::shared_ptr<env::Environment> env_);
+		RealVectorSpace(int num_dimensions_);
+		RealVectorSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, const std::shared_ptr<env::Environment> env_);
 		virtual ~RealVectorSpace();
 
-		int getDimensions() override { return dimensions; }
+		int getNumDimensions() override { return num_dimensions; }
 
 		std::shared_ptr<base::State> randomState(std::shared_ptr<base::State> q_center) override;
 		std::shared_ptr<base::State> newState(std::shared_ptr<base::State> q) override;
@@ -32,7 +32,7 @@ namespace base
 		bool isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		virtual bool isValid(const std::shared_ptr<base::State> q) override;
 		virtual float computeDistance(const std::shared_ptr<base::State> q) override;
-		virtual std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> computeDistanceAndPlanes(const std::shared_ptr<base::State> q) override;
+		virtual std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> computeDistanceAndNearestPoints(const std::shared_ptr<base::State> q) override;
 		friend std::ostream &operator<<(std::ostream &os, const RealVectorSpace &space);
 
 		static bool collisionCapsuleToBox(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);

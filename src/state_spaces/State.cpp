@@ -11,7 +11,7 @@ base::State::State()
 	idx = -1;
 	d_c = -1;
 	cost = -1;
-	planes = nullptr;
+	nearest_points = nullptr;
 	parent = nullptr;
 	children = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
 }

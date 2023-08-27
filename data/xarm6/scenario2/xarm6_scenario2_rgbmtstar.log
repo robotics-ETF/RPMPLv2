@@ -68062,7 +68062,7 @@ inf		216		14617
 14.1331		1792		121969
 ---------------------------------------------------------------------------
 Space Type:      RealVectorSpaceFCL Type
-Space dimension: 6
+Dimensionality:  6
 Planner type:    RGBMT*
 Using scenario:  data/xarm6/scenario2.yaml
 Planner info:

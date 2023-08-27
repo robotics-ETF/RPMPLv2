@@ -15,7 +15,7 @@ namespace base
 	{
 	public:
 		RealVectorSpaceState(Eigen::VectorXf state_);
-		RealVectorSpaceState(int dimensions_);
+		RealVectorSpaceState(int num_dimensions_);
 		RealVectorSpaceState(std::shared_ptr<base::State> state);
 		~RealVectorSpaceState() {}
 	};

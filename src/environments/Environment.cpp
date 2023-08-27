@@ -70,7 +70,7 @@ env::Environment::Environment(const std::vector<env::Obstacle> obs)
         std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject(fclBox, obs[i].second));
         ob->computeAABB();
         parts.emplace_back(ob);
-        std::cout << "Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
+        std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
     }
 }
 
@@ -106,6 +106,6 @@ void env::Environment::updateObstacles()
             parts[i]->setTranslation(trans);
             parts[i]->computeAABB();
         // }
-        // std::cout << "Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
+        // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
     }
 }

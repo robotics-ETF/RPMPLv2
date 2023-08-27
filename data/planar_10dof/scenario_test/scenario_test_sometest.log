@@ -10027,7 +10027,7 @@ inf		423		3224
 10.8224		10027		96070
 ---------------------------------------------------------------------------
 Space Type:      RealVectorSpaceFCL Type
-Space dimension: 10
+Dimensionality:  10
 Planner type:    RGBMT*
 Using scenario:  data/planar_10dof/scenario_test/scenario_test.yaml
 Planner info:

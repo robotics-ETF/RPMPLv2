@@ -49,7 +49,7 @@ namespace base
 		std::shared_ptr<base::State> getNearestState(std::shared_ptr<base::State> q);
 		std::shared_ptr<base::State> getNearestStateV2(std::shared_ptr<base::State> q);
 		void upgradeTree(std::shared_ptr<base::State> q_new, std::shared_ptr<base::State> q_parent,
-						 float d_c = -1, std::shared_ptr<std::vector<Eigen::MatrixXf>> planes = nullptr, float cost = -1);
+						 float d_c = -1, std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = nullptr, float cost = -1);
 
 		template <class BBOX> 
         bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }

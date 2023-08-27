@@ -72,7 +72,7 @@ namespace planning
             base::State::Status status;                                         // The status of proceeding from 'q_curr' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;          // The predefined path that is being followed
             const float hysteresis = 0.1;                                       // Hysteresis size when choosing the next state
-            const int num_lateral_states = 2 * getSS()->getDimensions() - 2;    // Number of lateral states
+            const int num_lateral_states = 2 * getStateSpace()->getNumDimensions() - 2;    // Number of lateral states
             
             void generateHorizon();
             void computeHorizon();

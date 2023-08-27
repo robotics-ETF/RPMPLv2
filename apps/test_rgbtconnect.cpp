@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
-	LOG(INFO) << "Dimensions: " << ss->getDimensions();
+	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 	LOG(INFO) << "Start: " << scenario.getStart();
 	LOG(INFO) << "Goal: " << scenario.getGoal();

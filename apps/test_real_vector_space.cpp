@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
 	std::shared_ptr<base::StateSpace> ss_FCL = scenario_FCL.getStateSpace();
 	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
-	LOG(INFO) << "Dimensions: " << ss->getDimensions();
+	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space ss type:     " << ss->getStateSpaceType();
 	LOG(INFO) << "State space ss_FCL type: " << ss_FCL->getStateSpaceType();
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 	{
 		// std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RGBTConnect>(ss, scenario.getStart(), scenario.getGoal());
 		float d_c;
-		std::shared_ptr<std::vector<Eigen::MatrixXf>> planes;
+		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;
 		int num = 0;
 		while (num++ < 1)
 		{
@@ -46,8 +46,8 @@ int main(int argc, char **argv)
 			// Test distance underestimation
 			// if (ss->isValid(q))
 			// {
-			// 	tie(d_c, planes) = ss->computeDistanceAndPlanes(q);
-			// 	float d_c_under = planner->computeDistanceUnderestimation(q, planes);
+			// 	tie(d_c, nearest_points) = ss->computeDistanceAndNearestPoints(q);
+			// 	float d_c_under = planner->computeDistanceUnderestimation(q, nearest_points);
 			// 	if (abs(d_c - d_c_under) > 1e-3)
 			// 	{
 			// 		LOG(INFO) << "************************ different ************************" << std::endl;
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 			// bool valid_FCL = ss_FCL->isValid(q);
 			// LOG(INFO) << "Is valid: " << (valid_FCL ? "true" : "false") << std::endl;
 			// float d_c_FCL = ss_FCL->computeDistance(q);
-			// // float d_c_FCL = std::get<0>(ss_FCL->computeDistanceAndPlanes(q));
+			// // float d_c_FCL = std::get<0>(ss_FCL->computeDistanceAndNearestPoints(q));
 			// LOG(INFO) << "Distance: " << d_c_FCL << std::endl;
 			
 			// if (valid != valid_FCL)

@@ -26,7 +26,7 @@ namespace planning
 				(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
             base::State::Status connectGenSpine(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
             float computeDistance(std::shared_ptr<base::State> q) override;
-            float computeDistanceUnderestimation(std::shared_ptr<base::State> q, std::shared_ptr<std::vector<Eigen::MatrixXf>> planes);
+            float computeDistanceUnderestimation(std::shared_ptr<base::State> q, std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points);
         };
 	}
 }

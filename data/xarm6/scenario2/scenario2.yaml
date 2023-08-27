@@ -1,4 +1,10 @@
 obstacles:
+#   fixed obstacle - table
+#   - box:
+#       dim: [1.5, 1.5, 0.1]
+#       trans: [0, 0, -0.05]
+#       rot: [0, 0, 0, 0]
+
   - box:
       dim: [0.1, 0.4, 0.7]
       trans: [-0.3, 0.5, 0.35]
@@ -31,10 +37,16 @@ obstacles:
       dim: [0.5, 0.4, 0.1]
       trans: [0, -0.5, 0.05]
       rot: [0, 0, 0, 0]
+
 robot:
-  type: "xARM6"
+  type: "xarm6"
   urdf: "/data/xarm6/xarm6.urdf"
-  space: "RealVectorSpaceFCL"
-  dimensions: 6
+#   space: "RealVectorSpace"
+  space: "RealVectorSpaceFCL"   # Currently, it does not consider a gripper!
+  num_DOFs: 6
   start: [1.5708, 1.3849, -2.9557, 1.5708, 0, 0]
   goal: [-1.5708, 1.3849, -2.9557, 1.5708, 0, 0]
+  gripper_length: 0      # In [m]
+  capsules_radius: [0.047, 0.12, 0.11, 0.09, 0.05, 0.0380] 	# When gripper is not attached
+#   capsules_radius: [0.047, 0.12, 0.11, 0.09, 0.05, 0.08]    # When gripper is attached
+  table_included: false      # Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'  

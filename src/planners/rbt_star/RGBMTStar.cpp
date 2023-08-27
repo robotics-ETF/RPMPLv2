@@ -55,7 +55,7 @@ bool planning::rbt_star::RGBMTStar::solve()
         
         // Adding a new local tree rooted in 'q_rand'
         trees.emplace_back(std::make_shared<base::Tree>(base::Tree("local", tree_new_idx)));
-        trees[tree_new_idx]->setKdTree(std::make_shared<base::KdTree>(ss->getDimensions(), *trees[tree_new_idx], 
+        trees[tree_new_idx]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[tree_new_idx], 
                                                                       nanoflann::KDTreeSingleIndexAdaptorParams(10)));
         trees[tree_new_idx]->upgradeTree(q_rand, nullptr, -1, nullptr, 0);
         trees_exist.clear();
@@ -87,7 +87,7 @@ bool planning::rbt_star::RGBMTStar::solve()
             if (status == base::State::Status::Reached)
             {
                 // If 'idx-th' tree is reached
-                trees[tree_new_idx]->upgradeTree(q_new, q_rand, q_near_new->getDistance(), q_near_new->getPlanes(), cost);
+                trees[tree_new_idx]->upgradeTree(q_new, q_rand, q_near_new->getDistance(), q_near_new->getNearestPoints(), cost);
                 trees_exist.emplace_back(idx);
                 trees_reached.emplace_back(idx);
                 states_reached[idx] = q_near_new;
@@ -303,7 +303,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
 
     std::shared_ptr<base::State> q_new = ss->newState(q->getCoord());
     float cost = q_opt->getCost() + computeCostToCome(q_opt, q_new);
-    tree->upgradeTree(q_new, q_opt, q_new->getDistance(), q_new->getPlanes(), cost);
+    tree->upgradeTree(q_new, q_opt, q_new->getDistance(), q_new->getNearestPoints(), cost);
     return q_new;
 }
 
@@ -407,7 +407,7 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(std::string filename, bool
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 		output_file << "Planner type:    " << "RGBMT*" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

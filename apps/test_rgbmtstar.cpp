@@ -14,12 +14,13 @@ int main(int argc, char **argv)
 	FLAGS_logtostderr = true;
 	LOG(INFO) << "GLOG successfully initialized!";
 
-	std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
+	// std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
 	// std::string scenario_file_path = "/data/planar_2dof/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/planar_2dof/scenario2/scenario2.yaml";
 	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test1.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test2.yaml";
+	std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 
 	bool print_help = false;
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
-	LOG(INFO) << "Dimensions: " << ss->getDimensions();
+	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 	LOG(INFO) << "Start: " << scenario.getStart();
 	LOG(INFO) << "Goal: " << scenario.getGoal();

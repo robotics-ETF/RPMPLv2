@@ -16,7 +16,7 @@ typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
 robots::Planar2DOF::~Planar2DOF() {}
 
-robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs)
+robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs_)
 {
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
@@ -26,9 +26,9 @@ robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs)
     	throw std::runtime_error("Failed to parse urdf file");
 	
 	type = model.getName();
-	LOG(INFO) << "Creating " << type;
 	std::vector<urdf::LinkSharedPtr > links;
 	model.getLinks(links);
+	num_DOFs = num_DOFs_;
 
 	for (size_t i = 0; i < num_DOFs; ++i)
 	{
@@ -48,77 +48,24 @@ robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs)
 							   links[i]->visual->origin.position.z);
 			
 			CollisionGeometryPtr fclBox(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
-			//LOG(INFO) << "origin: " << origin << std::endl;
+			// LOG(INFO) << "origin: " << origin << std::endl;
 			
 			init_poses.emplace_back(KDL::Frame(origin));
 			parts.emplace_back(new fcl::CollisionObjectf(fclBox, fcl::Transform3f()));
-			radii.emplace_back(box->dim.y / 2);
+			capsules_radius.emplace_back(box->dim.y / 2);
 		}
 	}
-	//LOG(INFO) << "constructor----------------------\n";
+	
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	Eigen::VectorXf state = Eigen::VectorXf::Zero(num_DOFs);
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
-}
 
-std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(std::shared_ptr<base::State> q)
-{
-	setConfiguration(q);
-	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = std::make_shared<std::vector<KDL::Frame>>();
-	robot_tree.getChain("base_link", "tool", robot_chain);
-	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
-
-	for (size_t i = 0; i < q->getDimensions(); ++i)
-		joint_pos(i) = q->getCoord(i);
-	
-	for (size_t i = 0; i < robot_tree.getNrOfSegments(); ++i)
-	{
-		KDL::Frame cart_pos;
-		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		if (kinematics_status >= 0)
-			frames_fk->emplace_back(cart_pos);
-	}
-	return frames_fk;
-    
-}
-
-std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
-	std::shared_ptr<base::State> q_init)
-{
-	// TODO (if needed)
-}
-
-std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared_ptr<base::State> q)
-{
-	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
-	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, getParts().size() + 1);
-	for (int k = 0; k <= getParts().size(); k++)
-		skeleton->col(k) << frames->at(k).p(0), frames->at(k).p(1), frames->at(k).p(2);
-	
-	return skeleton;
-}
-
-float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
-									  std::shared_ptr<Eigen::MatrixXf> skeleton)
-{
-	// Assumes that number of links is equal to number of DOFs
-	float d = 0;
-	float r;
-	for (int i = 0; i < getParts().size(); i++)
-	{
-		r = 0;
-		for (int k = i+1; k <= getParts().size(); k++)
-			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
-		
-		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
-	}
-	return fi / d;
+	LOG(INFO) << type << " robot created.";
+	// LOG(INFO) << "Constructor end ----------------------\n";
 }
 
 void robots::Planar2DOF::setState(std::shared_ptr<base::State> q)
 {
-	KDL::JntArray joint_pos = KDL::JntArray(q->getDimensions());
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
 	for (size_t i = 0; i < parts.size(); ++i)
@@ -131,6 +78,60 @@ void robots::Planar2DOF::setState(std::shared_ptr<base::State> q)
 		parts[i]->computeAABB(); 
 		//LOG(INFO) << parts[i]->getAABB().min_ <<"\t;\t" << parts[i]->getAABB().max_ << std::endl << "*******************" << std::endl;
 	}
+}
+
+std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(std::shared_ptr<base::State> q)
+{
+	setConfiguration(q);
+	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = std::make_shared<std::vector<KDL::Frame>>();
+	robot_tree.getChain("base_link", "tool", robot_chain);
+	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
+
+	for (size_t i = 0; i < num_DOFs; ++i)
+		joint_pos(i) = q->getCoord(i);
+	
+	for (size_t i = 0; i < robot_tree.getNrOfSegments(); ++i)
+	{
+		KDL::Frame cart_pos;
+		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
+		if (kinematics_status >= 0)
+			frames_fk->emplace_back(cart_pos);
+	}
+	return frames_fk;
+}
+
+std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
+																		  std::shared_ptr<base::State> q_init)
+{
+	// TODO (if needed)
+}
+
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared_ptr<base::State> q)
+{
+	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
+	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1);
+	for (int k = 0; k <= num_DOFs; k++)
+		skeleton->col(k) << frames->at(k).p(0), frames->at(k).p(1), frames->at(k).p(2);
+	
+	return skeleton;
+}
+
+float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
+									  std::shared_ptr<Eigen::MatrixXf> skeleton)
+{
+	// Assumes that number of links is equal to number of DOFs
+	float d = 0;
+	float r;
+	for (int i = 0; i < num_DOFs; i++)
+	{
+		r = 0;
+		for (int k = i+1; k <= num_DOFs; k++)
+			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
+		
+		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
+	}
+	return fi / d;
 }
 
 fcl::Vector3f robots::Planar2DOF::transformPoint(fcl::Vector3f& v, fcl::Transform3f t)

@@ -61,26 +61,38 @@ scenario::Scenario::Scenario(std::string configuration_file, std::string root_pa
     env = std::make_shared<env::Environment>(obstacles);
 
     YAML::Node robot_node = node["robot"];
-    const int dim = robot_node["dimensions"].as<int>();
-
     std::string type = robot_node["type"].as<std::string>();
-    std::string space_state = robot_node["space"].as<std::string>();
-    if (type == "xARM6")
-        robot = std::make_shared<robots::xARM6>(root_path + robot_node["urdf"].as<std::string>());
+    int num_DOFs = robot_node["num_DOFs"].as<int>();
+    if (type == "xarm6")
+    {
+        YAML::Node capsules_radius_node = robot_node["capsules_radius"];
+        if (capsules_radius_node.size() != num_DOFs)
+            throw std::logic_error("Number of capsules is not correct!");
+            
+        std::vector<float> capsules_radius;
+        for (size_t i = 0; i < capsules_radius_node.size(); ++i)
+            capsules_radius.emplace_back(capsules_radius_node[i].as<float>());
+
+        robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
+                                                capsules_radius,
+                                                robot_node["gripper_length"].as<float>(),
+                                                robot_node["table_included"].as<bool>());
+    }
     else if (type == "planar_2DOF")
         robot = std::make_shared<robots::Planar2DOF>(root_path + robot_node["urdf"].as<std::string>());
     else if (type == "planar_10DOF")
         robot = std::make_shared<robots::Planar10DOF>(root_path + robot_node["urdf"].as<std::string>());
 
+    std::string space_state = robot_node["space"].as<std::string>();
     if (space_state == "RealVectorSpace")
-        ss = std::make_shared<base::RealVectorSpace>(dim, robot, env);
+        ss = std::make_shared<base::RealVectorSpace>(num_DOFs, robot, env);
     else if (space_state == "RealVectorSpaceFCL")
-        ss = std::make_shared<base::RealVectorSpaceFCL>(dim, robot, env);
+        ss = std::make_shared<base::RealVectorSpaceFCL>(num_DOFs, robot, env);
 
     YAML::Node start_node = robot_node["start"];
     YAML::Node goal_node = robot_node["goal"];
-    Eigen::VectorXf start_vec(dim);
-    Eigen::VectorXf goal_vec(dim);
+    Eigen::VectorXf start_vec(num_DOFs);
+    Eigen::VectorXf goal_vec(num_DOFs);
     if (start_node.size() != goal_node.size())
         throw std::logic_error("Start and goal size mismatch!");
     for (size_t i = 0; i < start_node.size(); ++i)
@@ -91,14 +103,4 @@ scenario::Scenario::Scenario(std::string configuration_file, std::string root_pa
     start = std::make_shared<base::RealVectorSpaceState>(start_vec);
     goal = std::make_shared<base::RealVectorSpaceState>(goal_vec);
 
-}
-
-void scenario::Scenario::setStart(const std::shared_ptr<base::State> start_)
-{
-    start = start_;
-}
-
-void scenario::Scenario::setGoal(const std::shared_ptr<base::State> goal_)
-{
-    goal = goal_;
 }

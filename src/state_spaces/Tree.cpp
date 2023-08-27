@@ -52,7 +52,7 @@ std::shared_ptr<base::State> base::Tree::getNearestStateV2(std::shared_ptr<base:
 	{
 		q_temp = getState(i)->getCoord();
 		is_out = false;
-		for (int k = 0; k < q->getDimensions(); k++)
+		for (int k = 0; k < q->getNumDimensions(); k++)
 		{
 			if (abs(q_temp(k) - q->getCoord(k)) > d_min)	// Is outside the box?
 			{
@@ -76,10 +76,10 @@ std::shared_ptr<base::State> base::Tree::getNearestStateV2(std::shared_ptr<base:
 // 'q_new' - new node added to tree
 // 'q_parent' - parent of 'q_new'
 // 'd_c' - distance-to-obstacles for 'q_new'
-// 'planes' - planes for 'q_new'
+// 'nearest_points' - nearest_points for 'q_new'
 // 'cost' - cost-to-come for 'q_new'
 void base::Tree::upgradeTree(std::shared_ptr<base::State> q_new, std::shared_ptr<base::State> q_parent,
-							 float d_c, std::shared_ptr<std::vector<Eigen::MatrixXf>> planes, float cost)
+							 float d_c, std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float cost)
 {
 	size_t N = states->size();
 	states->emplace_back(q_new);
@@ -88,7 +88,7 @@ void base::Tree::upgradeTree(std::shared_ptr<base::State> q_new, std::shared_ptr
 	q_new->setIdx(N);
 	q_new->setParent(q_parent);
 	q_new->setDistance(d_c);
-	q_new->setPlanes(planes);
+	q_new->setNearestPoints(nearest_points);
 	q_new->setCost(cost);
 	if (q_parent != nullptr)
 		q_parent->addChild(q_new);

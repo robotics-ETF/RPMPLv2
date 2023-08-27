@@ -24,7 +24,8 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/planar_10dof/scenario_test/scenario_test.yaml";
 	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario2.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test1.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test2.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
-	LOG(INFO) << "Dimensions: " << ss->getDimensions();
+	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 	LOG(INFO) << "Start: " << scenario.getStart();
 	LOG(INFO) << "Goal: " << scenario.getGoal();
@@ -78,9 +79,9 @@ int main(int argc, char **argv)
 	std::ofstream output_file;
 	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_sometest.log", std::ofstream::out);
 	
-	if (ss->getDimensions() == 2)
+	if (ss->getNumDimensions() == 2)
 		RGBMTStarConfig::MAX_PLANNING_TIME = 10e3;		// 10 sec
-	else if (ss->getDimensions() == 6)
+	else if (ss->getNumDimensions() == 6)
 		RGBMTStarConfig::MAX_PLANNING_TIME = 120e3; 	// 2 min
 	else
 		RGBMTStarConfig::MAX_PLANNING_TIME = 60e3;		// 1 min
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
 
 	output_file << std::string(75, '-') << std::endl;
 	output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-	output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+	output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 	output_file << "Planner type:    " << "RGBMT*" << std::endl;
 	output_file << "Using scenario:  " << project_path + scenario_file_path << std::endl;
 	output_file << "Planner info:\n";

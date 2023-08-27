@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < 2; i++)
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
 
-	std::shared_ptr<robots::xARM6> robot = std::make_shared<robots::xARM6>(project_path + "/data/xarm6/xarm6.urdf");
+	std::shared_ptr<robots::xArm6> robot = std::make_shared<robots::xArm6>(project_path + "/data/xarm6/xarm6.urdf");
 
 	// LOG(INFO) << robot->getRobotTree().getNrOfSegments();
 	// LOG(INFO) << robot->getParts().size();

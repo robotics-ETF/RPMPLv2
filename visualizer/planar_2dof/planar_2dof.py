@@ -127,7 +127,7 @@ class Planar2DOF(RealVectorSpace):
 
     def get_config(self, q):
         if len(self.robot.actuated_joints) != len(q):
-            raise Exception("Wrong dimensions of q")
+            raise Exception("Wrong num. of dimensions of q")
 
         cfg = {}
         for i in range(len(q)):

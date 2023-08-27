@@ -207,7 +207,7 @@ void planning::drbt::DRGBTConnect::computeHorizon()
     auto T1 = std::chrono::steady_clock::now();
     // LOG(INFO) << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << d_c;
     horizon_size = std::min((int) std::floor(DRGBTConnectConfig::INIT_HORIZON_SIZE * (1 + DRGBTConnectConfig::D_CRIT / d_c)),
-                            5 * ss->getDimensions() * DRGBTConnectConfig::INIT_HORIZON_SIZE);
+                            5 * ss->getNumDimensions() * DRGBTConnectConfig::INIT_HORIZON_SIZE);
     
     // LOG(INFO) << "Modifying horizon size from " << horizon.size() << " to " << horizon_size;
     if (horizon_size < horizon.size())
@@ -289,7 +289,7 @@ void planning::drbt::DRGBTConnect::addRandomStates(int num)
 void planning::drbt::DRGBTConnect::addLateralStates()
 {
     int num_added = 0;
-    if (ss->getDimensions() == 2)   // In 2D C-space only two possible lateral spines exist
+    if (ss->getNumDimensions() == 2)   // In 2D C-space only two possible lateral spines exist
     {
         std::shared_ptr<base::State> q_new;
         Eigen::Vector2f new_vec;
@@ -313,7 +313,7 @@ void planning::drbt::DRGBTConnect::addLateralStates()
         while (std::abs(q_next->getCoord(k) - q_current->getCoord(k)) < 1e-6)
             k++;
             
-        if (k < ss->getDimensions())
+        if (k < ss->getNumDimensions())
         {
             std::shared_ptr<base::State> q_new;
             float coord;
@@ -351,9 +351,9 @@ bool planning::drbt::DRGBTConnect::modifyState(std::shared_ptr<HorizonState> &q)
     int num_attepmts = 10;
     while (num++ < num_attepmts)
     {
-        Eigen::VectorXf vec = Eigen::VectorXf::Random(ss->getDimensions()) * norm / std::sqrt(ss->getDimensions() - 1);
+        Eigen::VectorXf vec = Eigen::VectorXf::Random(ss->getNumDimensions()) * norm / std::sqrt(ss->getNumDimensions() - 1);
         vec(0) = (vec(0) > 0) ? 1 : -1;
-        vec(0) *= std::sqrt(norm * norm - vec.tail(ss->getDimensions() - 1).squaredNorm());
+        vec(0) *= std::sqrt(norm * norm - vec.tail(ss->getNumDimensions() - 1).squaredNorm());
         if (q->getStatus() == HorizonState::Status::Bad)
             q_new = ss->newState(q_reached->getCoord() + vec);
         else if (q->getStatus() == HorizonState::Status::Critical)
@@ -428,7 +428,7 @@ void planning::drbt::DRGBTConnect::computeReachedState(std::shared_ptr<base::Sta
     q->setIsReached(status == base::State::Status::Reached ? true : false);
 
     // TODO: If there is enough remaining time, compute real distance-to-obstacles 
-    float d_c = computeDistanceUnderestimation(q_reached, q_current->getPlanes());
+    float d_c = computeDistanceUnderestimation(q_reached, q_current->getNearestPoints());
     if (q->getDistancePrevious() == -1)
         q->setDistancePrevious(d_c);
     else
@@ -587,7 +587,7 @@ void planning::drbt::DRGBTConnect::outputPlannerData(std::string filename, bool 
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 		output_file << "Planner type:    " << "DRGBTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

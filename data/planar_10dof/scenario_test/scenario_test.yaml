@@ -12,6 +12,6 @@ robot:
   type: "planar_10DOF"
   urdf: "/data/planar_10dof/planar_10dof.urdf"
   space: "RealVectorSpaceFCL"
-  dimensions: 10
+  num_DOFs: 10
   start: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   goal: [3.1415, 0, 0, 0, 0, 0, 0, 0, 0, 0]

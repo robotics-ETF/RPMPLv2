@@ -87,7 +87,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
         std::shared_ptr<base::State> q_temp = ss->newState(q_new);
         tie(status, q_new) = extendSpine(q_temp, q_e, d_c);
 		q_new_list->emplace_back(q_new);
-        d_c = computeDistanceUnderestimation(q_new, q->getPlanes());
+        d_c = computeDistanceUnderestimation(q_new, q->getNearestPoints());
 		// d_c = getDistance(q_new); 	// If you want to use real distance
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
@@ -107,7 +107,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
     {
         std::shared_ptr<base::State> q_temp = ss->newState(q_new);
         tie(status, q_new) = extendSpine(q_temp, q_e, d_c);
-        d_c = computeDistanceUnderestimation(q_new, q->getPlanes());
+        d_c = computeDistanceUnderestimation(q_new, q->getNearestPoints());
 		// d_c = getDistance(q_new); 	// If you want to use real distance
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
@@ -147,7 +147,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 }
 
 // Get minimal distance from 'q' to obstacles
-// Also set corresponding 'planes' (which are approximating the obstacles) for the configuation 'q'
+// Also set corresponding 'nearest_points' for the configuation 'q'
 float planning::rbt::RGBTConnect::computeDistance(std::shared_ptr<base::State> q)
 {
     float d_c;
@@ -155,30 +155,36 @@ float planning::rbt::RGBTConnect::computeDistance(std::shared_ptr<base::State> q
 		d_c = q->getDistance();
 	else
 	{
-    	std::shared_ptr<std::vector<Eigen::MatrixXf>> planes;
-		tie(d_c, planes) = ss->computeDistanceAndPlanes(q);
+    	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;
+		tie(d_c, nearest_points) = ss->computeDistanceAndNearestPoints(q);
 		q->setDistance(d_c);
-        q->setPlanes(planes);
+        q->setNearestPoints(nearest_points);
 	}
 	return d_c;
 }
 
-// Returns the underestimation of distance-to-obstacles 'd_c', i.e. returns the distance-to-planes
-float planning::rbt::RGBTConnect::computeDistanceUnderestimation(std::shared_ptr<base::State> q, std::shared_ptr<std::vector<Eigen::MatrixXf>> planes)
+// Returns the underestimation of distance-to-obstacles 'd_c', i.e. returns the distance-to-planes,
+// where planes approximate obstacles, and are generated according to 'nearest_points' 
+float planning::rbt::RGBTConnect::computeDistanceUnderestimation(std::shared_ptr<base::State> q, 
+																 std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points)
 {
     float d_c = INFINITY;
-    Eigen::Vector3f M, MN;    // planes << M, MN; where MN = N - M, where N is robot nearest point, and M is obstacle nearest point
-	std::shared_ptr<Eigen::MatrixXf> XYZ = ss->robot->computeSkeleton(q);
+    Eigen::Vector3f R, O;    // 'R' is robot nearest point, and 'O' is obstacle nearest point
+	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
     
     for (int i = 0; i < ss->robot->getParts().size(); i++)
     {
         for (int j = 0; j < ss->env->getParts().size(); j++)
         {
-            M << planes->at(j).col(i).head(3);
-            MN << planes->at(j).col(i).tail(3);
-            d_c = std::min(d_c, std::min(std::abs(MN.dot(XYZ->col(i) - M)) / MN.norm(), 
-									 	 std::abs(MN.dot(XYZ->col(i+1) - M)) / MN.norm()) - ss->robot->getRadius(i));
-        }
+            O = nearest_points->at(j).col(i).tail(3);
+			if (O.norm() < INFINITY)
+			{
+				R = nearest_points->at(j).col(i).head(3);
+				d_c = std::min(d_c, std::min(std::abs((R - O).dot(skeleton->col(i) - O)) / (R - O).norm(), 
+											 std::abs((R - O).dot(skeleton->col(i+1) - O)) / (R - O).norm()) 
+											 - ss->robot->getCapsuleRadius(i));
+			}
+		}
     }
     return d_c;
 }
@@ -212,7 +218,7 @@ void planning::rbt::RGBTConnect::outputPlannerData(std::string filename, bool ou
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 		output_file << "Planner type:    " << "RGBTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

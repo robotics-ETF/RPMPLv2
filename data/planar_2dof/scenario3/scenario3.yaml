@@ -19,7 +19,7 @@ robot:
   type: "planar_2DOF"
   urdf: "/data/planar_2dof/planar_2dof.urdf"
   space: "RealVectorSpaceFCL"
-  dimensions: 2
+  num_DOFs: 2
   start: [1.8, 1.25]
   goal: [1.3416, -1.25]
   

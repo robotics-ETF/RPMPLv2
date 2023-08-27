@@ -17,13 +17,15 @@ planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std
 {
 	// LOG(INFO) << "Initializing planner...";
 	std::cout << "Initializing planner...\n";
-	if (!ss->isValid(start_) || !ss->isValid(goal_))
-		throw std::domain_error("Start or goal positions are invalid!");
+	if (!ss->isValid(start))
+		throw std::domain_error("Start position is invalid!");
+	if (!ss->isValid(goal))
+		throw std::domain_error("Goal position is invalid!");
 		
 	trees.emplace_back(std::make_shared<base::Tree>("start", 0));
 	trees.emplace_back(std::make_shared<base::Tree>("goal", 1));
-	trees[0]->setKdTree(std::make_shared<base::KdTree>(ss->getDimensions(), *trees[0], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
-	trees[1]->setKdTree(std::make_shared<base::KdTree>(ss->getDimensions(), *trees[1], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+	trees[0]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[0], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+	trees[1]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[1], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
 	trees[0]->upgradeTree(start, nullptr);
 	trees[1]->upgradeTree(goal, nullptr);
 	planner_info->setNumIterations(0);
@@ -54,7 +56,7 @@ bool planning::rrt::RRTConnect::solve()
 		/* Extend */
 		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
 		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
-		q_rand = getSS()->randomState();
+		q_rand = getStateSpace()->randomState();
 		// LOG(INFO) << q_rand->getCoord().transpose();
 		q_near = trees[tree_idx]->getNearestState(q_rand);
 		// q_near = trees[tree_idx]->getNearestStateV2(q_rand);
@@ -193,7 +195,7 @@ void planning::rrt::RRTConnect::outputPlannerData(std::string filename, bool out
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 		output_file << "Planner type:    " << "RRTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

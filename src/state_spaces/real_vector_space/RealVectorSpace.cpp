@@ -7,17 +7,18 @@
 #include <ostream>
 #include <Eigen/Dense>
 #include "ConfigurationReader.h"
+#include "xArm6.h"
 // #include <QuadProg++.hh>
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
 
-base::RealVectorSpace::RealVectorSpace(int dimensions_) : dimensions(dimensions_)
+base::RealVectorSpace::RealVectorSpace(int num_dimensions_) : num_dimensions(num_dimensions_)
 {
 	setStateSpaceType(StateSpaceType::RealVectorSpace);
 }
 
-base::RealVectorSpace::RealVectorSpace(int dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
-									   const std::shared_ptr<env::Environment> env_) : dimensions(dimensions_)
+base::RealVectorSpace::RealVectorSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+									   const std::shared_ptr<env::Environment> env_) : num_dimensions(num_dimensions_)
 {
 	srand((unsigned int) time(0));
 	setStateSpaceType(StateSpaceType::RealVectorSpace);
@@ -29,17 +30,17 @@ base::RealVectorSpace::~RealVectorSpace() {}
 
 std::ostream &base::operator<<(std::ostream &os, const base::RealVectorSpace &space)
 {
-	os << " dimensions: " << space.dimensions;
+	os << " Num. of dimensions: " << space.num_dimensions;
 	return os;
 }
 
 // Get a random state with uniform distribution, which is centered around 'q_center' and limited with robot joint limits
 std::shared_ptr<base::State> base::RealVectorSpace::randomState(std::shared_ptr<base::State> q_center)
 {
-	std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(dimensions);
-	Eigen::VectorXf rand = Eigen::VectorXf::Random(dimensions);
+	std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(num_dimensions);
+	Eigen::VectorXf rand = Eigen::VectorXf::Random(num_dimensions);
 	std::vector<std::vector<float>> limits = robot->getLimits();
-	for (size_t i = 0; i < dimensions; ++i)
+	for (size_t i = 0; i < num_dimensions; ++i)
 		rand(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
 
 	if (q_center == nullptr)
@@ -80,7 +81,7 @@ bool base::RealVectorSpace::isEqual(const std::shared_ptr<base::State> q1, const
 std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSpace::interpolate
 	(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float D)
 {
-	std::shared_ptr<base::State> q_new = std::make_shared<base::RealVectorSpaceState>(dimensions);
+	std::shared_ptr<base::State> q_new = std::make_shared<base::RealVectorSpaceState>(num_dimensions);
 	base::State::Status status;
 
 	if (D < 0) 	// D = -1 is the default value
@@ -118,30 +119,33 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 {
 	bool collision;
-	std::shared_ptr<Eigen::MatrixXf> XYZ = robot->computeSkeleton(q);
-	int i0 = (robot->getType() == "xarm6") ? 1 : 0;
+	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
 	
-	for (int i = i0; i < robot->getParts().size(); i++)
+	for (int i = 0; i < robot->getParts().size(); i++)
 	{
     	for (int j = 0; j < env->getParts().size(); j++)
 		{
-            if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
+			// 'j == 0' always represents the table when it is included
+			if ((j == 0 && (i == 0 || i == 1)) && robot->getType() == "xarm6_with_table")
+				continue;
+            else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
 				// std::cout << "(i,j) = (" <<i<<","<<j<<")" << std::endl;
-				// std::cout << "r(i): " << robot->getRadius(i) << std::endl;
-				// std::cout << "XYZ(i):   " << XYZ->col(i).transpose() << std::endl;
-				// std::cout << "XYZ(i+1): " << XYZ->col(i+1).transpose() << std::endl;
+				// std::cout << "r(i): " << robot->getCapsuleRadius(i) << std::endl;
+				// std::cout << "skeleton(i):   " << skeleton->col(i).transpose() << std::endl;
+				// std::cout << "skeleton(i+1): " << skeleton->col(i+1).transpose() << std::endl;
 				fcl::AABB AABB = env->getParts()[j]->getAABB();
 				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
-				if (collisionCapsuleToBox(XYZ->col(i), XYZ->col(i+1), robot->getRadius(i), obs))
+				if (collisionCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs))
 					return false;
             }
-			// else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_SPHERE)
-			// {
-            //     if (collisionCapsuleToSphere(XYZ->col(i), XYZ->col(i+1), robot->getRadius(i), obs))
-			// 		return false;
-            // }
+			else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_SPHERE)
+			{
+				Eigen::VectorXf obs(4); 	// TODO
+                if (collisionCapsuleToSphere(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs))
+					return false;
+            }
         }
     }
     return true;
@@ -344,34 +348,41 @@ bool base::RealVectorSpace::collisionCapsuleToSphere(const Eigen::Vector3f &A, c
 
 float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> q)
 {
-	return std::get<0>(computeDistanceAndPlanes(q));
+	return std::get<0>(computeDistanceAndNearestPoints(q));
 }
 
-std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVectorSpace::computeDistanceAndPlanes(const std::shared_ptr<base::State> q)
+std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVectorSpace::computeDistanceAndNearestPoints
+	(const std::shared_ptr<base::State> q)
 {
     Eigen::MatrixXf distances(robot->getParts().size(), env->getParts().size());
-	std::shared_ptr<std::vector<Eigen::MatrixXf>> planes = std::make_shared<std::vector<Eigen::MatrixXf>>
+	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
 		(std::vector<Eigen::MatrixXf>(env->getParts().size(), Eigen::MatrixXf(6, robot->getParts().size())));
-	std::shared_ptr<Eigen::MatrixXf> nearest_pts = nullptr;
-	std::shared_ptr<Eigen::MatrixXf> XYZ = robot->computeSkeleton(q);
-	int i0 = (robot->getType() == "xarm6") ? 1 : 0;
+	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
+	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
 
-	for (int i = i0; i < robot->getParts().size(); i++)
+	for (int i = 0; i < robot->getParts().size(); i++)
 	{
     	for (int j = 0; j < env->getParts().size(); j++)
 		{
-            if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
+			// 'j == 0' always represents the table when it is included
+			if ((j == 0 && (i == 0 || i == 1)) && robot->getType() == "xarm6_with_table")
+			{
+				distances(i, j) = INFINITY;
+				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
+				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point
+			}
+            else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
 				fcl::AABB AABB = env->getParts()[j]->getAABB();
 				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
-                tie(distances(i, j), nearest_pts) = distanceCapsuleToBox(XYZ->col(i), XYZ->col(i+1), robot->getRadius(i), obs);
+                tie(distances(i, j), nearest_pts) = distanceCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
 
 				// std::cout << "(i, j) = (" <<i<<", "<<j<<"). " << std::endl;
 				// std::cout << "Distance:    " << distances(i, j) << std::endl;
 				// // float dQP;
 				// // std::shared_ptr<Eigen::MatrixXf> nearest_ptsQP;
-                // // tie(dQP, nearest_ptsQP) = distanceCapsuleToBoxQP(XYZ->col(i), XYZ->col(i+1), robot->getRadius(i), obs);
+                // // tie(dQP, nearest_ptsQP) = distanceCapsuleToBoxQP(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
 				// // std::cout << "Distance QP: " << dQP << std::endl;
 				// // if (std::abs(distances(i, j) - dQP) > 1e-3)
 				// // 	std::cout << "****************************** DIFFERENT *************************************" << std::endl;
@@ -382,23 +393,25 @@ std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVecto
 				// 	std::cout << "Nearest point obs:     " << nearest_pts->col(1).transpose() << std::endl;
 				// 	// std::cout << "Nearest point obs QP:  " << nearest_ptsQP->col(1).transpose() << std::endl;
 				// }
-				// std::cout << "r(i): " << robot->getRadius(i) << std::endl;
-				// std::cout << "XYZ(i):   " << XYZ->col(i).transpose() << std::endl;
-				// std::cout << "XYZ(i+1): " << XYZ->col(i+1).transpose() << std::endl;
+				// std::cout << "r(i): " << robot->getCapsuleRadius(i) << std::endl;
+				// std::cout << "skeleton(i):   " << skeleton->col(i).transpose() << std::endl;
+				// std::cout << "skeleton(i+1): " << skeleton->col(i+1).transpose() << std::endl;
 				// std::cout << "-------------------------------------------------------------" << std::endl;
             }
-			// else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_SPHERE)
-			// {
-            //     tie(distances(i, j), nearest_pts) = distanceCapsuleToSphere(XYZ->col(i), XYZ->col(i+1), robot->getRadius(i), obs);
-            // }
+			else if (env->getParts()[j]->getNodeType() == fcl::NODE_TYPE::GEOM_SPHERE)
+			{
+				Eigen::VectorXf obs(4); 	// TODO
+                tie(distances(i, j), nearest_pts) = distanceCapsuleToSphere(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
+            }
 
             if (distances(i, j) <= 0)		// The collision occurs
                 return {0, nullptr};
 			
-			planes->at(j).col(i) << nearest_pts->col(1), nearest_pts->col(0) - nearest_pts->col(1);
+			// 'nearest_pts->col(0)' is robot nearest point, and 'nearest_pts->col(1)' is obstacle nearest point
+			nearest_points->at(j).col(i) << nearest_pts->col(0), nearest_pts->col(1);
         }
     }
-	return {distances.minCoeff(), planes};
+	return {distances.minCoeff(), nearest_points};
 }
 
 // Get distance (and nearest points) between capsule (determined with line segment AB and 'radius') 

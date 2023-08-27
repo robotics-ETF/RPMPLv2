@@ -110,7 +110,7 @@ void planning::rbt::RBTConnect::saturateSpine(std::shared_ptr<base::State> q, st
 // Return result of the prunning. Return false if 'q_e' becomes equal to 'q'. Otherwise, return true.
 bool planning::rbt::RBTConnect::pruneSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	int dim = ss->getDimensions();
+	int dim = ss->getNumDimensions();
 	Eigen::VectorXf q_temp;
 	std::vector<float> bounds(dim);
 	std::vector<int> indices;
@@ -242,7 +242,7 @@ void planning::rbt::RBTConnect::outputPlannerData(std::string filename, bool out
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Space dimension: " << ss->getDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
 		output_file << "Planner type:    " << "RBTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

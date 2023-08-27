@@ -140831,7 +140831,7 @@ inf		95		235
 4.97452		4545		10000
 ---------------------------------------------------------------------------
 Space Type:      RealVectorSpaceFCL Type
-Space dimension: 2
+Dimensionality:  2
 Planner type:    RGBMT*
 Using scenario:  data/planar_2dof/scenario3.yaml
 Planner info:
