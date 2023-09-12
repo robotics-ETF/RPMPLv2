@@ -3,7 +3,6 @@
 //
 
 #include "DRGBTConnect.h"
-#include "ConfigurationReader.h"
 #include <glog/log_severity.h>
 #include <glog/logging.h>
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
@@ -12,7 +11,8 @@
 planning::drbt::DRGBTConnect::DRGBTConnect(std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
 
 planning::drbt::DRGBTConnect::DRGBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                                           std::shared_ptr<base::State> goal_) : RGBTConnect(ss_, start_, goal_) 
+                                           std::shared_ptr<base::State> goal_, const std::string &planner_name_) : 
+                                           RGBTConnect(ss_, start_, goal_) 
 {
     // Additionally the following is required:
     q_current = nullptr;
@@ -22,6 +22,7 @@ planning::drbt::DRGBTConnect::DRGBTConnect(std::shared_ptr<base::StateSpace> ss_
     replanning = false;
     status = base::State::Status::Reached;
     planner_info->setNumStates(1);
+    planner_name = planner_name_;
 }
 
 bool planning::drbt::DRGBTConnect::solve()
@@ -35,10 +36,10 @@ bool planning::drbt::DRGBTConnect::solve()
     path.emplace_back(start);                                   // State 'start' is added to the realized path
     horizon_size = DRGBTConnectConfig::INIT_HORIZON_SIZE + num_lateral_states;
 
-    // Obtaining the inital path using RGBTConnect (any planner can be used)
-    std::unique_ptr<planning::AbstractPlanner> RGBTConnect = std::make_unique<planning::rbt::RGBTConnect>(ss, start, goal);
-    RGBTConnect->solve();
-    predefined_path = RGBTConnect->getPath();
+    // Obtaining the inital path using specified static planner
+    std::unique_ptr<planning::AbstractPlanner> planner = initPlanner();
+    planner->solve();
+    predefined_path = planner->getPath();
     // LOG(INFO) << "Predefined path is" << (predefined_path.empty() ? " empty! " : ":");
     // for (int i = 0; i < predefined_path.size(); i++)
     //     std::cout << predefined_path.at(i) << std::endl;
@@ -89,20 +90,20 @@ bool planning::drbt::DRGBTConnect::solve()
                 {
                     // LOG(INFO) << "Trying to replan...";
                     time_current = std::chrono::steady_clock::now();
-                    RGBTConnectConfig::MAX_PLANNING_TIME = DRGBTConnectConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start, time_current) - 1; // 1 [ms] is reserved for the following code lines
-                    RGBTConnect = std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, goal);
-                    if (RGBTConnect->solve())   // New path is found, thus update predefined path to the goal
+                    planner = initPlanner(q_current, DRGBTConnectConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start, time_current) - 1); // 1 [ms] is reserved for the following code lines
+                    
+                    if (planner->solve())   // New path is found, thus update predefined path to the goal
                     {
                         // LOG(INFO) << "The path has been replanned in " << RGBTConnect->getPlannerInfo()->getPlanningTime() << " [ms]. ";
                         // LOG(INFO) << "Predefined path is: ";
-                        predefined_path = RGBTConnect->getPath();
+                        predefined_path = planner->getPath();
                         // for (int i = 0; i < predefined_path.size(); i++)
                         //     std::cout << predefined_path.at(i) << std::endl;
                         replanning = false;
                         status = base::State::Status::Reached;
                         q_next = std::make_shared<HorizonState>(predefined_path.front(), 0);
                         horizon.clear();
-                        planner_info->addRoutineTime(RGBTConnect->getPlannerInfo()->getPlanningTime(), 4);
+                        planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 4);
                     }
                     else    // New path is not found
                         throw std::runtime_error("New path is not found! ");
@@ -549,6 +550,46 @@ int planning::drbt::DRGBTConnect::getIndexInHorizon(std::shared_ptr<HorizonState
     return -1;   
 }
 
+std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBTConnect::initPlanner
+    (std::shared_ptr<base::State> start_, float max_planning_time)
+{
+    if (start_ == nullptr)
+        start_ = start;
+
+    // std::cout << "Static planner (for replanning): " << planner_name << "\n";
+    if (planner_name == "RRTConnect")
+    {
+        if (max_planning_time > 0) 
+            RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rrt::RRTConnect>(ss, start_, goal);
+    }
+    else if (planner_name == "RBTConnect")
+    {
+        if (max_planning_time > 0) 
+            RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt::RBTConnect>(ss, start_, goal);
+    }
+    else if (planner_name == "RGBTConnect")
+    {
+        if (max_planning_time > 0) 
+            RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt::RGBTConnect>(ss, start_, goal);
+    }
+    else if (planner_name == "RGBMT*")
+    {
+        if (max_planning_time > 0) 
+            RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt_star::RGBMTStar>(ss, start_, goal);
+    }
+    else
+    {
+        std::cout << "The requested planner " << planner_name << " is not found! Using RGBTConnect. \n";
+        if (max_planning_time > 0) 
+            RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt::RGBTConnect>(ss, start_, goal);
+    }
+}
+
 bool planning::drbt::DRGBTConnect::checkTerminatingCondition()
 {
     if (ss->isEqual(q_current, goal))
@@ -607,53 +648,4 @@ void planning::drbt::DRGBTConnect::outputPlannerData(std::string filename, bool 
 	}
 	else
 		throw "Cannot open file"; // std::something exception perhaps?
-}
-
-planning::drbt::DRGBTConnect::HorizonState::HorizonState(std::shared_ptr<base::State> state_, int index_)
-{
-    state = state_;
-    index = index_;
-    state_reached = nullptr;
-    status = HorizonState::Status::Good;
-    d_c = -1;
-    d_c_previous = -1;
-    weight = -1;
-    is_reached = false;
-}
-
-void planning::drbt::DRGBTConnect::HorizonState::setDistance(float d_c_)
-{
-    d_c = d_c_;
-    if (d_c < DRGBTConnectConfig::D_CRIT)
-        setStatus(HorizonState::Status::Critical);
-}
-
-void planning::drbt::DRGBTConnect::HorizonState::setWeight(float weight_) 
-{ 
-    weight = weight_;
-    if (weight == 0)
-        setStatus(HorizonState::Status::Bad);
-}
-
-std::ostream &planning::drbt::operator<<(std::ostream &os, const planning::drbt::DRGBTConnect::HorizonState *q)
-{
-    os << "q:         (" << q->getCoord().transpose() << ")" << std::endl;
-    if (q->getStateReached() == nullptr)
-        os << "q_reached: NONE " << std::endl;
-    else
-        os << "q_reached: (" << q->getStateReached()->getCoord().transpose() << ")" << std::endl;
-        
-    if (q->getStatus() == DRGBTConnect::HorizonState::Status::Good)
-        os << "status:     " << "Good " << std::endl;
-    else if (q->getStatus() == DRGBTConnect::HorizonState::Status::Bad)
-        os << "status:     " << "Bad " << std::endl;
-    else if (q->getStatus() == DRGBTConnect::HorizonState::Status::Critical)
-        os << "status:     " << "Critical " << std::endl;
-    else if (q->getStatus() == DRGBTConnect::HorizonState::Status::Goal)
-        os << "status:     " << "Goal " << std::endl;
-
-    os << "idx path:   " << q->getIndex() << std::endl;
-    os << "d_c:        " << q->getDistance() << std::endl;
-    os << "weight:     " << q->getWeight() << std::endl;
-    return os;
 }

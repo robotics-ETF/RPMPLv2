@@ -2,12 +2,14 @@
 // Created by dinko on 17.02.22.
 // Modified by nermin on 22.07.23.
 //
+#ifndef RPMPL_CONFIGURATIONREADER_H
+#define RPMPL_CONFIGURATIONREADER_H
 
 #include <string>
 #include <yaml-cpp/yaml.h>
-#include "yaml-cpp/parser.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
+#include <yaml-cpp/parser.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
 #include "RRTConnectConfig.h"
 #include "RBTConnectConfig.h"
 #include "RGBTConnectConfig.h"
@@ -185,3 +187,4 @@ public:
     }
 };
 
+#endif RPMPL_CONFIGURATIONREADER_H
