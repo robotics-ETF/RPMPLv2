@@ -103,7 +103,7 @@ bool planning::drbt::DRGBTConnect::solve()
                         status = base::State::Status::Reached;
                         q_next = std::make_shared<HorizonState>(predefined_path.front(), 0);
                         horizon.clear();
-                        planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 4);
+                        // planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 4);
                     }
                     else    // New path is not found
                         throw std::runtime_error("New path is not found! ");
@@ -148,7 +148,7 @@ bool planning::drbt::DRGBTConnect::solve()
 // Only states from predefined path that come after 'q_next' are remained in the horizon. Other states are deleted.
 void planning::drbt::DRGBTConnect::generateHorizon()
 {
-    auto T = std::chrono::steady_clock::now();
+    // auto T = std::chrono::steady_clock::now();
     // LOG(INFO) << "Preparing horizon...";
     if (!horizon.empty())   // 'q_next' is reached. No replanning nor 'status' is trapped
     {
@@ -196,7 +196,7 @@ void planning::drbt::DRGBTConnect::generateHorizon()
     q_next = horizon.front();
 
     auto time_generateHorizon = std::chrono::steady_clock::now();
-    planner_info->addRoutineTime(getElapsedTime(T, time_generateHorizon, "microseconds"), 0);
+    // planner_info->addRoutineTime(getElapsedTime(T, time_generateHorizon, "microseconds"), 0);
 }
 
 // Update and then compute the horizon.
@@ -205,7 +205,7 @@ void planning::drbt::DRGBTConnect::computeHorizon()
 {
     float d_c = computeDistance(q_current);
 
-    auto T1 = std::chrono::steady_clock::now();
+    // auto T1 = std::chrono::steady_clock::now();
     // LOG(INFO) << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << d_c;
     horizon_size = std::min((int) std::floor(DRGBTConnectConfig::INIT_HORIZON_SIZE * (1 + DRGBTConnectConfig::D_CRIT / d_c)),
                             5 * ss->getNumDimensions() * DRGBTConnectConfig::INIT_HORIZON_SIZE);
@@ -222,10 +222,10 @@ void planning::drbt::DRGBTConnect::computeHorizon()
     horizon_size = horizon.size();
 
     auto time_updateHorizon = std::chrono::steady_clock::now();
-    planner_info->addRoutineTime(getElapsedTime(T1, time_updateHorizon, "microseconds"), 1);
+    // planner_info->addRoutineTime(getElapsedTime(T1, time_updateHorizon, "microseconds"), 1);
 
     // LOG(INFO) << "Generating gbur by computing reached states...";
-    auto T2 = std::chrono::steady_clock::now();
+    // auto T2 = std::chrono::steady_clock::now();
     for (int i = 0; i < horizon.size(); i++)
     {
         computeReachedState(q_current, horizon[i]);
@@ -237,7 +237,7 @@ void planning::drbt::DRGBTConnect::computeHorizon()
                 modifyState(horizon[i]);
     }
     auto time_generateGBur = std::chrono::steady_clock::now();
-    planner_info->addRoutineTime(getElapsedTime(T2, time_generateGBur), 3);
+    // planner_info->addRoutineTime(getElapsedTime(T2, time_generateGBur), 3);
 }
 
 // Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
@@ -384,7 +384,7 @@ bool planning::drbt::DRGBTConnect::modifyState(std::shared_ptr<HorizonState> &q)
 // Moreover, check validity of the motion from 'q_current' to 'q_new'
 void planning::drbt::DRGBTConnect::updateCurrentState()
 {
-    auto T = std::chrono::steady_clock::now();
+    // auto T = std::chrono::steady_clock::now();
     std::shared_ptr<base::State> q_new;
     bool update = true;
     tie(status, q_new) = ss->interpolate(q_current, q_next->getState(), DRGBTConnectConfig::STEP);
@@ -416,7 +416,7 @@ void planning::drbt::DRGBTConnect::updateCurrentState()
     }
     path.emplace_back(q_current);
     auto time_updateCurrentState = std::chrono::steady_clock::now();
-    planner_info->addRoutineTime(getElapsedTime(T, time_updateCurrentState, "microseconds"), 2);
+    // planner_info->addRoutineTime(getElapsedTime(T, time_updateCurrentState, "microseconds"), 2);
 }
 
 // Compute reached state when generating a generalized spine from 'q_current' towards 'q'.
