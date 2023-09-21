@@ -5,6 +5,7 @@
 
 #include "RRTConnect.h"
 #include "ConfigurationReader.h"
+
 #include <glog/log_severity.h>
 #include <glog/logging.h>
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
@@ -56,7 +57,7 @@ bool planning::rrt::RRTConnect::solve()
 		/* Extend */
 		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
 		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
-		q_rand = getStateSpace()->randomState();
+		q_rand = ss->getRandomState();
 		// LOG(INFO) << q_rand->getCoord().transpose();
 		q_near = trees[tree_idx]->getNearestState(q_rand);
 		// q_near = trees[tree_idx]->getNearestStateV2(q_rand);
@@ -103,8 +104,8 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRT
 	// LOG(INFO) << "Inside extend.";
 	base::State::Status status;
 	std::shared_ptr<base::State> q_new;
-	tie(status, q_new) = ss->interpolate(q, q_e, RRTConnectConfig::EPS_STEP);
-	if (status != base::State::Status::Trapped && ss->isValid(q, q_new))
+	tie(status, q_new) = ss->interpolateEdge2(q, q_e, RRTConnectConfig::EPS_STEP);
+	if (ss->isValid(q, q_new))
 		return {status, q_new};
 	else
 		return {base::State::Status::Trapped, q};
@@ -120,7 +121,7 @@ base::State::Status planning::rrt::RRTConnect::connect
 	int num_ext = 0;
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->newState(q_new);
+		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
 		tie(status, q_new) = extend(q_temp, q_e);
 		if (status != base::State::Status::Trapped)
 			tree->upgradeTree(q_new, q_temp);
@@ -151,19 +152,6 @@ void planning::rrt::RRTConnect::computePath()
 const std::vector<std::shared_ptr<base::State>> &planning::rrt::RRTConnect::getPath() const
 {
 	return path;
-}
-
-// Get elapsed time (defaultly in milliseconds) from 'time_start' to 'time_current'
-float planning::rrt::RRTConnect::getElapsedTime(std::chrono::steady_clock::time_point &time_start,
-												std::chrono::steady_clock::time_point &time_current,
-												std::string time_unit)
-{
-	if (time_unit == "milliseconds")
-		return std::chrono::duration_cast<std::chrono::milliseconds>(time_current - time_start).count();
-	else if (time_unit == "microseconds")
-		return std::chrono::duration_cast<std::chrono::microseconds>(time_current - time_start).count();
-	else
-		LOG(INFO) << "Error in measuring time!";
 }
 
 bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status status)

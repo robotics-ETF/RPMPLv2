@@ -94,7 +94,7 @@ void env::Environment::removeCollisionObjects(int start_idx)
         parts.erase(idx);
 }
 
-void env::Environment::updateObstacles()
+void env::Environment::updateEnvironment()
 {
     fcl::Vector3f trans;
     for (int i = 0; i < parts.size(); i++)

@@ -3,8 +3,6 @@
 //
 
 #include "StateSpaceType.h"
-#include <iostream>
-#include <string>
 
 std::ostream &operator<<(std::ostream &os, const StateSpaceType &v) 
 {

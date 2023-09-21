@@ -5,11 +5,6 @@
 #ifndef RPMPL_REALVECTORSPACEFCL_H
 #define RPMPL_REALVECTORSPACEFCL_H
 
-#include <ostream>
-#include <memory>
-#include <vector>
-#include "StateSpace.h"
-#include "RealVectorSpaceState.h"
 #include "RealVectorSpace.h"
 
 namespace base
@@ -28,7 +23,6 @@ namespace base
 		
 		bool isValid(const std::shared_ptr<base::State> q) override;
 		float computeDistance(const std::shared_ptr<base::State> q) override;
-		std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> computeDistanceAndNearestPoints(const std::shared_ptr<base::State> q) override;
 	};
 }
 #endif //RPMPL_REALVECTORSPACE_H

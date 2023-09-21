@@ -3,21 +3,12 @@
 //
 
 #include "Scenario.h"
-#include "Environment.h"
-#include "AbstractRobot.h"
 #include "RealVectorSpaceFCL.h"
 #include "RealVectorSpaceState.h"
-#include "xArm6.h"
 #include "Planar2DOF.h"
 #include "Planar10DOF.h"
-
-#include <yaml-cpp/yaml.h>
-#include "yaml-cpp/parser.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
-#include <stdexcept>
-
-#include <glog/logging.h>
+#include "xArm6.h"
+#include "ConfigurationReader.h"
 
 scenario::Scenario::Scenario(std::string configuration_file, std::string root_path)
 {

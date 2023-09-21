@@ -2,11 +2,6 @@
 // Created by dinko on 7.3.21..
 //
 #include "RealVectorSpaceFCL.h"
-#include "RealVectorSpace.h"
-#include "RealVectorSpaceState.h"
-#include <ostream>
-#include <Eigen/Dense>
-#include <time.h>
 #include "RealVectorSpaceConfig.h"
 #include "xArm6.h"
 // #include <glog/log_severity.h>
@@ -52,16 +47,16 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	return true;
 }
 
+// Get minimal distance from robot in configuration 'q' to obstacles
+// Moreover, set corresponding 'nearest_points' for the configuation 'q'
+// Be aware that if 'q->getDistance() > 0', the new distance will not be computed again!
 float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::State> q)
 {
-	return std::get<0>(computeDistanceAndNearestPoints(q));
-}
+	if (q->getDistance() > 0)
+		return q->getDistance();
 
-std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVectorSpaceFCL::computeDistanceAndNearestPoints
-	(const std::shared_ptr<base::State> q)
-{
 	robot->setState(q);
-	float min_dist = INFINITY;
+	float d_c = INFINITY;
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
 		(std::vector<Eigen::MatrixXf>(env->getParts().size(), Eigen::MatrixXf(6, robot->getParts().size())));
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
@@ -89,7 +84,7 @@ std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVecto
 				distance_data.request.enable_nearest_points = true;
 				distance_data.result.clear();
 				collision_manager_robot->distance(collision_manager_env.get(), &distance_data, fcl::DefaultDistanceFunction);
-				min_dist = std::min(min_dist, distance_data.result.min_distance);
+				d_c = std::min(d_c, distance_data.result.min_distance);
 				nearest_pts->col(0) = distance_data.result.nearest_points[0];
 				nearest_pts->col(1) = distance_data.result.nearest_points[1];
 
@@ -99,12 +94,19 @@ std::tuple<float, std::shared_ptr<std::vector<Eigen::MatrixXf>>> base::RealVecto
 				// LOG(INFO) << "NP env:   " << nearest_pts->col(1).transpose() << std::endl;
 			}
 
-			if (min_dist <= 0)		// The collision occurs
-                return {0, nullptr};
+			if (d_c <= 0)		// The collision occurs
+            {
+				q->setDistance(0);
+				q->setNearestPoints(nullptr);
+				return 0;
+			}
 			
 			// 'nearest_pts->col(0)' is robot nearest point, and 'nearest_pts->col(1)' is obstacle nearest point
 			nearest_points->at(j).col(i) << nearest_pts->col(0), nearest_pts->col(1);
 		}
 	}
-	return {min_dist, nearest_points};
+	
+	q->setDistance(d_c);
+	q->setNearestPoints(nearest_points);
+	return d_c;
 }

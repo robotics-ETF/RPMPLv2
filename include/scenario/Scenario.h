@@ -7,13 +7,13 @@
 
 #include <vector> 
 #include <memory>
+#include <string>
+#include <fcl/fcl.h>
+
 #include "AbstractRobot.h"
 #include "Environment.h"
 #include "State.h"
-#include <string>
-#include <StateSpace.h>
-
-#include "fcl/fcl.h"
+#include "StateSpace.h"
 
 namespace scenario
 {

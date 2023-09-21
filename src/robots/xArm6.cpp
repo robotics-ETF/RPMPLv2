@@ -3,15 +3,12 @@
 // Modified by nermin on 05.09.22.
 //
 
-#include <iostream>
-#include <vector>
-
 #include "xArm6.h"
-#include "urdf/model.h"
 #include "RealVectorSpaceState.h"
 
+#include <urdf/model.h>
 #include <glog/logging.h>
-#include "stl_reader.h"
+#include <stl_reader.h>
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 

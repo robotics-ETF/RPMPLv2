@@ -3,7 +3,6 @@
 //
 
 #include "StateSpace.h"
-#include "StateSpaceType.h"
 
 base::StateSpace::StateSpace()
 {

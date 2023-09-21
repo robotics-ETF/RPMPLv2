@@ -6,9 +6,6 @@
 #define RPMPL_XARM6_H
 
 #include "AbstractRobot.h"
-#include <memory>
-#include <vector>
-#include <string>
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>

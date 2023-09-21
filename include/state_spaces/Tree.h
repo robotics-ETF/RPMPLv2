@@ -5,12 +5,10 @@
 #ifndef RPMPL_TREE_H
 #define RPMPL_TREE_H
 
+#include <nanoflann.hpp>
+
 #include "State.h"
 #include "StateSpaceType.h"
-#include <Eigen/Dense>
-#include <vector>
-#include <memory>
-#include <nanoflann.hpp>
 
 namespace base
 {
@@ -28,8 +26,8 @@ namespace base
 
 	public:
 		Tree() {}
-		Tree(std::string tree_name_, uint tree_idx_);
-		Tree(std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_);
+		Tree(const std::string &tree_name_, uint tree_idx_);
+		Tree(const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_);
 		~Tree() {}
 
 		inline const std::string &getTreeName() const { return tree_name; }
@@ -41,15 +39,15 @@ namespace base
 
 		inline void setTreeName(const std::string &tree_name_) { tree_name = tree_name_; }
 		inline void setTreeIdx(const uint treeIdx_) { tree_idx = treeIdx_; }
-		inline void setStates(std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_) { states = states_; }
-		inline void setState(std::shared_ptr<base::State> state, size_t idx) { states->at(idx) = state; }
-        inline void setKdTree(std::shared_ptr<base::KdTree> kdtree_) { kd_tree = kdtree_; }
+		inline void setStates(const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_) { states = states_; }
+		inline void setState(const std::shared_ptr<base::State> state, size_t idx) { states->at(idx) = state; }
+        inline void setKdTree(const std::shared_ptr<base::KdTree> kdtree_) { kd_tree = kdtree_; }
 
 		void clearTree();
-		std::shared_ptr<base::State> getNearestState(std::shared_ptr<base::State> q);
-		std::shared_ptr<base::State> getNearestStateV2(std::shared_ptr<base::State> q);
-		void upgradeTree(std::shared_ptr<base::State> q_new, std::shared_ptr<base::State> q_parent,
-						 float d_c = -1, std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = nullptr, float cost = -1);
+		std::shared_ptr<base::State> getNearestState(const std::shared_ptr<base::State> q);
+		std::shared_ptr<base::State> getNearestStateV2(const std::shared_ptr<base::State> q);
+		void upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent,float d_c = -1, 
+						 const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = nullptr, float cost = -1);
 
 		template <class BBOX> 
         bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }

@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 		int num = 0;
 		while (num++ < 1)
 		{
-			// std::shared_ptr<base::State> q = ss->randomState();
+			// std::shared_ptr<base::State> q = ss->getRandomState();
 			// Eigen::VectorXf Q(6); Q << 1.5708, 1.5708, -2.3562, 0, 0, 0;
 			// std::shared_ptr<base::State> q = std::make_shared<base::RealVectorSpaceState>(Q);
 			std::shared_ptr<base::State> q = scenario.getStart();

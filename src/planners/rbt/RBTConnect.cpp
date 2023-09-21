@@ -4,6 +4,7 @@
 
 #include "RBTConnect.h"
 #include "ConfigurationReader.h"
+
 #include <glog/log_severity.h>
 #include <glog/logging.h>
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
@@ -27,11 +28,11 @@ bool planning::rbt::RBTConnect::solve()
 		/* Generating bur */
 		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
 		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
-		q_e = ss->randomState();
+		q_e = ss->getRandomState();
 		//LOG(INFO) << q_rand->getCoord().transpose();
 		q_near = trees[tree_idx]->getNearestState(q_e);
 		//LOG(INFO) << "Tree: " << trees[treeNum]->getTreeName();
-		if (computeDistance(q_near) > RBTConnectConfig::D_CRIT)
+		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
 			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
 			{
@@ -76,79 +77,11 @@ std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(std::shar
 	std::shared_ptr<base::State> q_rand;
 	do
 	{
-		q_rand = ss->randomState(q_center);
-		saturateSpine(q_center, q_rand);
-	} while (!pruneSpine(q_center, q_rand));
+		q_rand = ss->getRandomState(q_center);
+		q_rand = ss->interpolateEdge(q_center, q_rand, RBTConnectConfig::DELTA);
+	} while (!ss->pruneEdge(q_center, q_rand));
 
 	return q_rand;
-}
-
-// Get minimal distance from 'q' (determined with the pointer 'q_p' and 'tree') to obstacles
-float planning::rbt::RBTConnect::computeDistance(std::shared_ptr<base::State> q)
-{
-	float d_c;
-	if (q->getDistance() > 0)
-		d_c = q->getDistance();
-	else
-	{
-		d_c = ss->computeDistance(q);
-		q->setDistance(d_c);
-		// LOG(INFO) << "Distance-to-obstacles: " << d_c;
-	}
-	return d_c;
-}
-
-// Saturate spine from 'q' to 'q_e', such that its distance becomes equal to RBTConnectConfig::DELTA
-void planning::rbt::RBTConnect::saturateSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
-{
-	float d = (q_e->getCoord() - q->getCoord()).norm();
-	if (d > 0)
-		q_e->setCoord(q->getCoord() + (q_e->getCoord() - q->getCoord()) * RBTConnectConfig::DELTA / d);
-}
-
-// Prune the spine from 'q' to 'q_e', if it comes out of C-space domain.
-// Return result of the prunning. Return false if 'q_e' becomes equal to 'q'. Otherwise, return true.
-bool planning::rbt::RBTConnect::pruneSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
-{
-	int dim = ss->getNumDimensions();
-	Eigen::VectorXf q_temp;
-	std::vector<float> bounds(dim);
-	std::vector<int> indices;
-	std::vector<std::vector<float>> limits = ss->robot->getLimits();
-	float t;
-
-	for (int k = 0; k < dim; k++)
-	{
-		if (q_e->getCoord(k) > limits[k][1])
-		{
-			bounds[k] = limits[k][1];
-			indices.push_back(k);
-		}
-		else if (q_e->getCoord(k) < limits[k][0])
-		{
-			bounds[k] = limits[k][0];
-			indices.push_back(k);
-		}
-	}
-	if (indices.size() == 1)
-	{
-		t = (bounds[indices[0]] - q->getCoord(indices[0])) / (q_e->getCoord(indices[0]) - q->getCoord(indices[0]));
-		q_e->setCoord(q->getCoord() + t * (q_e->getCoord() - q->getCoord()));
-	}
-	else if (indices.size() > 1)
-	{
-		for (int k : indices)
-		{
-			t = (bounds[k] - q->getCoord(k)) / (q_e->getCoord(k) - q->getCoord(k));
-			q_temp = q->getCoord() + t * (q_e->getCoord() - q->getCoord());
-			if ((q_temp.array() >= limits[k][0] && q_temp.array() <= limits[k][1]).prod())
-			{
-				q_e->setCoord(q_temp);
-				break;
-			}
-		}
-	}
-	return !ss->isEqual(q, q_e) ? true : false;
 }
 
 // Spine is generated from 'q' towards 'q_e'
@@ -157,18 +90,18 @@ bool planning::rbt::RBTConnect::pruneSpine(std::shared_ptr<base::State> q, std::
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBTConnect::extendSpine
 	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e, float d_c_underest)
 {
-	float d_c = (d_c_underest > 0) ? d_c_underest : computeDistance(q);
+	float d_c = (d_c_underest > 0) ? d_c_underest : ss->computeDistance(q);
 	float step;
 	float rho = 0;             	// The path length in W-space
 	int counter = 0;
 	int K_max = 5;              // The number of iterations for computing q*
-	std::shared_ptr<base::State> q_new = ss->newState(q->getCoord());
-	std::shared_ptr<Eigen::MatrixXf> XYZ = ss->robot->computeSkeleton(q);
-	std::shared_ptr<Eigen::MatrixXf> XYZ_new = XYZ;
+	std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
+	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
+	std::shared_ptr<Eigen::MatrixXf> skeleton_new = skeleton;
 	
 	while (true)
 	{
-		step = ss->robot->computeStep(q_new, q_e, d_c - rho, XYZ_new);     // 'd_c - rho' is the remaining path length in W-space
+		step = ss->robot->computeStep(q_new, q_e, d_c - rho, skeleton_new);     // 'd_c - rho' is the remaining path length in W-space
 		if (step > 1)
 		{
 			q_new->setCoord(q_e->getCoord());
@@ -181,26 +114,26 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 			return {base::State::Status::Advanced, q_new};
 
 		rho = 0;
-		XYZ_new = ss->robot->computeSkeleton(q_new);
+		skeleton_new = ss->robot->computeSkeleton(q_new);
 		for (int k = 1; k <= ss->robot->getParts().size(); k++)
-			rho = std::max(rho, (XYZ->col(k) - XYZ_new->col(k)).norm());
+			rho = std::max(rho, (skeleton->col(k) - skeleton_new->col(k)).norm());
 	}
 }
 
 base::State::Status planning::rbt::RBTConnect::connectSpine
 	(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	float d_c = computeDistance(q);
+	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
 	int num_ext = 0;
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->newState(q_new);
+		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new) = extendSpine(q_temp, q_e);
-			d_c = computeDistance(q_new);
+			d_c = ss->computeDistance(q_new);
 			tree->upgradeTree(q_new, q_temp, d_c);
 		}
 		else

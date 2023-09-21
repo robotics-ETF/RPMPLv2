@@ -3,13 +3,10 @@
 // Modified by nermin on 05.09.22.
 //
 
-#include <iostream>
-#include <vector>
 #include "Planar2DOF.h"
-#include "urdf/model.h"
 #include "RealVectorSpaceState.h"
-#include <Eigen/Dense>
 
+#include <urdf/model.h>
 #include <glog/logging.h>
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;

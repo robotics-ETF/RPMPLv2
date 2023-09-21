@@ -4,6 +4,7 @@
 
 #include "RGBMTStar.h"
 #include "ConfigurationReader.h"
+
 #include <glog/log_severity.h>
 #include <glog/logging.h>
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
@@ -12,7 +13,7 @@
 planning::rbt_star::RGBMTStar::RGBMTStar(std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
 
 planning::rbt_star::RGBMTStar::RGBMTStar(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                                    std::shared_ptr<base::State> goal_) : RGBTConnect(ss_, start_, goal_)
+                                         std::shared_ptr<base::State> goal_) : RGBTConnect(ss_, start_, goal_)
 {
     // Additionally the following is required:
 	start->setCost(0);
@@ -190,7 +191,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState(){
     base::State::Status status;
     while (true)
     {
-        q_rand = ss->randomState();    // Uniform distribution
+        q_rand = ss->getRandomState();    // Uniform distribution
         if (planner_info->getNumStates() > 2 * (num_states[0] + num_states[1]))     // If local trees contain more states than main trees
         {
             // LOG(INFO) << "Local trees are dominant! " << std::endl;
@@ -212,24 +213,24 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState(){
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star::RGBMTStar::connectGenSpine
     (std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	float d_c = computeDistance(q);
+	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
 	int num_ext = 0;
 	while (status == base::State::Status::Advanced)
 	{
-		std::shared_ptr<base::State> q_temp = ss->newState(q_new);
+		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
-			tie(status, q_new) = extendGenSpineV2(q_temp, q_e);
-            d_c = computeDistance(q_new);
+			tie(status, q_new) = extendGenSpine(q_temp, q_e);
+            d_c = ss->computeDistance(q_new);
 		}
 		else
 		{
 			tie(status, q_new) = extend(q_temp, q_e);
             if (++num_ext > 10)
             {
-                d_c = computeDistance(q_new);   
+                d_c = ss->computeDistance(q_new);   
                 num_ext = 0;
             }
 		}            
@@ -240,7 +241,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 // Returns cost-to-come from 'q1' to 'q2'
 inline float planning::rbt_star::RGBMTStar::computeCostToCome(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2)
 {
-    return (q1->getCoord() - q2->getCoord()).norm();
+    return ss->getDistance(q1, q2);
 }
 
 // State 'q' from another tree is optimally connected to 'tree'
@@ -263,10 +264,11 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     {
         Eigen::VectorXf q_opt_ = q_reached->getCoord();  // It is surely collision-free. It will become an optimal state later
         Eigen::VectorXf q_parent_ = q_reached->getParent()->getCoord();   // Needs to be collision-checked
-        std::shared_ptr<base::State> q_middle = ss->randomState();
-        float D = (q_opt_ - q_parent_).norm();
+        std::shared_ptr<base::State> q_middle = ss->getRandomState();
+        int max_iter = std::floor(std::log2(10 * ss->getDistance(q_reached->getParent(), q_reached)));
         bool update = false;
-        for (int i = 0; i < floor(log2(10 * D)); i++)
+
+        for (int i = 0; i < max_iter; i++)
         {
             q_middle->setCoord((q_opt_ + q_parent_) / 2);
             if (std::get<0>(connectGenSpine(q, q_middle)) == base::State::Status::Reached)
@@ -280,7 +282,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
 
         if (update)
         {
-            q_opt = ss->newState(q_opt_);
+            q_opt = ss->getNewState(q_opt_);
             float cost = q_reached->getParent()->getCost() + computeCostToCome(q_reached->getParent(), q_opt);
             tree->upgradeTree(q_opt, q_reached->getParent(), -1, nullptr, cost);
             q_opt->addChild(q_reached);
@@ -301,7 +303,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     else
         q_opt = q_reached;
 
-    std::shared_ptr<base::State> q_new = ss->newState(q->getCoord());
+    std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
     float cost = q_opt->getCost() + computeCostToCome(q_opt, q_new);
     tree->upgradeTree(q_new, q_opt, q_new->getDistance(), q_new->getNearestPoints(), cost);
     return q_new;
@@ -314,8 +316,8 @@ void planning::rbt_star::RGBMTStar::unifyTrees(std::shared_ptr<base::Tree> tree,
                                           std::shared_ptr<base::State> q_con, std::shared_ptr<base::State> q0_con)
 {
     std::shared_ptr<base::State> q_considered = nullptr;
-    std::shared_ptr<base::State> q_conNew = ss->newState(q_con);
-    std::shared_ptr<base::State> q0_conNew = ss->newState(q0_con);
+    std::shared_ptr<base::State> q_conNew = ss->getNewState(q_con);
+    std::shared_ptr<base::State> q0_conNew = ss->getNewState(q0_con);
     while (true)
     {
         considerChildren(q_conNew, tree0, q0_conNew, q_considered);

@@ -7,8 +7,7 @@
 
 #include <vector> 
 #include <memory>
-
-#include "fcl/fcl.h"
+#include <fcl/fcl.h>
 
 namespace env
 {
@@ -26,7 +25,7 @@ namespace env
 		void setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_);
 		void addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob);
 		void removeCollisionObjects(int start_idx);
-		void updateObstacles();
+		void updateEnvironment();
 
 	private:
 		std::vector<std::shared_ptr<fcl::CollisionObject<float>>> parts;

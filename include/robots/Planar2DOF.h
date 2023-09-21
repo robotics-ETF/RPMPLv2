@@ -7,9 +7,6 @@
 
 #include "AbstractRobot.h"
 #include "Environment.h"
-#include <memory>
-#include <vector>
-#include <string>
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>

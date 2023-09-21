@@ -5,11 +5,14 @@
 
 #include "State.h"
 
-base::State::State()
+base::State::State(const Eigen::VectorXf &coord_)
 {
+	coord = coord_;
+	num_dimensions = coord.size();
 	tree_idx = -1;
 	idx = -1;
 	d_c = -1;
+	d_c_underestimation = -1;
 	cost = -1;
 	nearest_points = nullptr;
 	parent = nullptr;
@@ -18,7 +21,7 @@ base::State::State()
 
 base::State::~State() {}
 
-void base::State::addChild(std::shared_ptr<base::State> child)
+void base::State::addChild(const std::shared_ptr<base::State> child)
 {
 	children->emplace_back(child);
 }

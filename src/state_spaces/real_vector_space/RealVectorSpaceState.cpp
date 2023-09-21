@@ -5,29 +5,19 @@
 
 #include "RealVectorSpaceState.h"
 
-base::RealVectorSpaceState::RealVectorSpaceState(Eigen::VectorXf state_) : State()
+base::RealVectorSpaceState::RealVectorSpaceState(const Eigen::VectorXf &coord_) : State(coord_)
 {
 	setStateSpaceType(StateSpaceType::RealVectorSpace);
-	setDimensions(state_.size());
-	setCoord(state_);
-}
-
-base::RealVectorSpaceState::RealVectorSpaceState(int num_dimensions_) : State()
-{
-	setStateSpaceType(StateSpaceType::RealVectorSpace);
-	setDimensions(num_dimensions_);
-	setCoord(Eigen::VectorXf::Random(num_dimensions_));
 }
 
 // Make a copy of 'state'
-base::RealVectorSpaceState::RealVectorSpaceState(std::shared_ptr<base::State> state)
+base::RealVectorSpaceState::RealVectorSpaceState(const std::shared_ptr<base::State> state) : State(state->getCoord())
 {
 	setStateSpaceType(StateSpaceType::RealVectorSpace);
-	setDimensions(state->getNumDimensions());
-	setCoord(state->getCoord());
 	setTreeIdx(state->getTreeIdx());
 	setIdx(state->getIdx());
 	setDistance(state->getDistance());
+	setDistanceUnderestimation(state->getDistanceUnderestimation());
 	setCost(state->getCost());
 	setNearestPoints(state->getNearestPoints());
 	setParent(state->getParent());

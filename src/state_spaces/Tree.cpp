@@ -4,7 +4,7 @@
 
 #include "Tree.h"
 
-base::Tree::Tree(std::string tree_name_, uint tree_idx_)
+base::Tree::Tree(const std::string &tree_name_, uint tree_idx_)
 {
 	tree_name = tree_name_;
 	tree_idx = tree_idx_;
@@ -12,7 +12,7 @@ base::Tree::Tree(std::string tree_name_, uint tree_idx_)
 	kd_tree = nullptr;
 }
 
-base::Tree::Tree(std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_)
+base::Tree::Tree(const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_)
 {
 	states = states_;
 	kd_tree = nullptr;
@@ -23,7 +23,7 @@ void base::Tree::clearTree()
 	states->clear();
 }
 
-std::shared_ptr<base::State> base::Tree::getNearestState(std::shared_ptr<base::State> q)
+std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<base::State> q)
 {
 	const size_t num_results = 1;
 	size_t q_near_idx;
@@ -41,7 +41,7 @@ std::shared_ptr<base::State> base::Tree::getNearestState(std::shared_ptr<base::S
 }
 
 // Get nearest state without using nanoflann library
-std::shared_ptr<base::State> base::Tree::getNearestStateV2(std::shared_ptr<base::State> q)
+std::shared_ptr<base::State> base::Tree::getNearestStateV2(const std::shared_ptr<base::State> q)
 {
 	int q_near_idx = 0;
 	float d, d_min = INFINITY;
@@ -61,7 +61,7 @@ std::shared_ptr<base::State> base::Tree::getNearestStateV2(std::shared_ptr<base:
 			}
 		}
 		if (!is_out)	// Is inside the box?
-		{    
+		{
 			d = (q_temp - q->getCoord()).norm();
 			if (d < d_min)
 			{
@@ -78,8 +78,8 @@ std::shared_ptr<base::State> base::Tree::getNearestStateV2(std::shared_ptr<base:
 // 'd_c' - distance-to-obstacles for 'q_new'
 // 'nearest_points' - nearest_points for 'q_new'
 // 'cost' - cost-to-come for 'q_new'
-void base::Tree::upgradeTree(std::shared_ptr<base::State> q_new, std::shared_ptr<base::State> q_parent,
-							 float d_c, std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float cost)
+void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent, float d_c, 
+							 const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float cost)
 {
 	size_t N = states->size();
 	states->emplace_back(q_new);

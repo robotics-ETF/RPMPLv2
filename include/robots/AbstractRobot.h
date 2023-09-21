@@ -5,13 +5,16 @@
 #ifndef RPMPL_ABSTRACTROBOT_H
 #define RPMPL_ABSTRACTROBOT_H
 
-#include <vector> 
+#include <vector>
+#include <string>
 #include <memory>
-#include "State.h"
-#include "fcl/fcl.h"
+#include <Eigen/Dense>
+#include <fcl/fcl.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
+
+#include "State.h"
 
 namespace robots
 {

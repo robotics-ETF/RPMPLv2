@@ -18,6 +18,7 @@ namespace planning
             DRGBTConnect(std::shared_ptr<base::StateSpace> ss_);
 			DRGBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, 
                          std::shared_ptr<base::State> goal_, const std::string &planner_name_ = "RGBTConnect");
+            
             bool solve() override;
             bool checkTerminatingCondition();
 			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;

@@ -4,6 +4,7 @@
 
 #ifndef RPMPL_PLANAR10DOF_H
 #define RPMPL_PLANAR10DOF_H
+
 #include "Planar2DOF.h"
 
 namespace robots
@@ -16,5 +17,4 @@ namespace robots
         
     };
 }
-
 #endif //RPMPL_ABSTRACTPLANNER_H

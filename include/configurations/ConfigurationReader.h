@@ -10,14 +10,14 @@
 #include <yaml-cpp/parser.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
+#include <glog/logging.h>
+
+#include "RealVectorSpaceConfig.h"
 #include "RRTConnectConfig.h"
 #include "RBTConnectConfig.h"
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
 #include "DRGBTConnectConfig.h"
-#include "RealVectorSpaceConfig.h"
-
-#include <glog/logging.h>
 
 class ConfigurationReader
 {

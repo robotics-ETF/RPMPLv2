@@ -7,16 +7,14 @@
 #define RPMPL_REALVECTORSPACESTATE_H
 
 #include "State.h"
-#include <Eigen/Dense>
 
 namespace base
 {
 	class RealVectorSpaceState : public State
 	{
 	public:
-		RealVectorSpaceState(Eigen::VectorXf state_);
-		RealVectorSpaceState(int num_dimensions_);
-		RealVectorSpaceState(std::shared_ptr<base::State> state);
+		RealVectorSpaceState(const Eigen::VectorXf &coord_);
+		RealVectorSpaceState(const std::shared_ptr<base::State> state);
 		~RealVectorSpaceState() {}
 	};
 }

@@ -16,6 +16,7 @@ namespace planning
 			RGBMTStar(std::shared_ptr<base::StateSpace> ss_);
 			RGBMTStar(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
 			~RGBMTStar();
+            
 			bool solve() override;
             bool checkTerminatingCondition(std::shared_ptr<base::State> q_con);
 			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
