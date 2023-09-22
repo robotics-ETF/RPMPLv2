@@ -185,7 +185,8 @@ bool planning::rbt_star::RGBMTStar::solve()
     }
 }
 
-std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState(){
+std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
+{
     int tree_idx;
     std::shared_ptr<base::State> q_rand, q_near;
     base::State::Status status;

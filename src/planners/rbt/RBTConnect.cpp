@@ -79,7 +79,8 @@ std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(std::shar
 	{
 		q_rand = ss->getRandomState(q_center);
 		q_rand = ss->interpolateEdge(q_center, q_rand, RBTConnectConfig::DELTA);
-	} while (!ss->pruneEdge(q_center, q_rand));
+		q_rand = ss->pruneEdge(q_center, q_rand);
+	} while (ss->isEqual(q_center, q_rand));
 
 	return q_rand;
 }

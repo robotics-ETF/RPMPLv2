@@ -45,6 +45,7 @@ bool planning::drbt::DRGBTConnect::solve()
 	 
     planner_info->setNumIterations(planner_info->getNumIterations() + 1);
     planner_info->addIterationTime(getElapsedTime(time_alg_start, std::chrono::steady_clock::now()));
+    // LOG(INFO) << "----------------------------------------------------------------------------------------\n";
 
     while (true)
     {
@@ -124,8 +125,7 @@ bool planning::drbt::DRGBTConnect::solve()
 
         // Checking the real-time execution
         auto time_current = std::chrono::steady_clock::now();
-        float time_iter_current = getElapsedTime(time_iter_start, time_current);
-        float time_iter_remain = DRGBTConnectConfig::MAX_ITER_TIME - time_iter_current;
+        float time_iter_remain = DRGBTConnectConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start, time_current);
         // LOG(INFO) << "Remaining iteration time is " << time_iter_remain << " [ms]. ";
         if (time_iter_remain < 0)
         {
@@ -300,7 +300,8 @@ void planning::drbt::DRGBTConnect::addLateralStates()
             new_vec(1) = coord * (q_next->getCoord(0) - q_current->getCoord(0)) / (q_next->getCoord(1) - q_current->getCoord(1));
             q_new = ss->getNewState(q_current->getCoord() + new_vec);
             q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
-            if (ss->pruneEdge(q_current, q_new))
+            q_new = ss->pruneEdge(q_current, q_new);
+            if (!ss->isEqual(q_current, q_new))
             {
                 horizon.emplace_back(std::make_shared<HorizonState>(q_new, -1));
                 num_added++;
@@ -326,7 +327,8 @@ void planning::drbt::DRGBTConnect::addLateralStates()
                         (q_next->getCoord(k) - q_current->getCoord(k));
                 q_new->setCoord(coord, k);
                 q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
-                if (ss->pruneEdge(q_current, q_new))
+                q_new = ss->pruneEdge(q_current, q_new);
+                if (!ss->isEqual(q_current, q_new))
                 {
                     horizon.emplace_back(std::make_shared<HorizonState>(q_new, -1));
                     num_added++;
@@ -363,7 +365,8 @@ bool planning::drbt::DRGBTConnect::modifyState(std::shared_ptr<HorizonState> &q)
             coeff = 1;
         }
         q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
-        if (ss->pruneEdge(q_current, q_new))
+        q_new = ss->pruneEdge(q_current, q_new);
+        if (!ss->isEqual(q_current, q_new))
         {
             q_new_ = std::make_shared<HorizonState>(q_new, -1);
             computeReachedState(q_current, q_new_);

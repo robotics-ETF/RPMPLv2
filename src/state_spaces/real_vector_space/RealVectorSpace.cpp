@@ -115,11 +115,11 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 	return {status, q_new};
 }
 
-// Prune edge from 'q1' to 'q2', if it comes out of C-space domain. State 'q2' will be modified!
-// Return result of the prunning. Return false if 'q2' becomes equal to 'q1'. Otherwise, return true.
+// Prune edge from 'q1' to 'q2', if it comes out of C-space domain or specified 'limits_'.
+// Return result state: 'q_new' if there is prunning, and 'q2' if not.
 // If 'limits_' are not passed, robot joint limits are used as deafult.
-bool base::RealVectorSpace::pruneEdge(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, 
-									  const std::vector<std::vector<float>> &limits_)
+std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_ptr<base::State> q1, 
+	const std::shared_ptr<base::State> q2, const std::vector<std::vector<float>> &limits_)
 {
 	std::vector<float> bounds(num_dimensions);
 	std::vector<int> indices;
@@ -138,28 +138,28 @@ bool base::RealVectorSpace::pruneEdge(std::shared_ptr<base::State> q1, std::shar
 		}
 	}
 
-	Eigen::VectorXf q_temp;
 	float t;
-	if (indices.size() == 1)
+	Eigen::VectorXf q_new_coord;
+	bool found;
+	for (int idx : indices)
 	{
-		t = (bounds[indices[0]] - q1->getCoord(indices[0])) / (q2->getCoord(indices[0]) - q1->getCoord(indices[0]));
-		q2->setCoord(q1->getCoord() + t * (q2->getCoord() - q1->getCoord()));
-	}
-	else if (indices.size() > 1)
-	{
-		for (int k : indices)
+		t = (bounds[idx] - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx));
+		q_new_coord = q1->getCoord() + t * (q2->getCoord() - q1->getCoord());
+
+		found = true;
+		for (int k = 0; k < num_dimensions; k++)
 		{
-			t = (bounds[k] - q1->getCoord(k)) / (q2->getCoord(k) - q1->getCoord(k));
-			q_temp = q1->getCoord() + t * (q2->getCoord() - q1->getCoord());
-			if ((q_temp.array() >= limits[k][0] && q_temp.array() <= limits[k][1]).prod())
+			if (q_new_coord(k) < limits[k][0] || q_new_coord(k) > limits[k][1])
 			{
-				q2->setCoord(q_temp);
+				found = false;
 				break;
 			}
 		}
+		if (found)
+			return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
 	}
 
-	return !isEqual(q1, q2) ? true : false;
+	return q2;
 }
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
