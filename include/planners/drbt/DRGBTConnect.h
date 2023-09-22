@@ -33,8 +33,9 @@ namespace planning
             void updateCurrentState();
             void computeReachedState(std::shared_ptr<base::State> q_current, std::shared_ptr<HorizonState> q);
             void computeNextState();
-            bool whetherToReplan();
             int getIndexInHorizon(std::shared_ptr<HorizonState> q);
+            bool whetherToReplan();
+            void replan(float replanning_time);
             std::unique_ptr<planning::AbstractPlanner> initPlanner(std::shared_ptr<base::State> start_ = nullptr, float max_planning_time = -1);
 
             std::vector<std::shared_ptr<HorizonState>> horizon;         // List of all horizon states and their information

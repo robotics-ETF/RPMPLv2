@@ -36,12 +36,7 @@ bool planning::drbt::DRGBTConnect::solve()
     // Initial iteration: Obtaining the inital path using specified static planner
     // LOG(INFO) << "\n\nIteration num. " << planner_info->getNumIterations();
     // LOG(INFO) << "Obtaining the inital path...";
-    std::unique_ptr<planning::AbstractPlanner> planner = initPlanner(start, DRGBTConnectConfig::MAX_ITER_TIME);
-    planner->solve();
-    predefined_path = planner->getPath();
-    // LOG(INFO) << "Predefined path is" << (predefined_path.empty() ? " empty! " : ":");
-    // for (int i = 0; i < predefined_path.size(); i++)
-    //     std::cout << predefined_path.at(i) << std::endl;
+    replan(DRGBTConnectConfig::MAX_ITER_TIME);
 	 
     planner_info->setNumIterations(planner_info->getNumIterations() + 1);
     planner_info->addIterationTime(getElapsedTime(time_alg_start, std::chrono::steady_clock::now()));
@@ -90,35 +85,10 @@ bool planning::drbt::DRGBTConnect::solve()
         // Replanning procedure assessment
         if (replanning || whetherToReplan())
         {
-            try
-            {
-                float time_remaining = DRGBTConnectConfig::MAX_ITER_TIME 
-                                       - getElapsedTime(time_iter_start, std::chrono::steady_clock::now()) 
-                                       - 1;     // 1 [ms] is reserved for the following code lines
-                // LOG(INFO) << "Trying to replan in " << time_remaining << " [ms]...";
-                planner = initPlanner(q_current, time_remaining);
-                
-                if (planner->solve())   // New path is found, thus update predefined path to the goal
-                {
-                    // LOG(INFO) << "The path has been replanned in " << planner->getPlannerInfo()->getPlanningTime() << " [ms]. ";
-                    // LOG(INFO) << "Predefined path is: ";
-                    predefined_path = planner->getPath();
-                    // for (int i = 0; i < predefined_path.size(); i++)
-                    //     std::cout << predefined_path.at(i) << std::endl;
-                    replanning = false;
-                    status = base::State::Status::Reached;
-                    q_next = std::make_shared<HorizonState>(predefined_path.front(), 0);
-                    horizon.clear();
-                    // planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 4);
-                }
-                else    // New path is not found
-                    throw std::runtime_error("New path is not found! ");
-            }
-            catch (std::exception &e)
-            {
-                // LOG(INFO) << "Replanning is required. " << e.what();
-                replanning = true;
-            }
+            float time_remaining = DRGBTConnectConfig::MAX_ITER_TIME 
+                                   - getElapsedTime(time_iter_start, std::chrono::steady_clock::now()) 
+                                   - 1;     // 1 [ms] is reserved for the following code lines
+            replan(time_remaining);
         }
         // else
         //     LOG(INFO) << "Replanning is not required! ";
@@ -514,6 +484,17 @@ void planning::drbt::DRGBTConnect::computeNextState()
     q_next_previous = q_next;
 }
 
+// Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
+int planning::drbt::DRGBTConnect::getIndexInHorizon(std::shared_ptr<HorizonState> q)
+{
+    for (int idx = 0; idx < horizon.size(); idx++)
+    {
+        if (q == horizon[idx])
+            return idx;
+    }
+    return -1;   
+}
+
 bool planning::drbt::DRGBTConnect::whetherToReplan()
 {
     float weight_max = 0;
@@ -527,15 +508,34 @@ bool planning::drbt::DRGBTConnect::whetherToReplan()
             weight_sum / horizon.size() < DRGBTConnectConfig::WEIGHT_MEAN_MIN) ? true : false;
 }
 
-// Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
-int planning::drbt::DRGBTConnect::getIndexInHorizon(std::shared_ptr<HorizonState> q)
+void planning::drbt::DRGBTConnect::replan(float replanning_time)
 {
-    for (int idx = 0; idx < horizon.size(); idx++)
+    try
     {
-        if (q == horizon[idx])
-            return idx;
+        // LOG(INFO) << "Trying to replan in " << replanning_time << " [ms]...";
+        std::unique_ptr<planning::AbstractPlanner> planner = initPlanner(q_current, replanning_time);
+        
+        if (planner->solve())   // New path is found, thus update predefined path to the goal
+        {
+            // LOG(INFO) << "The path has been replanned in " << planner->getPlannerInfo()->getPlanningTime() << " [ms]. ";
+            predefined_path = planner->getPath();
+            // LOG(INFO) << "Predefined path is: ";
+            // for (int i = 0; i < predefined_path.size(); i++)
+            //     std::cout << predefined_path.at(i) << std::endl;
+            replanning = false;
+            status = base::State::Status::Reached;
+            q_next = std::make_shared<HorizonState>(predefined_path.front(), 0);
+            horizon.clear();
+            // planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 4);
+        }
+        else    // New path is not found
+            throw std::runtime_error("New path is not found! ");
     }
-    return -1;   
+    catch (std::exception &e)
+    {
+        // LOG(INFO) << "Replanning is required. " << e.what();
+        replanning = true;
+    }
 }
 
 std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBTConnect::initPlanner
