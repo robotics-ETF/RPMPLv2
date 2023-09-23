@@ -36,10 +36,9 @@ bool planning::drbt::DRGBTConnect::solve()
     // Initial iteration: Obtaining the inital path using specified static planner
     // LOG(INFO) << "\n\nIteration num. " << planner_info->getNumIterations();
     // LOG(INFO) << "Obtaining the inital path...";
-    replan(DRGBTConnectConfig::MAX_ITER_TIME);
-	 
+    replan(DRGBTConnectConfig::MAX_ITER_TIME);	 
     planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-    planner_info->addIterationTime(getElapsedTime(time_alg_start, std::chrono::steady_clock::now()));
+    planner_info->addIterationTime(getElapsedTime(time_iter_start, std::chrono::steady_clock::now()));
     // LOG(INFO) << "----------------------------------------------------------------------------------------\n";
 
     while (true)
@@ -513,7 +512,7 @@ void planning::drbt::DRGBTConnect::replan(float replanning_time)
     try
     {
         // LOG(INFO) << "Trying to replan in " << replanning_time << " [ms]...";
-        std::unique_ptr<planning::AbstractPlanner> planner = initPlanner(q_current, replanning_time);
+        std::unique_ptr<planning::AbstractPlanner> planner = initPlanner(replanning_time);
         
         if (planner->solve())   // New path is found, thus update predefined path to the goal
         {
@@ -538,44 +537,33 @@ void planning::drbt::DRGBTConnect::replan(float replanning_time)
     }
 }
 
-std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBTConnect::initPlanner
-    (std::shared_ptr<base::State> start_, float max_planning_time)
+std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBTConnect::initPlanner(float max_planning_time)
 {
-    if (start_ == nullptr)
-        start_ = start;
-
     // std::cout << "Static planner (for replanning): " << planner_name << "\n";
     if (planner_name == "RRTConnect")
     {
-        if (max_planning_time > 0) 
-            RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rrt::RRTConnect>(ss, start_, goal);
+        RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rrt::RRTConnect>(ss, q_current, goal);
     }
     else if (planner_name == "RBTConnect")
     {
-        if (max_planning_time > 0) 
-            RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt::RBTConnect>(ss, start_, goal);
+        RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt::RBTConnect>(ss, q_current, goal);
     }
     else if (planner_name == "RGBTConnect")
     {
-        if (max_planning_time > 0) 
-            RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt::RGBTConnect>(ss, start_, goal);
+        RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, goal);
     }
     else if (planner_name == "RGBMT*")
     {
-        if (max_planning_time > 0) 
-            RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt_star::RGBMTStar>(ss, start_, goal);
+        RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
+        return std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_current, goal);
     }
-    else
-    {
-        std::cout << "The requested planner " << planner_name << " is not found! Using RGBTConnect. \n";
-        if (max_planning_time > 0) 
-            RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt::RGBTConnect>(ss, start_, goal);
-    }
+
+    std::cout << "The requested planner " << planner_name << " is not found! Using RGBTConnect. \n";
+    RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
+    return std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, goal);
 }
 
 bool planning::drbt::DRGBTConnect::checkTerminatingCondition()
