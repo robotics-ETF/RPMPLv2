@@ -406,6 +406,7 @@ void planning::drbt::DRGBTConnect::computeNextState()
     float d_goal_min = INFINITY;
     int d_goal_min_idx = -1;
     float d_c_max = 0;
+
     for (int i = 0; i < horizon.size(); i++)
     {
         dist_to_goal[i] = ss->getDistance(horizon[i]->getStateReached(), goal);
@@ -417,11 +418,10 @@ void planning::drbt::DRGBTConnect::computeNextState()
         if (horizon[i]->getDistance() > d_c_max)
             d_c_max = horizon[i]->getDistance();
     }
-    d_max_mean = (planner_info->getNumIterations() * d_max_mean + d_c_max) / (planner_info->getNumIterations() + 1);
     
     if (d_goal_min == 0)      // 'goal' lies in the horizon
     {
-        d_goal_min = 1e-3;    // Only to avoid "0/0" when 'dist_to_goal[i] == 0'
+        d_goal_min = 1e-6;    // Only to avoid "0/0" when 'dist_to_goal[i] == 0'
         dist_to_goal[d_goal_min_idx] = d_goal_min;
     }
 
@@ -429,26 +429,34 @@ void planning::drbt::DRGBTConnect::computeNextState()
     for (int i = 0; i < horizon.size(); i++)
         weights_dist[i] = d_goal_min / dist_to_goal[i];        
     
+    d_max_mean = (planner_info->getNumIterations() * d_max_mean + d_c_max) / (planner_info->getNumIterations() + 1);
     float weights_dist_mean = std::accumulate(weights_dist.begin(), weights_dist.end(), 0.0) / horizon.size();
     float max_weight = 0;
     float weight;
     float d_min;
+
     for (int i = 0; i < horizon.size(); i++)
     {
-        if (horizon[i]->getDistance() > DRGBTConnectConfig::D_CRIT)
-        {
-            weight = (2 * horizon[i]->getDistance() - horizon[i]->getDistancePrevious()) / d_max_mean 
-                     + weights_dist[i] - weights_dist_mean;
-            if (weight > 1)
-                weight = 1;
-            else if (weight < 0)
-                weight = 0;
-        }
-        else
-            weight = 0;
+        if (horizon[i]->getStatus() == HorizonState::Status::Critical)  // 'weight' is already set to zero
+            continue;
         
-        if (horizon[i]->getIndex() == -1)   // Weight is decreased if state does not belong to the path, in order to favorize the replanning procedure
+        // Computing 'weight' according to the following heuristic:
+        weight = horizon[i]->getDistance() / d_max_mean
+                 + (horizon[i]->getDistance() - horizon[i]->getDistancePrevious()) / d_max_mean 
+                 + weights_dist[i] - weights_dist_mean;
+        
+        // Saturate 'weight' since it must be between 0 and 1
+        if (weight > 1)
+            weight = 1;
+        else if (weight < 0)
+            weight = 0;
+
+        // If state does not belong to the predefined path, 'weight' is decreased within the range [0, DRGBTConnectConfig::WEIGHT_MIN]
+        // If such state becomes the best one, the replanning will surely be triggered
+        if (horizon[i]->getIndex() == -1)   
             weight *= DRGBTConnectConfig::WEIGHT_MIN;
+        
+        horizon[i]->setWeight(weight);
 
         if (weight > max_weight)
         {
@@ -456,15 +464,16 @@ void planning::drbt::DRGBTConnect::computeNextState()
             d_min = dist_to_goal[i];
             q_next = horizon[i];
         }
-        horizon[i]->setWeight(weight);
     }
 
-    if (max_weight > DRGBTConnectConfig::WEIGHT_MIN)
+    // Do the following only if 'q_next' belongs to the predefined path
+    if (q_next->getIndex() != -1)
     {
         // The best state nearest to the goal is chosen as the next state
         for (int i = 0; i < horizon.size(); i++)
         {
-            if (std::abs(max_weight - horizon[i]->getWeight()) < hysteresis && dist_to_goal[i] < d_min)
+            if (std::abs(q_next->getWeight() - horizon[i]->getWeight()) < hysteresis && 
+                dist_to_goal[i] < d_min)
             {
                 d_min = dist_to_goal[i];
                 q_next = horizon[i];
@@ -503,8 +512,9 @@ bool planning::drbt::DRGBTConnect::whetherToReplan()
         weight_max = std::max(weight_max, horizon[i]->getWeight());
         weight_sum += horizon[i]->getWeight();
     }
-    return (weight_max < DRGBTConnectConfig::WEIGHT_MIN && 
-            weight_sum / horizon.size() < DRGBTConnectConfig::WEIGHT_MEAN_MIN) ? true : false;
+    return (weight_max <= DRGBTConnectConfig::WEIGHT_MIN && 
+            weight_sum / horizon.size() <= DRGBTConnectConfig::WEIGHT_MEAN_MIN) 
+            ? true : false;
 }
 
 void planning::drbt::DRGBTConnect::replan(float replanning_time)
