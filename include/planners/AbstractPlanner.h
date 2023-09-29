@@ -36,6 +36,7 @@ namespace planning
 		std::shared_ptr<base::State> start;
 		std::shared_ptr<base::State> goal;
 		std::vector<std::shared_ptr<base::State>> path;
+		std::chrono::steady_clock::time_point time_start;
 	};
 }
 #endif //RPMPL_ABSTRACTPLANNER_H

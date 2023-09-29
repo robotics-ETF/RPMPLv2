@@ -30,8 +30,8 @@ planning::drbt::DRGBTConnect::DRGBTConnect(std::shared_ptr<base::StateSpace> ss_
 
 bool planning::drbt::DRGBTConnect::solve()
 {
-    auto time_alg_start = std::chrono::steady_clock::now();     // Start the algorithm clock
-    auto time_iter_start = time_alg_start;
+    time_start = std::chrono::steady_clock::now();     // Start the algorithm clock
+    auto time_iter_start = time_start;
 
     // Initial iteration: Obtaining the inital path using specified static planner
     // LOG(INFO) << "\n\nIteration num. " << planner_info->getNumIterations();
@@ -104,12 +104,10 @@ bool planning::drbt::DRGBTConnect::solve()
 
         // Planner info and terminating condition
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-        planner_info->addIterationTime(getElapsedTime(time_alg_start, time_current));
+        planner_info->addIterationTime(getElapsedTime(time_start, time_current));
         if (checkTerminatingCondition())
-        {
-            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
             return planner_info->getSuccessState();
-        }
+        
         // LOG(INFO) << "----------------------------------------------------------------------------------------\n";
     }
 }
@@ -317,7 +315,7 @@ bool planning::drbt::DRGBTConnect::modifyState(std::shared_ptr<HorizonState> &q)
     std::shared_ptr<HorizonState> q_new_;
     std::shared_ptr<base::State> q_new;
     std::shared_ptr<base::State> q_reached = q->getStateReached();
-    float norm = ss->getDistance(q_current, q_reached);
+    float norm = ss->getNorm(q_current, q_reached);
     float coeff = 0;
     int num = 0;
     int num_attepmts = 10;
@@ -409,7 +407,7 @@ void planning::drbt::DRGBTConnect::computeNextState()
 
     for (int i = 0; i < horizon.size(); i++)
     {
-        dist_to_goal[i] = ss->getDistance(horizon[i]->getStateReached(), goal);
+        dist_to_goal[i] = ss->getNorm(horizon[i]->getStateReached(), goal);
         if (dist_to_goal[i] < d_goal_min)
         {
             d_goal_min = dist_to_goal[i];
@@ -578,25 +576,31 @@ std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBTConnect::initPla
 
 bool planning::drbt::DRGBTConnect::checkTerminatingCondition()
 {
+    auto time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());    
     if (ss->isEqual(q_current, goal))
     {
         // LOG(INFO) << "Goal configuration has been successfully reached! ";
         std::cout << "Goal configuration has been successfully reached! \n";
 		planner_info->setSuccessState(true);
+        planner_info->setPlanningTime(time_current);
         return true;
     }
-	else if (planner_info->getIterationTimes().back() >= DRGBTConnectConfig::MAX_PLANNING_TIME)
+	
+    if (time_current >= DRGBTConnectConfig::MAX_PLANNING_TIME)
 	{
         // LOG(INFO) << "Maximal planning time has been reached! ";
         std::cout << "Maximal planning time has been reached! \n";
 		planner_info->setSuccessState(false);
+        planner_info->setPlanningTime(time_current);
 		return true;
 	}
-    else if (planner_info->getNumIterations() >= DRGBTConnectConfig::MAX_NUM_ITER)
+    
+    if (planner_info->getNumIterations() >= DRGBTConnectConfig::MAX_NUM_ITER)
 	{
         // LOG(INFO) << "Maximal number of iterations has been reached! ";
         std::cout << "Maximal number of iterations has been reached! \n";
 		planner_info->setSuccessState(false);
+        planner_info->setPlanningTime(time_current);
 		return true;
 	}
 

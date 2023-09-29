@@ -18,13 +18,14 @@ namespace planning
 			~RGBMTStar();
             
 			bool solve() override;
-            bool checkTerminatingCondition(std::shared_ptr<base::State> q_con);
+            bool checkTerminatingCondition();
 			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
-            std::vector<size_t> num_states;              // Total number of states for each tree
-            float cost_opt;                              // Cost of the final path 
-            
+            std::vector<size_t> num_states;             // Total number of states for each tree
+            float cost_opt;                             // Cost of the final path 
+            std::shared_ptr<base::State> q_con_opt;     // State (takes start or goal conf.) from which the optimal path is constructed
+	
 			std::tuple<base::State::Status, std::shared_ptr<base::State>> connectGenSpine
                 (std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
             float computeCostToCome(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2);

@@ -27,7 +27,7 @@ namespace base
 		std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) override;
 		std::shared_ptr<base::State> getNewState(const Eigen::VectorXf &coord) override;
 		
-		float getDistance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
+		float getNorm(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		bool isEqual(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		std::shared_ptr<base::State> interpolateEdge
 			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist) override;

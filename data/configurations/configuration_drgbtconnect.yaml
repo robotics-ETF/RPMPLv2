@@ -5,4 +5,4 @@ INIT_HORIZON_SIZE: 10		  # Initial horizon size
 STEP: 0.1			            # Advancing step in C-space in [rad] when moving from current towards next state in a single iteration
 WEIGHT_MIN: 0.5			      # Treshold 1 for the replanning assessment. Range: between 0 and 1
 WEIGHT_MEAN_MIN: 0.5		  # Treshold 2 for the replanning assessment. Range: between 0 and 1
-D_CRIT: 0.05			        # Critical distance in W-space in [m] when RBT uses RRT-mode
+D_CRIT: 0.1			          # Critical distance in W-space in [m] when RBT uses RRT-mode

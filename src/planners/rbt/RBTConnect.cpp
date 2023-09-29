@@ -17,8 +17,7 @@ planning::rbt::RBTConnect::RBTConnect(std::shared_ptr<base::StateSpace> ss_, std
 
 bool planning::rbt::RBTConnect::solve()
 {
-	auto time_start = std::chrono::steady_clock::now(); 	// Start the clock
-	auto time_current = time_start;
+	time_start = std::chrono::steady_clock::now(); 	// Start the clock
 	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
 	base::State::Status status;
@@ -58,15 +57,12 @@ bool planning::rbt::RBTConnect::solve()
 		}
 
 		/* Planner info and terminating condition */
-		time_current = std::chrono::steady_clock::now();
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-		planner_info->addIterationTime(getElapsedTime(time_start, time_current));
+		planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
 		planner_info->setNumStates(trees[0]->getNumStates() + trees[1]->getNumStates());
 		if (checkTerminatingCondition(status))
-		{
-			planner_info->setPlanningTime(planner_info->getIterationTimes().back());
 			return planner_info->getSuccessState();
-		}
+		
     }
 }
 
@@ -151,17 +147,22 @@ bool planning::rbt::RBTConnect::checkTerminatingCondition(base::State::Status st
 {
 	if (status == base::State::Status::Reached)
 	{
-		planner_info->setSuccessState(true);
 		computePath();
+		planner_info->setSuccessState(true);
+		planner_info->setPlanningTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
 		return true;
 	}
-	else if (planner_info->getNumStates() >= RBTConnectConfig::MAX_NUM_STATES || 
-			 planner_info->getIterationTimes().back() >= RBTConnectConfig::MAX_PLANNING_TIME ||
-			 planner_info->getNumIterations() >= RBTConnectConfig::MAX_NUM_ITER)
+
+	auto time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
+	if (time_current >= RBTConnectConfig::MAX_PLANNING_TIME ||
+		planner_info->getNumStates() >= RBTConnectConfig::MAX_NUM_STATES || 
+		planner_info->getNumIterations() >= RBTConnectConfig::MAX_NUM_ITER)
 	{
 		planner_info->setSuccessState(false);
+		planner_info->setPlanningTime(time_current);
 		return true;
 	}
+
 	return false;
 }
 

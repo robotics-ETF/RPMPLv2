@@ -25,7 +25,7 @@ namespace base
 		virtual std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const Eigen::VectorXf &coord) = 0;
 
-		virtual float getDistance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) = 0;
+		virtual float getNorm(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) = 0;
 		virtual bool isEqual(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) = 0;
 		virtual std::shared_ptr<base::State> interpolateEdge
 			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist = -1) = 0;

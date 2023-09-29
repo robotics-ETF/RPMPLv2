@@ -57,8 +57,8 @@ std::shared_ptr<base::State> base::RealVectorSpace::getNewState(const Eigen::Vec
 	return std::make_shared<base::RealVectorSpaceState>(coord);
 }
 
-// Get Euclidean distance between two states
-inline float base::RealVectorSpace::getDistance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
+// Get Euclidean distance between two states (get norm of the vector 'q2 - q1')
+inline float base::RealVectorSpace::getNorm(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
 	return (q1->getCoord() - q2->getCoord()).norm();
 }
@@ -66,7 +66,7 @@ inline float base::RealVectorSpace::getDistance(const std::shared_ptr<base::Stat
 // Check if two states are equal
 bool base::RealVectorSpace::isEqual(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
-	if (getDistance(q1, q2) < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+	if (getNorm(q1, q2) < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
 		return true;
 	
 	return false;
@@ -79,7 +79,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::interpolateEdge
 	(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist)
 {
 	if (dist < 0) 	// 'dist' = -1 is default value
-		dist = getDistance(q1, q2);
+		dist = getNorm(q1, q2);
 	
 	Eigen::VectorXf q_new_coord;
 	if (dist > 0)
@@ -97,7 +97,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 	(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist)
 {
 	if (dist < 0) 	// 'dist' = -1 is default value
-		dist = getDistance(q1, q2);
+		dist = getNorm(q1, q2);
 	
 	std::shared_ptr<base::State> q_new;
 	base::State::Status status;
@@ -149,7 +149,8 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 		found = true;
 		for (int k = 0; k < num_dimensions; k++)
 		{
-			if (q_new_coord(k) < limits[k][0] || q_new_coord(k) > limits[k][1])
+			if (q_new_coord(k) < limits[k][0] - RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
+				q_new_coord(k) > limits[k][1] + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
 			{
 				found = false;
 				break;
@@ -165,7 +166,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
 	int num_checks = RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS;
-	float dist = getDistance(q1, q2);
+	float dist = getNorm(q1, q2);
 	std::shared_ptr<base::State> q_new;
 	for (float k = num_checks; k >= 1; k--)
 	{
