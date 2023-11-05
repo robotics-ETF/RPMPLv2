@@ -13,8 +13,6 @@
 
 typedef std::shared_ptr<fcl::CollisionGeometry<float>> CollisionGeometryPtr;
 
-env::Environment::~Environment() {}
-
 env::Environment::Environment(const std::string &filename)
 {
     YAML::Node node = YAML::LoadFile(filename);
@@ -74,6 +72,12 @@ env::Environment::Environment(const std::vector<env::Obstacle> obs)
     }
 }
 
+env::Environment::~Environment()
+{
+    parts.clear();
+    velocities.clear();
+}
+
 void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_)
 {
     parts.clear();
@@ -85,27 +89,58 @@ void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::Collision
 void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob) 
 {
     ob->computeAABB();
-    parts.emplace_back(ob); 
+    parts.emplace_back(ob);
+    fcl::Vector3f vel = fcl::Vector3f::Random(3);
+    vel.normalize();
+    velocities.emplace_back(vel);
 }
 
 void env::Environment::removeCollisionObjects(int start_idx)
 {
-    for (auto idx = parts.end() - 1; idx >= parts.begin() + start_idx; idx--)
-        parts.erase(idx);
+    for (int idx = parts.size()-1; idx >= start_idx; idx--)
+    {
+        parts.erase(parts.begin() + idx);
+        velocities.erase(velocities.begin() + idx);
+    }
 }
 
-void env::Environment::updateEnvironment()
+// void env::Environment::updateEnvironment()
+// {
+//     fcl::Vector3f pos;
+//     for (int i = 0; i < parts.size(); i++)
+//     {
+//         pos = parts[i]->getTranslation();
+//         pos(0) -= max_vel;    // Move along x axis
+//         parts[i]->setTranslation(pos);
+//         parts[i]->computeAABB();
+//         // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
+//     }
+// }
+
+void env::Environment::updateEnvironment(float step)
 {
-    fcl::Vector3f trans;
+    fcl::Vector3f pos, vel;
     for (int i = 0; i < parts.size(); i++)
     {
-        trans = parts[i]->getTranslation();
-        // if (trans(0) > 0)
-        // {
-            trans(0) -= 0.01;    // Move along x axis
-            parts[i]->setTranslation(trans);
+        pos = parts[i]->getTranslation();
+        pos += step * max_vel * velocities[i];
+
+        float tol = 0.245;  // Computed in order to make robot faster than obstacle
+        if ((pos - WS_center).norm() > WS_radius ||                                         // Out of workspace
+            pos.head(2).norm() < tol && pos.z() > -tol && pos.z() < WS_center.z() + tol)    // Robot base
+        {
+            // std::cout << i << ". Computing new velocity.\n";
+            vel = fcl::Vector3f::Random(3);
+            vel.normalize();
+            velocities[i] = vel;
+            i--;
+        }
+        else
+        {
+            parts[i]->setTranslation(pos);
             parts[i]->computeAABB();
-        // }
-        // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
+            // std::cout << i << ". Obstacle pos: (" << pos.transpose() << ")\n";
+        }
     }
+    // std::cout << std::endl;
 }

@@ -22,13 +22,18 @@ namespace env
 		~Environment();
 
 		const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &getParts() const { return parts; }
+		void setMaxVel(float max_vel_) { max_vel = max_vel_; }
 		void setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_);
 		void addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob);
 		void removeCollisionObjects(int start_idx);
-		void updateEnvironment();
+		void updateEnvironment(float step);
 
 	private:
 		std::vector<std::shared_ptr<fcl::CollisionObject<float>>> parts;
+		std::vector<fcl::Vector3f> velocities; 		// Velocity vector for each obstacle
+		float max_vel; 								// Maximal velocity for each obstacle
+        const Eigen::Vector3f WS_center = Eigen::Vector3f(0, 0, 0.267);
+        const float WS_radius = 1.0;
 	};
 }
 #endif //RPMPL_ABSTRACTPLANNER_H
