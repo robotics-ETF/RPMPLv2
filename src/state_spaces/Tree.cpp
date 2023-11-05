@@ -18,6 +18,11 @@ base::Tree::Tree(const std::shared_ptr<std::vector<std::shared_ptr<base::State>>
 	kd_tree = nullptr;
 }
 
+base::Tree::~Tree()
+{
+	clearTree();
+}
+
 void base::Tree::clearTree()
 {
 	states->clear();

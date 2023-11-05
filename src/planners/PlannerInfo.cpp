@@ -4,6 +4,14 @@
 
 #include "PlannerInfo.h"
 
+PlannerInfo::~PlannerInfo()
+{
+	iteration_times.clear();
+	state_times.clear();
+	cost_convergence.clear();
+	routine_times.clear();
+}
+
 void PlannerInfo::addIterationTime(float time)
 {
 	iteration_times.emplace_back(time);

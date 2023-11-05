@@ -23,6 +23,7 @@ protected:
 
 public:
 	PlannerInfo() {}
+	~PlannerInfo();
 	void addIterationTime(float time);
 	void addStateTimes(const std::vector<float> &state_times);
 	void addCostConvergence(const std::vector<float> &cost_convergence);
