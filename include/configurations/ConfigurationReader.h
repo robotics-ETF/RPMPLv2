@@ -17,7 +17,7 @@
 #include "RBTConnectConfig.h"
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
-#include "DRGBTConnectConfig.h"
+#include "DRGBTConfig.h"
 
 class ConfigurationReader
 {
@@ -29,7 +29,7 @@ public:
         YAML::Node RBTConnectConfigRoot         = YAML::LoadFile(root_path + "/data/configurations/configuration_rbtconnect.yaml");
         YAML::Node RGBTConnectConfigRoot        = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml");
         YAML::Node RGBMTStarConfigRoot          = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml");
-        YAML::Node DRGBTConnectConfigRoot       = YAML::LoadFile(root_path + "/data/configurations/configuration_drgbtconnect.yaml");
+        YAML::Node DRGBTConfigRoot              = YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml");
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -141,46 +141,46 @@ public:
         else
             LOG(INFO) << "RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND is not defined! Using default value of " << RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND;
 
-        // DRGBTConnectConfigRoot
-        if (DRGBTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
-            DRGBTConnectConfig::MAX_NUM_ITER = DRGBTConnectConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+        // DRGBTConfigRoot
+        if (DRGBTConfigRoot["MAX_NUM_ITER"].IsDefined())
+            DRGBTConfig::MAX_NUM_ITER = DRGBTConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::MAX_NUM_ITER is not defined! Using default value of " << DRGBTConnectConfig::MAX_NUM_ITER;
+            LOG(INFO) << "DRGBTConfig::MAX_NUM_ITER is not defined! Using default value of " << DRGBTConfig::MAX_NUM_ITER;
         
-        if (DRGBTConnectConfigRoot["MAX_ITER_TIME"].IsDefined())
-            DRGBTConnectConfig::MAX_ITER_TIME = DRGBTConnectConfigRoot["MAX_ITER_TIME"].as<float>();
+        if (DRGBTConfigRoot["MAX_ITER_TIME"].IsDefined())
+            DRGBTConfig::MAX_ITER_TIME = DRGBTConfigRoot["MAX_ITER_TIME"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::MAX_ITER_TIME is not defined! Using default value of " << DRGBTConnectConfig::MAX_ITER_TIME;
+            LOG(INFO) << "DRGBTConfig::MAX_ITER_TIME is not defined! Using default value of " << DRGBTConfig::MAX_ITER_TIME;
         
-        if (DRGBTConnectConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            DRGBTConnectConfig::MAX_PLANNING_TIME = DRGBTConnectConfigRoot["MAX_PLANNING_TIME"].as<float>();
+        if (DRGBTConfigRoot["MAX_PLANNING_TIME"].IsDefined())
+            DRGBTConfig::MAX_PLANNING_TIME = DRGBTConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << DRGBTConnectConfig::MAX_PLANNING_TIME;
+            LOG(INFO) << "DRGBTConfig::MAX_PLANNING_TIME is not defined! Using default value of " << DRGBTConfig::MAX_PLANNING_TIME;
         
-        if (DRGBTConnectConfigRoot["INIT_HORIZON_SIZE"].IsDefined())
-            DRGBTConnectConfig::INIT_HORIZON_SIZE = DRGBTConnectConfigRoot["INIT_HORIZON_SIZE"].as<int>();
+        if (DRGBTConfigRoot["INIT_HORIZON_SIZE"].IsDefined())
+            DRGBTConfig::INIT_HORIZON_SIZE = DRGBTConfigRoot["INIT_HORIZON_SIZE"].as<int>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::INIT_HORIZON_SIZE is not defined! Using default value of " << DRGBTConnectConfig::INIT_HORIZON_SIZE;
+            LOG(INFO) << "DRGBTConfig::INIT_HORIZON_SIZE is not defined! Using default value of " << DRGBTConfig::INIT_HORIZON_SIZE;
         
-        if (DRGBTConnectConfigRoot["STEP"].IsDefined())
-            DRGBTConnectConfig::STEP = DRGBTConnectConfigRoot["STEP"].as<float>();
+        if (DRGBTConfigRoot["STEP"].IsDefined())
+            DRGBTConfig::STEP = DRGBTConfigRoot["STEP"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::STEP is not defined! Using default value of " << DRGBTConnectConfig::STEP;
+            LOG(INFO) << "DRGBTConfig::STEP is not defined! Using default value of " << DRGBTConfig::STEP;
         
-        if (DRGBTConnectConfigRoot["WEIGHT_MIN"].IsDefined())
-            DRGBTConnectConfig::WEIGHT_MIN = DRGBTConnectConfigRoot["WEIGHT_MIN"].as<float>();
+        if (DRGBTConfigRoot["WEIGHT_MIN"].IsDefined())
+            DRGBTConfig::WEIGHT_MIN = DRGBTConfigRoot["WEIGHT_MIN"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::WEIGHT_MIN is not defined! Using default value of " << DRGBTConnectConfig::WEIGHT_MIN;
+            LOG(INFO) << "DRGBTConfig::WEIGHT_MIN is not defined! Using default value of " << DRGBTConfig::WEIGHT_MIN;
         
-        if (DRGBTConnectConfigRoot["WEIGHT_MEAN_MIN"].IsDefined())
-            DRGBTConnectConfig::WEIGHT_MEAN_MIN = DRGBTConnectConfigRoot["WEIGHT_MEAN_MIN"].as<float>();
+        if (DRGBTConfigRoot["WEIGHT_MEAN_MIN"].IsDefined())
+            DRGBTConfig::WEIGHT_MEAN_MIN = DRGBTConfigRoot["WEIGHT_MEAN_MIN"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::WEIGHT_MEAN_MIN is not defined! Using default value of " << DRGBTConnectConfig::WEIGHT_MEAN_MIN;
+            LOG(INFO) << "DRGBTConfig::WEIGHT_MEAN_MIN is not defined! Using default value of " << DRGBTConfig::WEIGHT_MEAN_MIN;
         
-        if (DRGBTConnectConfigRoot["D_CRIT"].IsDefined())
-            DRGBTConnectConfig::D_CRIT = DRGBTConnectConfigRoot["D_CRIT"].as<float>();
+        if (DRGBTConfigRoot["D_CRIT"].IsDefined())
+            DRGBTConfig::D_CRIT = DRGBTConfigRoot["D_CRIT"].as<float>();
         else
-            LOG(INFO) << "DRGBTConnectConfig::D_CRIT is not defined! Using default value of " << DRGBTConnectConfig::D_CRIT;
+            LOG(INFO) << "DRGBTConfig::D_CRIT is not defined! Using default value of " << DRGBTConfig::D_CRIT;
 
         LOG(INFO) << "Configuration parameters read successfully!";
         

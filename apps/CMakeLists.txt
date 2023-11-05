@@ -42,9 +42,9 @@ add_executable(test_rgbtconnect test_rgbtconnect.cpp)
 target_compile_features(test_rgbtconnect PRIVATE cxx_std_17)
 target_link_libraries(test_rgbtconnect PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 
-add_executable(test_drgbtconnect_benchmark test_drgbtconnect_benchmark.cpp)
-target_compile_features(test_drgbtconnect_benchmark PRIVATE cxx_std_17)
-target_link_libraries(test_drgbtconnect_benchmark PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+add_executable(test_drgbt_benchmark test_drgbt_benchmark.cpp)
+target_compile_features(test_drgbt_benchmark PRIVATE cxx_std_17)
+target_link_libraries(test_drgbt_benchmark PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 
 add_executable(test_rgbmtstar test_rgbmtstar.cpp)
 target_compile_features(test_rgbmtstar PRIVATE cxx_std_17)
@@ -65,7 +65,7 @@ install(TARGETS
   test_rrtconnect
   test_rbtconnect
   test_rgbtconnect
-  test_drgbtconnect_benchmark
+  test_drgbt_benchmark
   test_rgbmtstar
   test_rgbmtstar_benchmark
   DESTINATION apps)

@@ -75,7 +75,6 @@ int main(int argc, char **argv)
 	std::vector<float> final_times;
 	std::vector<float> initial_num_states;
 	std::vector<float> final_num_states;
-	std::unique_ptr<planning::AbstractPlanner> planner;
 	std::ofstream output_file;
 	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_sometest.log", std::ofstream::out);
 	
@@ -91,7 +90,8 @@ int main(int argc, char **argv)
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());					
+			std::unique_ptr<planning::AbstractPlanner> planner = 
+				std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());					
 			bool res = planner->solve();
 
 			LOG(INFO) << "RGBMT* planning finished with " << (res ? "SUCCESS!" : "FAILURE!");
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 				final_costs.emplace_back(planner->getPlannerInfo()->getCostConvergence().back());
 				final_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 				final_num_states.emplace_back(planner->getPlannerInfo()->getNumStates());
-				for (int i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
+				for (size_t i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
 				{
 					if (planner->getPlannerInfo()->getCostConvergence()[i] < INFINITY)
 					{
@@ -132,9 +132,10 @@ int main(int argc, char **argv)
 
 			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 		}
-		catch (std::domain_error &e)
+		catch (std::exception &e)
 		{
 			LOG(ERROR) << e.what();
+			num_test--;
 		}
 	}
 
@@ -160,15 +161,21 @@ int main(int argc, char **argv)
 
 float getMean(std::vector<float> &v)
 {
+	if (v.empty()) 
+		return INFINITY;
+		
 	float sum = std::accumulate(v.begin(), v.end(), 0.0);
 	return sum / v.size();
 }
 
 float getStd(std::vector<float> &v)
 {
+	if (v.empty()) 
+		return INFINITY;
+		
 	float mean = getMean(v);
 	float sum = 0;
-	for (int i = 0; i < v.size(); i++)
+	for (size_t i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
 	return std::sqrt(sum / v.size());

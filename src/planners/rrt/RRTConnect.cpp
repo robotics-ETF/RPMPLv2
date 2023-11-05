@@ -17,7 +17,7 @@ planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std
 									  std::shared_ptr<base::State> goal_) : AbstractPlanner(ss_, start_, goal_)
 {
 	// LOG(INFO) << "Initializing planner...";
-	std::cout << "Initializing planner...\n";
+	// std::cout << "Initializing planner...\n";
 	if (!ss->isValid(start))
 		throw std::domain_error("Start position is invalid!");
 	if (!ss->isValid(goal))
@@ -32,13 +32,14 @@ planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std
 	planner_info->setNumIterations(0);
     planner_info->setNumStates(2);
 	// LOG(INFO) << "Planner initialized!";
-	std::cout << "Planner initialized!\n";
+	// std::cout << "Planner initialized!\n";
 }
 
 planning::rrt::RRTConnect::~RRTConnect()
 {
-	trees[0]->clearTree();
-	trees[1]->clearTree();
+    for (int i = 0; i < trees.size(); i++)
+        trees[i]->clearTree();
+
 	trees.clear();
 	path.clear();
 }

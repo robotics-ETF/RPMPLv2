@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_planner_data.log");
 		
 	}
-	catch (std::domain_error &e)
+	catch (std::exception &e)
 	{
 		LOG(ERROR) << e.what();
 	}

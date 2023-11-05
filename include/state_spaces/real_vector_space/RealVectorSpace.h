@@ -38,7 +38,7 @@ namespace base
 
 		bool isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		virtual bool isValid(const std::shared_ptr<base::State> q) override;
-		virtual float computeDistance(const std::shared_ptr<base::State> q) override;
+		virtual float computeDistance(const std::shared_ptr<base::State> q, bool compute_again) override;
 		float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 			const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points) override;
 			

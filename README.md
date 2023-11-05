@@ -5,7 +5,7 @@ Available planners are:
 - Rapidly-exploring Random Trees (RRT-Connect)
 - Rapidly-exploring Bur Trees (RBT-Connect)
 - Rapidly-exploring Generalized Bur Trees (RGBT-Connect)
-- Dynamic Rapidly-exploring Generalized Bur Trees (DRGBT-Connect)
+- Dynamic Rapidly-exploring Generalized Bur Trees (DRGBT)
 - Rapidly-exploring Generalized Bur Multi-Tree (RGBMT*)
 
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
@@ -123,9 +123,9 @@ Test RGBMT* benchmark:
 ./test_rgbmtstar_benchmark
 ```
 
-Test DRGBT-Connect benchmark:
+Test DRGBT benchmark:
 ```
-./test_drgbtconnect_benchmark
+./test_drgbt_benchmark
 ```
 
 After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planner_data.log```).

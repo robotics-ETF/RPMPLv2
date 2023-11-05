@@ -62,7 +62,8 @@ int main(int argc, char **argv)
 
 	try
 	{
-		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());
+		std::unique_ptr<planning::AbstractPlanner> planner 
+			= std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());
 		bool res = planner->solve();
 		LOG(INFO) << "RGBMT* planning finished with " << (res ? "SUCCESS!" : "FAILURE!");
 		LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
 		planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_planner_data.log");
 
 	}
-	catch (std::domain_error &e)
+	catch (std::exception &e)
 	{
 		LOG(ERROR) << e.what();
 	}

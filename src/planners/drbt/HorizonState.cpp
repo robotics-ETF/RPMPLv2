@@ -15,7 +15,7 @@ planning::drbt::HorizonState::HorizonState(std::shared_ptr<base::State> state_, 
 void planning::drbt::HorizonState::setDistance(float d_c_)
 {
     d_c = d_c_;
-    if (d_c < DRGBTConnectConfig::D_CRIT)
+    if (d_c < DRGBTConfig::D_CRIT)
     {
         setStatus(HorizonState::Status::Critical);
         weight = 0;

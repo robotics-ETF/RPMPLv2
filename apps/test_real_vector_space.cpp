@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		}
 		LOG(INFO) << "Test completed successfully! " << std::endl;
 	}
-	catch (std::domain_error &e)
+	catch (std::exception &e)
 	{
 		LOG(ERROR) << e.what();
 	}

@@ -101,7 +101,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 	
 	std::shared_ptr<base::State> q_new;
 	base::State::Status status;
-	if (step + RealVectorSpaceConfig::EQUALITY_THRESHOLD < dist)
+	if (step < dist)
 	{
 		q_new = interpolateEdge(q1, q2, step, dist);
 		status = base::State::Status::Advanced;
@@ -214,10 +214,10 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 
 // Get minimal distance from robot in configuration 'q' to obstacles
 // Moreover, set corresponding 'nearest_points' for the configuation 'q'
-// Be aware that if 'q->getDistance() > 0', the new distance will not be computed again!
-float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> q)
+// If 'compute_again' is true, the new distance will be computed again!
+float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
-	if (q->getDistance() > 0)
+	if (!compute_again && q->getDistance() > 0)
 		return q->getDistance();
 
 	Eigen::MatrixXf distances(robot->getParts().size(), env->getParts().size());

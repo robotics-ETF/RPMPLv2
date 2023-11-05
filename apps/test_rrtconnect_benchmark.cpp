@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 		{
 			benchmark.runBenchmark();		
 		}
-		catch (std::domain_error &e)
+		catch (std::exception &e)
 		{
 			LOG(ERROR) << e.what();
 		}

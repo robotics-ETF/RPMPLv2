@@ -36,7 +36,7 @@ namespace base
 		
 		virtual bool isValid(const std::shared_ptr<base::State> q) = 0;
 		virtual bool isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) = 0;
-		virtual float computeDistance(const std::shared_ptr<base::State> q) = 0;
+		virtual float computeDistance(const std::shared_ptr<base::State> q, bool compute_again = false) = 0;
 		virtual float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 			const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points) = 0;
 	};

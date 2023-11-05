@@ -22,7 +22,7 @@ namespace base
 		std::shared_ptr<fcl::BroadPhaseCollisionManagerf> getCollisionManagerEnv() { return collision_manager_env; }
 		
 		bool isValid(const std::shared_ptr<base::State> q) override;
-		float computeDistance(const std::shared_ptr<base::State> q) override;
+		float computeDistance(const std::shared_ptr<base::State> q, bool compute_again) override;
 	};
 }
 #endif //RPMPL_REALVECTORSPACE_H

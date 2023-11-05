@@ -18,7 +18,7 @@ namespace base
 	public:
 		enum Status {Advanced, Trapped, Reached};
 		
-	private:
+	protected:
 		StateSpaceType state_space_type;
 		int num_dimensions;												// Dimensionality in C-space
 		Eigen::VectorXf coord;											// Coordinates in C-space
