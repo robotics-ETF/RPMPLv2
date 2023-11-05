@@ -1,0 +1,30 @@
+obstacles:  
+
+robot:
+  type: "xarm6"
+  urdf: "/data/xarm6/xarm6.urdf"
+  space: "RealVectorSpace"
+  num_DOFs: 6
+  start: [0, 0, 0, 3.1415, 1.5708, 0]
+  goal: [3.1415, 0, -1.5708, 0, 0, 3.1415]
+  gripper_length: 0      # In [m]
+  # capsules_radius: [0, 0, 0, 0, 0, 0]
+  capsules_radius: [0.047, 0.12, 0.11, 0.09, 0.05, 0.0380] 	# When gripper is not attached
+  table_included: false      # Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'
+  
+testing:
+  num_obstacles_init: 1
+  max_num_obstacles: 100
+  max_obs_vel: 0.1 	# [m / iter.] 	delta_q * r > max_obs_vel, eps = sqrt(num_DOFs) * delta_q
+  
+  num_test_init: 1
+  num_success_test_init: 0
+  max_num_tests: 1000
+  static_planner_name: "RGBMT*"
+  # static_planner_name: "RGBTConnect"
+  routines: ["isValid [us]", 
+  	     "computeDistance [us]", 
+  	     "replan [ms]", 
+  	     "generateGBur [ms]", 
+  	     "generateHorizon [us]", 
+  	     "updateHorizon [us]"]
