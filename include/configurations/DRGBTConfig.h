@@ -2,7 +2,7 @@
 // Created by nermin on 14.04.22.
 //
 
-class DRGBTConnectConfig
+class DRGBTConfig
 {
 public:
     static unsigned long MAX_NUM_ITER;  // Maximal number of algorithm iterations
