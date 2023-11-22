@@ -182,6 +182,16 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::D_CRIT is not defined! Using default value of " << DRGBTConfig::D_CRIT;
 
+        if (DRGBTConfigRoot["TASK1_UTILITY"].IsDefined())
+            DRGBTConfig::TASK1_UTILITY = DRGBTConfigRoot["TASK1_UTILITY"].as<float>();
+        else
+            LOG(INFO) << "DRGBTConfig::TASK1_UTILITY is not defined! Using default value of " << DRGBTConfig::TASK1_UTILITY;
+
+        if (DRGBTConfigRoot["REAL_TIME_SCHEDULING"].IsDefined())
+            DRGBTConfig::REAL_TIME_SCHEDULING = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();
+        else
+            LOG(INFO) << "DRGBTConfig::REAL_TIME_SCHEDULING is not defined! Using default value of " << DRGBTConfig::REAL_TIME_SCHEDULING;
+        
         LOG(INFO) << "Configuration parameters read successfully!";
         
     }

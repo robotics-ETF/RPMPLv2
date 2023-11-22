@@ -158,7 +158,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 
 		/* Planner info and terminating condition */
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-		// planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
+		planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
 		size_t num_states_total = 0;
         num_states.resize(trees.size());
         for(int idx = 0; idx < trees.size(); idx++)
@@ -166,8 +166,8 @@ bool planning::rbt_star::RGBMTStar::solve()
             num_states[idx] = trees[idx]->getNumStates();
 		    num_states_total += num_states[idx];
         }
-        // planner_info->addCostConvergence(std::vector<float>(num_states_total - planner_info->getNumStates(), cost_opt));
-        // planner_info->addStateTimes(std::vector<float>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
+        planner_info->addCostConvergence(std::vector<float>(num_states_total - planner_info->getNumStates(), cost_opt));
+        planner_info->addStateTimes(std::vector<float>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
         planner_info->setNumStates(num_states_total);
         if (checkTerminatingCondition())
             return planner_info->getSuccessState();

@@ -1,8 +1,10 @@
-MAX_NUM_ITER: 1000000		  # Maximal number of algorithm iterations
-MAX_ITER_TIME: 1000 		  # Maximal runtime of a single iteration in [ms]
-MAX_PLANNING_TIME: 30000	# Maximal algorithm runtime in [ms]
-INIT_HORIZON_SIZE: 10		  # Initial horizon size
-STEP: 1.0			            # Advancing step in C-space in [rad] when moving from current towards next state in a single iteration
-WEIGHT_MIN: 0.5			      # Treshold 1 for the replanning assessment. Range: between 0 and 1
-WEIGHT_MEAN_MIN: 0.5		  # Treshold 2 for the replanning assessment. Range: between 0 and 1
-D_CRIT: 0.05			        # Critical distance in W-space in [m] when RBT uses RRT-mode
+MAX_NUM_ITER: 1000000		    # Maximal number of algorithm iterations
+MAX_ITER_TIME: 100 		      # Maximal runtime of a single iteration in [ms]
+MAX_PLANNING_TIME: 10000	  # Maximal algorithm runtime in [ms]
+INIT_HORIZON_SIZE: 10		    # Initial horizon size
+STEP: 1.0			              # Advancing step in C-space in [rad] when moving from current towards next state in a single iteration
+WEIGHT_MIN: 0.5			        # Treshold 1 for the replanning assessment. Range: between 0 and 1
+WEIGHT_MEAN_MIN: 0.5		    # Treshold 2 for the replanning assessment. Range: between 0 and 1
+D_CRIT: 0.05			          # Critical distance in W-space in [m] when RBT uses RRT-mode
+TASK1_UTILITY: 0.3          # Maximal utility which Task 1 can take from the processor
+REAL_TIME_SCHEDULING: "DPS" # "DPS" - Dynamic Priority Scheduling; "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling

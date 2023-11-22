@@ -37,9 +37,9 @@ namespace planning
             void updateCurrentState();
             int getIndexInHorizon(std::shared_ptr<HorizonState> q);
             bool whetherToReplan();
-            void replan(float replanning_time);
+            float replan(float replanning_time);
             std::unique_ptr<planning::AbstractPlanner> initPlanner(float max_planning_time);
-            bool checkMotionValidity(int num_checks = RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS);
+            bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
             std::vector<std::shared_ptr<HorizonState>> horizon;             // List of all horizon states and their information
             std::shared_ptr<base::State> q_current;                         // Current robot configuration
@@ -54,6 +54,7 @@ namespace planning
             const float hysteresis = 0.1;                                   // Hysteresis size when choosing the next state
             const int num_lateral_states = 2 * ss->getNumDimensions() - 2;  // Number of lateral states
             std::string planner_name;                                       // Name of a static planner (for obtaining the predefined path)
+            std::chrono::steady_clock::time_point time_iter_start;
         };
     }
 }

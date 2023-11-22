@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 	std::vector<std::string> routines;
     for (int i = 0; i < node["testing"]["routines"].size(); i++)
         routines.emplace_back(node["testing"]["routines"][i].as<std::string>());
+	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = 100 * max_obs_vel;
 
 	while (num_obstacles_init <= max_num_obstacles)
 	{
@@ -85,18 +86,17 @@ int main(int argc, char **argv)
 		std::vector<float> path_lengths;
 		int num_test = num_test_init;
 		int num_success_tests = num_success_test_init;
-		while (num_success_tests <= max_num_tests)
+		while (num_success_tests < max_num_tests)
 		{
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
 							"_routine_times" + std::to_string(num_obstacles_init) + ".log", std::ofstream::app);
 
-			std::vector<std::vector<float>> routine_times(routines.size());
 			scenario::Scenario scenario(scenario_file_path, project_path);
 			std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
 			std::shared_ptr<env::Environment> env = scenario.getEnvironment();
 			initObstacles(scenario, max_obs_vel, num_obstacles_init);
 
-			LOG(INFO) << "Test number: " << num_test;
+			LOG(INFO) << "Test number: " << num_test << " (" << num_success_tests << ")";
 			LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 			LOG(INFO) << "Environment parts: " << env->getParts().size();
 			LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
@@ -134,47 +134,45 @@ int main(int argc, char **argv)
 				}
 
 				output_file << "Test number: " << num_test << std::endl;
-				output_file << "Number of successful tests: " << num_success_tests << " of " << max_num_tests << std::endl;
+				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test << std::endl;
 				output_file << "Success:\n" << res << std::endl;
 				output_file << "Algorithm time [ms]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (res ? path_length : INFINITY) << std::endl;
 
 				if (res)
 				{
-					std::vector<std::vector<float>> times = planner->getPlannerInfo()->getRoutineTimes();
-					for (int idx = 0; idx < times.size(); idx++)
-						for (int i = 0; i < times[idx].size(); i++)
-							routine_times[idx].emplace_back(times[idx][i]);
-
+					std::vector<std::vector<float>> routine_times = planner->getPlannerInfo()->getRoutineTimes();
 					for (int idx = 0; idx < routines.size(); idx++)
 					{
-						// LOG(INFO) << "Routine " << routines[idx] << std::endl;
-						// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]) << std::endl;
-						// LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end()) << std::endl;
+						// LOG(INFO) << "Routine " << routines[idx];
+						// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
+						// LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
+						// LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
 						
-						output_file << "Routine " << routines[idx] << " times: " << std::endl;
+						output_file << "Routine " << routines[idx] << " routine_times: " << std::endl;
 						for (float t : routine_times[idx])
 							output_file << t << std::endl;
 					}
 				}
-				num_test++;
 			}
 			catch (std::exception &e)
 			{
 				LOG(ERROR) << e.what();
 			}
 
-			LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << max_num_tests;
+			LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << num_test 
+					  << " = " << 100.0 * num_success_tests / num_test << " %";
 			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();
+			num_test++;
 		}
 
 		num_test_init = 1;
 		num_success_test_init = 0;
 		num_obstacles_init += std::pow(10, std::floor(std::log10(num_obstacles_init)));
 
-		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / max_num_tests << " %";
+		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
 		LOG(INFO) << "Average algorithm time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [ms]";
 		LOG(INFO) << "Average path length: " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
 		LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
