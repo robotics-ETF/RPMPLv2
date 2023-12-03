@@ -1,87 +1,96 @@
-#include <AbstractPlanner.h>
 #include <RBTConnect.h>
-#include <iostream>
-#include <Scenario.h>
 #include <ConfigurationReader.h>
-#include <CommandLine.h>
-#include <glog/logging.h>
-
+#include <CommonFunctions.h>
 
 int main(int argc, char **argv)
 {
-	google::InitGoogleLogging(argv[0]);
-	std::srand((unsigned int) time(0));
-	FLAGS_logtostderr = true;
-	LOG(INFO) << "GLOG successfully initialized!";
-
-	std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
+	// std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
 	// std::string scenario_file_path = "/data/planar_2dof/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/planar_2dof/scenario2/scenario2.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
+	// std::string scenario_file_path = "/data/planar_2dof/scenario3/scenario3.yaml";
+
+	// std::string scenario_file_path = "/data/planar_10dof/scenario_test/scenario_test.yaml";
+	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
+	// std::string scenario_file_path = "/data/planar_10dof/scenario2/scenario2.yaml";
+	
+	std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 
-	bool print_help = false;
-	CommandLine args("Test RBTConnect command line parser.");
-	args.addArgument({"-s", "--scenario"}, &scenario_file_path, "Scenario .yaml description file path");
-	args.addArgument({"-h", "--help"},     &print_help, "Use --scenario scenario_yaml_file_path to run with different scenario");
+	int max_num_tests = 10;
+	int num_random_obstacles = 10;  	// If set to zero, random obstacles will not be initialized
 
-	try
-	{
-		args.parse(argc, argv);
-	}
-	catch (std::runtime_error const &e)
-	{
-		LOG(INFO) << e.what() << std::endl;
-		return -1;
-	}
+	// -------------------------------------------------------------------------------------- //
+	
+	initGoogleLogging(argv);
+	int clp = commandLineParser(argc, argv, scenario_file_path);
+	if (clp != 0) return clp;
 
-	// When oPrintHelp was set to true, we print a help message and exit.
-	if (print_help)
-	{
-		args.printHelp();
-		return 0;
-	}
-
-	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++)
-        project_path = project_path.substr(0, project_path.find_last_of("/\\"));
-
+	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
+	std::shared_ptr<base::State> start = scenario.getStart();
+	std::shared_ptr<base::State> goal = scenario.getGoal();
+	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+
+	bool result = false;
+	int num_obs = env->getParts().size();
+	while (!result && num_random_obstacles > 0)
+	{
+		LOG(INFO) << "Adding " << num_random_obstacles << " random obstacles...";
+		env->removeCollisionObjects(num_obs);
+		initRandomObstacles(scenario, num_random_obstacles);
+		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
+		result = planner->solve();
+	}
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
-	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
+	LOG(INFO) << "Environment parts: " << env->getParts().size();
 	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
-	LOG(INFO) << "Start: " << scenario.getStart();
-	LOG(INFO) << "Goal: " << scenario.getGoal();
+	LOG(INFO) << "Start: " << start;
+	LOG(INFO) << "Goal: " << goal;
 
-	try
+	int num_test = 0;
+	std::vector<float> planning_times;
+	while (num_test++ < max_num_tests)
 	{
-		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, scenario.getStart(), scenario.getGoal());
-		bool res = planner->solve();
-		LOG(INFO) << "RBTConnect planning finished with " << (res ? "SUCCESS!" : "FAILURE!");
-		LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
-		LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-		LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [ms]";
-			
-		if (res)
+		try
 		{
-			LOG(INFO) << "Found path: ";
-			std::vector<std::shared_ptr<base::State>> path = planner->getPath();
-			for (int i = 0; i < path.size(); i++)
-				std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
-		}
-		LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_planner_data.log";
-		planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_planner_data.log");
+			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
+			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
+			result = planner->solve();
 
+			LOG(INFO) << "RBTConnect planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
+			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
+			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [ms]";
+				
+			if (result)
+			{
+				// LOG(INFO) << "Found path: ";
+				// std::vector<std::shared_ptr<base::State>> path = planner->getPath();
+				// for (int i = 0; i < path.size(); i++)
+				// 	std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
+				planning_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
+			}
+
+			LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
+						 + "_rbtconnect_test" + std::to_string(num_test) + ".log";
+			planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
+									   + "_rbtconnect_test" + std::to_string(num_test) + ".log");
+			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
+		}
+		catch (std::exception &e)
+		{
+			LOG(ERROR) << e.what();
+			num_test--;
+		}
 	}
-	catch (std::exception &e)
-	{
-		LOG(ERROR) << e.what();
-	}
+	LOG(INFO) << "Average planning time: " << getMean(planning_times) << " +- " << getStd(planning_times) << " [ms].";
+
 	google::ShutDownCommandLineFlags();
 	return 0;
 }

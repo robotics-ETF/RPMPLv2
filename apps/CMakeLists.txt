@@ -29,30 +29,27 @@ target_link_libraries(test_fcl_distance PUBLIC rpmpl_library ${PROJECT_LIBRARIES
 add_executable(test_rrtconnect test_rrtconnect.cpp)
 target_compile_features(test_rrtconnect PRIVATE cxx_std_17)
 target_link_libraries(test_rrtconnect PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
-
-add_executable(test_rrtconnect_benchmark test_rrtconnect_benchmark.cpp)
-target_compile_features(test_rrtconnect_benchmark PRIVATE cxx_std_17)
-target_link_libraries(test_rrtconnect_benchmark PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rrtconnect PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_rbtconnect test_rbtconnect.cpp)
 target_compile_features(test_rbtconnect PRIVATE cxx_std_17)
 target_link_libraries(test_rbtconnect PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rbtconnect PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_rgbtconnect test_rgbtconnect.cpp)
 target_compile_features(test_rgbtconnect PRIVATE cxx_std_17)
 target_link_libraries(test_rgbtconnect PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rgbtconnect PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
-add_executable(test_drgbt_benchmark test_drgbt_benchmark.cpp)
-target_compile_features(test_drgbt_benchmark PRIVATE cxx_std_17)
-target_link_libraries(test_drgbt_benchmark PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+add_executable(test_drgbt test_drgbt.cpp)
+target_compile_features(test_drgbt PRIVATE cxx_std_17)
+target_link_libraries(test_drgbt PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_drgbt PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_rgbmtstar test_rgbmtstar.cpp)
 target_compile_features(test_rgbmtstar PRIVATE cxx_std_17)
 target_link_libraries(test_rgbmtstar PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
-
-add_executable(test_rgbmtstar_benchmark test_rgbmtstar_benchmark.cpp)
-target_compile_features(test_rgbmtstar_benchmark PRIVATE cxx_std_17)
-target_link_libraries(test_rgbmtstar_benchmark PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rgbmtstar PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 install(TARGETS
   test_nanoflann
@@ -65,7 +62,6 @@ install(TARGETS
   test_rrtconnect
   test_rbtconnect
   test_rgbtconnect
-  test_drgbt_benchmark
+  test_drgbt
   test_rgbmtstar
-  test_rgbmtstar_benchmark
   DESTINATION apps)
