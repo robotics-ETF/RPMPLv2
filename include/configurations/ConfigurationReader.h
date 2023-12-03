@@ -98,6 +98,11 @@ public:
             RBTConnectConfig::NUM_SPINES = RBTConnectConfigRoot["NUM_SPINES"].as<int>();
         else
             LOG(INFO) << "RBTConnectConfig::NUM_SPINES is not defined! Using default value of " << RBTConnectConfig::NUM_SPINES;
+        
+        if (RBTConnectConfigRoot["NUM_ITER_SPINE"].IsDefined())
+            RBTConnectConfig::NUM_ITER_SPINE = RBTConnectConfigRoot["NUM_ITER_SPINE"].as<int>();
+        else
+            LOG(INFO) << "RBTConnectConfig::NUM_ITER_SPINE is not defined! Using default value of " << RBTConnectConfig::NUM_ITER_SPINE;
 
         // RGBTConnectConfigRoot
         if (RGBTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())

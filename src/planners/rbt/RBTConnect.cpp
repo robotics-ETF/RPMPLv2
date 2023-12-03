@@ -25,12 +25,12 @@ bool planning::rbt::RBTConnect::solve()
 	while (true)
 	{
 		/* Generating bur */
-		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
-		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
+		// std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+		// std::cout << "Num. states: " << planner_info->getNumStates() << "\n";
 		q_e = ss->getRandomState();
-		//LOG(INFO) << q_rand->getCoord().transpose();
+		// std::cout << q_rand->getCoord().transpose() << "\n";
 		q_near = trees[tree_idx]->getNearestState(q_e);
-		//LOG(INFO) << "Tree: " << trees[treeNum]->getTreeName();
+		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
 			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
@@ -91,7 +91,6 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 	float step;
 	float rho = 0;             	// The path length in W-space
 	int counter = 0;
-	int K_max = 5;              // The number of iterations for computing q*
 	std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
 	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
 	std::shared_ptr<Eigen::MatrixXf> skeleton_new = skeleton;
@@ -107,7 +106,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		else
 			q_new->setCoord(q_new->getCoord() + step * (q_e->getCoord() - q_new->getCoord()));
 		
-		if (++counter == K_max)
+		if (++counter == RBTConnectConfig::NUM_ITER_SPINE)
 			return {base::State::Status::Advanced, q_new};
 
 		rho = 0;
