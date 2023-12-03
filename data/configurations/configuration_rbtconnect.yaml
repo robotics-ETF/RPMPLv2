@@ -1,6 +1,7 @@
 MAX_NUM_ITER: 1000000000	  # Maximal number of algorithm iterations
 MAX_NUM_STATES: 10000		    # Maximal number of considered states
-MAX_PLANNING_TIME: 60000	  # Maximal algorithm runtime in [ms]
+MAX_PLANNING_TIME: 10000	  # Maximal algorithm runtime in [ms]
 D_CRIT: 0.03			          # Critical distance in W-space in [m] when RBT uses RRT-mode
 DELTA: 3.14159			        # Radius of hypersphere in [rad] from q to q_e
 NUM_SPINES: 7			          # Number of bur spines
+NUM_ITER_SPINE: 1           # Number of iterations when computing a single spine (1 iteration is minimum, when accordingly function 'fi' is not computed)

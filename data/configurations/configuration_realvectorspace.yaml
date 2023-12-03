@@ -1,2 +1,2 @@
 EQUALITY_THRESHOLD: 0.000001		        # Threshold to determine whether two states are equal
-NUM_INTERPOLATION_VALIDITY_CHECKS: 15	  # Number of discrete collision checks of the edge with the length of RRTConnectConfig::EPS_STEP
+NUM_INTERPOLATION_VALIDITY_CHECKS: 10	  # Number of discrete collision checks of the edge with the length of RRTConnectConfig::EPS_STEP

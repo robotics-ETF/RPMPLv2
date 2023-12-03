@@ -26,12 +26,12 @@ bool planning::rbt::RGBTConnect::solve()
 	while (true)
 	{
 		/* Generating generalized bur */
-		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
-		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
+		// std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+		// std::cout << "Num. states: " << planner_info->getNumStates() << "\n";
 		q_e = ss->getRandomState();
-		// LOG(INFO) << q_rand->getCoord().transpose();
+		// std::cout << q_rand->getCoord().transpose() << "\n";
 		q_near = trees[tree_idx]->getNearestState(q_e);
-		// LOG(INFO) << "Tree: " << trees[treeNum]->getTreeName();
+		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
 			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)

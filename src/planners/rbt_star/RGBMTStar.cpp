@@ -40,10 +40,10 @@ bool planning::rbt_star::RGBMTStar::solve()
 
     while (true)
     {
-		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
-		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
-        // LOG(INFO) << "Num. main: " << num_states[0] + num_states[1] << "\t "
-        //           << "Num. local: " << planner_info->getNumStates() - num_states[0] - num_states[1] << std::endl;
+		// std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+		// std::cout << "Num. states: " << planner_info->getNumStates() << "\n";
+        // std::cout << "Num. main: " << num_states[0] + num_states[1] << "\t "
+        //           << "Num. local: " << planner_info->getNumStates() - num_states[0] - num_states[1] << "\n";
         
 		q_rand = getRandomState();
         
@@ -63,7 +63,7 @@ bool planning::rbt_star::RGBMTStar::solve()
         {
             // If the connection with 'q_near' is not possible, attempt to connect with 'parent(q_near)', etc.
             q_near = trees[idx]->getNearestState(q_rand);
-            // q_near = trees[idx]->getNearestStateV2(q_rand);
+            // q_near = trees[idx]->getNearestState2(q_rand);
             std::shared_ptr<base::State> q_near_new = q_near;
             while (true)
             {
@@ -133,7 +133,7 @@ bool planning::rbt_star::RGBMTStar::solve()
                     {
                         q_con_opt = q_new;
                         cost_opt = cost;
-                        // LOG(INFO) << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt;
+                        // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
                         // planner_info->setSuccessState(true);
                         // computePath(q_con_opt);
                         // outputPlannerData("/home/nermin/RPMPLv2/data/planar_2dof/scenario1_tests/plannerData" + 
@@ -184,10 +184,10 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
         q_rand = ss->getRandomState();    // Uniform distribution
         if (planner_info->getNumStates() > 2 * (num_states[0] + num_states[1]))     // If local trees contain more states than main trees
         {
-            // LOG(INFO) << "Local trees are dominant! " << std::endl;
+            // std::cout << "Local trees are dominant! \n";
             tree_idx = (num_states[0] < num_states[1]) ? 0 : 1;
             q_near = trees[tree_idx]->getNearestState(q_rand);
-            // q_near = trees[tree_idx]->getNearestStateV2(q_rand);
+            // q_near = trees[tree_idx]->getNearestState2(q_rand);
             tie(status, q_rand) = connectGenSpine(q_near, q_rand);
             if (status != base::State::Status::Trapped)
                 return q_rand;
@@ -218,7 +218,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 		else
 		{
 			tie(status, q_new) = extend(q_temp, q_e);
-            if (++num_ext > 10)
+            if (++num_ext > 0.2 * RRTConnectConfig::MAX_EXTENSION_STEPS)
             {
                 d_c = ss->computeDistance(q_new);   
                 num_ext = 0;

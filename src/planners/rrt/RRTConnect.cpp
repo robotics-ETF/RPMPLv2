@@ -16,7 +16,6 @@ planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_) : A
 planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
 									  std::shared_ptr<base::State> goal_) : AbstractPlanner(ss_, start_, goal_)
 {
-	// LOG(INFO) << "Initializing planner...";
 	// std::cout << "Initializing planner...\n";
 	if (!ss->isValid(start))
 		throw std::domain_error("Start position is invalid!");
@@ -31,7 +30,6 @@ planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std
 	trees[1]->upgradeTree(goal, nullptr);
 	planner_info->setNumIterations(0);
     planner_info->setNumStates(2);
-	// LOG(INFO) << "Planner initialized!";
 	// std::cout << "Planner initialized!\n";
 }
 
@@ -46,7 +44,7 @@ planning::rrt::RRTConnect::~RRTConnect()
 
 bool planning::rrt::RRTConnect::solve()
 {
-	// LOG(INFO) << "Entering solve ...";
+	// std::cout << "Entering solve ...\n";
 	time_start = std::chrono::steady_clock::now(); 	// Start the clock
 	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_rand, q_near, q_new;
@@ -55,16 +53,16 @@ bool planning::rrt::RRTConnect::solve()
 	while (true)
 	{
 		/* Extend */
-		// LOG(INFO) << "Iteration: " << planner_info->getNumIterations();
-		// LOG(INFO) << "Num. states: " << planner_info->getNumStates();
+		// std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+		// std::cout << "Num. states: " << planner_info->getNumStates() << "\n";
 		q_rand = ss->getRandomState();
-		// LOG(INFO) << q_rand->getCoord().transpose();
+		// std::cout << q_rand->getCoord().transpose() << "\n";
 		q_near = trees[tree_idx]->getNearestState(q_rand);
-		// q_near = trees[tree_idx]->getNearestStateV2(q_rand);
+		// q_near = trees[tree_idx]->getNearestState2(q_rand);
 
-		// LOG(INFO) << "Tree: " << trees[tree_idx]->getTreeName();
+		// std::cout << "Tree: " << trees[tree_idx]->getTreeName() << "\n";
 		tie(status, q_new) = extend(q_near, q_rand);
-		// LOG(INFO) << "Status: " << status;
+		// std::cout << "Status: " << status << "\n";
 		if (status != base::State::Status::Trapped)
 			trees[tree_idx]->upgradeTree(q_new, q_near);
 
@@ -73,10 +71,10 @@ bool planning::rrt::RRTConnect::solve()
 		/* Connect */
 		if (status != base::State::Status::Trapped)
 		{	
-			// LOG(INFO) << "Not Trapped";
-			// LOG(INFO) << "Trying to connect to: " << q_new->getCoord().transpose() << " from " << trees[tree_idx]->getTreeName();
+			// std::cout << "Not Trapped \n";
+			// std::cout << "Trying to connect to: " << q_new->getCoord().transpose() << " from " << trees[tree_idx]->getTreeName() << "\n";
 			q_near = trees[tree_idx]->getNearestState(q_new);
-			// q_near = trees[tree_idx]->getNearestStateV2(q_new);
+			// q_near = trees[tree_idx]->getNearestState2(q_new);
 			status = connect(trees[tree_idx], q_near, q_new);
 		}
 		
@@ -98,7 +96,7 @@ base::Tree planning::rrt::RRTConnect::getTree(int tree_idx) const
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRTConnect::extend
 	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	// LOG(INFO) << "Inside extend.";
+	// std::cout << "Inside extend. \n";
 	base::State::Status status;
 	std::shared_ptr<base::State> q_new;
 	tie(status, q_new) = ss->interpolateEdge2(q, q_e, RRTConnectConfig::EPS_STEP);
@@ -106,13 +104,13 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRT
 		return {status, q_new};
 	else
 		return {base::State::Status::Trapped, q};
-	// LOG(INFO) << "Extended.";
+	// std::cout << "Extended. \n";
 }
 
 base::State::Status planning::rrt::RRTConnect::connect
 	(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	// LOG(INFO) << "Inside connect.";
+	// std::cout << "Inside connect. \n";
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
 	int num_ext = 0;
@@ -123,7 +121,7 @@ base::State::Status planning::rrt::RRTConnect::connect
 		if (status != base::State::Status::Trapped)
 			tree->upgradeTree(q_new, q_temp);
 	}
-	// LOG(INFO) << "Connected.";
+	// std::cout << "Connected. \n";
 	return status;
 }
 

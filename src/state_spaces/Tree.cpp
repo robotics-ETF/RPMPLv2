@@ -46,7 +46,7 @@ std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<b
 }
 
 // Get nearest state without using nanoflann library
-std::shared_ptr<base::State> base::Tree::getNearestStateV2(const std::shared_ptr<base::State> q)
+std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<base::State> q)
 {
 	int q_near_idx = 0;
 	float d, d_min = INFINITY;

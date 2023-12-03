@@ -1,5 +1,5 @@
 MAX_NUM_ITER: 1000000000	  # Maximal number of algorithm iterations
 MAX_NUM_STATES: 10000		    # Maximal number of considered states
-MAX_PLANNING_TIME: 60000	  # Maximal algorithm runtime in [ms]
+MAX_PLANNING_TIME: 10000	  # Maximal algorithm runtime in [ms]
 MAX_EXTENSION_STEPS: 50		  # Maximal number of extensions in connect procedure
 EPS_STEP: 0.1			          # Advancing step in C-space in [rad] used by RRT-based algorithms

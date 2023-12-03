@@ -37,8 +37,9 @@ namespace planning
             void updateCurrentState();
             int getIndexInHorizon(std::shared_ptr<HorizonState> q);
             bool whetherToReplan();
-            float replan(float replanning_time);
-            std::unique_ptr<planning::AbstractPlanner> initPlanner(float max_planning_time);
+            std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
+            virtual void replan(float max_planning_time);
+            void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_, float delta_q_max);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
             std::vector<std::shared_ptr<HorizonState>> horizon;             // List of all horizon states and their information
@@ -55,6 +56,7 @@ namespace planning
             const int num_lateral_states = 2 * ss->getNumDimensions() - 2;  // Number of lateral states
             std::string planner_name;                                       // Name of a static planner (for obtaining the predefined path)
             std::chrono::steady_clock::time_point time_iter_start;
+            int replanning_cnt;
         };
     }
 }

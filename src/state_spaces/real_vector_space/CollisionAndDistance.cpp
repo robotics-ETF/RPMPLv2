@@ -151,14 +151,14 @@ const Eigen::Vector3f base::CollisionAndDistance::get3DPoint(const Eigen::Vector
 bool base::CollisionAndDistance::collisionLineSegToLineSeg(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector3f &C, Eigen::Vector3f &D)
 {
     Eigen::Vector3f P1, P2;
-    double alpha1 = (B - A).squaredNorm();
-    double alpha2 = (B - A).dot(D - C);
-    double beta1 = (C - D).dot(B - A);
-    double beta2 = (C - D).dot(D - C);
-    double gamma1 = (A - C).dot(A - B);
-    double gamma2 = (A - C).dot(C - D);
-    double s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
-    double t = (gamma1 - beta1 * s) / alpha1;
+    float alpha1 = (B - A).squaredNorm();
+    float alpha2 = (B - A).dot(D - C);
+    float beta1 = (C - D).dot(B - A);
+    float beta2 = (C - D).dot(D - C);
+    float gamma1 = (A - C).dot(A - B);
+    float gamma2 = (A - C).dot(C - D);
+    float s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
+    float t = (gamma1 - beta1 * s) / alpha1;
 
     if (t > 0 && t < 1 && s > 0 && s < 1)
 	{
@@ -179,14 +179,14 @@ bool base::CollisionAndDistance::collisionCapsuleToSphere(const Eigen::Vector3f 
 
     else
 	{
-        double a = (B - A).squaredNorm();
-        double b = 2 * (A.dot(B) + (A - B).dot(obs.head(3)) - A.squaredNorm());
-        double c = A.squaredNorm() + obs.head(3).squaredNorm() - 2 * A.dot(obs.head(3)) - radius * radius;
-        double D = b * b - 4 * a * c;
+        float a = (B - A).squaredNorm();
+        float b = 2 * (A.dot(B) + (A - B).dot(obs.head(3)) - A.squaredNorm());
+        float c = A.squaredNorm() + obs.head(3).squaredNorm() - 2 * A.dot(obs.head(3)) - radius * radius;
+        float D = b * b - 4 * a * c;
         if (D >= 0)
 		{
-            double t1 = (-b + sqrt(D)) / (2 * a);
-            double t2 = (-b - sqrt(D)) / (2 * a);
+            float t1 = (-b + sqrt(D)) / (2 * a);
+            float t2 = (-b - sqrt(D)) / (2 * a);
             if (t1 > 0 && t1 < 1 || t2 > 0 && t2 < 1)
                 return true;
         }
@@ -211,14 +211,14 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
     float d_c = INFINITY;
     std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
     std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp = std::make_shared<Eigen::MatrixXf>(3, 2);
-    double alpha1 = (B - A).squaredNorm();
-    double alpha2 = (B - A).dot(D - C);
-    double beta1  = (C - D).dot(B - A);
-    double beta2  = (C - D).dot(D - C);
-    double gamma1 = (A - C).dot(A - B);
-    double gamma2 = (A - C).dot(C - D);
-    double s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
-    double t = (gamma1 - beta1 * s) / alpha1;
+    float alpha1 = (B - A).squaredNorm();
+    float alpha2 = (B - A).dot(D - C);
+    float beta1  = (C - D).dot(B - A);
+    float beta2  = (C - D).dot(D - C);
+    float gamma1 = (A - C).dot(A - B);
+    float gamma2 = (A - C).dot(C - D);
+    float s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
+    float t = (gamma1 - beta1 * s) / alpha1;
 	
 	if (t > 0 && t < 1 && s > 0 && s < 1)
 	{
@@ -336,26 +336,26 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)
 {
     std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-	double AO = (A - obs.head(3)).norm();
-    double d_c = AO - obs(3);
+	float AO = (A - obs.head(3)).norm();
+    float d_c = AO - obs(3);
     if (d_c < radius)	// The collision occurs
         return {0, nullptr};
     
-    double BO = (B - obs.head(3)).norm();
-    double d_c_temp = BO - obs(3);
+    float BO = (B - obs.head(3)).norm();
+    float d_c_temp = BO - obs(3);
     if (d_c_temp < radius) 	// The collision occurs
         return {0, nullptr};    
     
     if (d_c_temp < d_c)
         d_c = d_c_temp; 
 
-    double AB = (A - B).norm();
-    double s = (AB + AO + BO) / 2;
-    double alpha = acos((AO * AO + AB * AB - BO * BO) / (2 * AO * AB));
+    float AB = (A - B).norm();
+    float s = (AB + AO + BO) / 2;
+    float alpha = acos((AO * AO + AB * AB - BO * BO) / (2 * AO * AB));
     d_c_temp = 2 * sqrt(s * (s - AB) * (s - AO) * (s - BO)) / AB - obs(3);     // h = 2 * P / AB; d_c_temp = h - obs(3);
     if (alpha < M_PI / 2)
 	{
-        double beta = acos((BO * BO + AB * AB - AO * AO) / (2 * BO * AB));
+        float beta = acos((BO * BO + AB * AB - AO * AO) / (2 * BO * AB));
         if (beta < M_PI / 2) 	// Acute triangle
 		{    
             d_c = d_c_temp;

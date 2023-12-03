@@ -7,4 +7,4 @@ WEIGHT_MIN: 0.5			        # Treshold 1 for the replanning assessment. Range: bet
 WEIGHT_MEAN_MIN: 0.5		    # Treshold 2 for the replanning assessment. Range: between 0 and 1
 D_CRIT: 0.05			          # Critical distance in W-space in [m] when RBT uses RRT-mode
 TASK1_UTILITY: 0.3          # Maximal utility which Task 1 can take from the processor
-REAL_TIME_SCHEDULING: "DPS" # "DPS" - Dynamic Priority Scheduling; "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling
+REAL_TIME_SCHEDULING: "" # "DPS" - Dynamic Priority Scheduling; "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling
