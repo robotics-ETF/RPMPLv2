@@ -13,6 +13,15 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 	std::string scenario_file_path = "/data/xarm6/scenario_real_time/scenario_real_time.yaml";
 
+	std::vector<std::string> routines = { 	// Routines of which the time executions are stored
+		"replan [ms]",
+		"isValid [us]", 
+		"computeDistance [us]", 
+		"generateGBur [ms]", 
+		"generateHorizon [us]", 
+		"updateHorizon [us]"
+	};
+
 	// -------------------------------------------------------------------------------------- //
 
 	initGoogleLogging(argv);
@@ -22,30 +31,26 @@ int main(int argc, char **argv)
 	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	int num_obstacles_init = node["testing"]["num_obstacles_init"].as<int>();
-	const int max_num_obstacles = node["testing"]["max_num_obstacles"].as<int>();
+	int num_random_obstacles_init = node["testing"]["num_random_obstacles_init"].as<int>();
+	const int max_num_random_obstacles = node["testing"]["max_num_random_obstacles"].as<int>();
 	const float max_obs_vel = node["testing"]["max_obs_vel"].as<float>();
+	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = 100 * max_obs_vel;
 	int num_test_init = node["testing"]["num_test_init"].as<int>();
 	int num_success_test_init = node["testing"]["num_success_test_init"].as<int>();
 	const int max_num_tests = node["testing"]["max_num_tests"].as<int>();
-	std::string static_planner_name = node["testing"]["static_planner_name"].as<std::string>();
-	std::vector<std::string> routines;
-    for (int i = 0; i < node["testing"]["routines"].size(); i++)
-        routines.emplace_back(node["testing"]["routines"][i].as<std::string>());
-	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = 100 * max_obs_vel;
 
-	while (num_obstacles_init <= max_num_obstacles)
+	while (num_random_obstacles_init <= max_num_random_obstacles)
 	{
-		LOG(INFO) << "Number of obstacles " << num_obstacles_init << " of " << max_num_obstacles;
+		LOG(INFO) << "Number of obstacles " << num_random_obstacles_init << " of " << max_num_random_obstacles;
 		
 		std::ofstream output_file;
 		if (num_test_init == 1)
 		{
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-							"_routine_times" + std::to_string(num_obstacles_init) + ".log", std::ofstream::out);
+							"_routine_times" + std::to_string(num_random_obstacles_init) + ".log", std::ofstream::out);
 			output_file << "Dynamic planner: DRGBT" << std::endl;
-			output_file << "Static planner for replanning: " << static_planner_name << std::endl;
-			output_file << "Number of obstacles: " << num_obstacles_init << std::endl;
+			output_file << "Static planner for replanning: " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
+			output_file << "Number of obstacles: " << num_random_obstacles_init << std::endl;
 			output_file << "Maximal velocity of each obstacle: " << max_obs_vel << " [m/iter.] " << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();
@@ -63,7 +68,7 @@ int main(int argc, char **argv)
 				std::shared_ptr<base::State> start = scenario.getStart();
 				std::shared_ptr<base::State> goal = scenario.getGoal();
 				std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-				initRandomObstacles(scenario, max_obs_vel, num_obstacles_init);
+				initRandomObstacles(scenario, max_obs_vel, num_random_obstacles_init);
 
 				LOG(INFO) << "Test number: " << num_test << " (" << num_success_tests << ")";
 				LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
@@ -73,8 +78,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Start: " << scenario.getStart();
 				LOG(INFO) << "Goal: " << scenario.getGoal();
 				
-				std::unique_ptr<planning::AbstractPlanner> planner = 
-					std::make_unique<planning::drbt::DRGBT>(ss, start, goal, static_planner_name);
+				std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::drbt::DRGBT>(ss, start, goal);
 				bool result = planner->solve();
 				
 				LOG(INFO) << "DRGBT planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
@@ -101,7 +105,7 @@ int main(int argc, char **argv)
 				}
 
 				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-								 "_routine_times" + std::to_string(num_obstacles_init) + ".log", std::ofstream::app);
+								 "_routine_times" + std::to_string(num_random_obstacles_init) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test << std::endl;
 				output_file << "Success:\n" << result << std::endl;
@@ -140,7 +144,7 @@ int main(int argc, char **argv)
 
 		num_test_init = 1;
 		num_success_test_init = 0;
-		num_obstacles_init += std::pow(10, std::floor(std::log10(num_obstacles_init)));
+		num_random_obstacles_init += std::pow(10, std::floor(std::log10(num_random_obstacles_init)));
 
 		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
 		LOG(INFO) << "Average execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [ms]";

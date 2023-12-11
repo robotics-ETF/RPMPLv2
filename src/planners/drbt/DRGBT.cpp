@@ -4,16 +4,15 @@
 
 #include "DRGBT.h"
 
-#include <glog/log_severity.h>
-#include <glog/logging.h>
+// #include <glog/log_severity.h>
+// #include <glog/logging.h>
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
 planning::drbt::DRGBT::DRGBT(std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
 
 planning::drbt::DRGBT::DRGBT(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                             std::shared_ptr<base::State> goal_, const std::string &planner_name_) :
-                             RGBTConnect(ss_)
+                             std::shared_ptr<base::State> goal_) : RGBTConnect(ss_)
 {
 	// std::cout << "Initializing planner... \n";
     start = start_;
@@ -31,8 +30,10 @@ planning::drbt::DRGBT::DRGBT(std::shared_ptr<base::StateSpace> ss_, std::shared_
     status = base::State::Status::Reached;
     planner_info->setNumStates(1);
 	planner_info->setNumIterations(0);
-    planner_name = planner_name_;
     path.emplace_back(start);                                   // State 'start' is added to the realized path
+    if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*") 
+        RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
+    
 	// std::cout << "Planner initialized! \n";
 }
 
@@ -59,17 +60,17 @@ bool planning::drbt::DRGBT::solve()
 
     while (true)
     {
-        // std::cout << "TASK 1: Computing next configuration... \n";
         // std::cout << "\n\nIteration num. " << planner_info->getNumIterations() << "\n";
+        // std::cout << "TASK 1: Computing next configuration... \n";
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
 
         // Update environment and check if the collision occurs
         bool is_valid = checkMotionValidity();              // < 10 [us]
 
         // Since the environment has changed, a new distance is required!
-        // auto time_computeDistance = std::chrono::steady_clock::now();
+        auto time_computeDistance = std::chrono::steady_clock::now();
         float d_c = ss->computeDistance(q_current, true);   // < 1 [ms]
-        // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, std::chrono::steady_clock::now(), "microseconds"), 2);
+        planner_info->addRoutineTime(getElapsedTime(time_computeDistance, std::chrono::steady_clock::now(), "microseconds"), 2);
 
         if (!is_valid || d_c <= 0)
         {
@@ -124,7 +125,7 @@ bool planning::drbt::DRGBT::solve()
 void planning::drbt::DRGBT::generateHorizon()
 {
     // std::cout << "Generating horizon... \n";
-    // auto time_generateHorizon = std::chrono::steady_clock::now();
+    auto time_generateHorizon = std::chrono::steady_clock::now();
 
     if (!horizon.empty())   // 'q_next' is reached. No replanning nor 'status' is trapped
     {
@@ -175,14 +176,14 @@ void planning::drbt::DRGBT::generateHorizon()
     // for (int i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
     
-    // planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, std::chrono::steady_clock::now(), "microseconds"), 4);
+    planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, std::chrono::steady_clock::now(), "microseconds"), 4);
 }
 
 // Update the horizon size, and add lateral spines.
 void planning::drbt::DRGBT::updateHorizon(float d_c)
 {
     // std::cout << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << d_c << "\n";
-    // auto time_updateHorizon = std::chrono::steady_clock::now();
+    auto time_updateHorizon = std::chrono::steady_clock::now();
     horizon_size = std::min(int(DRGBTConfig::INIT_HORIZON_SIZE * (1 + DRGBTConfig::D_CRIT / d_c)),
                             ss->getNumDimensions() * DRGBTConfig::INIT_HORIZON_SIZE);
     
@@ -196,7 +197,7 @@ void planning::drbt::DRGBT::updateHorizon(float d_c)
     // std::cout << "Adding " << num_lateral_states << " lateral states... \n";
     addLateralStates();
     horizon_size = horizon.size();
-    // planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, std::chrono::steady_clock::now(), "microseconds"), 5);
+    planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, std::chrono::steady_clock::now(), "microseconds"), 5);
 }
 
 // Generate the generalized bur from 'q_current', i.e., compute the horizon spines.
@@ -204,7 +205,7 @@ void planning::drbt::DRGBT::updateHorizon(float d_c)
 void planning::drbt::DRGBT::generateGBur()
 {
     // std::cout << "Generating gbur by computing reached states... \n";
-    // auto time_generateGBur = std::chrono::steady_clock::now();
+    auto time_generateGBur = std::chrono::steady_clock::now();
     int idx;
     for (idx = 0; idx < horizon.size(); idx++)
     {
@@ -230,7 +231,7 @@ void planning::drbt::DRGBT::generateGBur()
             break;
         }
     }
-    // planner_info->addRoutineTime(getElapsedTime(time_generateGBur, std::chrono::steady_clock::now()), 3);
+    planner_info->addRoutineTime(getElapsedTime(time_generateGBur, std::chrono::steady_clock::now()), 3);
 }
 
 // Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
@@ -451,10 +452,10 @@ void planning::drbt::DRGBT::computeNextState()
         else if (weight < 0)
             weight = 0;
 
-        // If state does not belong to the predefined path, 'weight' is decreased within the range [0, DRGBTConfig::WEIGHT_MIN]
+        // If state does not belong to the predefined path, 'weight' is decreased within the range [0, DRGBTConfig::TRESHOLD_WEIGHT]
         // If such state becomes the best one, the replanning will surely be triggered
         if (horizon[i]->getIndex() == -1)   
-            weight *= DRGBTConfig::WEIGHT_MIN;
+            weight *= DRGBTConfig::TRESHOLD_WEIGHT;
         
         horizon[i]->setWeight(weight);
 
@@ -544,36 +545,36 @@ bool planning::drbt::DRGBT::whetherToReplan()
         weight_max = std::max(weight_max, horizon[i]->getWeight());
         weight_sum += horizon[i]->getWeight();
     }
-    return (weight_max <= DRGBTConfig::WEIGHT_MIN && 
-            weight_sum / horizon.size() <= DRGBTConfig::WEIGHT_MEAN_MIN) 
+    return (weight_max <= DRGBTConfig::TRESHOLD_WEIGHT && 
+            weight_sum / horizon.size() <= DRGBTConfig::TRESHOLD_WEIGHT) 
             ? true : false;
 }
 
 std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBT::initStaticPlanner(float max_planning_time)
 {
-    // std::cout << "Static planner (for replanning): " << planner_name << "\n";
-    if (planner_name == "RRTConnect")
+    // std::cout << "Static planner (for replanning): " << DRGBTConfig::STATIC_PLANNER_NAME << "\n";
+    if (DRGBTConfig::STATIC_PLANNER_NAME == "RRTConnect")
     {
         RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rrt::RRTConnect>(ss, q_current, goal);
     }
-    else if (planner_name == "RBTConnect")
+    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RBTConnect")
     {
         RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt::RBTConnect>(ss, q_current, goal);
     }
-    else if (planner_name == "RGBTConnect")
+    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBTConnect")
     {
         RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, goal);
     }
-    else if (planner_name == "RGBMT*")
+    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*")
     {
         RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_current, goal);
     }
     else
-        throw std::domain_error("The requested static planner " + planner_name + " is not found! ");
+        throw std::domain_error("The requested static planner " + DRGBTConfig::STATIC_PLANNER_NAME + " is not found! ");
 }
 
 // Try to replan the predefined path from current to goal configuration within the specified time
@@ -591,12 +592,12 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
         if (DRGBTConfig::REAL_TIME_SCHEDULING == "DPS")         // Dynamic Priority Scheduling
         {
             // std::cout << "Replanning with Dynamic Priority Scheduling \n";
-            float max_planning_time_new = max_planning_time + (1 - DRGBTConfig::TASK1_UTILITY) * DRGBTConfig::MAX_ITER_TIME;
-            // std::cout << "Trying to replan in " << max_planning_time_new << " [ms]... \n";
+            max_planning_time += (1 - DRGBTConfig::TASK1_UTILITY) * DRGBTConfig::MAX_ITER_TIME;
+            // std::cout << "Trying to replan in " << max_planning_time << " [ms]... \n";
 
-            planner = initStaticPlanner(max_planning_time_new);
+            planner = initStaticPlanner(max_planning_time);
             result = planner->solve();
-            if (max_planning_time_new - planner->getPlannerInfo()->getPlanningTime() 
+            if (max_planning_time - planner->getPlannerInfo()->getPlanningTime() 
                 < (1 - DRGBTConfig::TASK1_UTILITY) * DRGBTConfig::MAX_ITER_TIME)
                     replanning_cnt = -1;    // Replanning is NOT completed within a single iteration
         }
@@ -624,7 +625,7 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
             status = base::State::Status::Reached;
             horizon.clear();
             q_next = std::make_shared<HorizonState>(predefined_path.front(), 0);
-            // planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 0);  // replan
+            planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 0);  // replan
         }
         else    // New path is not found, and just continue with the previous motion. We can also impose the robot to stop.
             throw std::runtime_error("New path is not found! ");
@@ -675,10 +676,10 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
         ss->env->updateEnvironment(random / num_checks);
         q_temp = ss->interpolateEdge(q_prev, q_current, k / num_checks * dist, dist);
 
-        // auto time_isValid = std::chrono::steady_clock::now();
+        auto time_isValid = std::chrono::steady_clock::now();
         bool is_valid = ss->isValid(q_temp);
-        // if (k == 1)     // Just to reduce the number of measurements
-        //     planner_info->addRoutineTime(getElapsedTime(time_isValid, std::chrono::steady_clock::now(), "microseconds"), 1);
+        if (k == 1)     // Just to reduce the number of measurements
+            planner_info->addRoutineTime(getElapsedTime(time_isValid, std::chrono::steady_clock::now(), "microseconds"), 1);
     
         if (!is_valid)
             return false;

@@ -1,5 +1,9 @@
 obstacles:  
-
+  #- box:
+  #    dim: [0.05, 0.05, 0.05]
+  #    trans: [0.5, 0.5, 0.5]
+  #    rot: [0, 0, 0, 0]
+      
 robot:
   type: "xarm6"
   urdf: "/data/xarm6/xarm6.urdf"
@@ -13,18 +17,9 @@ robot:
   table_included: false      # Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'
   
 testing:
-  num_obstacles_init: 1
-  max_num_obstacles: 100
-  max_obs_vel: 0.1 	# [m / iter.] 	delta_q * r > max_obs_vel, eps = sqrt(num_DOFs) * delta_q
-  
+  num_random_obstacles_init: 100		# Number of random obstacles to start with the testing
+  max_num_random_obstacles: 100		# Maximal number of random obstacles to be added
+  max_obs_vel: 0.1 			# [m / iter.]
   num_test_init: 1
   num_success_test_init: 0
   max_num_tests: 1000
-  static_planner_name: "RGBMT*"
-  static_planner_name: "RGBTConnect"
-  routines: ["replan [ms]", 
-  	     "isValid [us]", 
-  	     "computeDistance [us]", 
-  	     "generateGBur [ms]", 
-  	     "generateHorizon [us]", 
-  	     "updateHorizon [us]"]

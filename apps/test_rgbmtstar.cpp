@@ -19,7 +19,6 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 
 	int max_num_tests = 30;
-	int num_random_obstacles = 10;  	// If set to zero, random obstacles will not be initialized
 	bool use_recommended_planning_times = false;
 	
 	// -------------------------------------------------------------------------------------- //
@@ -30,6 +29,8 @@ int main(int argc, char **argv)
 
 	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
+    YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
+	int num_random_obstacles = node["num_random_obstacles"].as<int>();
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
 	std::shared_ptr<base::State> start = scenario.getStart();

@@ -24,7 +24,8 @@ namespace env
 		const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &getParts() const { return parts; }
 		void setMaxVel(float max_vel_) { max_vel = max_vel_; }
 		void setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_);
-		void addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob);
+		void setVelocities(const std::vector<fcl::Vector3f> &velocities_) { velocities = velocities_; }
+		void addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, const fcl::Vector3f &velocity = fcl::Vector3f::Zero());
 		void removeCollisionObjects(int start_idx);
 		void updateEnvironment(float step);
 

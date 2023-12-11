@@ -22,6 +22,8 @@ obstacles:
       trans: [-0.55, -0.55, 0.5]
       rot: [0, 0, 0, 0]
 
+num_random_obstacles: 0 	# If set to zero, random obstacles will not be initialized
+
 robot:
   type: "xarm6"
   urdf: "/data/xarm6/xarm6.urdf"

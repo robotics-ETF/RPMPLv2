@@ -16,8 +16,7 @@ namespace planning
         {
         public:
             DRGBT(std::shared_ptr<base::StateSpace> ss_);
-			DRGBT(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, 
-                         std::shared_ptr<base::State> goal_, const std::string &planner_name_ = "RGBTConnect");
+			DRGBT(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
             ~DRGBT();                         
             
             bool solve() override;
@@ -54,7 +53,6 @@ namespace planning
             std::vector<std::shared_ptr<base::State>> predefined_path;      // The predefined path that is being followed
             const float hysteresis = 0.1;                                   // Hysteresis size when choosing the next state
             const int num_lateral_states = 2 * ss->getNumDimensions() - 2;  // Number of lateral states
-            std::string planner_name;                                       // Name of a static planner (for obtaining the predefined path)
             std::chrono::steady_clock::time_point time_iter_start;
             int replanning_cnt;
         };

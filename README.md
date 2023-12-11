@@ -60,23 +60,25 @@ For example, open ```configuration_rgbmtstar.yaml```, and set the maximal planni
 MAX_PLANNING_TIME: 10000
 ```
 
-## 3.2 Set scenario parameters
+## 3.2 Set scenario parameters for static planning
 Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario yaml files.
 
 For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many obstacles as you want. For now, only box obstacles are supported, and you can set:
-- ```dim```: Dimensions (x, y and z in [m]), 
-- ```trans```: Translation (x, y and z in [m]),
+- ```dim```: Dimensions (x, y and z in [m]);
+- ```trans```: Translation (x, y and z in [m]);
 - ```rot```: Rotation (quaternion). 
 
+Additionally, by setting ```num_random_obstacles```, you can set as many random obstacles as you want. All of them will be collision free with your start and goal configuration. Note that if you set zero random obstacles, they will not be initialized. 
+
 Moreover, some details about the used robot can be set, such as:
-- ```type```: Robot type, 
-- ```urdf```: Urdf file location, 
-- ```space```: Configuration space type (RealVectorSpace or RealVectorSpaceFCL), 
-- ```num_DOFs```: Number of DOFs (number of dimensions of the configuration space), 
-- ```start```: Start configuration,
-- ```goal```: Goal configuration,
-- ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached), 
-- ```capsules_radius```: Radius of each capsule in [m] that approximates robot links,
+- ```type```: Robot type;
+- ```urdf```: Urdf file location;
+- ```space```: Configuration space type (RealVectorSpace or RealVectorSpaceFCL);
+- ```num_DOFs```: Number of DOFs (number of dimensions of the configuration space);
+- ```start```: Start configuration;
+- ```goal```: Goal configuration;
+- ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
+- ```capsules_radius```: Radius of each capsule in [m] that approximates robot links;
 - ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'.
 
 Note that the last three options are only available for ```/xarm6``` robot.
@@ -92,7 +94,38 @@ Otherwise, if you do want to use FCL, just set:
 space: "RealVectorSpaceFCL"
 ```
 
-## 3.3 Test planners
+## 3.3 Set scenario parameters for dynamic real-time planning
+In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_real_time/scenario_real_time.yaml```. You can set the following:
+- ```num_random_obstacles_init```: Number of random obstacles to start with the testing;
+- ```max_num_random_obstacles```: Maximal number of random obstacles to be added;
+- ```max_obs_vel```: Maximal velocity of each obstacle in [m/iter.];
+- ```num_test_init```: Number of testing to start with (default: 1);
+- ```num_success_test_init```: Number of successful tests so far (default: 0);
+- ```max_num_tests```: Maximal number of tests that should be carried out.
+
+For example, if you set ```num_random_obstacles_init: 1``` and ```max_num_random_obstacles: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```num_random_obstacles_init : 0``` and ```max_num_random_obstacles : 0```.
+
+You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line until it reaches the workspace limit, when it returns back by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_obs_vel```.
+
+Parameters ```num_test_init``` and ```num_success_test_init``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left just by setting these two parameters.
+
+In the file ```/data/configurations/configuration_drgbt```, you can set the following DRGBT parameters:
+- ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
+- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the real obstacle velocity in [m/s] depends on this parameter! When you specify ```max_obs_vel``` in [m/iter.], you need to divide such value with ```MAX_ITER_TIME``` to obtain the real velocity in [m/s];
+- ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [ms];
+- ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
+- ```STEP```: Advancing step in C-space in [rad] when moving from current towards next state in a single iteration. Be aware that this step should be conveniently chosen in order that robot can be faster than obstacles! You can use: ```STEP``` >= sqrt(```num_DOFs```) * ```delta_q1```, whenever ```delta_q1``` * ```r1``` > ```max_obs_vel```, where ```r1``` is the radius of robot base (first link);
+- ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
+- ```D_CRIT```: Critical distance in W-space to compute critical nodes;
+- ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*";
+- ```REAL_TIME_SCHEDULING```: Available real-time schedulings are: "DPS" - Dynamic Priority Scheduling; "FPS" - Fixed Priority Scheduling; If you set "", no real-time scheduling will be used;
+- ```TASK1_UTILITY```: Maximal utility which Task 1 (computing the next configuration) can take from the processor. Default: 0.2.
+ 
+Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
+
+## 3.4 Test planners
+All test files are available within the folder ```/apps```. For example, open ```test_rgbmtstar.cpp```. You can set the file path of desired scenario via ```scenario_file_path```, and maximal number of tests in ```max_num_tests```. 
+
 In the new tab type:
 ```
 cd ~/RPMPLv2/install/rpmpl_library/apps
@@ -118,19 +151,14 @@ Test RGBMT*:
 ./test_rgbmtstar
 ```
 
-Test RGBMT* benchmark:
+Test DRGBT:
 ```
-./test_rgbmtstar_benchmark
-```
-
-Test DRGBT benchmark:
-```
-./test_drgbt_benchmark
+./test_drgbt
 ```
 
 After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planner_data.log```).
 
-## 3.4 Visualize the robot and obstacles
+## 3.5 Visualize the robot and obstacles
 In the new tab type:
 ```
 cd ~/xarm6-etf-lab/build

@@ -5,6 +5,7 @@ obstacles:
 #       trans: [0, 0, -0.05]
 #       rot: [0, 0, 0, 0]
 
+num_random_obstacles: 10 	# If set to zero, random obstacles will not be initialized
 
 robot:
   type: "xarm6"

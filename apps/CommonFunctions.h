@@ -130,13 +130,15 @@ void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, int nu
 		pos.z() = WS_center.z() + r * std::cos(theta);
 		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(dim);
 		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
-		env->addCollisionObject(ob);
+		fcl::Vector3f vel = fcl::Vector3f::Random(3);
+		vel.normalize();
+		env->addCollisionObject(ob, vel);
 		if (ss->computeDistance(scenario.getStart(), true) < 6 * DRGBTConfig::D_CRIT) // Just to ensure safety of init. conf.
 		{
 			env->removeCollisionObjects(i);
 			i--;
 		}
-		else
-    		std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
+		// else
+    	// 	std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
 	}
 }

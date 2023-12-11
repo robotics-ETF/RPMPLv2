@@ -172,30 +172,30 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::STEP is not defined! Using default value of " << DRGBTConfig::STEP;
         
-        if (DRGBTConfigRoot["WEIGHT_MIN"].IsDefined())
-            DRGBTConfig::WEIGHT_MIN = DRGBTConfigRoot["WEIGHT_MIN"].as<float>();
+        if (DRGBTConfigRoot["TRESHOLD_WEIGHT"].IsDefined())
+            DRGBTConfig::TRESHOLD_WEIGHT = DRGBTConfigRoot["TRESHOLD_WEIGHT"].as<float>();
         else
-            LOG(INFO) << "DRGBTConfig::WEIGHT_MIN is not defined! Using default value of " << DRGBTConfig::WEIGHT_MIN;
-        
-        if (DRGBTConfigRoot["WEIGHT_MEAN_MIN"].IsDefined())
-            DRGBTConfig::WEIGHT_MEAN_MIN = DRGBTConfigRoot["WEIGHT_MEAN_MIN"].as<float>();
-        else
-            LOG(INFO) << "DRGBTConfig::WEIGHT_MEAN_MIN is not defined! Using default value of " << DRGBTConfig::WEIGHT_MEAN_MIN;
+            LOG(INFO) << "DRGBTConfig::TRESHOLD_WEIGHT is not defined! Using default value of " << DRGBTConfig::TRESHOLD_WEIGHT;
         
         if (DRGBTConfigRoot["D_CRIT"].IsDefined())
             DRGBTConfig::D_CRIT = DRGBTConfigRoot["D_CRIT"].as<float>();
         else
             LOG(INFO) << "DRGBTConfig::D_CRIT is not defined! Using default value of " << DRGBTConfig::D_CRIT;
 
-        if (DRGBTConfigRoot["TASK1_UTILITY"].IsDefined())
-            DRGBTConfig::TASK1_UTILITY = DRGBTConfigRoot["TASK1_UTILITY"].as<float>();
+        if (DRGBTConfigRoot["STATIC_PLANNER_NAME"].IsDefined())
+            DRGBTConfig::STATIC_PLANNER_NAME = DRGBTConfigRoot["STATIC_PLANNER_NAME"].as<std::string>();
         else
-            LOG(INFO) << "DRGBTConfig::TASK1_UTILITY is not defined! Using default value of " << DRGBTConfig::TASK1_UTILITY;
+            LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_NAME is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_NAME;
 
         if (DRGBTConfigRoot["REAL_TIME_SCHEDULING"].IsDefined())
             DRGBTConfig::REAL_TIME_SCHEDULING = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();
         else
             LOG(INFO) << "DRGBTConfig::REAL_TIME_SCHEDULING is not defined! Using default value of " << DRGBTConfig::REAL_TIME_SCHEDULING;
+        
+        if (DRGBTConfigRoot["TASK1_UTILITY"].IsDefined())
+            DRGBTConfig::TASK1_UTILITY = DRGBTConfigRoot["TASK1_UTILITY"].as<float>();
+        else
+            LOG(INFO) << "DRGBTConfig::TASK1_UTILITY is not defined! Using default value of " << DRGBTConfig::TASK1_UTILITY;
         
         LOG(INFO) << "Configuration parameters read successfully!";
         

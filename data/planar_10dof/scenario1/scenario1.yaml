@@ -15,7 +15,9 @@ obstacles:
       dim: [1.2, 0.4, 0.1]
       trans: [-1, -0.7, 0]
       rot: [0, 0, 0, 0]
-      
+
+num_random_obstacles: 0 	# If set to zero, random obstacles will not be initialized
+
 robot:
   type: "planar_10DOF"
   urdf: "/data/planar_10dof/planar_10dof.urdf"

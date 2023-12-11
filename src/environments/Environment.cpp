@@ -47,6 +47,7 @@ env::Environment::Environment(const std::string &filename)
             std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fclBox, quat.matrix(), tr));
             ob->computeAABB();
             parts.emplace_back(ob);
+            velocities.emplace_back(fcl::Vector3f::Zero());
         }
     }        
 }
@@ -57,6 +58,7 @@ env::Environment::Environment(const fcl::Box<float> &box, const fcl::Transform3<
 	std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject(fclBox, tf));
     ob->computeAABB();
     parts.emplace_back(ob);
+    velocities.emplace_back(fcl::Vector3f::Zero());
     std::cout << "Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
 }
 
@@ -68,6 +70,7 @@ env::Environment::Environment(const std::vector<env::Obstacle> obs)
         std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject(fclBox, obs[i].second));
         ob->computeAABB();
         parts.emplace_back(ob);
+        velocities.emplace_back(fcl::Vector3f::Zero());
         std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
     }
 }
@@ -86,13 +89,11 @@ void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::Collision
         part->computeAABB();
 }
 
-void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob) 
+void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, const fcl::Vector3f &velocity) 
 {
     ob->computeAABB();
     parts.emplace_back(ob);
-    fcl::Vector3f vel = fcl::Vector3f::Random(3);
-    vel.normalize();
-    velocities.emplace_back(vel);
+    velocities.emplace_back(velocity);
 }
 
 void env::Environment::removeCollisionObjects(int start_idx)
@@ -104,13 +105,13 @@ void env::Environment::removeCollisionObjects(int start_idx)
     }
 }
 
-// void env::Environment::updateEnvironment()
+// void env::Environment::updateEnvironment(float step)
 // {
 //     fcl::Vector3f pos;
 //     for (int i = 0; i < parts.size(); i++)
 //     {
 //         pos = parts[i]->getTranslation();
-//         pos(0) -= max_vel;    // Move along x axis
+//         pos(0) -= step * max_vel;    // Move along x axis
 //         parts[i]->setTranslation(pos);
 //         parts[i]->computeAABB();
 //         // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
