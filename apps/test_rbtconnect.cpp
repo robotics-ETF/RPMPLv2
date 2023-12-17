@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 		initRandomObstacles(scenario, num_random_obstacles);
 		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
 		result = planner->solve();
+		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
 	}
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
 	LOG(INFO) << "Goal: " << goal;
 
 	int num_test = 0;
+	int num_success = 0;
 	std::vector<float> planning_times;
 	while (num_test++ < max_num_tests)
 	{
@@ -71,11 +73,12 @@ int main(int argc, char **argv)
 				
 			if (result)
 			{
+				num_success++;
+				planning_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 				// LOG(INFO) << "Found path: ";
 				// std::vector<std::shared_ptr<base::State>> path = planner->getPath();
 				// for (int i = 0; i < path.size(); i++)
 				// 	std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
-				planning_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 			}
 
 			LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
@@ -90,7 +93,8 @@ int main(int argc, char **argv)
 			num_test--;
 		}
 	}
-	LOG(INFO) << "Average planning time: " << getMean(planning_times) << " +- " << getStd(planning_times) << " [ms].";
+	LOG(INFO) << "Success rate: " << (float) num_success / max_num_tests * 100 << " [%]";
+	LOG(INFO) << "Average planning time: " << getMean(planning_times) << " +- " << getStd(planning_times) << " [ms]";
 
 	google::ShutDownCommandLineFlags();
 	return 0;

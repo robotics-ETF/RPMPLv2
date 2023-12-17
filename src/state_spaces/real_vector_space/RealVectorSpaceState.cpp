@@ -11,13 +11,16 @@ base::RealVectorSpaceState::RealVectorSpaceState(const Eigen::VectorXf &coord_) 
 }
 
 // Make a copy of 'state'
-base::RealVectorSpaceState::RealVectorSpaceState(const std::shared_ptr<base::State> state) : State(state->getCoord())
+base::RealVectorSpaceState::RealVectorSpaceState(const std::shared_ptr<base::State> state) : State()
 {
 	state_space_type = StateSpaceType::RealVectorSpace;
+	coord = state->getCoord();
+	num_dimensions = state->getNumDimensions();
 	tree_idx = state->getTreeIdx();
 	idx = state->getIdx();
 	d_c = state->getDistance();
-	d_c_underestimation = state->getDistanceUnderestimation();
+	d_c_profile = state->getDistanceProfile();
+	is_real_d_c = state->getIsRealDistance();
 	cost = state->getCost();
 	nearest_points = state->getNearestPoints();
 	parent = state->getParent();

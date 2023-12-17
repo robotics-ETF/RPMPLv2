@@ -78,13 +78,9 @@ std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<
 	return getState(q_near_idx);
 }
 
-// 'q_new' - new node added to tree
+// 'q_new' - new state added to tree
 // 'q_parent' - parent of 'q_new'
-// 'd_c' - distance-to-obstacles for 'q_new'
-// 'nearest_points' - nearest_points for 'q_new'
-// 'cost' - cost-to-come for 'q_new'
-void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent, float d_c, 
-							 const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float cost)
+void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent)
 {
 	size_t N = states->size();
 	states->emplace_back(q_new);
@@ -92,11 +88,21 @@ void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std
 	q_new->setTreeIdx(getTreeIdx());
 	q_new->setIdx(N);
 	q_new->setParent(q_parent);
-	q_new->setDistance(d_c);
-	q_new->setNearestPoints(nearest_points);
-	q_new->setCost(cost);
 	if (q_parent != nullptr)
 		q_parent->addChild(q_new);
+}
+
+// 'q_new' - new state added to tree
+// 'q_parent' - parent of 'q_new'
+// 'q_ref' - referent state containing useful distance information that are copied to 'q_new'
+void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent, 
+							 const std::shared_ptr<base::State> q_ref)
+{
+	upgradeTree(q_new, q_parent);
+	q_new->setDistance(q_ref->getDistance());
+	q_new->setDistanceProfile(q_ref->getDistanceProfile());
+	q_new->setIsRealDistance(q_ref->getIsRealDistance());
+	q_new->setNearestPoints(q_ref->getNearestPoints());
 }
 
 std::ostream &base::operator<<(std::ostream &os, const Tree &tree)

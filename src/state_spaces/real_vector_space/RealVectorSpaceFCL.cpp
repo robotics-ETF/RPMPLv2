@@ -47,23 +47,26 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	return true;
 }
 
-// Get minimal distance from robot in configuration 'q' to obstacles
-// Moreover, set corresponding 'nearest_points' for the configuation 'q'
-// If 'compute_again' is true, the new distance will be computed again!
+// Return minimal distance from robot in configuration 'q' to obstacles
+// Compute minimal distance from each robot's link in configuration 'q' to obstacles, i.e., compute distance profile function
+// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'
+// If 'compute_again' is true, the new distance profile will be computed again!
 float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
-	if (!compute_again && q->getDistance() > 0)
+	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
-
-	robot->setState(q);
+	
 	float d_c = INFINITY;
+	std::vector<float> d_c_profile(robot->getParts().size(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
 		(std::vector<Eigen::MatrixXf>(env->getParts().size(), Eigen::MatrixXf(6, robot->getParts().size())));
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
 	fcl::DefaultDistanceData<float> distance_data;
+	robot->setState(q);
 	
 	for (size_t i = 0; i < robot->getParts().size(); i++)
-	{	
+	{
+		d_c_profile[i] = INFINITY;
 		for (size_t j = 0; j < env->getParts().size(); j++)
 		{
 			// 'j == 0' always represents the table when it is included
@@ -84,7 +87,7 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 				distance_data.request.enable_nearest_points = true;
 				distance_data.result.clear();
 				collision_manager_robot->distance(collision_manager_env.get(), &distance_data, fcl::DefaultDistanceFunction);
-				d_c = std::min(d_c, distance_data.result.min_distance);
+				d_c_profile[i] = std::min(d_c_profile[i], distance_data.result.min_distance);
 				nearest_pts->col(0) = distance_data.result.nearest_points[0];
 				nearest_pts->col(1) = distance_data.result.nearest_points[1];
 
@@ -94,9 +97,11 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 				// LOG(INFO) << "NP env:   " << nearest_pts->col(1).transpose() << std::endl;
 			}
 
-			if (d_c <= 0)		// The collision occurs
+			if (d_c_profile[i] <= 0)		// The collision occurs
             {
 				q->setDistance(0);
+				q->setDistanceProfile(d_c_profile);
+				q->setIsRealDistance(true);
 				q->setNearestPoints(nullptr);
 				return 0;
 			}
@@ -104,9 +109,13 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 			// 'nearest_pts->col(0)' is robot nearest point, and 'nearest_pts->col(1)' is obstacle nearest point
 			nearest_points->at(j).col(i) << nearest_pts->col(0), nearest_pts->col(1);
 		}
+		d_c = std::min(d_c, d_c_profile[i]);
 	}
 	
 	q->setDistance(d_c);
+	q->setDistanceProfile(d_c_profile);
+	q->setIsRealDistance(true);
 	q->setNearestPoints(nearest_points);
+	
 	return d_c;
 }

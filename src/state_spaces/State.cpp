@@ -12,7 +12,8 @@ base::State::State(const Eigen::VectorXf &coord_)
 	tree_idx = -1;
 	idx = -1;
 	d_c = -1;
-	d_c_underestimation = -1;
+	d_c_profile = std::vector<float>();
+	is_real_d_c = true;
 	cost = -1;
 	nearest_points = nullptr;
 	parent = nullptr;

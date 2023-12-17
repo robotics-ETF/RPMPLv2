@@ -22,9 +22,10 @@ namespace planning
 
 		protected:
             std::shared_ptr<base::State> getRandomState(std::shared_ptr<base::State> q_center);
-			std::tuple<base::State::Status, std::shared_ptr<base::State>> extendSpine
-				(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e, float d_c_underest = -1);
-			base::State::Status connectSpine(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+			std::tuple<base::State::Status, std::shared_ptr<base::State>> 
+				extendSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+			base::State::Status connectSpine(std::shared_ptr<base::Tree> tree, 
+											 std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
 		};
 	}
 }

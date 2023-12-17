@@ -212,16 +212,18 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
     return true;
 }
 
-// Get minimal distance from robot in configuration 'q' to obstacles
-// Moreover, set corresponding 'nearest_points' for the configuation 'q'
-// If 'compute_again' is true, the new distance will be computed again!
+// Return minimal distance from robot in configuration 'q' to obstacles
+// Compute minimal distance from each robot's link in configuration 'q' to obstacles, i.e., compute distance profile function
+// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'
+// If 'compute_again' is true, the new distance profile will be computed again!
 float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
-	if (!compute_again && q->getDistance() > 0)
+	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
 
 	float d_c_temp;
 	float d_c = INFINITY;
+	std::vector<float> d_c_profile(robot->getParts().size(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
 		(std::vector<Eigen::MatrixXf>(env->getParts().size(), Eigen::MatrixXf(6, robot->getParts().size())));
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
@@ -229,6 +231,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 
 	for (int i = 0; i < robot->getParts().size(); i++)
 	{
+		d_c_profile[i] = INFINITY;
     	for (int j = 0; j < env->getParts().size(); j++)
 		{
 			// 'j == 0' always represents the table when it is included
@@ -270,11 +273,13 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 				Eigen::VectorXf obs(4); 	// TODO
                 tie(d_c_temp, nearest_pts) = distanceCapsuleToSphere(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
             }
-			d_c = std::min(d_c, d_c_temp);
 
-            if (d_c <= 0)		// The collision occurs
+			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
+            if (d_c_profile[i] <= 0)		// The collision occurs
 			{
 				q->setDistance(0);
+				q->setDistanceProfile(d_c_profile);
+				q->setIsRealDistance(true);
 				q->setNearestPoints(nullptr);
 				return 0;
 			}
@@ -282,45 +287,62 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 			// 'nearest_pts->col(0)' is robot nearest point, and 'nearest_pts->col(1)' is obstacle nearest point
 			nearest_points->at(j).col(i) << nearest_pts->col(0), nearest_pts->col(1);
         }
+		d_c = std::min(d_c, d_c_profile[i]);
     }
 
 	q->setDistance(d_c);
+	q->setDistanceProfile(d_c_profile);
+	q->setIsRealDistance(true);
 	q->setNearestPoints(nearest_points);
+	
 	return d_c;
 }
 
-// Returns the underestimation of distance-to-obstacles 'd_c', i.e. returns the distance-to-planes, 
-// when robot is in the configuration 'q', where planes approximate obstacles, and are generated according to 'nearest_points'
+// Return the underestimation of distance-to-obstacles 'd_c', i.e. return the distance-to-planes, 
+// Compute the underestimation of distance-to-obstacles 'd_c' for each robot's link, 
+// i.e. compute the distance-to-planes profile function, when robot is in the configuration 'q', 
+// where planes approximate obstacles, and are generated according to 'nearest_points'
 float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points)
 {
+	if (q->getDistance() > 0 && q->getIsRealDistance()) 	// Real distance was already computed
+		return q->getDistance();
+	
+	float d_c_temp;
     float d_c = INFINITY;
+	std::vector<float> d_c_profile(robot->getParts().size(), 0);
     Eigen::Vector3f R, O;    // 'R' is robot nearest point, and 'O' is obstacle nearest point
 	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
     
     for (int i = 0; i < robot->getParts().size(); i++)
     {
+		d_c_profile[i] = INFINITY;
         for (int j = 0; j < env->getParts().size(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
 			if (O.norm() < INFINITY)
 			{
 				R = nearest_points->at(j).col(i).head(3);
-				d_c = std::min(d_c, std::min(std::abs((R - O).dot(skeleton->col(i) - O)) / (R - O).norm(), 
-											 std::abs((R - O).dot(skeleton->col(i+1) - O)) / (R - O).norm()) 
-											 - robot->getCapsuleRadius(i));
+				d_c_temp = std::min(std::abs((R - O).dot(skeleton->col(i) - O)) / (R - O).norm(), 
+									std::abs((R - O).dot(skeleton->col(i+1) - O)) / (R - O).norm()) 
+									- robot->getCapsuleRadius(i);
+				d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
 
 				// std::cout << "(i, j) = " << "(" << i << ", " << j << "):" << std::endl;
 				// std::cout << "Robot nearest point:    " << R.transpose() << std::endl;
 				// std::cout << "Obstacle nearest point: " << O.transpose() << std::endl;
-				// std::cout << "d_c: " << d_c << std::endl;
+				// std::cout << "d_c: " << d_c_profile[i] << std::endl;
 			}
 		}
+		d_c = std::min(d_c, d_c_profile[i]);
     }
-	
-	if (q->getDistanceUnderestimation() > 0)	// If it was previously computed, take "better" (greater) one
-		d_c = std::max(d_c, q->getDistanceUnderestimation());
-	
-	q->setDistanceUnderestimation(d_c);
-    return d_c;
+
+	if (d_c > q->getDistance())		// Also, if it was previously computed (q->getDistance() > 0), take "better" (greater) one
+	{
+		q->setDistance(d_c);
+		q->setDistanceProfile(d_c_profile);
+		q->setIsRealDistance(false);
+	}
+
+	return q->getDistance();
 }

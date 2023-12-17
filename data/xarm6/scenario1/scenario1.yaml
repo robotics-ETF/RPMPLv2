@@ -27,8 +27,8 @@ num_random_obstacles: 0 	# If set to zero, random obstacles will not be initiali
 robot:
   type: "xarm6"
   urdf: "/data/xarm6/xarm6.urdf"
-#   space: "RealVectorSpace"
-  space: "RealVectorSpaceFCL"   # Currently, it does not consider a gripper!
+  space: "RealVectorSpace"
+  # space: "RealVectorSpaceFCL"   # Currently, it does not consider a gripper!
   num_DOFs: 6
   start: [1.5708, 1.5708, -2.3562, 0, 0, 0]
   goal: [-1.5708, 0, -2.3562, 0, 0, 0]

@@ -104,6 +104,11 @@ public:
         else
             LOG(INFO) << "RBTConnectConfig::NUM_ITER_SPINE is not defined! Using default value of " << RBTConnectConfig::NUM_ITER_SPINE;
 
+        if (RBTConnectConfigRoot["USE_EXPANDED_BUBBLE"].IsDefined())
+            RBTConnectConfig::USE_EXPANDED_BUBBLE = RBTConnectConfigRoot["USE_EXPANDED_BUBBLE"].as<bool>();
+        else
+            LOG(INFO) << "RBTConnectConfig::USE_EXPANDED_BUBBLE is not defined! Using default value of " << RBTConnectConfig::USE_EXPANDED_BUBBLE;
+
         // RGBTConnectConfigRoot
         if (RGBTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
             RGBTConnectConfig::MAX_NUM_ITER = RGBTConnectConfigRoot["MAX_NUM_ITER"].as<unsigned long>();

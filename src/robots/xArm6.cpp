@@ -211,7 +211,7 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
-	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, getParts().size() + 1);
+	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, parts.size() + 1);
 	skeleton->col(0) << 0, 0, 0;
 	skeleton->col(1) << frames->at(1).p(0), frames->at(1).p(1), frames->at(1).p(2);
 	skeleton->col(2) << frames->at(2).p(0), frames->at(2).p(1), frames->at(2).p(2);
@@ -232,18 +232,38 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(std::shared_ptr<
 	return skeleton;
 }
 
-float robots::xArm6::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
+// Compute step for moving from 'q1' towards 'q2' using ordinary bubble
+float robots::xArm6::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho, 
 								 std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
-	Eigen::VectorXf r(6);
+	Eigen::VectorXf r(parts.size()); 	// For robot xArm6, parts.size() = 6
 	r(0) = getEnclosingRadius(skeleton, 2, -2);
 	r(1) = getEnclosingRadius(skeleton, 2, -1);
 	r(2) = getEnclosingRadius(skeleton, 3, -1);
 	r(3) = getEnclosingRadius(skeleton, 5, 3);
 	r(4) = getEnclosingRadius(skeleton, 5, -1);
 	r(5) = 0;
-	float d = r.dot((q1->getCoord() - q2->getCoord()).cwiseAbs());
-	return fi / d;
+
+	return (d_c - rho) / r.dot((q1->getCoord() - q2->getCoord()).cwiseAbs()); 	// 'd_c - rho' is the remaining path length in W-space
+}
+
+// Compute step for moving from 'q1' towards 'q2' using expanded bubble
+float robots::xArm6::computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, const std::vector<float> &d_c_profile,
+						   		  const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton)
+{
+	Eigen::VectorXf r(parts.size()); 	// For robot xArm6, parts.size() = 6
+	r(0) = getEnclosingRadius(skeleton, 2, -2);
+	r(1) = getEnclosingRadius(skeleton, 2, -1);
+	r(2) = getEnclosingRadius(skeleton, 3, -1);
+	r(3) = getEnclosingRadius(skeleton, 5, 3);
+	r(4) = getEnclosingRadius(skeleton, 5, -1);
+	r(5) = 0;
+
+	Eigen::VectorXf steps(parts.size());
+	for (int k = 0; k < parts.size(); k++)
+		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
+
+	return steps.minCoeff();
 }
 
 float robots::xArm6::getEnclosingRadius(std::shared_ptr<Eigen::MatrixXf> skeleton, int j_start, int j_proj)

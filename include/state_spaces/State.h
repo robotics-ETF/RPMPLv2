@@ -25,13 +25,15 @@ namespace base
 		uint tree_idx;													// Tree index in which the state is stored
 		size_t idx; 													// Index of the state in the tree
 		float d_c;														// Distance-to-obstacles
-		float d_c_underestimation;										// Underestimation of distance-to-obstacles
+		std::vector<float> d_c_profile; 								// Distance-to-obstacles for each robot's link
+		bool is_real_d_c;												// Is real or underestimation of distance-to-obstacles used
 		float cost;                  									// Cost-to-come
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;	// Set of nearest points between each robot segment and each obstacle
 		std::shared_ptr<State> parent;
 		std::shared_ptr<std::vector<std::shared_ptr<State>>> children;
 		
 	public:
+		State() {}
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 
@@ -42,7 +44,8 @@ namespace base
 		inline uint getTreeIdx() const { return tree_idx; }
 		inline size_t getIdx() const { return idx; }
 		inline float getDistance() const { return d_c; }
-		inline float getDistanceUnderestimation() const { return d_c_underestimation; }
+		inline const std::vector<float> &getDistanceProfile() const {return d_c_profile; }
+		inline bool getIsRealDistance() const { return is_real_d_c; }
 		inline float getCost() const { return cost; }
 		inline std::shared_ptr<std::vector<Eigen::MatrixXf>> getNearestPoints() const { return nearest_points; }
 		inline std::shared_ptr<State> getParent() const { return parent; }
@@ -55,7 +58,8 @@ namespace base
 		inline void setTreeIdx(uint tree_idx_) { tree_idx = tree_idx_; }
 		inline void setIdx(size_t idx_) { idx = idx_; }
 		inline void setDistance(float d_c_) { d_c = d_c_; }
-		inline void setDistanceUnderestimation(float d_c_underestimation_) { d_c_underestimation = d_c_underestimation_; }
+		inline void setDistanceProfile(const std::vector<float> &d_c_profile_) { d_c_profile = d_c_profile_; }
+		inline void setIsRealDistance(bool is_real_d_c_) { is_real_d_c = is_real_d_c_; }
 		inline void setCost(float cost_) { cost = cost_; }
 		inline void setNearestPoints(const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points_) { nearest_points = nearest_points_; }
 		inline void setParent(const std::shared_ptr<State> parent_) { parent = parent_; }

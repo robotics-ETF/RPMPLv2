@@ -17,7 +17,7 @@ robot:
   table_included: false      # Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'
   
 testing:
-  num_random_obstacles_init: 100		# Number of random obstacles to start with the testing
+  num_random_obstacles_init: 1		# Number of random obstacles to start with the testing
   max_num_random_obstacles: 100		# Maximal number of random obstacles to be added
   max_obs_vel: 0.1 			# [m / iter.]
   num_test_init: 1

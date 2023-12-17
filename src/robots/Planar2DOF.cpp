@@ -114,21 +114,40 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared
 	return skeleton;
 }
 
-float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
+// Compute step for moving from 'q1' towards 'q2' using ordinary bubble
+float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho, 
 									  std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
-	// Assumes that number of links is equal to number of DOFs
 	float d = 0;
 	float r;
-	for (int i = 0; i < num_DOFs; i++)
+	for (int i = 0; i < parts.size(); i++)
 	{
 		r = 0;
-		for (int k = i+1; k <= num_DOFs; k++)
+		for (int k = i+1; k <= parts.size(); k++)
 			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
 		
 		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
 	}
-	return fi / d;
+	return (d_c - rho) / d;
+}
+
+// Compute step for moving from 'q1' towards 'q2' using expanded bubble
+float robots::Planar2DOF::computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, 
+	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton)
+{
+	float d = 0;
+	Eigen::VectorXf r = Eigen::VectorXf::Zero(parts.size());
+	for (int i = 0; i < parts.size(); i++)
+	{
+		for (int k = i+1; k <= parts.size(); k++)
+			r(i) = std::max(r(i), (skeleton->col(k) - skeleton->col(i)).norm());
+	}
+
+	Eigen::VectorXf steps(parts.size());
+	for (int k = 0; k < parts.size(); k++)
+		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
+
+	return steps.minCoeff();
 }
 
 fcl::Vector3f robots::Planar2DOF::transformPoint(fcl::Vector3f& v, fcl::Transform3f t)

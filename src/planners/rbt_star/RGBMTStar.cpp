@@ -36,7 +36,6 @@ bool planning::rbt_star::RGBMTStar::solve()
     std::vector<int> trees_reached;                             // List of reached trees
     std::vector<int> trees_connected;                           // List of connected trees
     std::vector<std::shared_ptr<base::State>> states_reached;   // Reached states from other trees
-    float cost;
 
     while (true)
     {
@@ -46,12 +45,13 @@ bool planning::rbt_star::RGBMTStar::solve()
         //           << "Num. local: " << planner_info->getNumStates() - num_states[0] - num_states[1] << "\n";
         
 		q_rand = getRandomState();
+        q_rand->setCost(0);
         
         // Adding a new local tree rooted in 'q_rand'
         trees.emplace_back(std::make_shared<base::Tree>(base::Tree("local", tree_new_idx)));
         trees[tree_new_idx]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[tree_new_idx], 
                                                                       nanoflann::KDTreeSingleIndexAdaptorParams(10)));
-        trees[tree_new_idx]->upgradeTree(q_rand, nullptr, -1, nullptr, 0);
+        trees[tree_new_idx]->upgradeTree(q_rand, nullptr);
         trees_exist.clear();
         trees_reached.clear();
         trees_connected.clear();
@@ -77,18 +77,19 @@ bool planning::rbt_star::RGBMTStar::solve()
                 q_near_new = q_near;
 
             // Whether currently considering tree ('tree_new_idx'-th tree) is reached
-            cost = computeCostToCome(q_rand, q_new);
             if (status == base::State::Status::Reached)
             {
                 // If 'idx-th' tree is reached
-                trees[tree_new_idx]->upgradeTree(q_new, q_rand, q_near_new->getDistance(), q_near_new->getNearestPoints(), cost);
+                q_new->setCost(computeCostToCome(q_rand, q_new));
+                trees[tree_new_idx]->upgradeTree(q_new, q_rand, q_near_new);
                 trees_exist.emplace_back(idx);
                 trees_reached.emplace_back(idx);
                 states_reached[idx] = q_near_new;
             }
             else if (status == base::State::Status::Advanced)
             {
-                trees[tree_new_idx]->upgradeTree(q_new, q_rand, -1, nullptr, cost);
+                q_new->setCost(computeCostToCome(q_rand, q_new));
+                trees[tree_new_idx]->upgradeTree(q_new, q_rand);
                 trees_exist.emplace_back(idx);
             }
         }
@@ -128,11 +129,11 @@ bool planning::rbt_star::RGBMTStar::solve()
                         q_new = optimize(q_parent, trees[tree_idx], q_new);
                         q_parent = q_parent->getParent();
                     }
-                    cost = q_new->getCost();
-                    if (cost < cost_opt)    // The optimal connection between main trees is stored
+                    
+                    if (q_new->getCost() < cost_opt)    // The optimal connection between main trees is stored
                     {
                         q_con_opt = q_new;
-                        cost_opt = cost;
+                        cost_opt = q_new->getCost();
                         // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
                         // planner_info->setSuccessState(true);
                         // computePath(q_con_opt);
@@ -228,7 +229,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 	return {status, q_new};
 }
 
-// Returns cost-to-come from 'q1' to 'q2'
+// Return cost-to-come from 'q1' to 'q2'
 inline float planning::rbt_star::RGBMTStar::computeCostToCome(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2)
 {
     return ss->getNorm(q1, q2);
@@ -236,7 +237,7 @@ inline float planning::rbt_star::RGBMTStar::computeCostToCome(std::shared_ptr<ba
 
 // State 'q' from another tree is optimally connected to 'tree'
 // 'q_reached' is a state from 'tree' that is reached by 'q'
-// return 'q_new': state 'q' which now belongs to 'tree'
+// Return 'q_new': state 'q' which now belongs to 'tree'
 std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     (std::shared_ptr<base::State> q, std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q_reached)
 {
@@ -273,9 +274,9 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
         if (update)
         {
             q_opt = ss->getNewState(q_opt_);
-            float cost = q_reached->getParent()->getCost() + computeCostToCome(q_reached->getParent(), q_opt);
-            tree->upgradeTree(q_opt, q_reached->getParent(), -1, nullptr, cost);
+            q_opt->setCost(q_reached->getParent()->getCost() + computeCostToCome(q_reached->getParent(), q_opt));
             q_opt->addChild(q_reached);
+            tree->upgradeTree(q_opt, q_reached->getParent());
             std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children = q_reached->getParent()->getChildren();
             for (int i = 0; i < children->size(); i++)
             {
@@ -294,8 +295,8 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
         q_opt = q_reached;
 
     std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
-    float cost = q_opt->getCost() + computeCostToCome(q_opt, q_new);
-    tree->upgradeTree(q_new, q_opt, q_new->getDistance(), q_new->getNearestPoints(), cost);
+    q_new->setCost(q_opt->getCost() + computeCostToCome(q_opt, q_new));
+    tree->upgradeTree(q_new, q_opt, q);
     return q_new;
 }
 
@@ -408,6 +409,27 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(std::string filename, bool
 		output_file << "\t Path cost [rad]:      " << planner_info->getCostConvergence().back() << std::endl;
 		if (output_states_and_paths)
 		{
+            // Just to check how many states have real or underestimation of distance-to-obstacles computed
+            // int num_real = 0, num_underest = 0, num_total = 0;
+            // for (int i = 0; i < trees.size(); i++)
+            // {
+            //     output_file << *trees[i];
+            //     for (auto q : *trees[i]->getStates())
+            //     {
+            //         if (q->getDistance() > 0)
+            //         {
+            //             if (q->getIsRealDistance()) num_real++;
+            //             else num_underest++;
+            //         }
+            //         num_total++;
+            //     }
+            // }
+            // std::cout << "Num. total: " << num_total << "\n";
+            // std::cout << "Num. real: " << num_real << " (" << 100 * float(num_real) / num_total << " [%]) \n";
+            // std::cout << "Num. underest: " << num_underest << " (" << 100 * float(num_underest) / num_total << " [%]) \n";
+            // std::cout << "Num. real + num. underest: " << num_real+num_underest << " (" 
+            //           << 100 * float(num_real + num_underest) / num_total << " [%]) \n";
+
             for (int i = 0; i < trees.size(); i++)
                 output_file << *trees[i];
 

@@ -47,6 +47,7 @@ int main(int argc, char **argv)
 		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, start, goal);
 		RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 		result = planner->solve();
+		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
 		RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = false;
 	}
 

@@ -27,8 +27,10 @@ namespace robots
 		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
 															  std::shared_ptr<base::State> q_init = nullptr) override;
 		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) override;
-		float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float fi, 
+		float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho, 
 						  std::shared_ptr<Eigen::MatrixXf> skeleton) override;
+		float computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, const std::vector<float> &d_c_profile,
+						   const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton) override;
 
 	private:
 		fcl::Transform3f KDL2fcl(const KDL::Frame &in);

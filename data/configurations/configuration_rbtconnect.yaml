@@ -5,3 +5,4 @@ D_CRIT: 0.03			          # Critical distance in W-space in [m] when RBT uses RRT
 DELTA: 3.14159			        # Radius of hypersphere in [rad] from q to q_e
 NUM_SPINES: 7			          # Number of bur spines
 NUM_ITER_SPINE: 1           # Number of iterations when computing a single spine (1 iteration is minimum, when accordingly function 'fi' is not computed)
+USE_EXPANDED_BUBBLE: true   # Whether to use expanded bubble when generating a spine. If yes, distance profile function for each robot's link is used

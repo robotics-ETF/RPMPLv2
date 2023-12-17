@@ -53,7 +53,7 @@ bool planning::rbt::RGBTConnect::solve()
 		
 		tree_idx = 1 - tree_idx; 	// Swapping trees
 
-		/* Bur-Connect */
+		/* GBur-Connect */
 		if (status != base::State::Status::Trapped)
 		{
 			q_near = trees[tree_idx]->getNearestState(q_new);
@@ -78,12 +78,12 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
     float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status;
+
     for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
-        std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
-        tie(status, q_new) = extendSpine(q_temp, q_e, d_c);
+        tie(status, q_new) = extendSpine(q_new, q_e);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
-		// d_c = getDistance(q_new); 	// If you want to use real distance
+		// d_c = ss->computeDistance(q_new);	// If you want to use real distance
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
     }
@@ -99,13 +99,14 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 	std::shared_ptr<base::State> q_new = q;
 	std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
     base::State::Status status;
+
     for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
-        tie(status, q_new) = extendSpine(q_temp, q_e, d_c);
+        tie(status, q_new) = extendSpine(q_temp, q_e);
 		q_new_list->emplace_back(q_new);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
-		// d_c = getDistance(q_new); 	// If you want to use real distance
+		// d_c = ss->computeDistance(q_new);	// If you want to use real distance
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
     }
@@ -120,6 +121,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
 	base::State::Status status = base::State::Status::Advanced;
 	int num_ext = 0;
+	
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
 		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
@@ -186,6 +188,27 @@ void planning::rbt::RGBTConnect::outputPlannerData(std::string filename, bool ou
 		output_file << "\t Planning time [ms]:   " << planner_info->getPlanningTime() << std::endl;
 		if (output_states_and_paths)
 		{
+			// Just to check how many states have real or underestimation of distance-to-obstacles computed
+            // int num_real = 0, num_underest = 0, num_total = 0;
+            // for (int i = 0; i < trees.size(); i++)
+            // {
+            //     output_file << *trees[i];
+            //     for (auto q : *trees[i]->getStates())
+            //     {
+            //         if (q->getDistance() > 0)
+            //         {
+            //             if (q->getIsRealDistance()) num_real++;
+            //             else num_underest++;
+            //         }
+            //         num_total++;
+            //     }
+            // }
+            // std::cout << "Num. total: " << num_total << "\n";
+            // std::cout << "Num. real: " << num_real << " (" << 100 * float(num_real) / num_total << " [%]) \n";
+            // std::cout << "Num. underest: " << num_underest << " (" << 100 * float(num_underest) / num_total << " [%]) \n";
+            // std::cout << "Num. real + num. underest: " << num_real+num_underest << " (" 
+            //           << 100 * float(num_real + num_underest) / num_total << " [%]) \n";
+
 			output_file << *trees[0];
 			output_file << *trees[1];
 			if (path.size() > 0)

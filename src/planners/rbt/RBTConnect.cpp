@@ -76,20 +76,23 @@ std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(std::shar
 		q_rand = ss->getRandomState(q_center);
 		q_rand = ss->interpolateEdge(q_center, q_rand, RBTConnectConfig::DELTA);
 		q_rand = ss->pruneEdge(q_center, q_rand);
-	} while (ss->isEqual(q_center, q_rand));
+	} 
+	while (ss->isEqual(q_center, q_rand));
 
 	return q_rand;
 }
 
-// Spine is generated from 'q' towards 'q_e'
+// Spine is generated from 'q' towards 'q_e' using complete (expanded) bubble
 // 'q_new' is the new reached state
-// If 'd_c_underest' is passed, the spine is extended using the underestimation of distance-to-obstacles for 'q'
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBTConnect::extendSpine
-	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e, float d_c_underest)
+	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
 {
-	float d_c = (d_c_underest > 0) ? d_c_underest : ss->computeDistance(q);
+	if (q->getDistance() < 0) 	// Just in case. Regularly, 'q' should have a distance!
+		ss->computeDistance(q);
+	
+	std::vector<float> rho_profile(ss->robot->getParts().size(), 0);	// The path length in W-space for each robot's link
+	float rho = 0; 														// The path length in W-space for complete robot
 	float step;
-	float rho = 0;             	// The path length in W-space
 	int counter = 0;
 	std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
 	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
@@ -97,7 +100,11 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 	
 	while (true)
 	{
-		step = ss->robot->computeStep(q_new, q_e, d_c - rho, skeleton_new);     // 'd_c - rho' is the remaining path length in W-space
+		if (RBTConnectConfig::USE_EXPANDED_BUBBLE)
+			step = ss->robot->computeStep2(q_new, q_e, q->getDistanceProfile(), rho_profile, skeleton_new);
+		else
+			step = ss->robot->computeStep(q_new, q_e, q->getDistance(), rho, skeleton_new);
+
 		if (step > 1)
 		{
 			q_new->setCoord(q_e->getCoord());
@@ -109,10 +116,17 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		if (++counter == RBTConnectConfig::NUM_ITER_SPINE)
 			return {base::State::Status::Advanced, q_new};
 
-		rho = 0;
+		rho_profile = std::vector<float>(ss->robot->getParts().size(), 0);
 		skeleton_new = ss->robot->computeSkeleton(q_new);
+		float rho_k;
+		float rho_k1 = 0;
 		for (int k = 1; k <= ss->robot->getParts().size(); k++)
-			rho = std::max(rho, (skeleton->col(k) - skeleton_new->col(k)).norm());
+		{
+			rho_k = (skeleton->col(k) - skeleton_new->col(k)).norm();
+			rho_profile[k-1] = std::max(rho_k1, rho_k);
+			rho_k1 = rho_k;
+			rho = std::max(rho, rho_k);
+		}
 	}
 }
 
@@ -123,6 +137,7 @@ base::State::Status planning::rbt::RBTConnect::connectSpine
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
 	int num_ext = 0;
+
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
 		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
@@ -130,7 +145,7 @@ base::State::Status planning::rbt::RBTConnect::connectSpine
 		{
 			tie(status, q_new) = extendSpine(q_temp, q_e);
 			d_c = ss->computeDistance(q_new);
-			tree->upgradeTree(q_new, q_temp, d_c);
+			tree->upgradeTree(q_new, q_temp);
 		}
 		else
 		{
@@ -185,6 +200,21 @@ void planning::rbt::RBTConnect::outputPlannerData(std::string filename, bool out
 		output_file << "\t Planning time [ms]:   " << planner_info->getPlanningTime() << std::endl;
 		if (output_states_and_paths)
 		{
+			// Just to check how many states have distance-to-obstacles computed
+            // int num_real = 0, num_total = 0;
+            // for (int i = 0; i < trees.size(); i++)
+            // {
+            //     output_file << *trees[i];
+            //     for (auto q : *trees[i]->getStates())
+            //     {
+            //         if (q->getDistance() > 0)
+            //         	num_real++;
+            //         num_total++;
+            //     }
+            // }
+            // std::cout << "Num. total: " << num_total << "\n";
+            // std::cout << "Num. real: " << num_real << " (" << 100 * float(num_real) / num_total << " [%]) \n";
+
 			output_file << *trees[0];
 			output_file << *trees[1];
 			if (path.size() > 0)
