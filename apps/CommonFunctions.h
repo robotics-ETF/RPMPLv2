@@ -61,6 +61,15 @@ float getMean(std::vector<float> &v)
 	return sum / v.size();
 }
 
+float getMean(std::vector<int> &v)
+{
+	if (v.empty()) 
+		return INFINITY;
+		
+	float sum = std::accumulate(v.begin(), v.end(), 0.0);
+	return sum / v.size();
+}
+
 float getStd(std::vector<float> &v)
 {
 	if (v.empty()) 
@@ -68,7 +77,20 @@ float getStd(std::vector<float> &v)
 		
 	float mean = getMean(v);
 	float sum = 0;
-	for (size_t i = 0; i < v.size(); i++)
+	for (int i = 0; i < v.size(); i++)
+		sum += (v[i] - mean) * (v[i] - mean);
+
+	return std::sqrt(sum / v.size());
+}
+
+float getStd(std::vector<int> &v)
+{
+	if (v.empty()) 
+		return INFINITY;
+		
+	float mean = getMean(v);
+	float sum = 0;
+	for (int i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
 	return std::sqrt(sum / v.size());
@@ -86,11 +108,15 @@ void initRandomObstacles(scenario::Scenario &scenario, int num_obstacles)
 	Eigen::Matrix3f rot = fcl::Quaternionf(0, 0, 0, 0).matrix();
 	float r, fi, theta;
 	int num_obs = env->getParts().size();
+	std::random_device rd;
+	std::mt19937 generator(rd());
+	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	
 	for (int i = num_obs; i < num_obs + num_obstacles; i++)
 	{
-		r = float(rand()) / RAND_MAX * WS_radius;
-		fi = float(rand()) / RAND_MAX * 2 * M_PI;
-		theta = float(rand()) / RAND_MAX * M_PI;
+		r = distribution(generator) * WS_radius;
+		fi = distribution(generator) * 2 * M_PI;
+		theta = distribution(generator) * M_PI;
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
@@ -107,7 +133,7 @@ void initRandomObstacles(scenario::Scenario &scenario, int num_obstacles)
 	}
 }
 
-void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, int num_obstacles)
+void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, float max_obs_acc, int num_obstacles)
 {
 	const Eigen::Vector3f dim = Eigen::Vector3f(0.01, 0.01, 0.01);
 	const Eigen::Vector3f WS_center = Eigen::Vector3f(0, 0, 0.267);
@@ -116,15 +142,20 @@ void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, int nu
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
 
 	env->setMaxVel(max_obs_vel);
+	env->setMaxAcc(max_obs_acc);
 	Eigen::Vector3f pos;
 	Eigen::Matrix3f rot = fcl::Quaternionf(0, 0, 0, 0).matrix();
 	float r, fi, theta;
 	int num_obs = env->getParts().size();
+	std::random_device rd;
+	std::mt19937 generator(rd());
+	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	
 	for (int i = num_obs; i < num_obs + num_obstacles; i++)
 	{
-		r = float(rand()) / RAND_MAX * WS_radius;
-		fi = float(rand()) / RAND_MAX * 2 * M_PI;
-		theta = float(rand()) / RAND_MAX * M_PI;
+		r = distribution(generator) * WS_radius;
+		fi = distribution(generator) * 2 * M_PI;
+		theta = distribution(generator) * M_PI;
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
@@ -132,7 +163,9 @@ void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, int nu
 		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
 		fcl::Vector3f vel = fcl::Vector3f::Random(3);
 		vel.normalize();
-		env->addCollisionObject(ob, vel);
+		vel *= distribution(generator) * max_obs_vel;
+		float acc_sign = (distribution(generator) > 0.5) ? 1 : -1;
+		env->addCollisionObject(ob, vel, acc_sign);
 		if (ss->computeDistance(scenario.getStart(), true) < 6 * DRGBTConfig::D_CRIT) // Just to ensure safety of init. conf.
 		{
 			env->removeCollisionObjects(i);

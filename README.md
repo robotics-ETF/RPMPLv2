@@ -98,7 +98,7 @@ space: "RealVectorSpaceFCL"
 In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_real_time/scenario_real_time.yaml```. You can set the following:
 - ```num_random_obstacles_init```: Number of random obstacles to start with the testing;
 - ```max_num_random_obstacles```: Maximal number of random obstacles to be added;
-- ```max_obs_vel```: Maximal velocity of each obstacle in [m/iter.];
+- ```max_obs_vel```: Maximal velocity of each obstacle in [m/s];
 - ```num_test_init```: Number of testing to start with (default: 1);
 - ```num_success_test_init```: Number of successful tests so far (default: 0);
 - ```max_num_tests```: Maximal number of tests that should be carried out.
@@ -111,15 +111,16 @@ Parameters ```num_test_init``` and ```num_success_test_init``` are useful if you
 
 In the file ```/data/configurations/configuration_drgbt```, you can set the following DRGBT parameters:
 - ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
-- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the real obstacle velocity in [m/s] depends on this parameter! When you specify ```max_obs_vel``` in [m/iter.], you need to divide such value with ```MAX_ITER_TIME``` to obtain the real velocity in [m/s];
+- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the obstacle covers a distance of ```max_obs_vel * MAX_ITER_TIME``` in [mm] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [ms];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
-- ```STEP```: Advancing step in C-space in [rad] when moving from current towards next state in a single iteration. Be aware that this step should be conveniently chosen in order that robot can be faster than obstacles! You can use: ```STEP``` >= sqrt(```num_DOFs```) * ```delta_q1```, whenever ```delta_q1``` * ```r1``` > ```max_obs_vel```, where ```r1``` is the radius of robot base (first link);
+- ```MAX_ANG_VEL```: Maximal angular velocity of each robot's joint in [rad/s], which determines an advancing step in C-space in [rad] when moving from current towards next state in a single iteration. Default: 3.1415 for xArm6;
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
 - ```D_CRIT```: Critical distance in W-space to compute critical nodes;
+- ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
 - ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*";
-- ```REAL_TIME_SCHEDULING```: Available real-time schedulings are: "DPS" - Dynamic Priority Scheduling; "FPS" - Fixed Priority Scheduling; If you set "", no real-time scheduling will be used;
-- ```TASK1_UTILITY```: Maximal utility which Task 1 (computing the next configuration) can take from the processor. Default: 0.2.
+- ```REAL_TIME_SCHEDULING```: Available real-time schedulings are: "FPS" - Fixed Priority Scheduling; "DPS" - Dynamic Priority Scheduling; If you set "", no real-time scheduling will be used;
+- ```MAX_TIME_TASK1```: Maximal time in [ms] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 20.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 

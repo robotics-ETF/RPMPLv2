@@ -48,6 +48,7 @@ env::Environment::Environment(const std::string &filename)
             ob->computeAABB();
             parts.emplace_back(ob);
             velocities.emplace_back(fcl::Vector3f::Zero());
+            acc_signs.emplace_back(0);
         }
     }        
 }
@@ -59,6 +60,7 @@ env::Environment::Environment(const fcl::Box<float> &box, const fcl::Transform3<
     ob->computeAABB();
     parts.emplace_back(ob);
     velocities.emplace_back(fcl::Vector3f::Zero());
+    acc_signs.emplace_back(0);
     std::cout << "Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
 }
 
@@ -71,6 +73,7 @@ env::Environment::Environment(const std::vector<env::Obstacle> obs)
         ob->computeAABB();
         parts.emplace_back(ob);
         velocities.emplace_back(fcl::Vector3f::Zero());
+        acc_signs.emplace_back(0);
         std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
     }
 }
@@ -79,6 +82,7 @@ env::Environment::~Environment()
 {
     parts.clear();
     velocities.clear();
+    acc_signs.clear();
 }
 
 void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_)
@@ -87,13 +91,18 @@ void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::Collision
     parts = parts_;
     for (std::shared_ptr<fcl::CollisionObjectf> part : parts)
         part->computeAABB();
+    
+    velocities = std::vector<fcl::Vector3f>(parts.size(), fcl::Vector3f::Zero());
+    acc_signs = std::vector<int>(parts.size(), 0);
 }
 
-void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, const fcl::Vector3f &velocity) 
+void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, const fcl::Vector3f &velocity,
+    float acc_sign) 
 {
     ob->computeAABB();
     parts.emplace_back(ob);
     velocities.emplace_back(velocity);
+    acc_signs.emplace_back(acc_sign);
 }
 
 void env::Environment::removeCollisionObjects(int start_idx)
@@ -102,42 +111,61 @@ void env::Environment::removeCollisionObjects(int start_idx)
     {
         parts.erase(parts.begin() + idx);
         velocities.erase(velocities.begin() + idx);
+        acc_signs.erase(acc_signs.begin() + idx);
     }
 }
 
-// void env::Environment::updateEnvironment(float step)
+// void env::Environment::updateEnvironment(float delta_time)
 // {
 //     fcl::Vector3f pos;
 //     for (int i = 0; i < parts.size(); i++)
 //     {
 //         pos = parts[i]->getTranslation();
-//         pos(0) -= step * max_vel;    // Move along x axis
+//         pos(0) -= delta_time * max_vel;    // Move along x axis
 //         parts[i]->setTranslation(pos);
 //         parts[i]->computeAABB();
 //         // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
 //     }
 // }
 
-void env::Environment::updateEnvironment(float step)
+void env::Environment::updateEnvironment(float delta_time)
 {
-    fcl::Vector3f pos, vel;
+    float r_tol = 0.3;      // Tolerance radius around the robot base
+    float vel_new;
+    fcl::Vector3f pos, velocity;
+
     for (int i = 0; i < parts.size(); i++)
     {
+        vel_new = velocities[i].norm() + acc_signs[i] * float(rand()) / RAND_MAX * max_acc * delta_time;
+        if (vel_new > max_vel)
+        {
+            vel_new = max_vel;
+            acc_signs[i] = -1;
+        }
+        else if (vel_new < 0.01 * max_vel)
+        {
+            vel_new = 0.01 * max_vel;
+            acc_signs[i] = 1;
+        }
+        // std::cout << "i: " << i << "  vel_new: " << vel_new << "\n";
+        
+        velocity = vel_new * velocities[i].normalized();
         pos = parts[i]->getTranslation();
-        pos += step * max_vel * velocities[i];
+        pos += velocity * delta_time;
 
-        float tol = 0.245;  // Computed in order to make robot faster than obstacle
-        if ((pos - WS_center).norm() > WS_radius ||                                         // Out of workspace
-            pos.head(2).norm() < tol && pos.z() > -tol && pos.z() < WS_center.z() + tol)    // Robot base
+        if ((pos - WS_center).norm() > WS_radius ||                                                             // Out of workspace
+            pos.head(2).norm() < r_tol && pos.z() > -parts[i]->getAABB().height() && pos.z() < WS_center.z() || // Surrounding of robot base
+            (pos - WS_center).norm() < r_tol)                                                                   // Surrounding of robot base
         {
             // std::cout << i << ". Computing new velocity.\n";
-            vel = fcl::Vector3f::Random(3);
+            fcl::Vector3f vel = fcl::Vector3f::Random(3);
             vel.normalize();
-            velocities[i] = vel;
+            velocities[i] = vel_new * vel;
             i--;
         }
         else
         {
+            velocities[i] = velocity;
             parts[i]->setTranslation(pos);
             parts[i]->computeAABB();
             // std::cout << i << ". Obstacle pos: (" << pos.transpose() << ")\n";

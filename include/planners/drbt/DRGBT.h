@@ -30,14 +30,15 @@ namespace planning
             void shortenHorizon(int num);
             void addRandomStates(int num);
             void addLateralStates();
-            bool modifyState(std::shared_ptr<HorizonState> &q);
+            bool modifyState(std::shared_ptr<HorizonState> &q, int max_num_attempts);
             void computeReachedState(std::shared_ptr<base::State> q_current, std::shared_ptr<HorizonState> q);
             void computeNextState();
-            void updateCurrentState();
+            inline void setNextState(std::shared_ptr<HorizonState> q);
             int getIndexInHorizon(std::shared_ptr<HorizonState> q);
+            void updateCurrentState();
             bool whetherToReplan();
-            std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
-            virtual void replan(float max_planning_time);
+            std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(int max_planning_time);
+            virtual void replan(int max_planning_time);
             void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_, float delta_q_max);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 

@@ -19,7 +19,9 @@ robot:
 testing:
   num_random_obstacles_init: 1		# Number of random obstacles to start with the testing
   max_num_random_obstacles: 100		# Maximal number of random obstacles to be added
-  max_obs_vel: 0.1 			# [m / iter.]
+  max_obs_vel: 1.6 			# [m/s]
+  max_obs_acc: 1.6 			# [m/s²]
   num_test_init: 1
   num_success_test_init: 0
   max_num_tests: 1000
+  successful_tests: false		# If true, run totally 'max_num_tests' successful tests 
