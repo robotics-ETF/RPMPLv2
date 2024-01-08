@@ -167,7 +167,7 @@ bool planning::rbt::RBTConnect::checkTerminatingCondition(base::State::Status st
 		return true;
 	}
 
-	auto time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
+	int time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
 	if (time_current >= RBTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RBTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RBTConnectConfig::MAX_NUM_ITER)

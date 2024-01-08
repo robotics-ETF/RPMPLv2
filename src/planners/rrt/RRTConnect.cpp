@@ -159,7 +159,7 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 		return true;
 	}
 
-	auto time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
+	int time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
 	if (time_current >= RRTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RRTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RRTConnectConfig::MAX_NUM_ITER)

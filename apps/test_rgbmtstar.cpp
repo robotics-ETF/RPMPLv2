@@ -60,8 +60,8 @@ int main(int argc, char **argv)
 
 	std::vector<float> initial_costs;
 	std::vector<float> final_costs;
-	std::vector<float> initial_times;
-	std::vector<float> final_times;
+	std::vector<int> initial_times;
+	std::vector<int> final_times;
 	std::vector<float> initial_num_states;
 	std::vector<float> final_num_states;
 	std::ofstream output_file;

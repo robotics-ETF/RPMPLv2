@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
 	int num_test = 0;
 	int num_success = 0;
-	std::vector<float> planning_times;
+	std::vector<int> planning_times;
 	while (num_test++ < max_num_tests)
 	{
 		try

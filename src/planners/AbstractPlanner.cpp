@@ -23,15 +23,25 @@ planning::AbstractPlanner::AbstractPlanner(std::shared_ptr<base::StateSpace> ss_
 
 planning::AbstractPlanner::~AbstractPlanner() {}
 
-// Get elapsed time (defaultly in milliseconds) from 'time_init' to 'time_current'
-float planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init,
-												const std::chrono::steady_clock::time_point &time_current,
-												const std::string &time_unit)
+// Get elapsed time (in milliseconds by default) from 'time_init' to 'time_current'
+int planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init,
+											  const std::chrono::steady_clock::time_point &time_current,
+										      const std::string &time_unit)
 {
-	if (time_unit == "milliseconds")
-		return std::chrono::duration_cast<std::chrono::milliseconds>(time_current - time_init).count();
-	else if (time_unit == "microseconds")
-		return std::chrono::duration_cast<std::chrono::microseconds>(time_current - time_init).count();
-	else
-		std::cout << "Error in measuring time!" << std::endl;
+	try
+	{
+		if (time_unit == "ms")
+			return std::chrono::duration_cast<std::chrono::milliseconds>(time_current - time_init).count();
+		else if (time_unit == "us")
+			return std::chrono::duration_cast<std::chrono::microseconds>(time_current - time_init).count();
+		else if (time_unit == "ns")
+			return std::chrono::duration_cast<std::chrono::nanoseconds>(time_current - time_init).count();
+		else
+			throw std::runtime_error("Error in measuring time! ");
+	}
+	catch(std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+		return -1;
+	}	
 }

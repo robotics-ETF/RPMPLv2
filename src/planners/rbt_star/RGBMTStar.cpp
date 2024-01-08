@@ -168,7 +168,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 		    num_states_total += num_states[idx];
         }
         planner_info->addCostConvergence(std::vector<float>(num_states_total - planner_info->getNumStates(), cost_opt));
-        planner_info->addStateTimes(std::vector<float>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
+        planner_info->addStateTimes(std::vector<int>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
         planner_info->setNumStates(num_states_total);
         if (checkTerminatingCondition())
             return planner_info->getSuccessState();
