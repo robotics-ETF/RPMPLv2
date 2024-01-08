@@ -124,6 +124,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 	std::vector<float> bounds(num_dimensions);
 	std::vector<int> indices;
 	std::vector<std::vector<float>> limits = (limits_.empty()) ? robot->getLimits() : limits_;
+
 	for (int k = 0; k < num_dimensions; k++)
 	{
 		if (q2->getCoord(k) > limits[k][1])
@@ -163,17 +164,39 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 	return q2;
 }
 
+// Prune edge from 'q1' to 'q2', where 'q1' is the center of a box which all dimensions are the same and equal to '2*delta_q_max'.
+// Return result state: 'q_new' if there is prunning, and 'q2' if not.
+std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared_ptr<base::State> q1, 
+	const std::shared_ptr<base::State> q2, float delta_q_max)
+{
+	Eigen::VectorXf::Index idx;
+	float delta_q12_max = (q2->getCoord() - q1->getCoord()).cwiseAbs().maxCoeff(&idx);
+	
+	if (delta_q12_max > delta_q_max)
+	{
+		int sign = (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1;
+		float limit = q1->getCoord(idx) + sign * delta_q_max;
+		float t = (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx));
+		Eigen::VectorXf q_new_coord = q1->getCoord() + t * (q2->getCoord() - q1->getCoord());
+		return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
+	}
+
+	return q2;
+}
+
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
 	int num_checks = RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS;
 	float dist = getNorm(q1, q2);
 	std::shared_ptr<base::State> q_new;
+
 	for (float k = num_checks; k >= 1; k--)
 	{
 		q_new = interpolateEdge(q1, q2, k / num_checks * dist, dist);
 		if (!isValid(q_new))
 			return false;
 	}
+
 	return true;
 }
 
@@ -209,6 +232,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
             }
         }
     }
+
     return true;
 }
 
