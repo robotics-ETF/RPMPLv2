@@ -30,8 +30,15 @@ namespace robots
 		const std::vector<std::vector<float>> &getLimits() const { return limits; }
 		const std::shared_ptr<base::State> getConfiguration() { return configuration; }
 		const float getCapsuleRadius(int num) { return capsules_radius[num]; }
+		const float getMaxVel(int num) { return max_vel[num]; }
+		const float getMaxAcc(int num) { return max_acc[num]; }
+		const float getMaxJerk(int num) { return max_jerk[num]; }
 
 		void setConfiguration(std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
+		void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
+		void setMaxVel(const std::vector<float> &max_vel_) { max_vel = max_vel_; }
+		void setMaxAcc(const std::vector<float> &max_acc_) { max_acc = max_acc_; }
+		void setMaxJerk(const std::vector<float> &max_jerk_) { max_jerk = max_jerk_; }
 
 		virtual void setState(std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) = 0;
@@ -50,6 +57,9 @@ namespace robots
 		std::vector<std::vector<float>> limits;
 		std::shared_ptr<base::State> configuration;
 		std::vector<float> capsules_radius;
+		std::vector<float> max_vel;
+		std::vector<float> max_acc;
+		std::vector<float> max_jerk;
 	};
 }
 #endif //RPMPL_ABSTRACTPLANNER_H

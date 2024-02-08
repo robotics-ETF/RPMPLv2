@@ -26,10 +26,16 @@ namespace env
 		void setMaxAcc(float max_acc_) { max_acc = max_acc_; }
 		void setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_);
 		void setVelocities(const std::vector<fcl::Vector3f> &velocities_) { velocities = velocities_; }
+		void setRobotMaxVel(float robot_max_vel_) { robot_max_vel = robot_max_vel_; }
+		void setBaseRadius(float base_radius_) { base_radius = base_radius_; }
 		void addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, 
 								const fcl::Vector3f &velocity = fcl::Vector3f::Zero(), float acc_sign = 0);
 		void removeCollisionObjects(int start_idx);
+		bool isValid(const Eigen::Vector3f &pos, float obs_vel);
 		void updateEnvironment(float delta_time);
+
+		const fcl::Vector3f &getWSCenter() { return WS_center; }
+		const float getWSRadius() { return WS_radius; }
 
 	private:
 		std::vector<std::shared_ptr<fcl::CollisionObject<float>>> parts;	// All parts of the environment
@@ -39,6 +45,8 @@ namespace env
         const fcl::Vector3f WS_center = fcl::Vector3f(0, 0, 0.267);			// Workspace center point in [m]
         const float WS_radius = 1.0; 										// Workspace radius in [m]
 		std::vector<int> acc_signs;		// Sign of acceleration for each obstacle. If 1, obstacle is accelerating, and if -1, obstacle is decelerating
+		float robot_max_vel;
+		float base_radius;
 	};
 }
 #endif //RPMPL_ABSTRACTPLANNER_H

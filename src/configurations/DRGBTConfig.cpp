@@ -8,7 +8,6 @@ unsigned long DRGBTConfig::MAX_NUM_ITER         = 10e6;
 int DRGBTConfig::MAX_ITER_TIME                  = 100;
 int DRGBTConfig::MAX_PLANNING_TIME              = 60e3;
 int DRGBTConfig::INIT_HORIZON_SIZE              = 10;
-float DRGBTConfig::MAX_ANG_VEL                  = 3.1415;
 float DRGBTConfig::TRESHOLD_WEIGHT              = 0.5;
 float DRGBTConfig::D_CRIT                       = 0.05;
 int DRGBTConfig::MAX_NUM_VALIDITY_CHECKS        = 10;

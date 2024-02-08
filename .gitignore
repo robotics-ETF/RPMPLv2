@@ -2,3 +2,5 @@ build
 install
 log
 .vscode
+data/xarm6/scenario_real_time/DRGBMTstar
+data/xarm6/scenario_real_time/DRGBTConnect

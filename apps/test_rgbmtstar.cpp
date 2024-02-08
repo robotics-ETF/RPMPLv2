@@ -20,6 +20,7 @@ int main(int argc, char **argv)
 
 	int max_num_tests = 30;
 	bool use_recommended_planning_times = false;
+	Eigen::Vector3f obs_dim(0.01, 0.01, 0.01);	// Dimensions of each random obstacle in [m, m, m]
 	
 	// -------------------------------------------------------------------------------------- //
 
@@ -41,9 +42,8 @@ int main(int argc, char **argv)
 	int num_obs = env->getParts().size();
 	while (!result && num_random_obstacles > 0)
 	{
-		LOG(INFO) << "Adding " << num_random_obstacles << " random obstacles...";
 		env->removeCollisionObjects(num_obs);
-		initRandomObstacles(scenario, num_random_obstacles);
+		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, start, goal);
 		RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 		result = planner->solve();

@@ -14,8 +14,7 @@ typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
 robots::xArm6::~xArm6() {}
 
-robots::xArm6::xArm6(std::string robot_desc, const std::vector<float> &capsules_radius_, 
-					 float gripper_length_, bool table_included_)
+robots::xArm6::xArm6(std::string robot_desc, float gripper_length_, bool table_included_)
 {
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
@@ -72,7 +71,6 @@ robots::xArm6::xArm6(std::string robot_desc, const std::vector<float> &capsules_
 	}
 	
 	gripper_length = gripper_length_;
-	capsules_radius = capsules_radius_;
 	table_included = table_included_;
 	if (table_included)
 		type += "_with_table";

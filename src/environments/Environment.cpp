@@ -115,6 +115,17 @@ void env::Environment::removeCollisionObjects(int start_idx)
     }
 }
 
+bool env::Environment::isValid(const Eigen::Vector3f &pos, float obs_vel)
+{
+    float tol_radius = std::max(obs_vel / robot_max_vel, base_radius);
+    if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
+        pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() ||   // Surrounding of robot base
+        (pos - WS_center).norm() < tol_radius)                          // Surrounding of robot base
+        return false;
+
+    return true;
+}
+
 // void env::Environment::updateEnvironment(float delta_time)
 // {
 //     fcl::Vector3f pos;
@@ -130,11 +141,11 @@ void env::Environment::removeCollisionObjects(int start_idx)
 
 void env::Environment::updateEnvironment(float delta_time)
 {
-    float r_tol = 0.3;      // Tolerance radius around the robot base
     float vel_new;
     fcl::Vector3f pos, velocity;
 
-    for (int i = 0; i < parts.size(); i++)
+    // TODO: Podesiti da se samo pomijeraju prepreke one koje imaju labelu npr. "moving_object"
+    for (int i = 1; i < parts.size(); i++)  // Table will be the first object
     {
         vel_new = velocities[i].norm() + acc_signs[i] * float(rand()) / RAND_MAX * max_acc * delta_time;
         if (vel_new > max_vel)
@@ -153,14 +164,12 @@ void env::Environment::updateEnvironment(float delta_time)
         pos = parts[i]->getTranslation();
         pos += velocity * delta_time;
 
-        if ((pos - WS_center).norm() > WS_radius ||                                                             // Out of workspace
-            pos.head(2).norm() < r_tol && pos.z() > -parts[i]->getAABB().height() && pos.z() < WS_center.z() || // Surrounding of robot base
-            (pos - WS_center).norm() < r_tol)                                                                   // Surrounding of robot base
+        if (!isValid(pos, vel_new))
         {
             // std::cout << i << ". Computing new velocity.\n";
-            fcl::Vector3f vel = fcl::Vector3f::Random(3);
-            vel.normalize();
-            velocities[i] = vel_new * vel;
+            velocity = fcl::Vector3f::Random(3);
+            velocity.normalize();
+            velocities[i] = vel_new * velocity;
             i--;
         }
         else

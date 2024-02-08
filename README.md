@@ -77,11 +77,14 @@ Moreover, some details about the used robot can be set, such as:
 - ```num_DOFs```: Number of DOFs (number of dimensions of the configuration space);
 - ```start```: Start configuration;
 - ```goal```: Goal configuration;
+- ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
-- ```capsules_radius```: Radius of each capsule in [m] that approximates robot links;
-- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles'.
+- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles';
+- ```max_vel```: Maximal velocity of each robot's joint in [rad/s] for revolute joints, or in [mm/s] for prismatic joints;
+- ```max_acc```: Maximal acceleration of each robot's joint in [rad/s²] for revolute joints, or in [mm/s²] for prismatic joints;
+- ```max_jerk```: Maximal jerk of each robot's joint in [rad/s³] for revolute joints, or in [mm/s³] for prismatic joints.
 
-Note that the last three options are only available for ```/xarm6``` robot.
+Note that ```gripper_length``` and ```table_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, thus their default values will be infinite.
 
 For example, if you do not want to use FCL (Flexible Collision Library) in planning, just set:
 ```
@@ -114,12 +117,11 @@ In the file ```/data/configurations/configuration_drgbt```, you can set the foll
 - ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the obstacle covers a distance of ```max_obs_vel * MAX_ITER_TIME``` in [mm] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [ms];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
-- ```MAX_ANG_VEL```: Maximal angular velocity of each robot's joint in [rad/s], which determines an advancing step in C-space in [rad] when moving from current towards next state in a single iteration. Default: 3.1415 for xArm6;
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
 - ```D_CRIT```: Critical distance in W-space to compute critical nodes;
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
 - ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*";
-- ```REAL_TIME_SCHEDULING```: Available real-time schedulings are: "FPS" - Fixed Priority Scheduling; "DPS" - Dynamic Priority Scheduling; If you set "", no real-time scheduling will be used;
+- ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [ms] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 20.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.

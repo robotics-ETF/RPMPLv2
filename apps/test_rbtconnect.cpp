@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 
 	int max_num_tests = 10;
+	Eigen::Vector3f obs_dim(0.01, 0.01, 0.01);	// Dimensions of each random obstacle in [m, m, m]
 
 	// -------------------------------------------------------------------------------------- //
 	
@@ -40,9 +41,8 @@ int main(int argc, char **argv)
 	int num_obs = env->getParts().size();
 	while (!result && num_random_obstacles > 0)
 	{
-		LOG(INFO) << "Adding " << num_random_obstacles << " random obstacles...";
 		env->removeCollisionObjects(num_obs);
-		initRandomObstacles(scenario, num_random_obstacles);
+		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
 		result = planner->solve();
 		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";

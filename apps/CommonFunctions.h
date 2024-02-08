@@ -96,9 +96,10 @@ float getStd(std::vector<int> &v)
 	return std::sqrt(sum / v.size());
 }
 
-void initRandomObstacles(scenario::Scenario &scenario, int num_obstacles)
+void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scenario::Scenario &scenario)
 {
-	const Eigen::Vector3f dim = Eigen::Vector3f(0.1, 0.1, 0.1);
+	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
+	
 	const Eigen::Vector3f WS_center = Eigen::Vector3f(0, 0, 0.267);
 	const float WS_radius = 1.0;
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
@@ -120,7 +121,7 @@ void initRandomObstacles(scenario::Scenario &scenario, int num_obstacles)
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
-		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(dim);
+		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(obs_dim);
 		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
 		env->addCollisionObject(ob);
 		if (!ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
@@ -133,40 +134,47 @@ void initRandomObstacles(scenario::Scenario &scenario, int num_obstacles)
 	}
 }
 
-void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, float max_obs_acc, int num_obstacles)
+void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scenario::Scenario &scenario, 
+	float max_obs_vel, float max_obs_acc)
 {
-	const Eigen::Vector3f dim = Eigen::Vector3f(0.01, 0.01, 0.01);
-	const Eigen::Vector3f WS_center = Eigen::Vector3f(0, 0, 0.267);
-	const float WS_radius = 1.0;
+	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
+
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+	const Eigen::Vector3f WS_center = env->getWSCenter();
+
+// TODO:
+	// std::vector<std::shared_ptr<fcl::CollisionObjectf>> fixed_parts = env->getParts();
+    // env->removeCollisionObjects(0);
 
 	env->setMaxVel(max_obs_vel);
 	env->setMaxAcc(max_obs_acc);
 	Eigen::Vector3f pos;
 	Eigen::Matrix3f rot = fcl::Quaternionf(0, 0, 0, 0).matrix();
-	float r, fi, theta;
 	int num_obs = env->getParts().size();
+	float r, fi, theta;
 	std::random_device rd;
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
 	
 	for (int i = num_obs; i < num_obs + num_obstacles; i++)
 	{
-		r = distribution(generator) * WS_radius;
+		r = distribution(generator) * env->getWSRadius();
 		fi = distribution(generator) * 2 * M_PI;
 		theta = distribution(generator) * M_PI;
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
-		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(dim);
+		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(obs_dim);
 		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
 		fcl::Vector3f vel = fcl::Vector3f::Random(3);
 		vel.normalize();
 		vel *= distribution(generator) * max_obs_vel;
 		float acc_sign = (distribution(generator) > 0.5) ? 1 : -1;
 		env->addCollisionObject(ob, vel, acc_sign);
-		if (ss->computeDistance(scenario.getStart(), true) < 6 * DRGBTConfig::D_CRIT) // Just to ensure safety of init. conf.
+
+		// if (!env->isValid(pos) || ss->computeDistance(scenario.getStart(), true) < env->getTolRadius()) // Just to ensure safety of init. conf.
+		if (!env->isValid(pos, vel.norm()) || pos.x() > -0.3 && pos.x() < 1 && abs(pos.y()) < 0.3)
 		{
 			env->removeCollisionObjects(i);
 			i--;
@@ -174,4 +182,8 @@ void initRandomObstacles(scenario::Scenario &scenario, float max_obs_vel, float 
 		// else
     	// 	std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
 	}
+
+	// for (std::shared_ptr<fcl::CollisionObjectf> part : fixed_parts)
+    //     env->addCollisionObject(part);
+	
 }
