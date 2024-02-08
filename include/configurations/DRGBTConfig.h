@@ -11,7 +11,6 @@ public:
     static int MAX_ITER_TIME;                   // Maximal runtime of a single iteration in [ms]
     static int MAX_PLANNING_TIME;               // Maximal algorithm runtime in [ms]
     static int INIT_HORIZON_SIZE;               // Initial horizon size
-    static float MAX_ANG_VEL;                   // Maximal angular velocity of each robot's joint in [rad/s], which determines an advancing step in C-space in [rad] when moving from current towards next state in a single iteration
     static float TRESHOLD_WEIGHT;               // Treshold for the replanning assessment. Range: between 0 and 1
     static float D_CRIT;                        // Critical distance in W-space to compute critical nodes
     static int MAX_NUM_VALIDITY_CHECKS;         // Maximal number of validity checks when robot moves from previous to current configuration, while the obstacles are moving simultaneously

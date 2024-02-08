@@ -13,7 +13,8 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 	std::string scenario_file_path = "/data/xarm6/scenario_real_time/scenario_real_time.yaml";
 
-	std::vector<std::string> routines = { 	// Routines of which the time executions are stored
+	Eigen::Vector3f obs_dim(0.01, 0.01, 0.01);	// Dimensions of each random obstacle in [m, m, m]
+	std::vector<std::string> routines = { 		// Routines of which the time executions are stored
 		"replan [ms]",
 		"checkMotionValidity [us]", 
 		"computeDistance [us]", 
@@ -52,23 +53,26 @@ int main(int argc, char **argv)
 		{
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
 							"_routine_times" + std::to_string(num_random_obstacles_init) + ".log", std::ofstream::out);
-			output_file << "Dynamic planner: DRGBT" << std::endl;
-			output_file	<< "Maximal iteration time: " << DRGBTConfig::MAX_ITER_TIME << " [ms]" << std::endl;
-			output_file << "Maximal algorithm time: " << DRGBTConfig::MAX_PLANNING_TIME << " [ms]" << std::endl;
-			output_file << "Initial horizon size: " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
-			output_file << "Maximal angular velocity of each robot's joint: " << DRGBTConfig::MAX_ANG_VEL << " [rad/s]" << std::endl;
-			output_file << "Treshold for the replanning assessment: " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
-			output_file << "Critical distance in W-space: " << DRGBTConfig::D_CRIT << " [m]" << std::endl;
-			output_file << "Maximal number of attempts when modifying bad or critical states: " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS << std::endl;
-			output_file << "Static planner for replanning: " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
-			output_file << "Number of layers (extensions) for generating a generalized bur: " << RGBTConnectConfig::NUM_LAYERS << std::endl;
-			output_file << "Number of iterations when computing a single spine: " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
-			output_file << "Using expanded bubble when generating a spine: " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
-			output_file << "Real-time scheduling: " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : DRGBTConfig::REAL_TIME_SCHEDULING) << std::endl;
-			output_file << "Maximal time of Task 1: " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : std::to_string(DRGBTConfig::MAX_TIME_TASK1) + " [ms]") << std::endl;
-			output_file << "Number of obstacles: " << num_random_obstacles_init << std::endl;
-			output_file << "Maximal velocity of each obstacle: " << max_obs_vel << " [m/s] " << std::endl;
-			output_file << "Maximal acceleration of each obstacle: " << max_obs_acc << " [m/s²] " << std::endl;
+			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
+			output_file << "Dynamic planner:                                        " << "DRGBT" << std::endl;
+			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
+			output_file << "Maximal algorithm time [ms]:                            " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
+			output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
+			output_file << "Treshold for the replanning assessment:                 " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
+			output_file << "Critical distance in W-space [m]:                       " << DRGBTConfig::D_CRIT << std::endl;
+			output_file << "Maximal number of attempts when modifying states:       " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS << std::endl;
+			output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
+			output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
+			output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
+			output_file << "--------------------------------------------------------------------\n";
+			output_file << "Real-time scheduling:                                   " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : DRGBTConfig::REAL_TIME_SCHEDULING) << std::endl;
+			output_file	<< "Maximal iteration time [ms]:                            " << DRGBTConfig::MAX_ITER_TIME << std::endl;
+			output_file << "Maximal time of Task 1 [ms]:                            " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+			output_file << "--------------------------------------------------------------------\n";
+			output_file << "Number of obstacles:                                    " << num_random_obstacles_init << std::endl;
+			output_file << "Obstacles motion:                                       " << "random" << std::endl;
+			output_file << "Maximal velocity of each obstacle [m/s]:                " << max_obs_vel << std::endl;
+			output_file << "Maximal acceleration of each obstacle [m/s²]:           " << max_obs_acc << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();
 		}
@@ -88,7 +92,9 @@ int main(int argc, char **argv)
 				std::shared_ptr<base::State> start = scenario.getStart();
 				std::shared_ptr<base::State> goal = scenario.getGoal();
 				std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-				initRandomObstacles(scenario, max_obs_vel, max_obs_acc, num_random_obstacles_init);
+				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
+				env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
+				initRandomObstacles(num_random_obstacles_init, obs_dim, scenario, max_obs_vel, max_obs_acc);
 
 				LOG(INFO) << "Test number: " << num_test;
 				LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
@@ -157,7 +163,7 @@ int main(int argc, char **argv)
 				output_file.close();
 				LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						  << " = " << 100.0 * num_success_tests / num_test << " %";
-				LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
+				LOG(INFO) << "--------------------------------------------------------------------\n\n";
 				num_test++;
 			}
 			catch (std::exception &e)

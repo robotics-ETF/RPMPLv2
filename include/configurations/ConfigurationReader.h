@@ -172,11 +172,6 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::INIT_HORIZON_SIZE is not defined! Using default value of " << DRGBTConfig::INIT_HORIZON_SIZE;
         
-        if (DRGBTConfigRoot["MAX_ANG_VEL"].IsDefined())
-            DRGBTConfig::MAX_ANG_VEL = DRGBTConfigRoot["MAX_ANG_VEL"].as<float>();
-        else
-            LOG(INFO) << "DRGBTConfig::MAX_ANG_VEL is not defined! Using default value of " << DRGBTConfig::MAX_ANG_VEL;
-        
         if (DRGBTConfigRoot["TRESHOLD_WEIGHT"].IsDefined())
             DRGBTConfig::TRESHOLD_WEIGHT = DRGBTConfigRoot["TRESHOLD_WEIGHT"].as<float>();
         else

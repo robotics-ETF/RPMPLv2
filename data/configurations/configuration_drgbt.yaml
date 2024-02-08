@@ -1,11 +1,10 @@
 MAX_NUM_ITER: 1000000		            # Maximal number of algorithm iterations
-MAX_ITER_TIME: 50 		              # Maximal runtime of a single iteration in [ms]
-MAX_PLANNING_TIME: 10000	          # Maximal algorithm runtime in [ms]
+MAX_ITER_TIME: 100 		              # Maximal runtime of a single iteration in [ms]
+MAX_PLANNING_TIME: 30000	          # Maximal algorithm runtime in [ms]
 INIT_HORIZON_SIZE: 10		            # Initial horizon size
-MAX_ANG_VEL: 3.1415			            # Maximal angular velocity of each robot's joint in [rad/s], which determines an advancing step in C-space in [rad] when moving from current towards next state in a single iteration
 TRESHOLD_WEIGHT: 0.5			          # Treshold for the replanning assessment. Range: between 0 and 1
 D_CRIT: 0.05			                  # Critical distance in W-space to compute critical nodes
 MAX_NUM_MODIFY_ATTEMPTS: 10         # Maximal number of attempts when modifying bad or critical states
 STATIC_PLANNER_NAME: "RGBMT*"       # Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*"
-REAL_TIME_SCHEDULING: "FPS"         # "FPS" - Fixed Priority Scheduling; "DPS" - Dynamic Priority Scheduling; "" - Without real-time scheduling
-MAX_TIME_TASK1: 25                  # Maximal time in [ms] which Task 1 can take from the processor
+REAL_TIME_SCHEDULING: "FPS"         # "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling
+MAX_TIME_TASK1: 50                  # Maximal time in [ms] which Task 1 can take from the processor
