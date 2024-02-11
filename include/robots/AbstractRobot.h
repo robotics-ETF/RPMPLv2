@@ -24,37 +24,38 @@ namespace robots
 		explicit AbstractRobot() { configuration = nullptr; }
 		virtual ~AbstractRobot() = 0;
 		
-		const std::string &getType() { return type; }
-		const int getNumDOFs() { return num_DOFs; }
-		const std::vector<std::unique_ptr<fcl::CollisionObjectf>> &getParts() const { return parts; }
-		const std::vector<std::vector<float>> &getLimits() const { return limits; }
-		const std::shared_ptr<base::State> getConfiguration() { return configuration; }
-		const float getCapsuleRadius(int num) { return capsules_radius[num]; }
-		const float getMaxVel(int num) { return max_vel[num]; }
-		const float getMaxAcc(int num) { return max_acc[num]; }
-		const float getMaxJerk(int num) { return max_jerk[num]; }
+		inline const std::string &getType() const { return type; }
+		inline int getNumDOFs() const { return num_DOFs; }
+		inline int getNumLinks() const { return links.size(); }
+		inline const std::vector<std::unique_ptr<fcl::CollisionObjectf>> &getLinks() const { return links; }
+		inline const std::vector<std::pair<float, float>> &getLimits() const { return limits; }
+		inline std::shared_ptr<base::State> getConfiguration() const { return configuration; }
+		inline float getCapsuleRadius(int num) const { return capsules_radius[num]; }
+		inline float getMaxVel(int num) const { return max_vel[num]; }
+		inline float getMaxAcc(int num) const { return max_acc[num]; }
+		inline float getMaxJerk(int num) const { return max_jerk[num]; }
 
-		void setConfiguration(std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
-		void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
-		void setMaxVel(const std::vector<float> &max_vel_) { max_vel = max_vel_; }
-		void setMaxAcc(const std::vector<float> &max_acc_) { max_acc = max_acc_; }
-		void setMaxJerk(const std::vector<float> &max_jerk_) { max_jerk = max_jerk_; }
+		inline void setConfiguration(const std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
+		inline void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
+		inline void setMaxVel(const std::vector<float> &max_vel_) { max_vel = max_vel_; }
+		inline void setMaxAcc(const std::vector<float> &max_acc_) { max_acc = max_acc_; }
+		inline void setMaxJerk(const std::vector<float> &max_jerk_) { max_jerk = max_jerk_; }
 
-		virtual void setState(std::shared_ptr<base::State> q) = 0;
-		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) = 0;
+		virtual void setState(const std::shared_ptr<base::State> q) = 0;
+		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p,
-																	  std::shared_ptr<base::State> q_init = nullptr) = 0;
-		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) = 0;
-		virtual float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho,
-								  std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
-		virtual float computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, const std::vector<float> &d_c_profile,
-						   		   const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
+																	  const std::shared_ptr<base::State> q_init = nullptr) = 0;
+		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> q) = 0;
+		virtual float computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
+			float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
+		virtual float computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
+			const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
 
 	protected:
 		std::string type;
 		int num_DOFs;
-		std::vector<std::unique_ptr<fcl::CollisionObjectf>> parts;
-		std::vector<std::vector<float>> limits;
+		std::vector<std::unique_ptr<fcl::CollisionObjectf>> links;
+		std::vector<std::pair<float, float>> limits;
 		std::shared_ptr<base::State> configuration;
 		std::vector<float> capsules_radius;
 		std::vector<float> max_vel;
@@ -62,4 +63,4 @@ namespace robots
 		std::vector<float> max_jerk;
 	};
 }
-#endif //RPMPL_ABSTRACTPLANNER_H
+#endif //RPMPL_ABSTRACTROBOT_H

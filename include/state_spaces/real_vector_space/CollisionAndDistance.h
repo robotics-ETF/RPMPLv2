@@ -55,7 +55,7 @@ namespace base
             void projectionLineSegOnSide(int min1, int min2, int min3, int max1, int max2, int max3);
             void checkEdges(Eigen::Vector3f &point, int k);
             std::shared_ptr<Eigen::MatrixXf> getLineSegments(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, 
-                                                            float coord_value, int coord);
+                                                             float coord_value, int coord);
             void distanceToMoreLineSegments(const Eigen::MatrixXf &line_segments);
             void checkOtherCases();
 

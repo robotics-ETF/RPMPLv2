@@ -12,7 +12,7 @@ namespace robots
     class Planar10DOF : public Planar2DOF
     {
     public:
-        Planar10DOF(std::string robot_desc);
+        Planar10DOF(const std::string &robot_desc);
         ~Planar10DOF();
         
     };

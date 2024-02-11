@@ -11,23 +11,23 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) {}
+planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) {}
 
-planning::rrt::RRTConnect::RRTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-									  std::shared_ptr<base::State> goal_) : AbstractPlanner(ss_, start_, goal_)
+planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
+									  const std::shared_ptr<base::State> q_goal_) : AbstractPlanner(ss_, q_start_, q_goal_)
 {
 	// std::cout << "Initializing planner...\n";
-	if (!ss->isValid(start))
+	if (!ss->isValid(q_start))
 		throw std::domain_error("Start position is invalid!");
-	if (!ss->isValid(goal))
+	if (!ss->isValid(q_goal))
 		throw std::domain_error("Goal position is invalid!");
 		
-	trees.emplace_back(std::make_shared<base::Tree>("start", 0));
-	trees.emplace_back(std::make_shared<base::Tree>("goal", 1));
+	trees.emplace_back(std::make_shared<base::Tree>("q_start", 0));
+	trees.emplace_back(std::make_shared<base::Tree>("q_goal", 1));
 	trees[0]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[0], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
 	trees[1]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[1], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
-	trees[0]->upgradeTree(start, nullptr);
-	trees[1]->upgradeTree(goal, nullptr);
+	trees[0]->upgradeTree(q_start, nullptr);
+	trees[1]->upgradeTree(q_goal, nullptr);
 	planner_info->setNumIterations(0);
     planner_info->setNumStates(2);
 	// std::cout << "Planner initialized!\n";
@@ -94,7 +94,7 @@ base::Tree planning::rrt::RRTConnect::getTree(int tree_idx) const
 }
 
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRTConnect::extend
-	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside extend. \n";
 	base::State::Status status;
@@ -108,7 +108,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRT
 }
 
 base::State::Status planning::rrt::RRTConnect::connect
-	(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside connect. \n";
 	std::shared_ptr<base::State> q_new = q;
@@ -172,7 +172,7 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 	return false;
 }
 
-void planning::rrt::RRTConnect::outputPlannerData(std::string filename, bool output_states_and_paths, bool append_output) const
+void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
 	std::ofstream output_file;
 	std::ios_base::openmode mode = std::ofstream::out;

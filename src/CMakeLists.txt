@@ -12,6 +12,7 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include/planners/rbt_star
         ${PROJECT_SOURCE_DIR}/include/robots
         ${PROJECT_SOURCE_DIR}/include/environments
+        ${PROJECT_SOURCE_DIR}/include/environments/objects
         ${PROJECT_SOURCE_DIR}/include/scenario
         ${PROJECT_SOURCE_DIR}/include/configurations
         ${PROJECT_SOURCE_DIR}/include/benchmark

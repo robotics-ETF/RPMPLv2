@@ -19,7 +19,6 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 
 	int max_num_tests = 10;
-	Eigen::Vector3f obs_dim(0.01, 0.01, 0.01);	// Dimensions of each random obstacle in [m, m, m]
 
 	// -------------------------------------------------------------------------------------- //
 	
@@ -30,30 +29,34 @@ int main(int argc, char **argv)
 	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	int num_random_obstacles = node["num_random_obstacles"].as<int>();
+	int num_random_obstacles = node["random_obstacles"]["num"].as<int>();
+	Eigen::Vector3f obs_dim;
+	for (int i = 0; i < 3; i++)
+		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
+		
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<base::State> start = scenario.getStart();
-	std::shared_ptr<base::State> goal = scenario.getGoal();
+	std::shared_ptr<base::State> q_start = scenario.getStart();
+	std::shared_ptr<base::State> q_goal = scenario.getGoal();
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
 
 	bool result = false;
-	int num_obs = env->getParts().size();
+	int num_obs = env->getNumObjects();
 	while (!result && num_random_obstacles > 0)
 	{
-		env->removeCollisionObjects(num_obs);
+		env->removeObjects(num_obs);
 		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
-		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
+		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
 		result = planner->solve();
 		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
 	}
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
-	LOG(INFO) << "Environment parts: " << env->getParts().size();
+	LOG(INFO) << "Environment parts: " << env->getNumObjects();
 	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
-	LOG(INFO) << "Start: " << start;
-	LOG(INFO) << "Goal: " << goal;
+	LOG(INFO) << "Start: " << q_start;
+	LOG(INFO) << "Goal: " << q_goal;
 
 	int num_test = 0;
 	int num_success = 0;
@@ -63,7 +66,7 @@ int main(int argc, char **argv)
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, start, goal);
+			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
 			result = planner->solve();
 
 			LOG(INFO) << "RBTConnect planning finished with " << (result ? "SUCCESS!" : "FAILURE!");

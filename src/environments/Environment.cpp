@@ -1,5 +1,6 @@
 //
 // Created by dinko on 14.02.22.
+// Modified by nermin on 09.02.24.
 //
 
 #include "Environment.h"
@@ -9,119 +10,144 @@
 #include "yaml-cpp/node/node.h"
 #include "yaml-cpp/node/parse.h"
 
-#include <glog/logging.h>
-
-typedef std::shared_ptr<fcl::CollisionGeometry<float>> CollisionGeometryPtr;
-
-env::Environment::Environment(const std::string &filename)
+env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
-    YAML::Node node = YAML::LoadFile(filename);
-    std::vector<std::shared_ptr<fcl::CollisionObject<float>>> parts;
-    for (size_t i = 0; i < node["obstacles"].size(); ++i)
+    YAML::Node node = YAML::LoadFile(root_path + config_file_path);
+    int num_added = 0;
+
+    for (int i = 0; i < node["environment"].size(); i++)
 	{
-        YAML::Node obstacle = node["obstacles"][i];
-        if(obstacle["box"].IsDefined())
+        try
         {
-            // BOX
-            YAML::Node box_size = obstacle["box"]["dim"];
-            float bx = box_size[0].as<float>();
-            float by = box_size[1].as<float>();
-            float bz = box_size[2].as<float>();
-            CollisionGeometryPtr fclBox(new fcl::Box<float>(bx, by, bz));
+            std::shared_ptr<env::Object> object;
+            YAML::Node obstacle = node["environment"][i];
+            if (obstacle["box"].IsDefined())
+            {
+                std::string label = "";
+                if (obstacle["box"]["label"].IsDefined())
+                    label = obstacle["box"]["label"].as<std::string>();
 
-            YAML::Node trans = obstacle["box"]["trans"];
-            float tx = trans[0].as<float>();
-            float ty = trans[1].as<float>();
-            float tz = trans[2].as<float>();
+                if (label == "table" && node["robot"]["table_included"].as<bool>() == false)
+                    continue;
 
-            YAML::Node rot = obstacle["box"]["rot"];
-            float rx = rot[1].as<float>();
-            float ry = rot[2].as<float>();
-            float rz = rot[3].as<float>();
-            float rw = rot[0].as<float>();
-            
-            fcl::Vector3f tr(tx, ty, tz);
-            fcl::Quaternionf quat(rw, rx, ry, rz);
+                YAML::Node d = obstacle["box"]["dim"];
+                YAML::Node p = obstacle["box"]["pos"];
+                YAML::Node r = obstacle["box"]["rot"];
+                
+                fcl::Vector3f dim(d[0].as<float>(), d[1].as<float>(), d[2].as<float>());
+                fcl::Vector3f pos(p[0].as<float>(), p[1].as<float>(), p[2].as<float>());
+                fcl::Quaternionf rot = fcl::Quaternionf::Identity();
 
-            //std::cout << "Object tf: " << quat << "\n" << tr << "\n------------";
-            std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fclBox, quat.matrix(), tr));
-            ob->computeAABB();
-            parts.emplace_back(ob);
-            velocities.emplace_back(fcl::Vector3f::Zero());
-            acc_signs.emplace_back(0);
+                if (r.IsDefined())
+                    rot = fcl::Quaternionf(r[3].as<float>(), r[0].as<float>(), r[1].as<float>(), r[2].as<float>());
+
+                object = std::make_shared<env::Box>(dim, pos, rot, label);
+            }
+            else if (obstacle["sphere"].IsDefined())
+            {
+                // TODO
+            }
+            else
+                throw std::domain_error("Object type is wrong! ");
+
+            objects.emplace_back(object);
+            std::cout << "Added " << num_added++ << ". " << object;            
         }
-    }        
-}
-
-env::Environment::Environment(const fcl::Box<float> &box, const fcl::Transform3<float> &tf)
-{
-    CollisionGeometryPtr fclBox(new fcl::Box(box.side[0], box.side[1], box.side[2]));
-	std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject(fclBox, tf));
-    ob->computeAABB();
-    parts.emplace_back(ob);
-    velocities.emplace_back(fcl::Vector3f::Zero());
-    acc_signs.emplace_back(0);
-    std::cout << "Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
-}
-
-env::Environment::Environment(const std::vector<env::Obstacle> obs)
-{
-    for (size_t i = 0; i < obs.size(); ++i)
-    {
-        CollisionGeometryPtr fclBox(new fcl::Box<float>(obs[i].first.side[0], obs[i].first.side[1], obs[i].first.side[2]));
-        std::shared_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject(fclBox, obs[i].second));
-        ob->computeAABB();
-        parts.emplace_back(ob);
-        velocities.emplace_back(fcl::Vector3f::Zero());
-        acc_signs.emplace_back(0);
-        std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
+        catch (std::exception &e)
+        {
+            std::cout << e.what() << "\n";
+        }
     }
+
+    table_included = node["robot"]["table_included"].as<bool>();
+
+    if (node["robot"]["WS_center"].IsDefined())
+    {
+        for (int i = 0; i < 3; i++)
+            WS_center(i) = node["robot"]["WS_center"][i].as<float>();
+
+        WS_radius = node["robot"]["WS_radius"].as<float>();
+    }
+	
 }
 
 env::Environment::~Environment()
 {
-    parts.clear();
-    velocities.clear();
-    acc_signs.clear();
+    objects.clear();
 }
 
-void env::Environment::setParts(const std::vector<std::shared_ptr<fcl::CollisionObject<float>>> &parts_)
+void env::Environment::addObject(const std::shared_ptr<env::Object> object, const fcl::Vector3f &velocity, 
+                                 const fcl::Vector3f &acceleration) 
 {
-    parts.clear();
-    parts = parts_;
-    for (std::shared_ptr<fcl::CollisionObjectf> part : parts)
-        part->computeAABB();
+    object->setVelocity(velocity);
+    object->setAcceleration(acceleration);
+    objects.emplace_back(object);
+}
+
+// Remove object at 'idx' position
+void env::Environment::removeObject(int idx)
+{
+    objects.erase(objects.begin() + idx);
+}
+
+// Remove objects from 'start_idx'-th object to 'end_idx'-th object
+// If 'end_idx' is not passed, it will be considered as the last index in 'objects'
+void env::Environment::removeObjects(int start_idx, int end_idx)
+{
+    if (end_idx == -1)
+        end_idx = objects.size() - 1;
     
-    velocities = std::vector<fcl::Vector3f>(parts.size(), fcl::Vector3f::Zero());
-    acc_signs = std::vector<int>(parts.size(), 0);
+    for (int idx = end_idx; idx >= start_idx; idx--)
+        objects.erase(objects.begin() + idx);
 }
 
-void env::Environment::addCollisionObject(const std::shared_ptr<fcl::CollisionObject<float>> ob, const fcl::Vector3f &velocity,
-    float acc_sign) 
+// Remove objects with label 'label' if 'with_label' is true (default)
+// Remove objects NOT with label 'label' if 'with_label' is false
+void env::Environment::removeObjects(const std::string &label, bool with_label)
 {
-    ob->computeAABB();
-    parts.emplace_back(ob);
-    velocities.emplace_back(velocity);
-    acc_signs.emplace_back(acc_sign);
-}
-
-void env::Environment::removeCollisionObjects(int start_idx)
-{
-    for (int idx = parts.size()-1; idx >= start_idx; idx--)
+    if (with_label)
     {
-        parts.erase(parts.begin() + idx);
-        velocities.erase(velocities.begin() + idx);
-        acc_signs.erase(acc_signs.begin() + idx);
+        for (int idx = objects.size()-1; idx >= 0; idx--)
+        {
+            if (objects[idx]->getLabel() == label)
+                objects.erase(objects.begin() + idx);
+        }
     }
+    else
+    {
+        for (int idx = objects.size()-1; idx >= 0; idx--)
+        {
+            if (objects[idx]->getLabel() != label)
+                objects.erase(objects.begin() + idx);
+        }
+    }        
 }
 
-bool env::Environment::isValid(const Eigen::Vector3f &pos, float obs_vel)
+// Remove all objects from the environment
+void env::Environment::removeAllObjects()
 {
-    float tol_radius = std::max(obs_vel / robot_max_vel, base_radius);
-    if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
-        pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() ||   // Surrounding of robot base
-        (pos - WS_center).norm() < tol_radius)                          // Surrounding of robot base
-        return false;
+    objects.clear();
+}
+
+// Check whether an object position 'pos' is valid when the object moves at 'vel' velocity
+bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
+{
+    float tol_radius = std::max(vel / robot_max_vel, base_radius);
+
+    if (table_included)
+    {
+        if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
+            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() ||   // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                          // Surrounding of robot base
+            return false;
+    }
+    else
+    {
+        if ((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
+            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() && pos.z() > -base_radius || // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                                                  // Surrounding of robot base
+            return false;
+    }
 
     return true;
 }
@@ -129,56 +155,56 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float obs_vel)
 // void env::Environment::updateEnvironment(float delta_time)
 // {
 //     fcl::Vector3f pos;
-//     for (int i = 0; i < parts.size(); i++)
+//     for (int i = 0; i < objects.size(); i++)
 //     {
-//         pos = parts[i]->getTranslation();
-//         pos(0) -= delta_time * max_vel;    // Move along x axis
-//         parts[i]->setTranslation(pos);
-//         parts[i]->computeAABB();
-//         // std::cout << i << ". Obstacle range: (" << parts[i]->getAABB().min_.transpose() << ")\t(" << parts[i]->getAABB().max_.transpose() << ")\n";
+//         pos = objects[i]->getPosition();
+//         pos(0) -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
+//         objects[i]->setPosition(pos);
+//         std::cout << i << ". " << objects[i];
 //     }
 // }
 
 void env::Environment::updateEnvironment(float delta_time)
 {
-    float vel_new;
-    fcl::Vector3f pos, velocity;
+    float vel_intensity;
+    fcl::Vector3f pos, vel;
 
-    // TODO: Podesiti da se samo pomijeraju prepreke one koje imaju labelu npr. "moving_object"
-    for (int i = 1; i < parts.size(); i++)  // Table will be the first object
+    for (int i = 0; i < objects.size(); i++)
     {
-        vel_new = velocities[i].norm() + acc_signs[i] * float(rand()) / RAND_MAX * max_acc * delta_time;
-        if (vel_new > max_vel)
-        {
-            vel_new = max_vel;
-            acc_signs[i] = -1;
-        }
-        else if (vel_new < 0.01 * max_vel)
-        {
-            vel_new = 0.01 * max_vel;
-            acc_signs[i] = 1;
-        }
-        // std::cout << "i: " << i << "  vel_new: " << vel_new << "\n";
-        
-        velocity = vel_new * velocities[i].normalized();
-        pos = parts[i]->getTranslation();
-        pos += velocity * delta_time;
+        // std::cout << objects[i];
+        if (objects[i]->getLabel() != "dynamic_obstacle")
+            continue;
 
-        if (!isValid(pos, vel_new))
+        vel = objects[i]->getVelocity() + objects[i]->getAcceleration() * delta_time;
+        pos = objects[i]->getPosition() + vel * delta_time;
+        vel_intensity = vel.norm();
+        // std::cout << i << ". position: " << pos.transpose() << "\n";
+        // std::cout << i << ". vel_intensity: " << vel_intensity << "\n";
+
+        if (vel_intensity > objects[i]->getMaxVel())
         {
-            // std::cout << i << ". Computing new velocity.\n";
-            velocity = fcl::Vector3f::Random(3);
-            velocity.normalize();
-            velocities[i] = vel_new * velocity;
+            // std::cout << i << ". Invalid object velocity. Computing new acceleration.\n";
+            fcl::Vector3f acc = fcl::Vector3f::Random(3);
+            acc.normalize();
+            objects[i]->setAcceleration(objects[i]->getAcceleration().norm() * acc);
+            i--;
+        }
+        else if (!isValid(pos, vel_intensity))
+        {
+            // std::cout << i << ". position: " << pos.transpose() << "\n";
+            // std::cout << i << ". Invalid object position. Computing new velocity.\n";
+            vel = fcl::Vector3f::Random(3);
+            vel.normalize();
+            objects[i]->setVelocity(vel_intensity * vel);
             i--;
         }
         else
         {
-            velocities[i] = velocity;
-            parts[i]->setTranslation(pos);
-            parts[i]->computeAABB();
-            // std::cout << i << ". Obstacle pos: (" << pos.transpose() << ")\n";
+            objects[i]->setVelocity(vel);
+            objects[i]->setPosition(pos);
+            // std::cout << i << ". position successfully computed: " << pos.transpose() << "\n";
+            // std::cout << i << ". " << objects[i];
         }
     }
-    // std::cout << std::endl;
+    // std::cout << "-------------------------------------------------" << std::endl;
 }

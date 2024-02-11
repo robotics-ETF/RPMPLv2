@@ -51,11 +51,11 @@ void CommandLine::printHelp(std::ostream &os) const
 
         // Print the help for each argument. This is a bit more involved
         // since we do line wrapping for long descriptions.
-        size_t spacePos = 0;
-        size_t lineWidth = 0;
+        int spacePos = 0;
+        int lineWidth = 0;
         while (spacePos != std::string::npos)
         {
-            size_t nextspacePos = argument.mHelp.find_first_of(' ', spacePos + 1);
+            int nextspacePos = argument.mHelp.find_first_of(' ', spacePos + 1);
             sstr << argument.mHelp.substr(spacePos, nextspacePos - spacePos);
             lineWidth += nextspacePos - spacePos;
             spacePos = nextspacePos;
@@ -87,7 +87,7 @@ void CommandLine::parse(int argc, char *argv[]) const
 
         // If there is an '=' in the flag, the part after the '=' is actually
         // the value.
-        size_t equalPos = flag.find('=');
+        int equalPos = flag.find('=');
         if (equalPos != std::string::npos)
         {
             value = flag.substr(equalPos + 1);
@@ -159,12 +159,12 @@ void CommandLine::parse(int argc, char *argv[]) const
         }
 
         // Advance to the next flag.
-        ++i;
+        i++;
 
         // If the value was separated, we have to advance our index once more.
         if (foundArgument && valueIsSeparate)
         {
-            ++i;
+            i++;
         }
     }
 }

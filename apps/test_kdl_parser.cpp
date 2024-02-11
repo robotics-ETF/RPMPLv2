@@ -7,7 +7,7 @@
 
 #include <ctime>
 #include <cstdlib>
-#include <iostream>
+#include <ostream>
 #include <string>
 
 #include <kdl_parser/kdl_parser.hpp>
@@ -54,7 +54,7 @@ bool parse_file(std::string filename)
 	KDL::Chain robot_chain;
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	
-	for (size_t i = 0; i < robot_tree.getNrOfSegments(); ++i)
+	for (int i = 0; i < robot_tree.getNrOfSegments(); i++)
 	{
 		KDL::Vector pos = getCartForSegment(robot_tree, robot_chain.getSegment(i));
 		LOG(INFO) << robot_chain.getSegment(i).getName() << " pos is: " << pos.x() << ";" << pos.y() << ";" << pos.z();

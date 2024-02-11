@@ -6,4 +6,4 @@
 
 robots::Planar10DOF::~Planar10DOF() {}
 
-robots::Planar10DOF::Planar10DOF(std::string robot_desc) : Planar2DOF(robot_desc, 10) {}
+robots::Planar10DOF::Planar10DOF(const std::string &robot_desc) : Planar2DOF(robot_desc, 10) {}

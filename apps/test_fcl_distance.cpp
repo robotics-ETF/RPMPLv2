@@ -1,4 +1,4 @@
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 #include <glog/logging.h>

@@ -10,14 +10,14 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt_star::RGBMTStar::RGBMTStar(std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
+planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
 
-planning::rbt_star::RGBMTStar::RGBMTStar(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                                         std::shared_ptr<base::State> goal_) : RGBTConnect(ss_, start_, goal_)
+planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
+                                         const std::shared_ptr<base::State> q_goal_) : RGBTConnect(ss_, q_start_, q_goal_)
 {
     // Additionally the following is required:
-	start->setCost(0);
-    goal->setCost(0);
+	q_start->setCost(0);
+    q_goal->setCost(0);
     num_states = {1, 1};
     cost_opt = INFINITY;
     q_con_opt = nullptr;
@@ -160,7 +160,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 		/* Planner info and terminating condition */
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
 		planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
-		size_t num_states_total = 0;
+		int num_states_total = 0;
         num_states.resize(trees.size());
         for(int idx = 0; idx < trees.size(); idx++)
         {
@@ -202,7 +202,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
 // Return 'Status'
 // Return 'q_new': the reached state
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star::RGBMTStar::connectGenSpine
-    (std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+    (const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
@@ -229,9 +229,13 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 	return {status, q_new};
 }
 
-// Return cost-to-come from 'q1' to 'q2'
-inline float planning::rbt_star::RGBMTStar::computeCostToCome(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2)
+// Return (weighted) cost-to-come from 'q1' to 'q2'
+inline float planning::rbt_star::RGBMTStar::computeCostToCome(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
+    // float d_c = ss->computeDistance(q2);
+    // if (d_c < 10 * DRGBTConfig::D_CRIT)
+    //     return (10 * DRGBTConfig::D_CRIT / d_c) * ss->getNorm(q1, q2);
+
     return ss->getNorm(q1, q2);
 }
 
@@ -239,7 +243,7 @@ inline float planning::rbt_star::RGBMTStar::computeCostToCome(std::shared_ptr<ba
 // 'q_reached' is a state from 'tree' that is reached by 'q'
 // Return 'q_new': state 'q' which now belongs to 'tree'
 std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
-    (std::shared_ptr<base::State> q, std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q_reached)
+    (const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q_reached)
 {
     // Finding the optimal connection to the predecessors of 'q_reached'
     std::shared_ptr<base::State> q_parent = q_reached->getParent();
@@ -303,8 +307,8 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
 // Optimally unifies a local tree 'tree' with 'tree0'
 // 'q_con' - a state that connects 'tree' with 'tree0'
 // 'q0_con' - a state that connects 'tree0' with 'tree'
-void planning::rbt_star::RGBMTStar::unifyTrees(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::Tree> tree0, 
-                                               std::shared_ptr<base::State> q_con, std::shared_ptr<base::State> q0_con)
+void planning::rbt_star::RGBMTStar::unifyTrees(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::Tree> tree0, 
+                                               const std::shared_ptr<base::State> q_con, const std::shared_ptr<base::State> q0_con)
 {
     std::shared_ptr<base::State> q_considered = nullptr;
     std::shared_ptr<base::State> q_conNew = ss->getNewState(q_con);
@@ -322,8 +326,8 @@ void planning::rbt_star::RGBMTStar::unifyTrees(std::shared_ptr<base::Tree> tree,
 }
 
 // Consider all children (except 'q_considered', that has already being considered) of 'q', and connect them optimally to 'tree0' 
-void planning::rbt_star::RGBMTStar::considerChildren(std::shared_ptr<base::State> q, std::shared_ptr<base::Tree> tree0,
-                                                     std::shared_ptr<base::State> q0_con, std::shared_ptr<base::State> q_considered)
+void planning::rbt_star::RGBMTStar::considerChildren(const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree0,
+                                                     const std::shared_ptr<base::State> q0_con, const std::shared_ptr<base::State> q_considered)
 {
     // Remove child 'q_considered' of 'q' from 'tree'
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children = q->getChildren();
@@ -348,7 +352,7 @@ void planning::rbt_star::RGBMTStar::considerChildren(std::shared_ptr<base::State
 }
 
 // Delete all trees with indices 'idx'
-void planning::rbt_star::RGBMTStar::deleteTrees(std::vector<int> &trees_connected)
+void planning::rbt_star::RGBMTStar::deleteTrees(const std::vector<int> &trees_connected)
 {
     for (int i = trees_connected.size()-1; i >= 0; i--)
         trees.erase(trees.begin() + trees_connected[i]);
@@ -388,7 +392,7 @@ bool planning::rbt_star::RGBMTStar::checkTerminatingCondition()
     return false;
 }
 
-void planning::rbt_star::RGBMTStar::outputPlannerData(std::string filename, bool output_states_and_paths, bool append_output) const
+void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
     std::ofstream output_file;
 	std::ios_base::openmode mode = std::ofstream::out;

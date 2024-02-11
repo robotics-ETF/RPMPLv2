@@ -10,10 +10,10 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt::RGBTConnect::RGBTConnect(std::shared_ptr<base::StateSpace> ss_) : RBTConnect(ss_) {}
+planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RBTConnect(ss_) {}
 
-planning::rbt::RGBTConnect::RGBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                                        std::shared_ptr<base::State> goal_) : RBTConnect(ss_, start_, goal_) {}
+planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
+                                        const std::shared_ptr<base::State> q_goal_) : RBTConnect(ss_, q_start_, q_goal_) {}
 
 bool planning::rbt::RGBTConnect::solve()
 {
@@ -73,7 +73,7 @@ bool planning::rbt::RGBTConnect::solve()
 // Generalized spine is generated from 'q' towards 'q_e'
 // 'q_new' is the final state from the generalized spine
 std::tuple<base::State::Status, std::shared_ptr<base::State>> 
-    planning::rbt::RGBTConnect::extendGenSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+    planning::rbt::RGBTConnect::extendGenSpine(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
     float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
@@ -93,7 +93,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
 // Generalized spine is generated from 'q' towards 'q_e'
 // 'q_new_list' contains all states from the generalized spine
 std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> 
-    planning::rbt::RGBTConnect::extendGenSpine2(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+    planning::rbt::RGBTConnect::extendGenSpine2(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
     float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
@@ -114,7 +114,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 }
 
 base::State::Status planning::rbt::RGBTConnect::connectGenSpine
-	(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
     float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
@@ -168,7 +168,7 @@ bool planning::rbt::RGBTConnect::checkTerminatingCondition(base::State::Status s
 	return false;
 }
 
-void planning::rbt::RGBTConnect::outputPlannerData(std::string filename, bool output_states_and_paths, bool append_output) const
+void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
 	std::ofstream output_file;
 	std::ios_base::openmode mode = std::ofstream::out;

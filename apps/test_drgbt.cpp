@@ -13,14 +13,12 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 	std::string scenario_file_path = "/data/xarm6/scenario_real_time/scenario_real_time.yaml";
 
-	Eigen::Vector3f obs_dim(0.01, 0.01, 0.01);	// Dimensions of each random obstacle in [m, m, m]
-	std::vector<std::string> routines = { 		// Routines of which the time executions are stored
-		"replan [ms]",
-		"checkMotionValidity [us]", 
-		"computeDistance [us]", 
-		"generateGBur [ms]", 
-		"generateHorizon [us]", 
-		"updateHorizon [us]"
+	std::vector<std::string> routines = { 	// Routines of which the time executions are stored
+		"replan [ms]",						// 0
+		"computeDistance [us]", 			// 1
+		"generateGBur [ms]", 				// 2
+		"generateHorizon [us]", 			// 3
+		"updateHorizon [us]"				// 4
 	};
 
 	// -------------------------------------------------------------------------------------- //
@@ -32,27 +30,32 @@ int main(int argc, char **argv)
 	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	int num_random_obstacles_init = node["testing"]["num_random_obstacles_init"].as<int>();
-	const int max_num_random_obstacles = node["testing"]["max_num_random_obstacles"].as<int>();
-	const float max_obs_vel = node["testing"]["max_obs_vel"].as<float>();
-	const float max_obs_acc = node["testing"]["max_obs_acc"].as<float>();
-	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_obs_vel * DRGBTConfig::MAX_ITER_TIME * 0.001) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
-	int num_test_init = node["testing"]["num_test_init"].as<int>();
-	int num_success_test_init = node["testing"]["num_success_test_init"].as<int>();
-	const int max_num_tests = node["testing"]["max_num_tests"].as<int>();
-	bool successful_tests = node["testing"]["successful_tests"].as<bool>();
+
+	int init_num_obs = node["random_obstacles"]["init_num"].as<int>();
+	const int max_num_obs = node["random_obstacles"]["max_num"].as<int>();
+	const float max_vel_obs = node["random_obstacles"]["max_vel"].as<float>();
+	const float max_acc_obs = node["random_obstacles"]["max_acc"].as<float>();
+	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME * 0.001) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
+	Eigen::Vector3f obs_dim;
+	for (int i = 0; i < 3; i++)
+		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
+
+	int init_num_test = node["testing"]["init_num"].as<int>();
+	int init_num_success_test = node["testing"]["init_num_success"].as<int>();
+	const int max_num_tests = node["testing"]["max_num"].as<int>();
+	bool reach_successful_tests = node["testing"]["reach_successful_tests"].as<bool>();
     if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*") 
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 
-	while (num_random_obstacles_init <= max_num_random_obstacles)
+	while (init_num_obs <= max_num_obs)
 	{
-		LOG(INFO) << "Number of obstacles " << num_random_obstacles_init << " of " << max_num_random_obstacles;
+		LOG(INFO) << "Number of obstacles " << init_num_obs << " of " << max_num_obs;
 		
 		std::ofstream output_file;
-		if (num_test_init == 1)
+		if (init_num_test == 1)
 		{
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-							"_routine_times" + std::to_string(num_random_obstacles_init) + ".log", std::ofstream::out);
+							"_routine_times" + std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << "DRGBT" << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
@@ -69,10 +72,10 @@ int main(int argc, char **argv)
 			output_file	<< "Maximal iteration time [ms]:                            " << DRGBTConfig::MAX_ITER_TIME << std::endl;
 			output_file << "Maximal time of Task 1 [ms]:                            " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
-			output_file << "Number of obstacles:                                    " << num_random_obstacles_init << std::endl;
+			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;
 			output_file << "Obstacles motion:                                       " << "random" << std::endl;
-			output_file << "Maximal velocity of each obstacle [m/s]:                " << max_obs_vel << std::endl;
-			output_file << "Maximal acceleration of each obstacle [m/s²]:           " << max_obs_acc << std::endl;
+			output_file << "Maximal velocity of each obstacle [m/s]:                " << max_vel_obs << std::endl;
+			output_file << "Maximal acceleration of each obstacle [m/s²]:           " << max_acc_obs << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();
 		}
@@ -80,8 +83,8 @@ int main(int argc, char **argv)
 		std::vector<float> alg_times;
 		std::vector<float> iter_times;
 		std::vector<float> path_lengths;
-		int num_test = num_test_init;
-		int num_success_tests = num_success_test_init;
+		int num_test = init_num_test;
+		int num_success_tests = init_num_success_test;
 
 		while (true)
 		{
@@ -89,22 +92,22 @@ int main(int argc, char **argv)
 			{
 				scenario::Scenario scenario(scenario_file_path, project_path);
 				std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-				std::shared_ptr<base::State> start = scenario.getStart();
-				std::shared_ptr<base::State> goal = scenario.getGoal();
+				std::shared_ptr<base::State> q_start = scenario.getStart();
+				std::shared_ptr<base::State> q_goal = scenario.getGoal();
 				std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 				env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
-				initRandomObstacles(num_random_obstacles_init, obs_dim, scenario, max_obs_vel, max_obs_acc);
+				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters				
+				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
 
 				LOG(INFO) << "Test number: " << num_test;
 				LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
-				LOG(INFO) << "Environment parts: " << env->getParts().size();
+				LOG(INFO) << "Environment parts: " << env->getNumObjects();
 				LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 				LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 				LOG(INFO) << "Start: " << scenario.getStart();
 				LOG(INFO) << "Goal: " << scenario.getGoal();
 				
-				std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::drbt::DRGBT>(ss, start, goal);
+				std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::drbt::DRGBT>(ss, q_start, q_goal);
 				bool result = planner->solve();
 				
 				LOG(INFO) << "DRGBT planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
@@ -133,7 +136,7 @@ int main(int argc, char **argv)
 				}
 
 				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-								 "_routine_times" + std::to_string(num_random_obstacles_init) + ".log", std::ofstream::app);
+								 "_routine_times" + std::to_string(init_num_obs) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
@@ -171,13 +174,13 @@ int main(int argc, char **argv)
 				LOG(ERROR) << e.what();
 			}
 
-			if (successful_tests && num_success_tests == max_num_tests || !successful_tests && num_test > max_num_tests)
+			if (reach_successful_tests && num_success_tests == max_num_tests || !reach_successful_tests && num_test > max_num_tests)
 				break;
 		}
 
-		num_test_init = 1;
-		num_success_test_init = 0;
-		num_random_obstacles_init += std::pow(10, std::floor(std::log10(num_random_obstacles_init)));
+		init_num_test = 1;
+		init_num_success_test = 0;
+		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
 
 		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [ms]";

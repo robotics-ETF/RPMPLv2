@@ -25,29 +25,30 @@ protected:
 public:
 	PlannerInfo() {}
 	~PlannerInfo();
+	
 	void addIterationTime(int time);
 	void addStateTimes(const std::vector<int> &state_times);
 	void addCostConvergence(const std::vector<float> &cost_convergence);
 	void addRoutineTime(int time, int idx);
-	void setPlanningTime(int planning_time_) { planning_time = planning_time_; }
-	void setNumCollisionQueries(int num_collision_queries_) { num_collision_queries = num_collision_queries_; }
-	void setNumDistanceQueries(int num_distance_queries_) { num_distance_queries = num_distance_queries_; }
-	void setNumStates(int num_states_) { num_states = num_states_; }
-	void setNumIterations(int num_iterations_) { num_iterations = num_iterations_; }
-	void setSuccessState(bool success_state_) { success_state = success_state_; }
-	void setTask1Interrupted(bool task1_interrupted_) { task1_interrupted = task1_interrupted_; }
+	inline void setPlanningTime(int planning_time_) { planning_time = planning_time_; }
+	inline void setNumCollisionQueries(int num_collision_queries_) { num_collision_queries = num_collision_queries_; }
+	inline void setNumDistanceQueries(int num_distance_queries_) { num_distance_queries = num_distance_queries_; }
+	inline void setNumStates(int num_states_) { num_states = num_states_; }
+	inline void setNumIterations(int num_iterations_) { num_iterations = num_iterations_; }
+	inline void setSuccessState(bool success_state_) { success_state = success_state_; }
+	inline void setTask1Interrupted(bool task1_interrupted_) { task1_interrupted = task1_interrupted_; }
 
-	const std::vector<int> &getIterationTimes() const { return iteration_times; }
-	const std::vector<int> &getStateTimes() const { return state_times; }
-	const std::vector<float> &getCostConvergence() const { return cost_convergence; }
-	const std::vector<std::vector<int>> &getRoutineTimes() const {return routine_times; }
-	int getPlanningTime() const { return planning_time; }
-	int getNumCollisionQueries() const { return num_collision_queries; }
-	int getNumDistanceQueries() const { return num_distance_queries; }
-	int getNumStates() const { return num_states; }
-	int getNumIterations() const { return num_iterations; }
-	bool getSuccessState() const { return success_state; }
-	bool getTask1Interrupted() const { return task1_interrupted; }
+	inline const std::vector<int> &getIterationTimes() const { return iteration_times; }
+	inline const std::vector<int> &getStateTimes() const { return state_times; }
+	inline const std::vector<float> &getCostConvergence() const { return cost_convergence; }
+	inline const std::vector<std::vector<int>> &getRoutineTimes() const {return routine_times; }
+	inline int getPlanningTime() const { return planning_time; }
+	inline int getNumCollisionQueries() const { return num_collision_queries; }
+	inline int getNumDistanceQueries() const { return num_distance_queries; }
+	inline int getNumStates() const { return num_states; }
+	inline int getNumIterations() const { return num_iterations; }
+	inline bool getSuccessState() const { return success_state; }
+	inline bool getTask1Interrupted() const { return task1_interrupted; }
 
 	void clearPlannerInfo();
 

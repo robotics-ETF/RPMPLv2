@@ -17,7 +17,7 @@ enum class StateSpaceType
 	SO3
 };
 
-std::ostream &operator<<(std::ostream &os, const StateSpaceType &v);
+std::ostream &operator<<(std::ostream &os, const StateSpaceType &type);
 
 
 #endif //RPMPL_STATESPACETYPE_H

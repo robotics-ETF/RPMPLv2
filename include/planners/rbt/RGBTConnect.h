@@ -13,19 +13,21 @@ namespace planning
 		class RGBTConnect : public planning::rbt::RBTConnect
 		{
 		public:
-			RGBTConnect(std::shared_ptr<base::StateSpace> ss_);
-			RGBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
+			RGBTConnect(const std::shared_ptr<base::StateSpace> ss_);
+			RGBTConnect(const std::shared_ptr<base::StateSpace> ss_, 
+						const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
 			
 			bool solve() override;
 			bool checkTerminatingCondition(base::State::Status status) override;
-			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
+			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
 			std::tuple<base::State::Status, std::shared_ptr<base::State>> extendGenSpine
-				(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+				(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
             std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> extendGenSpine2
-        		(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
-            base::State::Status connectGenSpine(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+        		(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+            base::State::Status connectGenSpine(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, 
+												const std::shared_ptr<base::State> q_e);
         };
 	}
 }

@@ -4,21 +4,26 @@
 
 #include "StateSpaceType.h"
 
-std::ostream &operator<<(std::ostream &os, const StateSpaceType &v) 
+std::ostream &operator<<(std::ostream &os, const StateSpaceType &type) 
 {
 	std::string strss;
-	switch(v) 
+	switch (type)
 	{
 		case StateSpaceType::Abstract:
-			strss = "Abstract Type"; break;
+			strss = "Abstract Type"; 
+			break;
 		case StateSpaceType::RealVectorSpace:
-			strss = "RealVectorSpace Type"; break;
+			strss = "RealVectorSpace Type"; 
+			break;
 		case StateSpaceType::RealVectorSpaceFCL:
-			strss = "RealVectorSpaceFCL Type"; break;
+			strss = "RealVectorSpaceFCL Type"; 
+			break;
 		case StateSpaceType::SO2:
-			strss = "SO2 Type"; break;
+			strss = "SO2 Type"; 
+			break;
 		case StateSpaceType::SO3:
-			strss = "SO3 Type"; break;
+			strss = "SO3 Type"; 
+			break;
 	}
 	return os << strss;
 }

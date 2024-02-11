@@ -10,10 +10,10 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt::RBTConnect::RBTConnect(std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) {}
+planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) {}
 
-planning::rbt::RBTConnect::RBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_,
-                                      std::shared_ptr<base::State> goal_) : RRTConnect(ss_, start_, goal_) {}
+planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
+                                      const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_) {}
 
 bool planning::rbt::RBTConnect::solve()
 {
@@ -68,7 +68,7 @@ bool planning::rbt::RBTConnect::solve()
 
 // Get a random state 'q_rand' with uniform distribution, which is centered around 'q_center'.
 // The spine from 'q_center' to 'q_rand' is saturated and prunned.
-std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(std::shared_ptr<base::State> q_center)
+std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(const std::shared_ptr<base::State> q_center)
 {
 	std::shared_ptr<base::State> q_rand;
 	do
@@ -85,12 +85,12 @@ std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(std::shar
 // Spine is generated from 'q' towards 'q_e' using complete (expanded) bubble
 // 'q_new' is the new reached state
 std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBTConnect::extendSpine
-	(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	if (q->getDistance() < 0) 	// Just in case. Regularly, 'q' should have a distance!
 		ss->computeDistance(q);
 	
-	std::vector<float> rho_profile(ss->robot->getParts().size(), 0);	// The path length in W-space for each robot's link
+	std::vector<float> rho_profile(ss->robot->getNumLinks(), 0);	// The path length in W-space for each robot's link
 	float rho = 0; 														// The path length in W-space for complete robot
 	float step;
 	int counter = 0;
@@ -116,11 +116,11 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		if (++counter == RBTConnectConfig::NUM_ITER_SPINE)
 			return {base::State::Status::Advanced, q_new};
 
-		rho_profile = std::vector<float>(ss->robot->getParts().size(), 0);
+		rho_profile = std::vector<float>(ss->robot->getNumLinks(), 0);
 		skeleton_new = ss->robot->computeSkeleton(q_new);
 		float rho_k;
 		float rho_k1 = 0;
-		for (int k = 1; k <= ss->robot->getParts().size(); k++)
+		for (int k = 1; k <= ss->robot->getNumLinks(); k++)
 		{
 			rho_k = (skeleton->col(k) - skeleton_new->col(k)).norm();
 			rho_profile[k-1] = std::max(rho_k1, rho_k);
@@ -131,7 +131,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 }
 
 base::State::Status planning::rbt::RBTConnect::connectSpine
-	(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e)
+	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
@@ -180,7 +180,7 @@ bool planning::rbt::RBTConnect::checkTerminatingCondition(base::State::Status st
 	return false;
 }
 
-void planning::rbt::RBTConnect::outputPlannerData(std::string filename, bool output_states_and_paths, bool append_output) const
+void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
 	std::ofstream output_file;
 	std::ios_base::openmode mode = std::ofstream::out;

@@ -19,7 +19,7 @@ namespace robots
 	class xArm6 : public AbstractRobot
 	{
 	public:
-		xArm6(std::string robot_desc, float gripper_length_ = 0, bool table_included_ = true);
+		xArm6(const std::string &robot_desc, float gripper_length_ = 0, bool table_included_ = true);
 		~xArm6();
 
 		const KDL::Tree &getRobotTree() const { return robot_tree; }

@@ -63,34 +63,39 @@ MAX_PLANNING_TIME: 10000
 ## 3.2 Set scenario parameters for static planning
 Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario yaml files.
 
-For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many obstacles as you want. For now, only box obstacles are supported, and you can set:
-- ```dim```: Dimensions (x, y and z in [m]);
-- ```trans```: Translation (x, y and z in [m]);
-- ```rot```: Rotation (quaternion). 
+For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many objects as you want in the ```environment``` node. You can set the following:
+- ```label```: Label to name the object (e.g., ```table```, ```dynamic_obstacle```, ```picking_object```, etc.). If not specified, it will be empty string;
+- ```dim```: Dimensions of the object (x, y and z in [m]);
+- ```pos```: Position of the object (x, y and z in [m]);
+- ```rot```: Rotation of the object (x, y, z in [m], and w in [rad]), specified as quaternion. If not specified, the object will be AABB (axis-aligned bounding-box);
 
-Additionally, by setting ```num_random_obstacles```, you can set as many random obstacles as you want. All of them will be collision free with your start and goal configuration. Note that if you set zero random obstacles, they will not be initialized. 
+Additionally, by setting ```num``` in ```random_obstacles``` node, you can set as many random obstacles as you want with dimensions ```dim```. All of them will be collision free with your start (and goal) configuration. Note that if you set zero random obstacles, they will not be initialized. 
 
-Moreover, some details about the used robot can be set, such as:
+Moreover, some details about the used robot can be set in the ```robot``` node, such as:
 - ```type```: Robot type;
 - ```urdf```: Urdf file location;
 - ```space```: Configuration space type (RealVectorSpace or RealVectorSpaceFCL);
 - ```num_DOFs```: Number of DOFs (number of dimensions of the configuration space);
-- ```start```: Start configuration;
-- ```goal```: Goal configuration;
+- ```q_start```: Start configuration;
+- ```q_goal```: Goal configuration;
 - ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
-- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' (required as the first obstacle) is (un)commented within 'obstacles';
+- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' is (un)commented within ```obstacles```;
+- ```WS_center```: Workspace center point in [m];
+- ```WS_radius```: Workspace radius in [m] assuming spherical workspace shape;
 - ```max_vel```: Maximal velocity of each robot's joint in [rad/s] for revolute joints, or in [mm/s] for prismatic joints;
 - ```max_acc```: Maximal acceleration of each robot's joint in [rad/s²] for revolute joints, or in [mm/s²] for prismatic joints;
 - ```max_jerk```: Maximal jerk of each robot's joint in [rad/s³] for revolute joints, or in [mm/s³] for prismatic joints.
 
-Note that ```gripper_length``` and ```table_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, thus their default values will be infinite.
+Note that ```gripper_length``` and ```table_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, if not relevant in the planning. 
+
+Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be ommited.
 
 For example, if you do not want to use FCL (Flexible Collision Library) in planning, just set:
 ```
 space: "RealVectorSpace"
 ```
-Be aware that, in such case, robot links are approximated with capsules, thus collision checks and distance queries between primitives, capsule and box, are performed. In most cases, this executes faster than when using FCL, especially for more complicated robot mesh structures (containing too many triangles), such as xarm6 structure.
+Be aware that, in such case, robot links are approximated with capsules, thus collision checks and distance queries between primitives, capsule and AABB, are performed. In most cases, this executes faster than when using FCL, especially for more complicated robot mesh structures (containing too many triangles), such as xarm6 structure.
 
 Otherwise, if you do want to use FCL, just set:
 ```
@@ -98,23 +103,28 @@ space: "RealVectorSpaceFCL"
 ```
 
 ## 3.3 Set scenario parameters for dynamic real-time planning
-In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_real_time/scenario_real_time.yaml```. You can set the following:
-- ```num_random_obstacles_init```: Number of random obstacles to start with the testing;
-- ```max_num_random_obstacles```: Maximal number of random obstacles to be added;
-- ```max_obs_vel```: Maximal velocity of each obstacle in [m/s];
-- ```num_test_init```: Number of testing to start with (default: 1);
-- ```num_success_test_init```: Number of successful tests so far (default: 0);
-- ```max_num_tests```: Maximal number of tests that should be carried out.
+In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_real_time/scenario_real_time.yaml```. You can set the following in the ```random_obstacles``` node:
+- ```init_num```: Number of random obstacles to start with the testing;
+- ```max_num```: Maximal number of random obstacles to be added;
+- ```max_vel```: Maximal velocity of each obstacle in [m/s];
+- ```max_acc```: Maximal acceleration of each obstacle in [m/s²];
+- ```dim```: Dimensions of each random obstacle in [m].
 
-For example, if you set ```num_random_obstacles_init: 1``` and ```max_num_random_obstacles: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```num_random_obstacles_init : 0``` and ```max_num_random_obstacles : 0```.
+For example, if you set ```init_num: 1``` and ```max_num: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```init_num : 0``` and ```max_num : 0```.
 
-You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line until it reaches the workspace limit, when it returns back by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_obs_vel```.
+You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line (when ```max_acc``` is set to 0) until it reaches the workspace limit, when it returns back by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_vel```.
 
-Parameters ```num_test_init``` and ```num_success_test_init``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left just by setting these two parameters.
+Moreover, you can set the following in the ```testing``` node:
+- ```init_num```: Number of testing to start with (default: 1);
+- ```init_num_success```: Initial number of already achieved successful tests (default: 0);
+- ```max_num```: Maximal number of tests that should be carried out;
+- ```reach_successful_tests```: If true, run totally ```max_num``` successful tests.
+
+Parameters ```init_num``` and ```init_num_success``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left just by setting these two parameters.
 
 In the file ```/data/configurations/configuration_drgbt```, you can set the following DRGBT parameters:
 - ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
-- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the obstacle covers a distance of ```max_obs_vel * MAX_ITER_TIME``` in [mm] during a single iteration;
+- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [mm] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [ms];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
@@ -161,7 +171,7 @@ Test DRGBT:
 
 After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planner_data.log```).
 
-## 3.5 Visualize the robot and obstacles
+## 3.5 Visualize the robot and environment
 In the new tab type:
 ```
 cd ~/xarm6-etf-lab/build

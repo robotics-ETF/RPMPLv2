@@ -1,4 +1,4 @@
-#include <iostream>
+#include <ostream>
 #include <RealVectorSpaceFCL.h>
 #include <Environment.h>
 #include <Planar2DOF.h>
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
 	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
 	std::shared_ptr<base::StateSpace> ss_FCL = scenario_FCL.getStateSpace();
-	LOG(INFO) << "Environment parts: " << scenario.getEnvironment()->getParts().size();
+	LOG(INFO) << "Number of objects in environment: " << scenario.getEnvironment()->getNumObjects();
 	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
 	LOG(INFO) << "State space ss type:     " << ss->getStateSpaceType();
 	LOG(INFO) << "State space ss_FCL type: " << ss_FCL->getStateSpaceType();

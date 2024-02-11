@@ -13,7 +13,7 @@ typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
 robots::Planar2DOF::~Planar2DOF() {}
 
-robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs_)
+robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, int num_DOFs_)
 {
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
@@ -23,32 +23,32 @@ robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs_)
     	throw std::runtime_error("Failed to parse urdf file");
 	
 	type = model.getName();
-	std::vector<urdf::LinkSharedPtr > links;
-	model.getLinks(links);
+	std::vector<urdf::LinkSharedPtr > links_;
+	model.getLinks(links_);
 	num_DOFs = num_DOFs_;
 
-	for (size_t i = 0; i < num_DOFs; ++i)
+	for (int i = 0; i < num_DOFs; i++)
 	{
 		float lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
 		float upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
-		limits.emplace_back(std::vector<float>({lower, upper}));
+		limits.emplace_back(std::pair<float, float>(lower, upper));
 	}
 
-	for (size_t i = 0; i < links.size()-1; ++i)
+	for (int i = 0; i < links_.size()-1; i++)
 	{
 		
-		if (links[i]->visual->geometry->type == urdf::Geometry::BOX)
+		if (links_[i]->visual->geometry->type == urdf::Geometry::BOX)
 		{
-			auto box = (std::shared_ptr<urdf::Box>&) links[i]->visual->geometry;
-			KDL::Vector origin(links[i]->visual->origin.position.x, 
-							   links[i]->visual->origin.position.y,
-							   links[i]->visual->origin.position.z);
+			auto box = (std::shared_ptr<urdf::Box>&) links_[i]->visual->geometry;
+			KDL::Vector origin(links_[i]->visual->origin.position.x, 
+							   links_[i]->visual->origin.position.y,
+							   links_[i]->visual->origin.position.z);
 			
 			CollisionGeometryPtr fclBox(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
 			// LOG(INFO) << "origin: " << origin << std::endl;
 			
 			init_poses.emplace_back(KDL::Frame(origin));
-			parts.emplace_back(new fcl::CollisionObjectf(fclBox, fcl::Transform3f()));
+			links.emplace_back(new fcl::CollisionObjectf(fclBox, fcl::Transform3f()));
 			capsules_radius.emplace_back(box->dim.y / 2);
 		}
 	}
@@ -61,23 +61,23 @@ robots::Planar2DOF::Planar2DOF(std::string robot_desc, int num_DOFs_)
 	// LOG(INFO) << "Constructor end ----------------------\n";
 }
 
-void robots::Planar2DOF::setState(std::shared_ptr<base::State> q)
+void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
-	for (size_t i = 0; i < parts.size(); ++i)
+	for (int i = 0; i < links.size(); i++)
 	{
 		tf = frames_fk->at(i) * init_poses[i];
 		//LOG(INFO) << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
 						
 		//LOG(INFO) << "fcl\n";
-		parts[i]->setTransform(KDL2fcl(tf));
-		parts[i]->computeAABB(); 
-		//LOG(INFO) << parts[i]->getAABB().min_ <<"\t;\t" << parts[i]->getAABB().max_ << std::endl << "*******************" << std::endl;
+		links[i]->setTransform(KDL2fcl(tf));
+		links[i]->computeAABB(); 
+		//LOG(INFO) << links[i]->getAABB().min_ <<"\t;\t" << links[i]->getAABB().max_ << std::endl << "*******************" << std::endl;
 	}
 }
 
-std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(std::shared_ptr<base::State> q)
+std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(const std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
@@ -85,10 +85,10 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
 
-	for (size_t i = 0; i < num_DOFs; ++i)
+	for (int i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 	
-	for (size_t i = 0; i < robot_tree.getNrOfSegments(); ++i)
+	for (int i = 0; i < robot_tree.getNrOfSegments(); i++)
 	{
 		KDL::Frame cart_pos;
 		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
@@ -99,12 +99,12 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 }
 
 std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
-																		  std::shared_ptr<base::State> q_init)
+																		  const std::shared_ptr<base::State> q_init)
 {
 	// TODO (if needed)
 }
 
-std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared_ptr<base::State> q)
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
 	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1);
@@ -115,15 +115,15 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(std::shared
 }
 
 // Compute step for moving from 'q1' towards 'q2' using ordinary bubble
-float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho, 
-									  std::shared_ptr<Eigen::MatrixXf> skeleton)
+float robots::Planar2DOF::computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
+	float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
 	float d = 0;
 	float r;
-	for (int i = 0; i < parts.size(); i++)
+	for (int i = 0; i < links.size(); i++)
 	{
 		r = 0;
-		for (int k = i+1; k <= parts.size(); k++)
+		for (int k = i+1; k <= links.size(); k++)
 			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
 		
 		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
@@ -132,19 +132,19 @@ float robots::Planar2DOF::computeStep(std::shared_ptr<base::State> q1, std::shar
 }
 
 // Compute step for moving from 'q1' towards 'q2' using expanded bubble
-float robots::Planar2DOF::computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, 
-	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton)
+float robots::Planar2DOF::computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
+	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
 	float d = 0;
-	Eigen::VectorXf r = Eigen::VectorXf::Zero(parts.size());
-	for (int i = 0; i < parts.size(); i++)
+	Eigen::VectorXf r = Eigen::VectorXf::Zero(links.size());
+	for (int i = 0; i < links.size(); i++)
 	{
-		for (int k = i+1; k <= parts.size(); k++)
+		for (int k = i+1; k <= links.size(); k++)
 			r(i) = std::max(r(i), (skeleton->col(k) - skeleton->col(i)).norm());
 	}
 
-	Eigen::VectorXf steps(parts.size());
-	for (int k = 0; k < parts.size(); k++)
+	Eigen::VectorXf steps(links.size());
+	for (int k = 0; k < links.size(); k++)
 		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
 
 	return steps.minCoeff();
@@ -156,10 +156,10 @@ fcl::Vector3f robots::Planar2DOF::transformPoint(fcl::Vector3f& v, fcl::Transfor
 	Eigen::Vector4f trans = Eigen::Vector4f(fclVec[0], fclVec[1], fclVec[2], 1);
 	fcl::Matrix3f rot = t.rotation();
 	Eigen::MatrixXf M = Eigen::MatrixXf::Identity(4,4);
-	for (size_t i = 0; i < 3; ++i)
-		for (size_t j = 0; j < 3; ++j)	
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)	
 			M(i,j) = rot(i,j);
-	for (size_t i = 0; i < 3; ++i)
+	for (int i = 0; i < 3; i++)
 		M(i,3) = fclVec[i];
 
 	// LOG(INFO) << "obj TF:\n" << M << "\n\n"; 
@@ -191,20 +191,20 @@ KDL::Frame robots::Planar2DOF::fcl2KDL(const fcl::Transform3f &in)
     return f;
 }
 
-void robots::Planar2DOF::test(std::shared_ptr<env::Environment> env, std::shared_ptr<base::State> q)
+void robots::Planar2DOF::test(const std::shared_ptr<env::Environment> env, const std::shared_ptr<base::State> q)
 {
 	setState(q);
-	std::shared_ptr<fcl::CollisionObject<float>> ob = env->getParts()[0];
+	std::shared_ptr<fcl::CollisionObject<float>> ob = env->getCollObject(0);
 
-	for (size_t i = 0; i < parts.size(); ++i)
+	for (int i = 0; i < links.size(); i++)
 	{
 		fcl::DistanceRequest<float> request(true, 0.00, 0.00, fcl::GST_INDEP);
 		fcl::DistanceResult<float> result;
 		result.clear();
-		fcl::distance(parts[i].get(), ob.get(), request, result);
-		LOG(INFO) << "link " << i+1 << "\n" << parts[i]->getTransform().matrix();
+		fcl::distance(links[i].get(), ob.get(), request, result);
+		LOG(INFO) << "link " << i+1 << "\n" << links[i]->getTransform().matrix();
 		LOG(INFO) << "distance from " << i + 1 << ": " << result.min_distance << " p1: " << result.nearest_points[0].transpose()
 				  << "\t p2: " << result.nearest_points[2].transpose();
 	}
-	//fcl::DefaultDistanceData<float> distance_data;
+	// fcl::DefaultDistanceData<float> distance_data;
 }

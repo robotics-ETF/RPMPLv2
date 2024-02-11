@@ -1,5 +1,6 @@
 //
-// Created by dinko on 1.02.22.
+// Created by dinko on 01.02.22.
+// Modified by nermin on 09.02.24.
 //
 
 #ifndef RPMPL_SCENARIO_H
@@ -12,7 +13,6 @@
 
 #include "AbstractRobot.h"
 #include "Environment.h"
-#include "State.h"
 #include "StateSpace.h"
 
 namespace scenario
@@ -20,27 +20,27 @@ namespace scenario
 	class Scenario
 	{
 	public:
-		Scenario(std::string configuration_file, std::string root_path = "");
+		Scenario(const std::string &config_file_path, const std::string &root_path = "");
         
-        const std::shared_ptr<robots::AbstractRobot> &getRobot() const { return robot; }		
-        const std::shared_ptr<env::Environment> &getEnvironment() const { return env; }
-        const std::shared_ptr<base::StateSpace> &getStateSpace() const { return ss; }
-        const std::shared_ptr<base::State> &getStart() const { return start; }
-        const std::shared_ptr<base::State> &getGoal() const { return goal; }
-        const std::string &getSpaceType() const { return spaceType; }
-        const int &getNumDimensions() const { return num_dimensions; }
+        inline std::shared_ptr<robots::AbstractRobot> getRobot() const { return robot; }		
+        inline std::shared_ptr<env::Environment> getEnvironment() const { return env; }
+        inline std::shared_ptr<base::StateSpace> getStateSpace() const { return ss; }
+        inline std::shared_ptr<base::State> getStart() const { return q_start; }
+        inline std::shared_ptr<base::State> getGoal() const { return q_goal; }
+        inline const std::string &getSpaceType() const { return spaceType; }
+        inline int getNumDimensions() const { return num_dimensions; }
 
-        void setStart(const std::shared_ptr<base::State> start_) { start = start_; }
-        void setGoal(const std::shared_ptr<base::State> goal_) { goal = goal_; }
+        inline void setStart(const std::shared_ptr<base::State> q_start_) { q_start = q_start_; }
+        inline void setGoal(const std::shared_ptr<base::State> q_goal_) { q_goal = q_goal_; }
 
 	private:
         std::shared_ptr<base::StateSpace> ss;
 		std::shared_ptr<robots::AbstractRobot> robot;
         std::shared_ptr<env::Environment> env;
-        std::shared_ptr<base::State> start;
-        std::shared_ptr<base::State> goal;
+        std::shared_ptr<base::State> q_start;
+        std::shared_ptr<base::State> q_goal;
         std::string spaceType;
-        int num_dimensions;         // Number of dimensions of state-space (also 'num_DOFs' of the used robot)
+        int num_dimensions;         // Number of dimensions of the state-space (also 'num_DOFs' of the used robot)
 	};
 }
-#endif //RPMPL_ABSTRACTPLANNER_H
+#endif //RPMPL_SCENARIO_H

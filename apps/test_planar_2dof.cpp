@@ -1,4 +1,4 @@
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 #include "Planar2DOF.h"
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	std::shared_ptr<robots::Planar2DOF> robot =  std::dynamic_pointer_cast<robots::Planar2DOF>(scenario.getRobot());
 	std::shared_ptr<base::State> testState = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1.35, -2.0}));
 	robot->setState(testState);
-	std::shared_ptr<fcl::CollisionObject<float>> ob = scenario.getEnvironment()->getParts()[0];
+	std::shared_ptr<fcl::CollisionObject<float>> ob = scenario.getEnvironment()->getCollObject(0);
 
 	//robot->test(scenario.getEnvironment(), testState);
 	fcl::DefaultDistanceData<float> distance_data;

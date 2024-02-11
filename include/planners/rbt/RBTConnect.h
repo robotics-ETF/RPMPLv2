@@ -13,19 +13,20 @@ namespace planning
 		class RBTConnect : public planning::rrt::RRTConnect
 		{
 		public:
-			RBTConnect(std::shared_ptr<base::StateSpace> ss_);
-			RBTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
+			RBTConnect(const std::shared_ptr<base::StateSpace> ss_);
+			RBTConnect(const std::shared_ptr<base::StateSpace> ss_, 
+					   const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
 			
 			bool solve() override;
 			bool checkTerminatingCondition(base::State::Status status) override;
-			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
+			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
-            std::shared_ptr<base::State> getRandomState(std::shared_ptr<base::State> q_center);
-			std::tuple<base::State::Status, std::shared_ptr<base::State>> 
-				extendSpine(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
-			base::State::Status connectSpine(std::shared_ptr<base::Tree> tree, 
-											 std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+            std::shared_ptr<base::State> getRandomState(const std::shared_ptr<base::State> q_center);
+			std::tuple<base::State::Status, std::shared_ptr<base::State>> extendSpine
+				(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+			base::State::Status connectSpine(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, 
+											 const std::shared_ptr<base::State> q_e);
 		};
 	}
 }

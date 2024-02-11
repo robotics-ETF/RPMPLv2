@@ -22,19 +22,19 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	robot->setState(q);	
 	fcl::DefaultCollisionData<float> collision_data;
 
-	for (size_t i = 0; i < robot->getParts().size(); i++)
+	for (int i = 0; i < robot->getNumLinks(); i++)
 	{	
-		for (size_t j = 0; j < env->getParts().size(); j++)
+		for (int j = 0; j < env->getNumObjects(); j++)
 		{
-			// 'j == 0' always represents the table when it is included
-			if ((j == 0 && (i == 0 || i == 1)) && robot->getType() == "xarm6_with_table")
+			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
+				robot->getType().find("with_table") != std::string::npos)
 				continue;
 			else
 			{
 				collision_manager_robot->clear();
 				collision_manager_env->clear();
-				collision_manager_robot->registerObject(robot->getParts()[i].get());
-				collision_manager_env->registerObject(env->getParts()[j].get());
+				collision_manager_robot->registerObject(robot->getLinks()[i].get());
+				collision_manager_env->registerObject(env->getCollObject(j).get());
 				collision_manager_robot->setup();
 				collision_manager_env->setup();
 
@@ -57,20 +57,20 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 		return q->getDistance();
 	
 	float d_c = INFINITY;
-	std::vector<float> d_c_profile(robot->getParts().size(), 0);
+	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
-		(std::vector<Eigen::MatrixXf>(env->getParts().size(), Eigen::MatrixXf(6, robot->getParts().size())));
+		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())));
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
 	fcl::DefaultDistanceData<float> distance_data;
 	robot->setState(q);
 	
-	for (size_t i = 0; i < robot->getParts().size(); i++)
+	for (int i = 0; i < robot->getNumLinks(); i++)
 	{
 		d_c_profile[i] = INFINITY;
-		for (size_t j = 0; j < env->getParts().size(); j++)
+		for (int j = 0; j < env->getNumObjects(); j++)
 		{
-			// 'j == 0' always represents the table when it is included
-			if ((j == 0 && (i == 0 || i == 1)) && robot->getType() == "xarm6_with_table")
+			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
+				robot->getType().find("with_table") != std::string::npos)
 			{
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
 				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point
@@ -79,8 +79,8 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 			{
 				collision_manager_robot->clear();
 				collision_manager_env->clear();
-				collision_manager_robot->registerObject(robot->getParts()[i].get());
-				collision_manager_env->registerObject(env->getParts()[j].get());
+				collision_manager_robot->registerObject(robot->getLinks()[i].get());
+				collision_manager_env->registerObject(env->getCollObject(j).get());
 				collision_manager_robot->setup();
 				collision_manager_env->setup();
 

@@ -1,19 +1,21 @@
-obstacles:
+environment:
   - box:
       dim: [0.5, 0.5, 0.1]
-      trans: [1, 0.5, 0]
-      rot: [0, 0, 0, 0]
+      pos: [1, 0.5, 0]
   - box:
       dim: [0.5, 0.5, 0.1]
-      trans: [1, -0.5, 0]
-      rot: [0, 0, 0, 0]
+      pos: [1, -0.5, 0]
 
-num_random_obstacles: 0 	# If set to zero, random obstacles will not be initialized
+random_obstacles:
+  num: 0	                        # Number of random obstacles to be added
+  dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
 
 robot:
   type: "planar_10DOF"
   urdf: "/data/planar_10dof/planar_10dof.urdf"
   space: "RealVectorSpaceFCL"
   num_DOFs: 10
-  start: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  goal: [3.1415, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  q_start: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  q_goal:  [3.1415, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  WS_center: [0.0, 0.0, 0.0]                          # Workspace center point in [m]
+  WS_radius: 10                                       # Workspace radius in [m] assuming spherical workspace shape

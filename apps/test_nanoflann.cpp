@@ -7,7 +7,7 @@
 
 #include <ctime>
 #include <cstdlib>
-#include <iostream>
+#include <ostream>
 #include "RealVectorSpaceState.h"
 #include "RealVectorSpace.h"
 #include "State.h"

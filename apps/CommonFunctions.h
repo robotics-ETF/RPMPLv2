@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <iostream>
+#include <ostream>
 #include <numeric>
 
 #include <Scenario.h>
@@ -96,46 +96,7 @@ float getStd(std::vector<int> &v)
 	return std::sqrt(sum / v.size());
 }
 
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scenario::Scenario &scenario)
-{
-	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
-	
-	const Eigen::Vector3f WS_center = Eigen::Vector3f(0, 0, 0.267);
-	const float WS_radius = 1.0;
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-
-	Eigen::Vector3f pos;
-	Eigen::Matrix3f rot = fcl::Quaternionf(0, 0, 0, 0).matrix();
-	float r, fi, theta;
-	int num_obs = env->getParts().size();
-	std::random_device rd;
-	std::mt19937 generator(rd());
-	std::uniform_real_distribution<float> distribution(0.0, 1.0);
-	
-	for (int i = num_obs; i < num_obs + num_obstacles; i++)
-	{
-		r = distribution(generator) * WS_radius;
-		fi = distribution(generator) * 2 * M_PI;
-		theta = distribution(generator) * M_PI;
-		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
-		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
-		pos.z() = WS_center.z() + r * std::cos(theta);
-		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(obs_dim);
-		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
-		env->addCollisionObject(ob);
-		if (!ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
-		{
-			env->removeCollisionObjects(i);
-			i--;
-		}
-		else
-    		std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
-	}
-}
-
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scenario::Scenario &scenario, 
-	float max_obs_vel, float max_obs_acc)
+void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
@@ -143,15 +104,50 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scen
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
 	const Eigen::Vector3f WS_center = env->getWSCenter();
 
-// TODO:
-	// std::vector<std::shared_ptr<fcl::CollisionObjectf>> fixed_parts = env->getParts();
-    // env->removeCollisionObjects(0);
-
-	env->setMaxVel(max_obs_vel);
-	env->setMaxAcc(max_obs_acc);
 	Eigen::Vector3f pos;
-	Eigen::Matrix3f rot = fcl::Quaternionf(0, 0, 0, 0).matrix();
-	int num_obs = env->getParts().size();
+	float r, fi, theta;
+	int num_obs = env->getNumObjects();
+	std::random_device rd;
+	std::mt19937 generator(rd());
+	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	
+	for (int i = num_obs; i < num_obs + num_obstacles; i++)
+	{
+		r = distribution(generator) * env->getWSRadius();
+		fi = distribution(generator) * 2 * M_PI;
+		theta = distribution(generator) * M_PI;
+		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
+		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
+		pos.z() = WS_center.z() + r * std::cos(theta);
+
+		std::shared_ptr<env::Object> object = 
+			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
+		env->addObject(object);
+
+		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
+		{
+			env->removeObject(i);
+			i--;
+		}
+		else
+    		std::cout << "Added " << i << ". " << object;
+	}
+}
+
+void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
+	float max_vel, float max_acc)
+{
+	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
+
+	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
+	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+	const Eigen::Vector3f WS_center = env->getWSCenter();
+
+	std::vector<std::shared_ptr<env::Object>> fixed_objects = env->getObjects();
+	env->removeAllObjects();
+
+	Eigen::Vector3f pos, vel, acc;
+	int num_obs = env->getNumObjects();
 	float r, fi, theta;
 	std::random_device rd;
 	std::mt19937 generator(rd());
@@ -165,25 +161,35 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &obs_dim, scen
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
-		std::shared_ptr<fcl::CollisionGeometryf> box = std::make_shared<fcl::Boxf>(obs_dim);
-		std::shared_ptr<fcl::CollisionObjectf> ob = std::make_shared<fcl::CollisionObjectf>(box, rot, pos);
-		fcl::Vector3f vel = fcl::Vector3f::Random(3);
-		vel.normalize();
-		vel *= distribution(generator) * max_obs_vel;
-		float acc_sign = (distribution(generator) > 0.5) ? 1 : -1;
-		env->addCollisionObject(ob, vel, acc_sign);
 
-		// if (!env->isValid(pos) || ss->computeDistance(scenario.getStart(), true) < env->getTolRadius()) // Just to ensure safety of init. conf.
-		if (!env->isValid(pos, vel.norm()) || pos.x() > -0.3 && pos.x() < 1 && abs(pos.y()) < 0.3)
+		std::shared_ptr<env::Object> object = 
+			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
+		object->setMaxVel(max_vel);
+		object->setMaxAcc(max_acc);
+
+		vel = Eigen::Vector3f::Random(3);
+		vel.normalize();
+		vel *= distribution(generator) * max_vel;
+
+		acc = Eigen::Vector3f::Random(3);
+		acc.normalize();
+		acc *= distribution(generator) * max_acc;
+		
+		env->addObject(object, vel);
+		// env->addObject(object, vel, acc);
+
+		if (!env->isValid(pos, vel.norm()) || 
+			ss->computeDistance(scenario.getStart(), true) < 6 * DRGBTConfig::D_CRIT) // Just to ensure safety of init. conf.
 		{
-			env->removeCollisionObjects(i);
+			env->removeObject(i);
 			i--;
 		}
 		// else
-    	// 	std::cout << i << ". Obstacle range: (" << ob->getAABB().min_.transpose() << ")\t(" << ob->getAABB().max_.transpose() << ")\n";
+    	// 	std::cout << "Added " << i << ". " << object;
 	}
 
-	// for (std::shared_ptr<fcl::CollisionObjectf> part : fixed_parts)
-    //     env->addCollisionObject(part);
+	// Restore deleted fixed objects from the beginning
+	for (std::shared_ptr<env::Object> obj : fixed_objects)
+        env->addObject(obj);
 	
 }

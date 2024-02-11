@@ -1,4 +1,4 @@
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 #include "xArm6.h"
@@ -17,11 +17,11 @@ int main(int argc, char **argv)
 	std::shared_ptr<robots::xArm6> robot = std::make_shared<robots::xArm6>(project_path + "/data/xarm6/xarm6.urdf");
 
 	// LOG(INFO) << robot->getRobotTree().getNrOfSegments();
-	// LOG(INFO) << robot->getParts().size();
-	// LOG(INFO) << robot->getParts().at(0)->getCollisionGeometry()->computeVolume();
-	// LOG(INFO) << robot->getParts().at(0)->getAABB().height() << ";" 
-	// 		  << robot->getParts().at(0)->getAABB().depth() << ";" 
-	// 		  << robot->getParts().at(0)->getAABB().width();
+	// LOG(INFO) << robot->getNumLinks();
+	// LOG(INFO) << robot->getLinks().at(0)->getCollisionGeometry()->computeVolume();
+	// LOG(INFO) << robot->getLinks().at(0)->getAABB().height() << ";" 
+	// 		  << robot->getLinks().at(0)->getAABB().depth() << ";" 
+	// 		  << robot->getLinks().at(0)->getAABB().width();
 
 	// Eigen::VectorXf q = Eigen::VectorXf::Zero(6);
 	// q << 0, 0, 0, M_PI, M_PI_2, 0;
@@ -34,13 +34,13 @@ int main(int argc, char **argv)
 
 	// Test inverse kinematics
 	srand((unsigned int) time(0));
-	const std::vector<std::vector<float>> limits = robot->getLimits();
+	const std::vector<std::pair<float, float>> limits = robot->getLimits();
 	for (int k = 0; k < 10000; k++)
 	{
 		LOG(INFO) << "k = " << k;
 		Eigen::VectorXf rand = Eigen::VectorXf::Random(6);
-		for (size_t i = 0; i < 6; i++)
-			rand(i) = ((limits[i][1] - limits[i][0]) * rand(i) + limits[i][0] + limits[i][1]) / 2;
+		for (int i = 0; i < 6; i++)
+			rand(i) = ((limits[i].second - limits[i].first) * rand(i) + limits[i].first + limits[i].second) / 2;
 		std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(rand);
 		// LOG(INFO) << "State: " << state;
 				

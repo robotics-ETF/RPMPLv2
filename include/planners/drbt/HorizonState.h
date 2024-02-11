@@ -15,7 +15,7 @@ namespace planning
         {
         public:
             HorizonState() {}
-            HorizonState(std::shared_ptr<base::State> state_, int index_);
+            HorizonState(const std::shared_ptr<base::State> state_, int index_);
             ~HorizonState() {}
 
             enum Status {Good, Bad, Critical, Goal};
@@ -31,7 +31,7 @@ namespace planning
             inline float getCoord(int idx) const { return state->getCoord(idx); }
             inline bool getIsReached() const { return is_reached; }
 
-            inline void setStateReached(std::shared_ptr<base::State> state_reached_) { state_reached = state_reached_; }
+            inline void setStateReached(const std::shared_ptr<base::State> state_reached_) { state_reached = state_reached_; }
             inline void setStatus(Status status_) { status = status_; }
             inline void setIndex(int index_) { index = index_; }
             void setDistance(float d_c_);
@@ -39,7 +39,7 @@ namespace planning
             void setWeight(float weight_);
             inline void setIsReached(bool is_reached_) { is_reached = is_reached_; }
 
-            friend std::ostream &operator<<(std::ostream &os, const HorizonState *q);
+            friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::drbt::HorizonState> q);
 
         private:
             std::shared_ptr<base::State> state;

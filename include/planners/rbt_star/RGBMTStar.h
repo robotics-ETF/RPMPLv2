@@ -13,32 +13,33 @@ namespace planning
 		class RGBMTStar : public planning::rbt::RGBTConnect
 		{
 		public:
-			RGBMTStar(std::shared_ptr<base::StateSpace> ss_);
-			RGBMTStar(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
+			RGBMTStar(const std::shared_ptr<base::StateSpace> ss_);
+			RGBMTStar(const std::shared_ptr<base::StateSpace> ss_, 
+                      const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
             
 			bool solve() override;
             bool checkTerminatingCondition();
-			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
+			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
-            std::vector<size_t> num_states;             // Total number of states for each tree
+            std::vector<int> num_states;                // Total number of states for each tree
             float cost_opt;                             // Cost of the final path 
             std::shared_ptr<base::State> q_con_opt;     // State (takes start or goal conf.) from which the optimal path is constructed
 	
 			std::tuple<base::State::Status, std::shared_ptr<base::State>> connectGenSpine
-                (std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
-            float computeCostToCome(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2);
-            std::shared_ptr<base::State> optimize(std::shared_ptr<base::State> q, std::shared_ptr<base::Tree> tree, 
+                (const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+            float computeCostToCome(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2);
+            std::shared_ptr<base::State> optimize(const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree, 
                                                   std::shared_ptr<base::State> q_reached);
-            void unifyTrees(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::Tree> tree0,
-                            std::shared_ptr<base::State> q_con, std::shared_ptr<base::State> q0_con);
-            void deleteTrees(std::vector<int> &trees_connected);
+            void unifyTrees(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::Tree> tree0,
+                            const std::shared_ptr<base::State> q_con, const std::shared_ptr<base::State> q0_con);
+            void deleteTrees(const std::vector<int> &trees_connected);
             std::shared_ptr<base::State> getRandomState();
             void computePath(std::shared_ptr<base::State> q_con);
     
         private:
-            void considerChildren(std::shared_ptr<base::State> q, std::shared_ptr<base::Tree> tree0,
-                                  std::shared_ptr<base::State> q0_con, std::shared_ptr<base::State> q_considered);
+            void considerChildren(const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree0,
+                                  const std::shared_ptr<base::State> q0_con, const std::shared_ptr<base::State> q_considered);
         };
 	}
 }

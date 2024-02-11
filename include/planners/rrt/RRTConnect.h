@@ -15,21 +15,24 @@ namespace planning
 		class RRTConnect : public AbstractPlanner
 		{
 		public:
-			RRTConnect(std::shared_ptr<base::StateSpace> ss_);
-			RRTConnect(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
+			RRTConnect(const std::shared_ptr<base::StateSpace> ss_);
+			RRTConnect(const std::shared_ptr<base::StateSpace> ss_, 
+					   const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
 			~RRTConnect();
 			
 			bool solve() override;
 			base::Tree getTree(int tree_idx) const;
 			const std::vector<std::shared_ptr<base::State>> &getPath() const override;
 			bool checkTerminatingCondition(base::State::Status status) override;
-			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
+			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 			
 		protected:
 			std::vector<std::shared_ptr<base::Tree>> trees;
 			
-			std::tuple<base::State::Status, std::shared_ptr<base::State>> extend(std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
-			base::State::Status connect(std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q, std::shared_ptr<base::State> q_e);
+			std::tuple<base::State::Status, std::shared_ptr<base::State>> extend
+				(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+			base::State::Status connect(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, 
+										const std::shared_ptr<base::State> q_e);
 			void computePath();
 		};
 	}

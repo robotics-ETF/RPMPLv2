@@ -29,7 +29,7 @@ void planning::drbt::HorizonState::setWeight(float weight_)
         setStatus(HorizonState::Status::Bad);
 }
 
-std::ostream &planning::drbt::operator<<(std::ostream &os, const planning::drbt::HorizonState *q)
+std::ostream &planning::drbt::operator<<(std::ostream &os, const std::shared_ptr<planning::drbt::HorizonState> q)
 {
     os << "q:         (" << q->getCoord().transpose() << ")" << std::endl;
     if (q->getStateReached() == nullptr)

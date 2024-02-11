@@ -1,6 +1,6 @@
 MAX_NUM_ITER: 1000000		            # Maximal number of algorithm iterations
 MAX_ITER_TIME: 100 		              # Maximal runtime of a single iteration in [ms]
-MAX_PLANNING_TIME: 30000	          # Maximal algorithm runtime in [ms]
+MAX_PLANNING_TIME: 10000	          # Maximal algorithm runtime in [ms]
 INIT_HORIZON_SIZE: 10		            # Initial horizon size
 TRESHOLD_WEIGHT: 0.5			          # Treshold for the replanning assessment. Range: between 0 and 1
 D_CRIT: 0.05			                  # Critical distance in W-space to compute critical nodes

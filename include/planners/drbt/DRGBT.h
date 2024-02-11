@@ -15,13 +15,14 @@ namespace planning
         class DRGBT : public planning::rbt::RGBTConnect
         {
         public:
-            DRGBT(std::shared_ptr<base::StateSpace> ss_);
-			DRGBT(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, std::shared_ptr<base::State> goal_);
+            DRGBT(const std::shared_ptr<base::StateSpace> ss_);
+			DRGBT(const std::shared_ptr<base::StateSpace> ss_, 
+                  const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
             ~DRGBT();                         
             
             bool solve() override;
             bool checkTerminatingCondition();
-			void outputPlannerData(std::string filename, bool output_states_and_paths = true, bool append_output = false) const override;
+			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
             
 		protected:
             void generateHorizon();
@@ -31,10 +32,10 @@ namespace planning
             void addRandomStates(int num);
             void addLateralStates();
             bool modifyState(std::shared_ptr<HorizonState> &q, int max_num_attempts);
-            void computeReachedState(std::shared_ptr<HorizonState> q);
+            void computeReachedState(const std::shared_ptr<HorizonState> q);
             void computeNextState();
-            inline void setNextState(std::shared_ptr<HorizonState> q);
-            int getIndexInHorizon(std::shared_ptr<HorizonState> q);
+            inline void setNextState(const std::shared_ptr<HorizonState> q);
+            int getIndexInHorizon(const std::shared_ptr<HorizonState> q);
             void updateCurrentState();
             void computeSpline();
             bool whetherToReplan();

@@ -7,17 +7,17 @@
 planning::AbstractPlanner::AbstractPlanner(std::shared_ptr<base::StateSpace> ss_)
 {
     ss = ss_;
-    start = nullptr;
-    goal = nullptr;
+    q_start = nullptr;
+    q_goal = nullptr;
     planner_info = std::make_shared<PlannerInfo>();
 }
 
-planning::AbstractPlanner::AbstractPlanner(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> start_, 
-                                                                                  std::shared_ptr<base::State> goal_)
+planning::AbstractPlanner::AbstractPlanner(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_, 
+                                           const std::shared_ptr<base::State> q_goal_)
 {
     ss = ss_;
-    start = start_;
-    goal = goal_;
+    q_start = q_start_;
+    q_goal = q_goal_;
     planner_info = std::make_shared<PlannerInfo>();
 }
 

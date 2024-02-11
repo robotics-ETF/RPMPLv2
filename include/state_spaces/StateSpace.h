@@ -12,15 +12,19 @@ namespace base
 	{
 	public:
 		StateSpaceType state_space_type;
+		int num_dimensions;
 		std::shared_ptr<robots::AbstractRobot> robot;
 		std::shared_ptr<env::Environment> env;
 
 		StateSpace();
+		StateSpace(int num_dimensions_);
+		StateSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+				   const std::shared_ptr<env::Environment> env_);
 		virtual ~StateSpace() = 0;
 		
-		void setStateSpaceType(StateSpaceType state_space_type_) { state_space_type = state_space_type_; };
-		virtual int getNumDimensions() = 0;
-		virtual StateSpaceType getStateSpaceType() const { return state_space_type; };
+		inline void setStateSpaceType(StateSpaceType state_space_type_) { state_space_type = state_space_type_; };
+		inline int getNumDimensions() { return num_dimensions; }
+		inline virtual StateSpaceType getStateSpaceType() const { return state_space_type; };
 		virtual std::shared_ptr<base::State> getRandomState(const std::shared_ptr<base::State> q_center = nullptr) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const Eigen::VectorXf &coord) = 0;
@@ -32,7 +36,7 @@ namespace base
 		virtual std::tuple<base::State::Status, std::shared_ptr<base::State>> interpolateEdge2
 			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist = -1) = 0;
 		virtual std::shared_ptr<base::State> pruneEdge(const std::shared_ptr<base::State> q1, 
-			const std::shared_ptr<base::State> q2, const std::vector<std::vector<float>> &limits_ = {}) = 0;
+			const std::shared_ptr<base::State> q2, const std::vector<std::pair<float, float>> &limits_ = {}) = 0;
 		virtual std::shared_ptr<base::State> pruneEdge2(const std::shared_ptr<base::State> q1, 
 			const std::shared_ptr<base::State> q2, float delta_q_max) = 0;
 		
