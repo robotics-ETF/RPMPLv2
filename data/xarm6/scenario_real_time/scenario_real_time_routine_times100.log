@@ -1,0 +1,1087 @@
+Using scenario:                                         /data/xarm6/scenario_real_time/scenario_real_time.yaml
+Dynamic planner:                                        DRGBT
+Static planner for replanning:                          RGBMT*
+Maximal algorithm time [ms]:                            30000
+Initial horizon size:                                   10
+Treshold for the replanning assessment:                 0.5
+Critical distance in W-space [m]:                       0.05
+Maximal number of attempts when modifying states:       10
+Number of extensions for generating a generalized bur:  6
+Number of iterations when computing a single spine:     1
+Using expanded bubble when generating a spine:          true
+--------------------------------------------------------------------
+Real-time scheduling:                                   FPS
+Maximal iteration time [ms]:                            100
+Maximal time of Task 1 [ms]:                            50
+--------------------------------------------------------------------
+Number of obstacles:                                    100
+Obstacles motion:                                       random
+Maximal velocity of each obstacle [m/s]:                1.6
+Maximal acceleration of each obstacle [m/s²]:           0
+--------------------------------------------------------------------
+Test number: 1
+Number of successful tests: 0 of 1 = 0 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+1141
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 2
+Number of successful tests: 0 of 2 = 0 %
+Success:
+0
+Number of iterations:
+51
+Algorithm execution time [ms]:
+3383
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 3
+Number of successful tests: 0 of 3 = 0 %
+Success:
+0
+Number of iterations:
+20
+Algorithm execution time [ms]:
+863
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 4
+Number of successful tests: 0 of 4 = 0 %
+Success:
+0
+Number of iterations:
+16
+Algorithm execution time [ms]:
+1471
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 5
+Number of successful tests: 0 of 5 = 0 %
+Success:
+0
+Number of iterations:
+4
+Algorithm execution time [ms]:
+246
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 6
+Number of successful tests: 0 of 6 = 0 %
+Success:
+0
+Number of iterations:
+76
+Algorithm execution time [ms]:
+6053
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 7
+Number of successful tests: 0 of 7 = 0 %
+Success:
+0
+Number of iterations:
+3
+Algorithm execution time [ms]:
+438
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 8
+Number of successful tests: 0 of 8 = 0 %
+Success:
+0
+Number of iterations:
+16
+Algorithm execution time [ms]:
+384
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 9
+Number of successful tests: 0 of 9 = 0 %
+Success:
+0
+Number of iterations:
+13
+Algorithm execution time [ms]:
+105
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 10
+Number of successful tests: 0 of 10 = 0 %
+Success:
+0
+Number of iterations:
+34
+Algorithm execution time [ms]:
+1685
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 11
+Number of successful tests: 0 of 11 = 0 %
+Success:
+0
+Number of iterations:
+16
+Algorithm execution time [ms]:
+1685
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 12
+Number of successful tests: 0 of 12 = 0 %
+Success:
+0
+Number of iterations:
+4
+Algorithm execution time [ms]:
+467
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 13
+Number of successful tests: 0 of 13 = 0 %
+Success:
+0
+Number of iterations:
+14
+Algorithm execution time [ms]:
+1559
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 14
+Number of successful tests: 0 of 14 = 0 %
+Success:
+0
+Number of iterations:
+12
+Algorithm execution time [ms]:
+536
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 15
+Number of successful tests: 0 of 15 = 0 %
+Success:
+0
+Number of iterations:
+18
+Algorithm execution time [ms]:
+341
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 16
+Number of successful tests: 0 of 16 = 0 %
+Success:
+0
+Number of iterations:
+13
+Algorithm execution time [ms]:
+113
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 17
+Number of successful tests: 1 of 17 = 5.88235 %
+Success:
+1
+Number of iterations:
+65
+Algorithm execution time [ms]:
+2316
+Path length [rad]:
+22.4869
+Task 1 interrupted:
+0
+Routine replan [ms] times: 
+27
+24
+76
+40
+52
+Routine computeDistance [us] times: 
+168
+164
+163
+162
+162
+170
+172
+167
+164
+176
+171
+172
+167
+167
+181
+172
+170
+171
+175
+166
+174
+173
+175
+185
+182
+184
+179
+183
+189
+186
+181
+180
+181
+177
+168
+174
+178
+174
+178
+220
+173
+178
+172
+176
+181
+171
+166
+169
+171
+169
+175
+170
+174
+217
+166
+166
+161
+170
+171
+168
+166
+170
+163
+164
+Routine generateGBur [ms] times: 
+9
+7
+3
+2
+4
+3
+4
+3
+3
+3
+2
+3
+3
+4
+7
+4
+3
+4
+2
+5
+5
+5
+3
+2
+3
+2
+2
+2
+2
+2
+2
+2
+3
+3
+2
+2
+2
+3
+2
+2
+5
+4
+2
+3
+2
+3
+2
+3
+3
+3
+3
+2
+3
+3
+3
+3
+2
+4
+3
+2
+2
+3
+6
+5
+Routine generateHorizon [us] times: 
+6
+0
+0
+5
+5
+5
+0
+0
+5
+0
+Routine updateHorizon [us] times: 
+11
+8
+6
+7
+6
+9
+6
+6
+6
+6
+6
+5
+5
+5
+4
+7
+6
+5
+32
+5
+4
+6
+5
+6
+5
+5
+5
+5
+6
+7
+5
+6
+4
+5
+5
+5
+6
+6
+5
+6
+6
+6
+6
+6
+5
+9
+6
+5
+7
+5
+5
+5
+4
+5
+5
+5
+6
+5
+9
+6
+5
+5
+5
+5
+--------------------------------------------------------------------
+Test number: 18
+Number of successful tests: 1 of 18 = 5.55556 %
+Success:
+0
+Number of iterations:
+41
+Algorithm execution time [ms]:
+1823
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 19
+Number of successful tests: 1 of 19 = 5.26316 %
+Success:
+0
+Number of iterations:
+17
+Algorithm execution time [ms]:
+897
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 20
+Number of successful tests: 1 of 20 = 5 %
+Success:
+0
+Number of iterations:
+17
+Algorithm execution time [ms]:
+1542
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 21
+Number of successful tests: 1 of 21 = 4.7619 %
+Success:
+0
+Number of iterations:
+18
+Algorithm execution time [ms]:
+2546
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 22
+Number of successful tests: 1 of 22 = 4.54545 %
+Success:
+0
+Number of iterations:
+8
+Algorithm execution time [ms]:
+608
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 23
+Number of successful tests: 1 of 23 = 4.34783 %
+Success:
+0
+Number of iterations:
+12
+Algorithm execution time [ms]:
+920
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 24
+Number of successful tests: 1 of 24 = 4.16667 %
+Success:
+0
+Number of iterations:
+17
+Algorithm execution time [ms]:
+1121
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 25
+Number of successful tests: 1 of 25 = 4 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+495
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 26
+Number of successful tests: 1 of 26 = 3.84615 %
+Success:
+0
+Number of iterations:
+22
+Algorithm execution time [ms]:
+1904
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 27
+Number of successful tests: 1 of 27 = 3.7037 %
+Success:
+0
+Number of iterations:
+34
+Algorithm execution time [ms]:
+4597
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 28
+Number of successful tests: 1 of 28 = 3.57143 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+1036
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 29
+Number of successful tests: 1 of 29 = 3.44828 %
+Success:
+0
+Number of iterations:
+8
+Algorithm execution time [ms]:
+610
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 30
+Number of successful tests: 1 of 30 = 3.33333 %
+Success:
+0
+Number of iterations:
+8
+Algorithm execution time [ms]:
+677
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 31
+Number of successful tests: 1 of 31 = 3.22581 %
+Success:
+0
+Number of iterations:
+25
+Algorithm execution time [ms]:
+1609
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 32
+Number of successful tests: 1 of 32 = 3.125 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+695
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 33
+Number of successful tests: 1 of 33 = 3.0303 %
+Success:
+0
+Number of iterations:
+5
+Algorithm execution time [ms]:
+556
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 34
+Number of successful tests: 1 of 34 = 2.94118 %
+Success:
+0
+Number of iterations:
+4
+Algorithm execution time [ms]:
+371
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 35
+Number of successful tests: 1 of 35 = 2.85714 %
+Success:
+0
+Number of iterations:
+12
+Algorithm execution time [ms]:
+2466
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 36
+Number of successful tests: 1 of 36 = 2.77778 %
+Success:
+0
+Number of iterations:
+6
+Algorithm execution time [ms]:
+394
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 37
+Number of successful tests: 1 of 37 = 2.7027 %
+Success:
+0
+Number of iterations:
+34
+Algorithm execution time [ms]:
+2200
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 38
+Number of successful tests: 1 of 38 = 2.63158 %
+Success:
+0
+Number of iterations:
+19
+Algorithm execution time [ms]:
+745
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 39
+Number of successful tests: 1 of 39 = 2.5641 %
+Success:
+0
+Number of iterations:
+9
+Algorithm execution time [ms]:
+1255
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 40
+Number of successful tests: 1 of 40 = 2.5 %
+Success:
+0
+Number of iterations:
+5
+Algorithm execution time [ms]:
+553
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 41
+Number of successful tests: 1 of 41 = 2.43902 %
+Success:
+0
+Number of iterations:
+7
+Algorithm execution time [ms]:
+357
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 42
+Number of successful tests: 1 of 42 = 2.38095 %
+Success:
+0
+Number of iterations:
+11
+Algorithm execution time [ms]:
+1059
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 43
+Number of successful tests: 1 of 43 = 2.32558 %
+Success:
+0
+Number of iterations:
+24
+Algorithm execution time [ms]:
+990
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 44
+Number of successful tests: 1 of 44 = 2.27273 %
+Success:
+0
+Number of iterations:
+17
+Algorithm execution time [ms]:
+1557
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 45
+Number of successful tests: 1 of 45 = 2.22222 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+436
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 46
+Number of successful tests: 1 of 46 = 2.17391 %
+Success:
+0
+Number of iterations:
+33
+Algorithm execution time [ms]:
+2294
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 47
+Number of successful tests: 1 of 47 = 2.12766 %
+Success:
+0
+Number of iterations:
+12
+Algorithm execution time [ms]:
+1579
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 48
+Number of successful tests: 1 of 48 = 2.08333 %
+Success:
+0
+Number of iterations:
+29
+Algorithm execution time [ms]:
+2806
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 49
+Number of successful tests: 2 of 49 = 4.08163 %
+Success:
+1
+Number of iterations:
+45
+Algorithm execution time [ms]:
+3116
+Path length [rad]:
+15.7753
+Task 1 interrupted:
+0
+Routine replan [ms] times: 
+68
+91
+76
+19
+56
+49
+90
+24
+54
+49
+31
+76
+Routine computeDistance [us] times: 
+166
+172
+171
+168
+168
+170
+173
+171
+172
+176
+170
+179
+172
+169
+182
+164
+168
+180
+169
+165
+166
+163
+165
+161
+161
+166
+164
+161
+164
+165
+162
+168
+181
+180
+164
+173
+165
+165
+176
+169
+171
+163
+161
+162
+Routine generateGBur [ms] times: 
+10
+9
+4
+3
+2
+3
+9
+7
+9
+6
+4
+4
+3
+2
+2
+2
+3
+2
+3
+4
+3
+4
+4
+4
+3
+4
+6
+4
+6
+6
+3
+5
+25
+23
+4
+3
+4
+6
+7
+14
+6
+6
+6
+5
+Routine generateHorizon [us] times: 
+6
+0
+0
+7
+0
+0
+0
+0
+0
+0
+9
+0
+0
+0
+9
+0
+Routine updateHorizon [us] times: 
+11
+8
+6
+6
+7
+6
+4
+7
+19
+9
+7
+7
+8
+6
+6
+4
+7
+5
+5
+8
+6
+5
+7
+6
+5
+5
+6
+4
+6
+9
+9
+6
+5
+4
+9
+6
+5
+5
+17
+12
+4
+10
+5
+5
+--------------------------------------------------------------------
+Test number: 50
+Number of successful tests: 2 of 50 = 4 %
+Success:
+0
+Number of iterations:
+10
+Algorithm execution time [ms]:
+363
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 51
+Number of successful tests: 2 of 51 = 3.92157 %
+Success:
+0
+Number of iterations:
+3
+Algorithm execution time [ms]:
+20
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 52
+Number of successful tests: 2 of 52 = 3.84615 %
+Success:
+0
+Number of iterations:
+16
+Algorithm execution time [ms]:
+1328
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------
+Test number: 53
+Number of successful tests: 2 of 53 = 3.77358 %
+Success:
+0
+Number of iterations:
+5
+Algorithm execution time [ms]:
+35
+Path length [rad]:
+inf
+Task 1 interrupted:
+0
+--------------------------------------------------------------------

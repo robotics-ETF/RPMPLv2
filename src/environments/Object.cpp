@@ -18,3 +18,10 @@ std::ostream &env::operator<<(std::ostream &os, const std::shared_ptr<env::Objec
 
     return os;
 }
+
+void env::Object::setPosition(const fcl::Vector3f &position_) 
+{ 
+    position = position_;
+    coll_object->setTranslation(position);
+    coll_object->computeAABB();
+}

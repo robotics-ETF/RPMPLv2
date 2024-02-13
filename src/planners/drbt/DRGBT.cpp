@@ -77,7 +77,7 @@ bool planning::drbt::DRGBT::solve()
             status = base::State::Status::Trapped;
             replanning = true;
             horizon.clear();
-            // std::cout << "Not updating the robot current state! \n";
+            // std::cout << "Not updating the robot current state since d_c < 0. \n";
         }
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, std::chrono::steady_clock::now(), "us"), 1);
         // ------------------------------------------------------------------------------- //
@@ -235,7 +235,7 @@ void planning::drbt::DRGBT::generateGBur()
         if (!DRGBTConfig::REAL_TIME_SCHEDULING.empty())   // Some scheduling is chosen
         {
             // Check whether the elapsed time for Task 1 is exceeded
-            // 1 [ms] is reserved for the routines computeNextState and computeNewCurrentState
+            // 1 [ms] is reserved for the routines computeNextState and updateCurrentState
             int time_elapsed = getElapsedTime(time_iter_start, std::chrono::steady_clock::now());
             if (time_elapsed >= DRGBTConfig::MAX_TIME_TASK1 - 1 && idx < horizon.size() - 1)
             {
@@ -573,6 +573,11 @@ void planning::drbt::DRGBT::updateCurrentState()
     q_previous = q_current;
     q_current = q_target;
     path.emplace_back(q_current);
+    if (ss->isEqual(q_current, q_goal))
+    {
+        status = base::State::Status::Reached;
+        return;
+    }
 
     q_target = ss->getNewState(q_next->getStateReached()->getCoord());
 
@@ -744,6 +749,8 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
         if (!is_valid)
             break;
     }
+    // for (int i = 0; i < ss->env->getNumObjects(); i++)
+    //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
     return is_valid;
 }

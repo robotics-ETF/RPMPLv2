@@ -80,7 +80,7 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```q_goal```: Goal configuration;
 - ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
-- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' is (un)commented within ```obstacles```;
+- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' is added in ```environment```;
 - ```WS_center```: Workspace center point in [m];
 - ```WS_radius```: Workspace radius in [m] assuming spherical workspace shape;
 - ```max_vel```: Maximal velocity of each robot's joint in [rad/s] for revolute joints, or in [mm/s] for prismatic joints;

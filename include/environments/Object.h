@@ -29,7 +29,7 @@ namespace env
         
         inline void setLabel(const std::string &label_) { label = label_; } 
 		inline void setCollObject(const std::shared_ptr<fcl::CollisionObject<float>> coll_object_) { coll_object = coll_object_; }
-        inline void setPosition(const fcl::Vector3f &position_) { position = position_; coll_object->setTranslation(position); }
+        void setPosition(const fcl::Vector3f &position_);
 		inline void setVelocity(const fcl::Vector3f &velocity_) { velocity = velocity_; }
 		inline void setAcceleration(const fcl::Vector3f &acceleration_) { acceleration = acceleration_; }
 		inline void setMaxVel(float max_vel_) { max_vel = max_vel_; }
