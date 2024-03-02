@@ -116,8 +116,8 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Task 1 interrupted: " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
 				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
-				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 						   + "_drgbt_test" + std::to_string(num_test) + ".log");
+				planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
+										   + "_drgbt_test" + std::to_string(num_test) + ".log");
 
 				float path_length = 0;
 				if (result)

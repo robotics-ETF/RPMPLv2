@@ -3,13 +3,53 @@ environment:
       label: "table"
       dim: [1.5, 1.5, 0.1]
       pos: [0, 0, -0.05]
+    - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [0.5, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [0.7, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [0.9, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [1.1, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [1.3, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [1.5, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [1.7, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [1.9, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [2.1, 0.5, 0.5]
+  - box:
+      label: "dynamic_obstacle"
+      dim: [0.1, 0.5, 1]
+      pos: [2.3, 0.5, 0.5]
 
 random_obstacles:
-  init_num: 1		                  # Number of random obstacles to start with the testing
-  max_num: 100		                # Maximal number of random obstacles to be added
-  max_vel: 1.6 			              # Maximal velocity of each obstacle in [m/s]
-  max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
-  dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
+  init_num: 30                  # Number of random obstacles to start with the testing
+  max_num: 100                # Maximal number of random obstacles to be added
+  max_vel: 2.7               # Maximal velocity of each obstacle in [m/s]
+  max_acc: 0                 # Maximal acceleration of each obstacle in [m/s²]
+  dim: [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]         # Dimensions of each random obstacle in [m]
 
 robot:
   type: "xarm6"
@@ -31,4 +71,4 @@ testing:
   init_num: 1                     # Number of testing to start with
   init_num_success: 0             # Initial number of already achieved successful tests
   max_num: 1000                   # Maximal number of tests that should be carried out
-  reach_successful_tests: false	  # If true, run totally 'max_num_tests' successful tests 
+  reach_successful_tests: false  # If true, run totally 'max_num_tests' successful tests 

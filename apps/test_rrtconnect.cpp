@@ -13,8 +13,8 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/planar_10dof/scenario2/scenario2.yaml";
 	
-	std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
+	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
+	std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 

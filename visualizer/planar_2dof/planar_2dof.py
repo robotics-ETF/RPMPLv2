@@ -1,5 +1,5 @@
 import math
-from urdfpy import URDF
+from urchin  import URDF
 import pyrender
 from state_spaces.real_vector_space import RealVectorSpace
 from trimesh.creation import box, cylinder

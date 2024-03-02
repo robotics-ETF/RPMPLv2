@@ -1,7 +1,7 @@
 import math
 from tkinter import LAST
 from turtle import width
-from urdfpy import URDF
+from urchin  import URDF
 import pyrender
 from trimesh.creation import box, cylinder
 from state_spaces.real_vector_space import RealVectorSpace
