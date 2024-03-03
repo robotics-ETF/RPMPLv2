@@ -179,7 +179,7 @@ void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, 
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
 		output_file << "Planner type:    " << "RGBTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

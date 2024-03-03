@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
 	LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 	LOG(INFO) << "Environment parts: " << env->getNumObjects();
-	LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
+	LOG(INFO) << "Number of DOFs: " << ss->num_dimensions;
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 	LOG(INFO) << "Start: " << q_start;
 	LOG(INFO) << "Goal: " << q_goal;
@@ -72,9 +72,9 @@ int main(int argc, char **argv)
 	
 	if (use_recommended_planning_times)
 	{
-		if (ss->getNumDimensions() == 2)
+		if (ss->num_dimensions == 2)
 			RGBMTStarConfig::MAX_PLANNING_TIME = 10e3;		// 10 sec
-		else if (ss->getNumDimensions() == 6)
+		else if (ss->num_dimensions == 6)
 			RGBMTStarConfig::MAX_PLANNING_TIME = 120e3; 	// 2 min
 		else
 			RGBMTStarConfig::MAX_PLANNING_TIME = 60e3;		// 1 min
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 
 	output_file << std::string(75, '-') << std::endl;
 	output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-	output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
+	output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
 	output_file << "Planner type:    " << "RGBMT*" << std::endl;
 	output_file << "Using scenario:  " << project_path + scenario_file_path << std::endl;
 	output_file << "Planner info:\n";

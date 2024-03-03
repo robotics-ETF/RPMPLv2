@@ -24,8 +24,8 @@ planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss
 		
 	trees.emplace_back(std::make_shared<base::Tree>("q_start", 0));
 	trees.emplace_back(std::make_shared<base::Tree>("q_goal", 1));
-	trees[0]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[0], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
-	trees[1]->setKdTree(std::make_shared<base::KdTree>(ss->getNumDimensions(), *trees[1], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+	trees[0]->setKdTree(std::make_shared<base::KdTree>(ss->num_dimensions, *trees[0], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+	trees[1]->setKdTree(std::make_shared<base::KdTree>(ss->num_dimensions, *trees[1], nanoflann::KDTreeSingleIndexAdaptorParams(10)));
 	trees[0]->upgradeTree(q_start, nullptr);
 	trees[1]->upgradeTree(q_goal, nullptr);
 	planner_info->setNumIterations(0);
@@ -183,7 +183,7 @@ void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, b
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
 		output_file << "Planner type:    " << "RRTConnect" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

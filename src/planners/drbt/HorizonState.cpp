@@ -5,7 +5,7 @@ planning::drbt::HorizonState::HorizonState(std::shared_ptr<base::State> state_, 
     state = state_;
     index = index_;
     state_reached = nullptr;
-    status = HorizonState::Status::Good;
+    status = planning::drbt::HorizonState::Status::Good;
     d_c = -1;
     d_c_previous = -1;
     weight = -1;
@@ -17,7 +17,7 @@ void planning::drbt::HorizonState::setDistance(float d_c_)
     d_c = d_c_;
     if (d_c < DRGBTConfig::D_CRIT)
     {
-        setStatus(HorizonState::Status::Critical);
+        setStatus(planning::drbt::HorizonState::Status::Critical);
         weight = 0;
     }
 }
@@ -26,7 +26,7 @@ void planning::drbt::HorizonState::setWeight(float weight_)
 { 
     weight = weight_;
     if (weight == 0)
-        setStatus(HorizonState::Status::Bad);
+        setStatus(planning::drbt::HorizonState::Status::Bad);
 }
 
 std::ostream &planning::drbt::operator<<(std::ostream &os, const std::shared_ptr<planning::drbt::HorizonState> q)
@@ -37,13 +37,13 @@ std::ostream &planning::drbt::operator<<(std::ostream &os, const std::shared_ptr
     else
         os << "q_reached: (" << q->getStateReached()->getCoord().transpose() << ")" << std::endl;
         
-    if (q->getStatus() == HorizonState::Status::Good)
+    if (q->getStatus() == planning::drbt::HorizonState::Status::Good)
         os << "status:     " << "Good " << std::endl;
-    else if (q->getStatus() == HorizonState::Status::Bad)
+    else if (q->getStatus() == planning::drbt::HorizonState::Status::Bad)
         os << "status:     " << "Bad " << std::endl;
-    else if (q->getStatus() == HorizonState::Status::Critical)
+    else if (q->getStatus() == planning::drbt::HorizonState::Status::Critical)
         os << "status:     " << "Critical " << std::endl;
-    else if (q->getStatus() == HorizonState::Status::Goal)
+    else if (q->getStatus() == planning::drbt::HorizonState::Status::Goal)
         os << "status:     " << "Goal " << std::endl;
 
     os << "idx path:   " << q->getIndex() << std::endl;

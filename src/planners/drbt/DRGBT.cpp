@@ -21,21 +21,27 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 		throw std::domain_error("Start position is invalid!");
     
     q_current = q_start;
-    q_target = q_current;
     q_previous = q_current;
-    setNextState(std::make_shared<HorizonState>(q_current, 0));
+    q_target = q_current;
+    q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0);
+    q_next_previous = q_next;
+
     d_max_mean = 0;
-    num_lateral_states = 2 * ss->getNumDimensions() - 2;
+    num_lateral_states = 2 * ss->num_dimensions - 2;
     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE + num_lateral_states;
     replanning = false;
     status = base::State::Status::Reached;
     planner_info->setNumStates(1);
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);                               // State 'q_start' is added to the realized path
+
     delta_q_max = 0;
-    for (int i = 0; i < ss->getNumDimensions(); i++)
+    for (int i = 0; i < ss->num_dimensions; i++)
         delta_q_max += std::pow(ss->robot->getMaxVel(i), 2);
-    delta_q_max = std::sqrt(delta_q_max) * DRGBTConfig::MAX_ITER_TIME * 0.001;
+    delta_q_max = std::sqrt(delta_q_max) * DRGBTConfig::MAX_ITER_TIME * 1e-3;
+
+    spline_current = std::make_shared<planning::trajectory::Spline5>(ss, q_current);
+    spline_next = spline_current;
 	// std::cout << "DRGBT planner initialized! \n";
 }
 
@@ -62,7 +68,7 @@ bool planning::drbt::DRGBT::solve()
 
     while (true)
     {
-        // std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
+        std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
         // std::cout << "TASK 1: Computing next configuration... \n";
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
         
@@ -71,12 +77,11 @@ bool planning::drbt::DRGBT::solve()
         d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
         if (d_c <= 0)   // The desired/target conf. is not safe, thus the robot is required to stop immediately, 
         {               // and compute the horizon again from 'q_current'
-        // TODO: Izracunati novi spline od q_current tako da robot sto prije zakoci i stane u q_target kada se primijeni max. usporenje!
+            // TODO: Urgently stopping needs to be implemented using quartic spline.
             q_target = q_current;
             d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
-            status = base::State::Status::Trapped;
-            replanning = true;
-            horizon.clear();
+            clearHorizon(base::State::Status::Trapped, true);
+            q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
             // std::cout << "Not updating the robot current state since d_c < 0. \n";
         }
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, std::chrono::steady_clock::now(), "us"), 1);
@@ -102,7 +107,7 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        // int time_iter_remain = DRGBTConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start, std::chrono::steady_clock::now());
+        // time_iter_remain = DRGBTConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start, std::chrono::steady_clock::now());
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms]. \n";
         // if (time_iter_remain < 0)
         //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
@@ -115,6 +120,10 @@ bool planning::drbt::DRGBT::solve()
             planner_info->setPlanningTime(planner_info->getIterationTimes().back());
             return false;
         }
+
+        // Current robot position at the end of iteration
+        q_current = spline_next->getPosition(spline_next->getTimeEnd());
+        std::cout << "q_current: " << q_current << "\n";
         
         // ------------------------------------------------------------------------------- //
         // Planner info and terminating condition
@@ -123,7 +132,7 @@ bool planning::drbt::DRGBT::solve()
         if (checkTerminatingCondition())
             return planner_info->getSuccessState();
 
-        // std::cout << "----------------------------------------------------------------------------------------\n";
+        std::cout << "----------------------------------------------------------------------------------------\n";
     }
 }
 
@@ -162,14 +171,14 @@ void planning::drbt::DRGBT::generateHorizon()
         if (idx + num_states <= predefined_path.size())
         {
             for (int i = idx; i < idx + num_states; i++)
-                horizon.emplace_back(std::make_shared<HorizonState>(predefined_path[i], i));
+                horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(predefined_path[i], i));
         }
         else if (idx < predefined_path.size())
         {
             for (int i = idx; i < predefined_path.size(); i++)
-                horizon.emplace_back(std::make_shared<HorizonState>(predefined_path[i], i));
+                horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(predefined_path[i], i));
             
-            horizon.back()->setStatus(HorizonState::Status::Goal);
+            horizon.back()->setStatus(planning::drbt::HorizonState::Status::Goal);
         }
     }
     else            // status == base::State::Status::Trapped || predefined_path.empty()
@@ -179,7 +188,7 @@ void planning::drbt::DRGBT::generateHorizon()
     }
     
     // Set the next state just for obtaining lateral spines later, since 'q_next' is not set
-    setNextState(horizon.front());
+    q_next = horizon.front();
 
     // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
     // for (int i = 0; i < horizon.size(); i++)
@@ -194,16 +203,16 @@ void planning::drbt::DRGBT::updateHorizon(float d_c)
     // std::cout << "Robot target state: " << q_target->getCoord().transpose() << " with d_c: " << d_c << "\n";
     auto time_updateHorizon = std::chrono::steady_clock::now();
 
-    if ((ss->getNumDimensions()-1) * d_c < DRGBTConfig::D_CRIT)
-        horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * ss->getNumDimensions();
+    if ((ss->num_dimensions-1) * d_c < DRGBTConfig::D_CRIT)
+        horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * ss->num_dimensions;
     else
         horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + DRGBTConfig::D_CRIT / d_c);
     
     // Modified formula (does not show better performance):
     // if (d_c < DRGBTConfig::D_CRIT)
-    //     horizon_size = ss->getNumDimensions() * DRGBTConfig::INIT_HORIZON_SIZE;
+    //     horizon_size = ss->num_dimensions * DRGBTConfig::INIT_HORIZON_SIZE;
     // else
-    //     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + (ss->getNumDimensions()-1) * DRGBTConfig::D_CRIT / d_c);
+    //     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + (ss->num_dimensions-1) * DRGBTConfig::D_CRIT / d_c);
     
     // std::cout << "Modifying horizon size from " << horizon.size() << " to " << horizon_size << "\n";
     if (horizon_size < horizon.size())
@@ -244,7 +253,7 @@ void planning::drbt::DRGBT::generateGBur()
                 for (int i = horizon.size() - 1; i > idx; i--)
                 {
                     if (q_next == horizon[i])   // 'q_next' will be deleted
-                        setNextState(horizon.front());
+                        q_next = horizon.front();
 
                     horizon.erase(horizon.begin() + i);
                 }
@@ -260,8 +269,8 @@ void planning::drbt::DRGBT::generateGBur()
             max_num_attempts = DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;
 
         // Bad and critical states are modified if there is enough remaining time for Task 1
-        if (horizon[idx]->getStatus() == HorizonState::Status::Bad || 
-            horizon[idx]->getStatus() == HorizonState::Status::Critical)
+        if (horizon[idx]->getStatus() == planning::drbt::HorizonState::Status::Bad || 
+            horizon[idx]->getStatus() == planning::drbt::HorizonState::Status::Critical)
             modifyState(horizon[idx], max_num_attempts);
     }
     planner_info->addRoutineTime(getElapsedTime(time_generateGBur, std::chrono::steady_clock::now()), 2);
@@ -273,7 +282,7 @@ void planning::drbt::DRGBT::shortenHorizon(int num)
     int num_deleted = 0;
     for (int i = horizon.size() - 1; i >= 0; i--)
     {
-        if (horizon[i]->getStatus() == HorizonState::Status::Bad)
+        if (horizon[i]->getStatus() == planning::drbt::HorizonState::Status::Bad)
         {
             horizon.erase(horizon.begin() + i);
             num_deleted++;
@@ -311,7 +320,7 @@ void planning::drbt::DRGBT::addRandomStates(int num)
     for (int i = 0; i < num; i++)
     {
         q_rand = getRandomState(q_target);
-        horizon.emplace_back(std::make_shared<HorizonState>(q_rand, -1));
+        horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_rand, -1));
         // std::cout << "Adding random state: " << horizon.back()->getCoord().transpose() << "\n";
     }
 }
@@ -319,7 +328,7 @@ void planning::drbt::DRGBT::addRandomStates(int num)
 void planning::drbt::DRGBT::addLateralStates()
 {
     int num_added = 0;
-    if (ss->getNumDimensions() == 2)   // In 2D C-space only two possible lateral spines exist
+    if (ss->num_dimensions == 2)   // In 2D C-space only two possible lateral spines exist
     {
         std::shared_ptr<base::State> q_new;
         Eigen::Vector2f new_vec;
@@ -332,7 +341,7 @@ void planning::drbt::DRGBT::addLateralStates()
             q_new = ss->pruneEdge(q_target, q_new);
             if (!ss->isEqual(q_target, q_new))
             {
-                horizon.emplace_back(std::make_shared<HorizonState>(q_new, -1));
+                horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_new, -1));
                 num_added++;
                 // std::cout << "Adding lateral state: " << horizon.back()->getCoord().transpose() << "\n";
             }
@@ -341,11 +350,11 @@ void planning::drbt::DRGBT::addLateralStates()
     else
     {
         int idx;
-        for (idx = 0; idx < ss->getNumDimensions(); idx++)
+        for (idx = 0; idx < ss->num_dimensions; idx++)
             if (std::abs(q_next->getCoord(idx) - q_target->getCoord(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
                 break;
             
-        if (idx < ss->getNumDimensions())
+        if (idx < ss->num_dimensions)
         {
             std::shared_ptr<base::State> q_new;
             float coord;
@@ -360,7 +369,7 @@ void planning::drbt::DRGBT::addLateralStates()
                 q_new = ss->pruneEdge(q_target, q_new);
                 if (!ss->isEqual(q_target, q_new))
                 {
-                    horizon.emplace_back(std::make_shared<HorizonState>(q_new, -1));
+                    horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_new, -1));
                     num_added++;
                     // std::cout << "Adding lateral state: " << horizon.back()->getCoord().transpose() << "\n";
                 }
@@ -373,9 +382,9 @@ void planning::drbt::DRGBT::addLateralStates()
 // Modify state 'q' by replacing it with a random state, which is generated using biased distribution,
 // i.e., oriented weight around 'q' ('q->getStatus()' == Bad), or around '-q' ('q->getStatus()' == Critical).
 // Return whether the modification is successful
-bool planning::drbt::DRGBT::modifyState(std::shared_ptr<HorizonState> &q, int max_num_attempts)
+bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonState> &q, int max_num_attempts)
 {
-    std::shared_ptr<HorizonState> q_new_horizon_state;
+    std::shared_ptr<planning::drbt::HorizonState> q_new_horizon_state;
     std::shared_ptr<base::State> q_new;
     std::shared_ptr<base::State> q_reached = q->getStateReached();
     float norm = ss->getNorm(q_target, q_reached);
@@ -383,12 +392,12 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<HorizonState> &q, int ma
     
     for (int num = 0; num < max_num_attempts; num++)
     {
-        Eigen::VectorXf vec = Eigen::VectorXf::Random(ss->getNumDimensions()) * norm / std::sqrt(ss->getNumDimensions() - 1);
+        Eigen::VectorXf vec = Eigen::VectorXf::Random(ss->num_dimensions) * norm / std::sqrt(ss->num_dimensions - 1);
         vec(0) = (vec(0) > 0) ? 1 : -1;
-        vec(0) *= std::sqrt(norm * norm - vec.tail(ss->getNumDimensions() - 1).squaredNorm());
-        if (q->getStatus() == HorizonState::Status::Bad)
+        vec(0) *= std::sqrt(norm * norm - vec.tail(ss->num_dimensions - 1).squaredNorm());
+        if (q->getStatus() == planning::drbt::HorizonState::Status::Bad)
             q_new = ss->getNewState(q_reached->getCoord() + vec);
-        else if (q->getStatus() == HorizonState::Status::Critical)
+        else if (q->getStatus() == planning::drbt::HorizonState::Status::Critical)
         {
             q_new = ss->getNewState(2 * q_target->getCoord() - q_reached->getCoord() + coeff * vec);
             coeff = 1;
@@ -397,13 +406,13 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<HorizonState> &q, int ma
         q_new = ss->pruneEdge(q_target, q_new);
         if (!ss->isEqual(q_target, q_new))
         {
-            q_new_horizon_state = std::make_shared<HorizonState>(q_new, -1);
+            q_new_horizon_state = std::make_shared<planning::drbt::HorizonState>(q_new, -1);
             computeReachedState(q_new_horizon_state);
             if (q_new_horizon_state->getDistance() > q->getDistance())
             {
                 // std::cout << "Modifying this state with the following state:\n" << q_new_horizon_state << "\n";
                 if (q_next == q)
-                    setNextState(q_new_horizon_state);
+                    q_next = q_new_horizon_state;
                 
                 q = q_new_horizon_state;
                 return true;
@@ -416,7 +425,7 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<HorizonState> &q, int ma
 }
 
 // Compute reached state when generating a generalized spine from 'q_target' towards 'q'.
-void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<HorizonState> q)
+void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q)
 {
     base::State::Status status;
     std::shared_ptr<base::State> q_reached;
@@ -435,7 +444,7 @@ void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<HorizonSta
     
     // Check whether the goal is reached
     if (q->getIndex() != -1 && ss->isEqual(q_reached, q_goal))
-        q->setStatus(HorizonState::Status::Goal);
+        q->setStatus(planning::drbt::HorizonState::Status::Goal);
 }
 
 // Compute weight for each state from the horizon, and then obtain the next state
@@ -476,7 +485,7 @@ void planning::drbt::DRGBT::computeNextState()
 
     for (int i = 0; i < horizon.size(); i++)
     {
-        if (horizon[i]->getStatus() == HorizonState::Status::Critical)  // 'weight' is already set to zero
+        if (horizon[i]->getStatus() == planning::drbt::HorizonState::Status::Critical)  // 'weight' is already set to zero
             continue;
         
         // Computing 'weight' according to the following heuristic:
@@ -527,7 +536,7 @@ void planning::drbt::DRGBT::computeNextState()
             // If weights of 'q_next_previous' and 'q_next' are close, 'q_next_previous' remains the next state
             if (q_next != q_next_previous &&
                 std::abs(q_next->getWeight() - q_next_previous->getWeight()) < hysteresis &&
-                q_next->getStatus() != HorizonState::Status::Goal &&
+                q_next->getStatus() != planning::drbt::HorizonState::Status::Goal &&
                 getIndexInHorizon(q_next_previous) != -1)
                     q_next = q_next_previous;
         }
@@ -535,7 +544,7 @@ void planning::drbt::DRGBT::computeNextState()
     else    // All states are critical, and q_next cannot be updated! 'status' will surely become Trapped
     {
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
-        q_next = std::make_shared<HorizonState>(q_target, 0);
+        q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
         q_next->setStateReached(q_target);
     }
 
@@ -547,15 +556,8 @@ void planning::drbt::DRGBT::computeNextState()
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
 }
 
-// Set 'q_next' and 'q_next_previous' to be equal to the same state 'q'
-void planning::drbt::DRGBT::setNextState(const std::shared_ptr<HorizonState> q)
-{
-    q_next = q;
-    q_next_previous = q;
-}
-
 // Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
-int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<HorizonState> q)
+int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q)
 {
     for (int idx = 0; idx < horizon.size(); idx++)
     {
@@ -567,26 +569,149 @@ int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<HorizonState>
 
 // Update the current state of the robot to 'q_target'.
 // Compute a target state (a new desired current state) of the robot by moving from 'q_current' towards 'q_next' 
-// for step size determined as max_vel * DRGBTConfig::MAX_ITER_TIME * 0.001
+// for step size determined as ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME * 1e-3
+// void planning::drbt::DRGBT::updateCurrentState()
+// {
+//     q_previous = q_current;
+//     q_current = q_target;
+//     path.emplace_back(q_current);
+//     if (ss->isEqual(q_current, q_goal))
+//     {
+//         status = base::State::Status::Reached;
+//         return;
+//     }
+
+//     q_target = ss->getNewState(q_next->getStateReached()->getCoord());
+
+//     // If all velocities are not the same, the following can be used:
+//     std::vector<std::pair<float, float>> limits;
+//     for (int i = 0; i < ss->num_dimensions; i++)
+//     {
+//         limits.emplace_back(std::pair<float, float>
+//             (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME * 1e-3, 
+//              q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME * 1e-3));
+//     }
+//     q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
+
+//     // If all velocities are the same, the following can be used:
+//     // float delta_q_max1 = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME * 1e-3;   // Time conversion from [ms] to [s]
+//     // if (ss->getNorm(q_current, q_target) > delta_q_max1)    // Check whether 'q_target' can be reached considering robot max. velocity
+//     //     q_target = ss->pruneEdge2(q_current, q_target, delta_q_max1);
+
+//     if (!ss->isEqual(q_current, q_target))
+//     {
+//         if (ss->isEqual(q_current, q_next->getState()))
+//             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
+//         else
+//             status = base::State::Status::Advanced;
+        
+//         q_target->setParent(q_current);
+//         // std::cout << "Updating the robot target state to: " << q_target->getCoord().transpose() << "\n";
+//     }
+//     else
+//     {
+//         clearHorizon(base::State::Status::Trapped, true);
+//         // std::cout << "Not updating the robot target state! \n";
+//     }
+
+//     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
+//     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
+//     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+// }
+
+/// @brief Update the current state of the robot towards 'q_target'.
+/// Eventually, compute a new spline 'spline'.
+/// Determine a new target state (a new desired current state) of the robot by moving from 'q_current' towards 'q_next' 
+/// while following 'spline'
 void planning::drbt::DRGBT::updateCurrentState()
 {
-    q_previous = q_current;
-    q_current = q_target;
+    float max_spline_time = 2e-3;     // Maximal allowed time in [s] for a spline computation
+    float time_iter = getElapsedTime(time_iter_start, std::chrono::steady_clock::now(), "us") * 1e-6;
+    if (DRGBTConfig::MAX_TIME_TASK1 * 1e-3 - time_iter < max_spline_time)
+        max_spline_time = DRGBTConfig::MAX_TIME_TASK1 * 1e-3 - time_iter;
+    float time_remain = DRGBTConfig::MAX_ITER_TIME * 1e-3 - time_iter - max_spline_time;
+
+    spline_current = spline_next;
+    spline_current->setTimeCurrent(spline_current->getTimeEnd() + time_iter + max_spline_time);
+    spline_current->setTimeBegin(spline_next->getTimeEnd());
+
+    float time_current = spline_current->getTimeCurrent();
+    q_current = spline_current->getPosition(time_current);
     path.emplace_back(q_current);
+
+    std::cout << "Iter. time:        " << time_iter * 1000 << " [ms] \n";
+    std::cout << "Max. spline time:  " << max_spline_time * 1000 << " [ms] \n";
+    std::cout << "Remain. time:      " << time_remain * 1000 << " [ms] \n";
+    std::cout << "Curr. spline time: " << time_current * 1000 << " [ms] \n";
+    std::cout << "q_current: " << q_current << "\n";
+    std::cout << "q_target:  " << q_target << "\n";
+    std::cout << "q_next:    " << q_next << "\n";
+
     if (ss->isEqual(q_current, q_goal))
     {
+        spline_next->setTimeEnd(time_current + time_remain);
         status = base::State::Status::Reached;
         return;
     }
 
-    q_target = ss->getNewState(q_next->getStateReached()->getCoord());
+    bool found = false;
+    if (ss->isEqual(q_next->getStateReached(), spline_current->getPosition(INFINITY)))  // Coordinates of q_next_reached did not change
+    {
+        std::cout << "Not computing a new spline! \n";
+        found = false;
+    }
+    else if (ss->isEqual(q_next->getState(), q_target))
+    {
+        std::cout << "Robot is urgently stopping! \n";
+        found = false;
+        // TODO: Urgently stopping needs to be implemented using quartic spline.
+    }
+    else
+    {
+        std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
+        std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states = { q_next };
+        spline_next = std::make_shared<planning::trajectory::Spline5>(ss, q_current, 
+                                                                          spline_current->getVelocity(time_current),
+                                                                          spline_current->getAcceleration(time_current));
 
-     // TODO: Ovdje razraditi jos...
-    float delta_q_max1 = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME * 0.001;   // Time conversion from [ms] to [s]
+        while (getElapsedTime(time_start_, std::chrono::steady_clock::now(), "us") * 1e-6 < max_spline_time)
+        {
+            if (spline_next->compute(q_next->getStateReached()))
+            {
+                std::cout << "New spline is computed! \n";
+                found = true;                
+                break;
+            }
+            else if (!changeNextState(visited_states))
+            {
+                std::cout << "Spline could not be changed! Continuing with the previous spline! \n";
+                found = false;                    
+                break;
+            }
+        }
+        std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, std::chrono::steady_clock::now(), "us") << " [us] \n";
+    }
+
+    if (found)
+    {
+        spline_current->setTimeEnd(time_current);
+        spline_next->setTimeEnd(time_remain);
+        q_target = spline_next->getPosition(time_remain + DRGBTConfig::MAX_TIME_TASK1 * 1e-3);
+        std::cout << "q_target time: " << time_remain * 1000 + DRGBTConfig::MAX_TIME_TASK1 << " [ms] \n";
+    }
+    else
+    {
+        spline_next = spline_current;
+        spline_next->setTimeEnd(time_current + time_remain);
+        q_target = spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1 * 1e-3);
+        std::cout << "q_target time: " << spline_next->getTimeEnd() * 1000 + DRGBTConfig::MAX_TIME_TASK1 << " [ms] \n";
+    }
+
+    // TODO: New spline needs to be validated on collision, at least during the current iteration!
     
-    if (ss->getNorm(q_current, q_target) > delta_q_max1)    // Check whether 'q_target' can be reached considering robot max. velocity
-        q_target = ss->pruneEdge2(q_current, q_target, delta_q_max1);
-
+    std::cout << "q_target:      " << q_target << "\n";
+    std::cout << "Spline next: \n" << spline_next << "\n";
+    
     if (!ss->isEqual(q_current, q_target))
     {
         if (ss->isEqual(q_current, q_next->getState()))
@@ -599,15 +724,65 @@ void planning::drbt::DRGBT::updateCurrentState()
     }
     else
     {
-        status = base::State::Status::Trapped;
-        replanning = true;
-        horizon.clear();
+        clearHorizon(base::State::Status::Trapped, true);
         // std::cout << "Not updating the robot target state! \n";
     }
 
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+}
+
+bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
+{
+    std::cout << "Change of q_next is required! \n";
+    std::shared_ptr<planning::drbt::HorizonState> q_new = nullptr;
+    float weight_max = 0;
+    bool visited;
+
+    for (std::shared_ptr<planning::drbt::HorizonState> q : horizon)
+    {
+        if (q->getWeight() < DRGBTConfig::TRESHOLD_WEIGHT)
+            continue;
+
+        visited = false;
+        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+        {
+            if (q == q_visited)
+            {
+                visited = true;
+                break;
+            }
+        }
+
+        if (!visited && q->getWeight() > weight_max)
+        {
+            q_new = q;
+            weight_max = q->getWeight();
+        }
+    }
+
+    if (q_new != nullptr)
+    {
+        visited_states.emplace_back(q_new);
+        q_next = q_new;
+
+        std::cout << "Horizon size: " << horizon.size() << "\t Visited idx: ";
+        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+            std::cout << getIndexInHorizon(q_visited) << " ";
+        std::cout << "\n" << "New q_next: " << q_next << "\n";
+
+        return true;
+    }
+
+    return false;
+}
+
+void planning::drbt::DRGBT::clearHorizon(base::State::Status status_, bool replanning_)
+{
+    horizon.clear();
+    status = status_;
+    replanning = replanning_;
 }
 
 bool planning::drbt::DRGBT::whetherToReplan()
@@ -686,10 +861,8 @@ void planning::drbt::DRGBT::replan(int max_planning_time)
         {
             // std::cout << "The path has been replanned in " << planner->getPlannerInfo()->getPlanningTime() << " [ms]. \n";
             acquirePredefinedPath(planner->getPath());
-            status = base::State::Status::Reached;
-            replanning = false;
-            horizon.clear();
-            setNextState(std::make_shared<HorizonState>(q_target, 0));
+            clearHorizon(base::State::Status::Reached, false);
+            q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
             planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime(), 0);  // replan
         }
         else    // New path is not found, and just continue with the previous motion. We can also impose the robot to stop.
@@ -730,25 +903,76 @@ void planning::drbt::DRGBT::acquirePredefinedPath(const std::vector<std::shared_
 // Finally, the environment is updated within this function.
 // Generally, 'num_checks' depends on maximal velocity of obstacles.
 // Note that, in reality, this motion would happen continuously during the execution of the current algorithm iteration.
+// bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
+// {
+//     // std::cout << "Updating environment... \n";
+//     std::shared_ptr<base::State> q_temp;
+//     float dist = ss->getNorm(q_previous, q_current);
+//     float delta_time = DRGBTConfig::MAX_ITER_TIME * 1e-3 / num_checks;
+//     bool is_valid = true;
+
+//     for (int num_check = 1; num_check <= num_checks; num_check++)
+//     {
+//         ss->env->updateEnvironment(delta_time);
+//         q_temp = ss->interpolateEdge(q_previous, q_current, dist * num_check / num_checks, dist);
+//         is_valid = ss->isValid(q_temp);        
+//         if (!is_valid)
+//             break;
+//     }
+
+//     // for (int i = 0; i < ss->env->getNumObjects(); i++)
+//     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
+
+//     return is_valid;
+// }
+
+/// @brief Discretely check the validity of motion when the robot moves over splines 'spline_curr' and 'spline_next'
+/// during the current iteration, while the obstacles are moving simultaneously.
+/// Finally, the environment is updated within this function.
+/// @param num_checks Number of checks of motion validity, which depends on maximal velocity of obstacles.
+/// @return The validity of motion.
+/// @note In reality, this motion would happen continuously during the execution of the current algorithm iteration.
 bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
 {
-    // Mozda ovu rutinu ne racunati kao dio naseg algoritma, ovo je samo validacija...
-    // Mozda graditi iglice dio po dio pa racunati i provjeravati ima li kolizije umjesto ovog sada...
-    // TODO: Racunati q_temp preko spline-a od q_previous to q_current (koje je sad azurirano!)
-    // std::cout << "Updating environment... \n";
-    std::shared_ptr<base::State> q_temp;
-    float dist = ss->getNorm(q_previous, q_current);
-    float delta_time = DRGBTConfig::MAX_ITER_TIME * 0.001 / num_checks;
+    // std::cout << "Checking the validity of motion while updating environment... \n";
+    int num_checks1 = std::ceil((spline_current->getTimeCurrent() - spline_current->getTimeBegin()) * num_checks 
+                                / (DRGBTConfig::MAX_ITER_TIME * 1e-3));
+    int num_checks2 = num_checks - num_checks1;
+    float delta_time1 = (spline_current->getTimeCurrent() - spline_current->getTimeBegin()) / num_checks1;
+    float delta_time2 = (spline_next->getTimeEnd() - spline_next->getTimeCurrent()) / num_checks2;
+    float t;
     bool is_valid = true;
+    
+    std::cout << "Inside checkMotionValidity... \n";
+    std::cout << "Current spline times:   " << spline_current->getTimeBegin() * 1000 << " [ms] \t"
+                                            << spline_current->getTimeCurrent() * 1000 << " [ms] \t"
+                                            << spline_current->getTimeEnd() * 1000 << " [ms] \n";
+    std::cout << "Next spline times:      " << spline_next->getTimeBegin() * 1000 << " [ms] \t"
+                                            << spline_next->getTimeCurrent() * 1000 << " [ms] \t"
+                                            << spline_next->getTimeEnd() * 1000 << " [ms] \n";
 
     for (int num_check = 1; num_check <= num_checks; num_check++)
     {
-        ss->env->updateEnvironment(delta_time);
-        q_temp = ss->interpolateEdge(q_previous, q_current, dist * num_check / num_checks, dist);
-        is_valid = ss->isValid(q_temp);        
-        if (!is_valid)
+        if (num_check <= num_checks1)
+        {
+            t = spline_current->getTimeBegin() + num_check * delta_time1;
+            q_current = spline_current->getPosition(t);
+            std::cout << "t: " << t * 1000 << " [ms]\t from curr. spline \t" << q_current << "\n";
+            ss->env->updateEnvironment(delta_time1);
+        }
+        else
+        {
+            t = spline_next->getTimeCurrent() + (num_check - num_checks1) * delta_time2;
+            q_current = spline_next->getPosition(t);
+            std::cout << "t: " << t * 1000 << " [ms]\t from next  spline \t" << q_current << "\n";
+            ss->env->updateEnvironment(delta_time2);
+        }
+
+        is_valid = ss->isValid(q_current);
+        if (!is_valid || ss->isEqual(q_current, q_goal))
             break;
     }
+    
     // for (int i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
@@ -797,7 +1021,7 @@ void planning::drbt::DRGBT::outputPlannerData(const std::string &filename, bool 
 	if (output_file.is_open())
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
-		output_file << "Dimensionality:  " << ss->getNumDimensions() << std::endl;
+		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
 		output_file << "Planner type:    " << "DRGBT" << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;

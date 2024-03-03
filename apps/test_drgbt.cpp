@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Test number: " << num_test;
 				LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
 				LOG(INFO) << "Environment parts: " << env->getNumObjects();
-				LOG(INFO) << "Number of DOFs: " << ss->getNumDimensions();
+				LOG(INFO) << "Number of DOFs: " << ss->num_dimensions;
 				LOG(INFO) << "State space type: " << ss->getStateSpaceType();
 				LOG(INFO) << "Start: " << scenario.getStart();
 				LOG(INFO) << "Goal: " << scenario.getGoal();

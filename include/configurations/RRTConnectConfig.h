@@ -10,5 +10,4 @@ public:
     static int MAX_PLANNING_TIME;               // Maximal algorithm runtime in [ms]
     static int MAX_EXTENSION_STEPS;             // Maximal number of extensions in connect procedure
     static float EPS_STEP;                      // Advancing step in C-space in [rad] used by RRT-based algorithms
-
 };

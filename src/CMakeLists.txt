@@ -10,6 +10,7 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include/planners/rbt
         ${PROJECT_SOURCE_DIR}/include/planners/drbt
         ${PROJECT_SOURCE_DIR}/include/planners/rbt_star
+        ${PROJECT_SOURCE_DIR}/include/planners/trajectory
         ${PROJECT_SOURCE_DIR}/include/robots
         ${PROJECT_SOURCE_DIR}/include/environments
         ${PROJECT_SOURCE_DIR}/include/environments/objects

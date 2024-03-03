@@ -7,18 +7,18 @@
 
 TEST(RealVectorSpaceStateTest, testConstructor)
 {
-    std::shared_ptr<base::State> ss = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1, 2}));
+    std::shared_ptr<base::State> q = std::make_shared<base::RealVectorSpaceState>(Eigen::Vector2f({1, 2}));
 
-    ASSERT_EQ(ss->getNumDimensions(), 2);
-    ASSERT_EQ(ss->getCoord(), Eigen::Vector2f({1, 2}));
+    ASSERT_EQ(q->getNumDimensions(), 2);
+    ASSERT_EQ(q->getCoord(), Eigen::Vector2f({1, 2}));
 }
 
 TEST(RealVectorSpaceStateTest, testConstructor1)
 {
     Eigen::VectorXf state_coord(6);
     state_coord << 0, 0, 0, 0, 0, 0;
-    std::shared_ptr<base::State> ss = std::make_shared<base::RealVectorSpaceState>(state_coord);
+    std::shared_ptr<base::State> q = std::make_shared<base::RealVectorSpaceState>(state_coord);
 
-    ASSERT_EQ(ss->getNumDimensions(), 2);
-    ASSERT_EQ(ss->getCoord(), state_coord);
+    ASSERT_EQ(q->getNumDimensions(), 2);
+    ASSERT_EQ(q->getCoord(), state_coord);
 }

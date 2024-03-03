@@ -7,6 +7,7 @@
 #include "RGBTConnect.h"
 #include "RGBMTStar.h"
 #include "HorizonState.h"
+#include "Spline5.h"
 
 namespace planning
 {
@@ -31,35 +32,37 @@ namespace planning
             void shortenHorizon(int num);
             void addRandomStates(int num);
             void addLateralStates();
-            bool modifyState(std::shared_ptr<HorizonState> &q, int max_num_attempts);
-            void computeReachedState(const std::shared_ptr<HorizonState> q);
+            bool modifyState(std::shared_ptr<planning::drbt::HorizonState> &q, int max_num_attempts);
+            void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
             void computeNextState();
-            inline void setNextState(const std::shared_ptr<HorizonState> q);
-            int getIndexInHorizon(const std::shared_ptr<HorizonState> q);
+            int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             void updateCurrentState();
-            void computeSpline();
+            bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
+            void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(int max_planning_time);
             virtual void replan(int max_planning_time);
             void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
-            std::vector<std::shared_ptr<HorizonState>> horizon;             // List of all horizon states and their information
-            std::shared_ptr<base::State> q_current;                         // Current robot configuration
-            std::shared_ptr<base::State> q_target;                          // Target robot configuration to which the robot is currently heading to
-            std::shared_ptr<base::State> q_previous;                        // Previous robot configuration
-            std::shared_ptr<HorizonState> q_next;                           // Next robot configuration
-            std::shared_ptr<HorizonState> q_next_previous;                  // Next robot configuration from the previous iteration
-            float d_max_mean;                                               // Averaged maximal distance-to-obstacles through iterations
-            int horizon_size;                                               // Number of states that is required to be in the horizon
-            bool replanning;                                                // Whether path replanning is required
-            base::State::Status status;                                     // The status of proceeding from 'q_curr' towards 'q_next'
-            std::vector<std::shared_ptr<base::State>> predefined_path;      // The predefined path that is being followed
-            int num_lateral_states;                                         // Number of lateral states
-            float delta_q_max;                                              // Maximal edge length when acquiring a new predefined path
-            std::chrono::steady_clock::time_point time_iter_start;
+            std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
+            std::shared_ptr<base::State> q_current;                                 // Current robot configuration
+            std::shared_ptr<base::State> q_previous;                                // Previous robot configuration
+            std::shared_ptr<base::State> q_target;                                  // Target robot configuration to which the robot is currently heading to
+            std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
+            std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
+            float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
+            int horizon_size;                                                       // Number of states that is required to be in the horizon
+            bool replanning;                                                        // Whether path replanning is required
+            base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
+            std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
+            int num_lateral_states;                                                 // Number of lateral states
+            float delta_q_max;                                                      // Maximal edge length when acquiring a new predefined path
+            std::chrono::steady_clock::time_point time_iter_start;                  // Start time point at each iteration
+            std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
+            std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
         };
     }
 }
 
-#endif RPMPL_DRGBT_H
+#endif //RPMPL_DRGBT_H

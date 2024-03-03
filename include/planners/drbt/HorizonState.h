@@ -54,4 +54,4 @@ namespace planning
     }
 }
 
-#endif RPMPL_HORIZONSTATE_H
+#endif //RPMPL_HORIZONSTATE_H

@@ -31,7 +31,7 @@ namespace base
 		~Tree();
 
 		inline const std::string &getTreeName() const { return tree_name; }
-		inline const int getTreeIdx() const { return tree_idx; }
+		inline int getTreeIdx() const { return tree_idx; }
 		inline std::shared_ptr<std::vector<std::shared_ptr<base::State>>> getStates() const { return states; }
 		inline std::shared_ptr<base::State> getState(int idx) const { return states->at(idx); }
         inline std::shared_ptr<base::KdTree> getKdTree() const { return kd_tree; }
