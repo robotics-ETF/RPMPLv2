@@ -1,7 +1,9 @@
 name: Build with CMake (Linux)
 
 on:
-  push:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -28,6 +30,6 @@ jobs:
 
       - name: Test (optional)
         run: |
-          if [ -f build/test ]; then
+          if [ -f build/tests ]; then
             ctest -C Release --output-on-failure
           fi
