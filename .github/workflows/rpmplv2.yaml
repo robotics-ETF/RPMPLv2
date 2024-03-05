@@ -1,0 +1,33 @@
+name: Build with CMake (Linux)
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install dependencies
+        run: |
+          sudo apt update && sudo apt install -y apt-transport-https \
+          ca-certificates curl wget gnupg make cmake lsb-release software-properties-common \
+          libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
+          libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev libnanoflann-dev \
+          && pip3 install trimesh urdfpy \
+        shell: bash
+
+      - name: Configure with CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          mkdir -p build
+          cmake --build build --config Release
+
+      - name: Test (optional)
+        run: |
+          if [ -f build/test ]; then
+            ctest -C Release --output-on-failure
+          fi
