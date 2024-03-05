@@ -1,11 +1,11 @@
-.PHONY: clean build dependencies source-dirs sim
-
-dependencies:
-	rosdep install --from-paths src --ignore-src -r -y
+.PHONY: clean build run_tests
 
 clean:
-	rm -r ./build/ ./install/ ./log/
+	rm -r ./build
 
 build:
-	colcon build --symlink-install --cmake-args " -DCMAKE_BUILD_TYPE=RelWithDebInfo"
+	mkdir -p build
+	cd build && cmake .. && make
+
+run_tests:
 

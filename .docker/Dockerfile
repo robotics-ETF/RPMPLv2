@@ -1,7 +1,27 @@
-FROM jammy-22.04 as base-img
+FROM ubuntu:22.04 as rpmplv2-dev-container
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg \
+    make \
+    cmake \
+    lsb-release \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
+    libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev \
+    && pip3 install trimesh urdfpy \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV CLANG_VERSION=18
 RUN wget https://apt.llvm.org/llvm.sh && \

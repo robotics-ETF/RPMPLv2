@@ -9,7 +9,6 @@ project(
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-
   # Optionally set things like CMAKE_CXX_STANDARD, CMAKE_POSITION_INDEPENDENT_CODE here
 
   # Let's ensure -std=c++xx instead of -std=g++xx
@@ -20,7 +19,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-
   # Testing only available if this is the main app
   # Note this needs to be done in the main CMakeLists
   # since it calls enable_testing, which must be in the
@@ -29,6 +27,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   # Docs only available if this is the main app
   find_package(Doxygen)
+
   if(Doxygen_FOUND)
     add_subdirectory(docs)
   else()
@@ -49,17 +48,20 @@ find_package(fcl 0.7 REQUIRED)
 add_subdirectory(external/glog)
 add_subdirectory(external/nanoflann)
 add_subdirectory(external/googletest)
-# add_subdirectory(external/QuadProgpp)
 
-set(PROJECT_LIBRARIES gtest glog::glog nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp 
+# add_subdirectory(external/QuadProgpp)
+set(PROJECT_LIBRARIES gtest glog::glog nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
+
   # quadprog
 )
 
+set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
+
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/visualizer/
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/visualizer)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/visualizer)
 
 # The compiled library code is here
 add_subdirectory(src)
@@ -69,7 +71,6 @@ add_subdirectory(apps)
 
 # Testing only available if this is the main app
 # Emergency override MODERN_CMAKE_BUILD_TESTING provided as well
-
 if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR MODERN_CMAKE_BUILD_TESTING) AND BUILD_TESTING)
   add_subdirectory(tests)
 endif()

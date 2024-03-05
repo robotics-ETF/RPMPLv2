@@ -64,4 +64,4 @@ install(TARGETS
   test_rgbtconnect
   test_drgbt
   test_rgbmtstar
-  DESTINATION apps)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
