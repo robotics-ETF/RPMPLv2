@@ -11,11 +11,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update && sudo apt install -y apt-transport-https \
+          sudo apt update && sudo apt upgrade &&sudo apt install -y apt-transport-https \
           ca-certificates curl wget gnupg make cmake lsb-release software-properties-common \
           libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
           libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev libnanoflann-dev \
-          && pip3 install trimesh urdfpy \
+          && pip3 install trimesh urdfpy
         shell: bash
 
       - name: Configure with CMake
