@@ -44,13 +44,13 @@ include_directories(${OROCOS_KDL_INCLUDE_DIR})
 
 find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
+find_package(nanoflann REQUIRED)
 
 add_subdirectory(external/glog)
-add_subdirectory(external/nanoflann)
 add_subdirectory(external/googletest)
 
 # add_subdirectory(external/QuadProgpp)
-set(PROJECT_LIBRARIES gtest glog::glog nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
+set(PROJECT_LIBRARIES gtest glog::glog nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
 
   # quadprog
 )
@@ -58,10 +58,10 @@ set(PROJECT_LIBRARIES gtest glog::glog nanoflann kdl_parser orocos-kdl fcl ccd y
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/apps/data)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/visualizer/
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/visualizer)
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/apps/visualizer)
 
 # The compiled library code is here
 add_subdirectory(src)

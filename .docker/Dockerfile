@@ -19,7 +19,7 @@ RUN apt-get update \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
-    libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev \
+    libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev libnanoflann-dev \
     && pip3 install trimesh urdfpy \
     && rm -rf /var/lib/apt/lists/*
 
