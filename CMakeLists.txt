@@ -46,9 +46,6 @@ find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
 
-add_subdirectory(external/glog)
-add_subdirectory(external/googletest)
-
 # add_subdirectory(external/QuadProgpp)
 set(PROJECT_LIBRARIES gtest glog::glog nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
 
