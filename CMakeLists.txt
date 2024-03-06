@@ -47,7 +47,7 @@ find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
 
 # add_subdirectory(external/QuadProgpp)
-set(PROJECT_LIBRARIES gtest glog::glog nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
+set(PROJECT_LIBRARIES gtest glog nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp
 
   # quadprog
 )
