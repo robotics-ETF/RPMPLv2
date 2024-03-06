@@ -19,6 +19,6 @@ TEST(RealVectorSpaceStateTest, testConstructor1)
     state_coord << 0, 0, 0, 0, 0, 0;
     std::shared_ptr<base::State> q = std::make_shared<base::RealVectorSpaceState>(state_coord);
 
-    ASSERT_EQ(q->getNumDimensions(), 2);
+    ASSERT_EQ(q->getNumDimensions(), 6);
     ASSERT_EQ(q->getCoord(), state_coord);
 }
