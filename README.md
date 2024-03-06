@@ -11,6 +11,10 @@ Available planners are:
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
 
 # 2. How to use
+## 2.0 Use docker and devcontainer
+
+If VS Code (or any other IDE with a support for VS Code's devcontainers), then just open and use "Rebuild and open in container" option. Then proceed with 2.5.
+
 ## 2.1 Obtain source code of "RPMPLv2" repository
 Choose the location for a target workspace, e.g.:
 ```
