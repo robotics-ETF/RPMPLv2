@@ -1,0 +1,29 @@
+CompileFlags:
+  CompilationDatabase: build
+Index:
+  StandardLibrary: Yes
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add:
+      [
+        performance-*,
+        bugprone-*,
+        portability-*,
+        modernize-*,
+      ]
+    Remove: 
+      [
+        modernize-use-trailing-return-type,
+      ]
+    CheckOptions:
+      readability-identifier-naming.VariableCase: lower_case
+Completion:
+  AllScopes: Yes
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  Designators: Yes
+Hover:
+  ShowAKA: Yes
