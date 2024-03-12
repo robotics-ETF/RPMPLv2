@@ -15,9 +15,9 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
     YAML::Node node = YAML::LoadFile(root_path + config_file_path);
     int num_added = 0;
 
-    for (int i = 0; i < node["environment"].size(); i++)
-	{
-        try
+    try
+    {
+        for (int i = 0; i < node["environment"].size(); i++)
         {
             std::shared_ptr<env::Object> object;
             YAML::Node obstacle = node["environment"][i];
@@ -51,24 +51,26 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                 throw std::domain_error("Object type is wrong! ");
 
             objects.emplace_back(object);
-            std::cout << "Added " << num_added++ << ". " << object;            
+            std::cout << "Added " << num_added++ << ". " << object;
         }
-        catch (std::exception &e)
+
+        if (node["robot"]["table_included"].IsDefined())
+            table_included = node["robot"]["table_included"].as<bool>();
+        else
+            throw std::domain_error("It is not defined whether the table is included! ");
+
+        if (node["robot"]["WS_center"].IsDefined())
         {
-            std::cout << e.what() << "\n";
+            for (int i = 0; i < 3; i++)
+                WS_center(i) = node["robot"]["WS_center"][i].as<float>();
+
+            WS_radius = node["robot"]["WS_radius"].as<float>();
         }
     }
-
-    table_included = node["robot"]["table_included"].as<bool>();
-
-    if (node["robot"]["WS_center"].IsDefined())
+    catch (std::exception &e)
     {
-        for (int i = 0; i < 3; i++)
-            WS_center(i) = node["robot"]["WS_center"][i].as<float>();
-
-        WS_radius = node["robot"]["WS_radius"].as<float>();
+        std::cout << e.what() << "\n";
     }
-	
 }
 
 env::Environment::~Environment()

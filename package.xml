@@ -4,6 +4,7 @@
   <name>rpmpl_library</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
+  <maintainer email="nermin.covic@etf.unsa.ba">root</maintainer>
   <maintainer email="dinko.osmankovic@etf.unsa.ba">root</maintainer>
   <license>TODO: License declaration</license>
 
