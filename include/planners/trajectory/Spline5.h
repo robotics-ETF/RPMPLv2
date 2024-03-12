@@ -13,12 +13,12 @@ namespace planning
         class Spline5 : public Spline
         {
         public:
-            Spline5(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current);
-            Spline5(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current, 
-                    const std::shared_ptr<base::State> q_current_dot, const std::shared_ptr<base::State> q_current_ddot);
+            Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
+            Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current, 
+                    const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot);
 		    ~Spline5() {}
 
-            bool compute(const std::shared_ptr<base::State> q_final) override;
+            bool compute(const Eigen::VectorXf &q_final) override;
             bool checkConstraints(int idx, float t_f) override;
 
             float getPosition(float t, int idx, float t_f) override;
@@ -30,7 +30,7 @@ namespace planning
             float computeFinalTime(int idx, float q_f_i);
             const std::vector<float> solveQubicEquation(float a, float b, float c, float d);
             
-            Eigen::VectorXf a, b, c, d, e, f;
+            Eigen::VectorXf a, b, c, d, e, f;   // Coefficients of a spline a*t⁵ + b*t⁴ + c*t³ + d*t² + e*t + f
         };
         
     }

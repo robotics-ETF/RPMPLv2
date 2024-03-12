@@ -202,6 +202,11 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::MAX_TIME_TASK1 is not defined! Using default value of " << DRGBTConfig::MAX_TIME_TASK1;
         
+        if (DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
+            DRGBTConfig::TRAJECTORY_INTERPOLATION = DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>();
+        else
+            LOG(INFO) << "DRGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << DRGBTConfig::TRAJECTORY_INTERPOLATION;
+        
         LOG(INFO) << "Configuration parameters read successfully!";
         
     }

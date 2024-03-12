@@ -2,28 +2,28 @@
 
 // #include <unsupported/Eigen/Polynomials>
 
-planning::trajectory::Spline5::Spline5(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current) :
-    Spline(5, ss_, q_current) 
+planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current) :
+    Spline(5, robot_, q_current) 
 {
-    a = b = c = d = e = Eigen::VectorXf::Zero(ss->num_dimensions);
-    f = q_current->getCoord();
+    a = b = c = d = e = Eigen::VectorXf::Zero(num_dimensions);
+    f = q_current;
 }
 
-planning::trajectory::Spline5::Spline5(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current, 
-    const std::shared_ptr<base::State> q_current_dot, const std::shared_ptr<base::State> q_current_ddot) :
-    Spline(5, ss_, q_current)
+planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current, 
+    const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot) :
+    Spline(5, robot_, q_current)
 {
-    a = b = c =  Eigen::VectorXf::Zero(ss->num_dimensions);
-    d = q_current_ddot->getCoord() / 2;
-    e = q_current_dot->getCoord();
-    f = q_current->getCoord();
+    a = b = c = Eigen::VectorXf::Zero(num_dimensions);
+    d = q_current_ddot / 2;
+    e = q_current_dot;
+    f = q_current;
 }
 
 /// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
 /// robot's maximal velocity, acceleration and jerk are satisfied.
 /// @param q_final Final configuration in which the spline is ending.
 /// @return Success of computing the spline.
-bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q_final)
+bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 {
     // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
     int idx_corr = -1;
@@ -32,44 +32,44 @@ bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q
     Eigen::Vector3f abc_left, abc_right;    // a, b and c coefficients, respectively
     const int max_num_iter = 5;
 
-    for (int idx = 0; idx < ss->num_dimensions; idx++)
+    for (int idx = 0; idx < num_dimensions; idx++)
     {
-        std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
-        std::cout << "Init. pos: " << f(idx) << "\t Final pos: " << q_final->getCoord(idx) <<  "\n";
-        std::cout << "Init. vel: " << e(idx) << "\t Final vel: 0 \n";
-        std::cout << "Init. acc: " << 2*d(idx) << "\t Final acc: 0 \n";
-        std::cout << "t_f_opt:   " << t_f_opt << "\n";
+        // std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
+        // std::cout << "Init. pos: " << f(idx) << "\t Final pos: " << q_final(idx) <<  "\n";
+        // std::cout << "Init. vel: " << e(idx) << "\t Final vel: 0 \n";
+        // std::cout << "Init. acc: " << 2*d(idx) << "\t Final acc: 0 \n";
+        // std::cout << "t_f_opt:   " << t_f_opt << "\n";
 
-        if (f(idx) == q_final->getCoord(idx) && e(idx) == 0 && d(idx) == 0)    // Special case
+        if (f(idx) == q_final(idx) && e(idx) == 0 && d(idx) == 0)    // Special case
         {
-            std::cout << "Joint position does not change. Just continue! \n";
+            // std::cout << "Joint position does not change. Just continue! \n";
             continue;
         }
 
         if (t_f_opt > 0)
         {
             t_f = t_f_opt;
-            c(idx) = (10*(q_final->getCoord(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
+            c(idx) = (10*(q_final(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
             b(idx) = -(3*c(idx)*t_f*t_f + 3*d(idx)*t_f + 2*e(idx)) / (2*t_f*t_f*t_f);
             a(idx) = -(6*b(idx)*t_f*t_f + 3*c(idx)*t_f + d(idx)) / (10*t_f*t_f*t_f);
             if (checkConstraints(idx, t_f))
             {
-                std::cout << "All constraints are satisfied for t_f: " << t_f << " [s]. Just continue! \n";
+                // std::cout << "All constraints are satisfied for t_f: " << t_f << " [s]. Just continue! \n";
                 continue;
             }
             else
             {
                 idx_corr = idx;
-                std::cout << "idx_corr: " << idx_corr << "\n";
+                // std::cout << "idx_corr: " << idx_corr << "\n";
             }
         }
 
-        c(idx) = -ss->robot->getMaxJerk(idx) / 6;
-        t_f_left = computeFinalTime(idx, q_final->getCoord(idx));
+        c(idx) = -robot->getMaxJerk(idx) / 6;
+        t_f_left = computeFinalTime(idx, q_final(idx));
         abc_left << a(idx), b(idx), c(idx);
 
-        c(idx) = ss->robot->getMaxJerk(idx) / 6;
-        t_f_right = computeFinalTime(idx, q_final->getCoord(idx));
+        c(idx) = robot->getMaxJerk(idx) / 6;
+        t_f_right = computeFinalTime(idx, q_final(idx));
         abc_right << a(idx), b(idx), c(idx);
 
         // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
@@ -80,7 +80,7 @@ bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q
         }
         else if (t_f_left > 0 && t_f_left < INFINITY && t_f_right > 0 && t_f_right < INFINITY)
         {
-            std::cout << "Solution is found! Just continue! \n";
+            // std::cout << "Solution is found! Just continue! \n";
             if (t_f_left < t_f_right)
             {
                 t_f_opt = t_f_left;
@@ -95,14 +95,14 @@ bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q
         }
         else if (t_f_left > 0 && t_f_left < INFINITY)
         {
-            std::cout << "Solution is found! Just continue! \n";
+            // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_left;
             a(idx) = abc_left(0); b(idx) = abc_left(1); c(idx) = abc_left(2);
             continue;
         }
         else if (t_f_right > 0 && t_f_right < INFINITY)
         {
-            std::cout << "Solution is found! Just continue! \n";
+            // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_right;
             a(idx) = abc_right(0); b(idx) = abc_right(1); c(idx) = abc_right(2);
             continue;
@@ -115,7 +115,7 @@ bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q
             // std::cout << "Num. iter: " << num << " --------------------------\n";
             // std::cout << "c_left: " << abc_left(2) << "\t c_right: " << abc_right(2) << "\n";
             c(idx) = (abc_left(2) + abc_right(2)) / 2;
-            t_f = computeFinalTime(idx, q_final->getCoord(idx));
+            t_f = computeFinalTime(idx, q_final(idx));
 
             if (t_f_left == 0)
             {
@@ -155,15 +155,15 @@ bool planning::trajectory::Spline5::compute(const std::shared_ptr<base::State> q
     t_f = t_f_opt;
     for (int idx = 0; idx < idx_corr; idx++)
     {
-        std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
-        c(idx) = (10*(q_final->getCoord(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
+        // std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
+        c(idx) = (10*(q_final(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
         b(idx) = -(3*c(idx)*t_f*t_f + 3*d(idx)*t_f + 2*e(idx)) / (2*t_f*t_f*t_f);
         a(idx) = -(6*b(idx)*t_f*t_f + 3*c(idx)*t_f + d(idx)) / (10*t_f*t_f*t_f);
     }
 
     // Solution is found. Set the parameters for a new spline
     time_final = t_f_opt;
-    for (int idx = 0; idx < ss->num_dimensions; idx++)
+    for (int idx = 0; idx < num_dimensions; idx++)
         coeff.row(idx) << f(idx), e(idx), d(idx), c(idx), b(idx), a(idx);
     
     // int t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();
@@ -182,14 +182,14 @@ float planning::trajectory::Spline5::computeFinalTime(int idx, float q_f_i)
     float t_f = INFINITY;
     std::vector<float> t_sol = solveQubicEquation(c(idx), 3*d(idx), 6*e(idx), 10*(f(idx) - q_f_i));
 
-    std::cout << "For c: " << c(idx) << ", it follows t_f: ";
+    // std::cout << "For c: " << c(idx) << ", it follows t_f: ";
     for (int i = 0; i < t_sol.size(); i++)
     {
-        std::cout << t_sol[i] << "\t";
+        // std::cout << t_sol[i] << "\t";
         if (t_sol[i] > 0)
             t_f = std::min(t_f, t_sol[i]);
     }
-    std::cout << "\n";
+    // std::cout << "\n";
 
     if (t_f == INFINITY)
         return INFINITY;
@@ -213,11 +213,11 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6 * std::abs(c(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
     // std::cout << "\t Max. jerk.\t t_max: " << t_max << "\t value: " << std::abs(getJerk(t_max, idx, t_f)) << "\n";
-    if (6 * std::abs(c(idx)) > ss->robot->getMaxJerk(idx) + 1e-3 ||
-        std::abs(getJerk(t_f, idx, t_f)) > ss->robot->getMaxJerk(idx) + 1e-3 || 
-        a(idx) != 0 && t_max > 0 && t_max < t_f && std::abs(getJerk(t_max, idx, t_f)) > ss->robot->getMaxJerk(idx))
+    if (6 * std::abs(c(idx)) > robot->getMaxJerk(idx) + 1e-3 ||
+        std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + 1e-3 || 
+        a(idx) != 0 && t_max > 0 && t_max < t_f && std::abs(getJerk(t_max, idx, t_f)) > robot->getMaxJerk(idx))
     {
-        std::cout << "\t Maximal jerk constraint not satisfied! \n";
+        // std::cout << "\t Maximal jerk constraint not satisfied! \n";
         return false;
     }
 
@@ -230,9 +230,9 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
         {
             t_max = (-24*b(idx) + sign*std::sqrt(D)) / (120*a(idx));
             // std::cout << "\t Max. acceleration.\t t_max: " << t_max << "\t value: " << std::abs(getAcceleration(t_max, idx, t_f)) << "\n";
-            if (t_max > 0 && t_max < t_f && std::abs(getAcceleration(t_max, idx, t_f)) > ss->robot->getMaxAcc(idx))
+            if (t_max > 0 && t_max < t_f && std::abs(getAcceleration(t_max, idx, t_f)) > robot->getMaxAcc(idx))
             {
-                std::cout << "\t Maximal acceleration constraint not satisfied! \n";
+                // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
                 return false;
             }
         }
@@ -244,14 +244,14 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
     for (int i = 0; i < t_max_.size(); i++)
     {
         // std::cout << "\t Max. velocity.\t t_max: " << t_max_[i] << "\t value: " << std::abs(getVelocity(t_max_[i], idx, t_f)) << "\n";
-        if (t_max_[i] > 0 && t_max_[i] < t_f && std::abs(getVelocity(t_max_[i], idx, t_f)) > ss->robot->getMaxVel(idx))
+        if (t_max_[i] > 0 && t_max_[i] < t_f && std::abs(getVelocity(t_max_[i], idx, t_f)) > robot->getMaxVel(idx))
         {
-            std::cout << "\t Maximal velocity constraint not satisfied! \n";
+            // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
         }
     }
 
-    std::cout << "\t All constraints are satisfied! \n";
+    // std::cout << "\t All constraints are satisfied! \n";
     return true;
 }
 

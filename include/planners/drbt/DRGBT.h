@@ -36,7 +36,8 @@ namespace planning
             void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
             void computeNextState();
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
-            void updateCurrentState();
+            float updateCurrentState();
+            void updateCurrentState2();
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
@@ -44,6 +45,7 @@ namespace planning
             virtual void replan(int max_planning_time);
             void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
+            bool checkMotionValidity2(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
             std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
             std::shared_ptr<base::State> q_current;                                 // Current robot configuration

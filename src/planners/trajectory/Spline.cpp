@@ -1,11 +1,12 @@
 #include "Spline.h"
 
-planning::trajectory::Spline::Spline(int order_, const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current)
+planning::trajectory::Spline::Spline(int order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current)
 {
     order = order_;
-    ss = ss_;
-    coeff = Eigen::MatrixXf::Zero(ss->num_dimensions, order + 1);
-    coeff.col(0) = q_current->getCoord();   // All initial conditions are zero, except position
+    robot = robot_;
+    num_dimensions = robot->getNumDOFs();
+    coeff = Eigen::MatrixXf::Zero(num_dimensions, order + 1);
+    coeff.col(0) = q_current;   // All initial conditions are zero, except position
     time_start = std::chrono::steady_clock::now();
     time_final = 0;
     time_current = 0;
@@ -15,14 +16,14 @@ planning::trajectory::Spline::Spline(int order_, const std::shared_ptr<base::Sta
 
 planning::trajectory::Spline::~Spline() {}
 
-std::shared_ptr<base::State> planning::trajectory::Spline::getPosition(float t)
+Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(ss->num_dimensions);
-    for (int i = 0; i < ss->num_dimensions; i++)
+    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
+    for (int i = 0; i < num_dimensions; i++)
         q(i) = getPosition(t, i);
 
     // std::cout << "Robot position at time " << t << " [s] is " << q.transpose() << "\n";
-    return ss->getNewState(q);
+    return q;
 }
 
 float planning::trajectory::Spline::getPosition(float t, int idx)
@@ -39,14 +40,14 @@ float planning::trajectory::Spline::getPosition(float t, int idx)
     return q;
 }
 
-std::shared_ptr<base::State> planning::trajectory::Spline::getVelocity(float t)
+Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(ss->num_dimensions);
-    for (int i = 0; i < ss->num_dimensions; i++)
+    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
+    for (int i = 0; i < num_dimensions; i++)
         q(i) = getVelocity(t, i);
 
     // std::cout << "Robot velocity at time " << t << " [s] is " << q.transpose() << "\n";
-    return ss->getNewState(q);
+    return q;
 }
 
 float planning::trajectory::Spline::getVelocity(float t, int idx)
@@ -61,14 +62,14 @@ float planning::trajectory::Spline::getVelocity(float t, int idx)
     return q;
 }
 
-std::shared_ptr<base::State> planning::trajectory::Spline::getAcceleration(float t)
+Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(ss->num_dimensions);
-    for (int i = 0; i < ss->num_dimensions; i++)
+    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
+    for (int i = 0; i < num_dimensions; i++)
         q(i) = getAcceleration(t, i);
 
     // std::cout << "Robot acceleration at time " << t << " [s] is " << q.transpose() << "\n";
-    return ss->getNewState(q);
+    return q;
 }
 
 float planning::trajectory::Spline::getAcceleration(float t, int idx)
@@ -83,14 +84,14 @@ float planning::trajectory::Spline::getAcceleration(float t, int idx)
     return q;
 }
 
-std::shared_ptr<base::State> planning::trajectory::Spline::getJerk(float t)
+Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(ss->num_dimensions);
-    for (int i = 0; i < ss->num_dimensions; i++)
+    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
+    for (int i = 0; i < num_dimensions; i++)
         q(i) = getJerk(t, i);
 
     // std::cout << "Robot jerk at time " << t << " [s] is " << q.transpose() << "\n";
-    return ss->getNewState(q);
+    return q;
 }
 
 float planning::trajectory::Spline::getJerk(float t, int idx)
@@ -126,7 +127,7 @@ void planning::trajectory::Spline::setTimeCurrent(float time_current_)
 
 std::ostream &planning::trajectory::operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
 {
-    for (int i = 0; i < spline->ss->num_dimensions; i++)
+    for (int i = 0; i < spline->num_dimensions; i++)
     {
         os << "q_" << i << "(t) = ";
         for (int j = 0; j <= spline->order; j++)
