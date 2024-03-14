@@ -6,7 +6,7 @@
 
 env::Object::~Object() {}
 
-std::ostream &env::operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
+std::ostream& env::operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
 {
     obj->coll_object->computeAABB();
 

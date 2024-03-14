@@ -4,8 +4,9 @@ clean:
 	rm -r ./build
 
 build:
+	cmake -B build -DCMAKE_BUILD_TYPE=Release
 	mkdir -p build
-	cd build && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1 && make 
+	cmake --build build --config Release
 
 run_tests:
-
+	if [ -d build/tests ]; then ctest --test-dir build/tests; fi
