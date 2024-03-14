@@ -39,7 +39,13 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, int num_DOFs_)
 		
 		if (links_[i]->visual->geometry->type == urdf::Geometry::BOX)
 		{
+			#ifdef __GNUC__
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			auto box = (std::shared_ptr<urdf::Box>&) links_[i]->visual->geometry;
+				#pragma GCC diagnostic pop
+			#endif
+			
 			KDL::Vector origin(links_[i]->visual->origin.position.x, 
 							   links_[i]->visual->origin.position.y,
 							   links_[i]->visual->origin.position.z);

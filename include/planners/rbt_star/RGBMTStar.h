@@ -18,9 +18,14 @@ namespace planning
                       const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
             
 			bool solve() override;
-            # pragma clang diagnostic ignored "-Woverloaded-virtual"
+            
+            #if defined(__clang__)
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Woverloaded-virtual"
             bool checkTerminatingCondition();
-			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
+                #pragma clang diagnostic pop
+            #endif
+            void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
             std::vector<size_t> num_states;                // Total number of states for each tree

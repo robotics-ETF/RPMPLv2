@@ -22,7 +22,12 @@ namespace planning
             ~DRGBT();                         
             
             bool solve() override;
+            #if defined(__clang__)
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Woverloaded-virtual"
             bool checkTerminatingCondition();
+                #pragma clang diagnostic pop
+            #endif
 			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
             
 		protected:
