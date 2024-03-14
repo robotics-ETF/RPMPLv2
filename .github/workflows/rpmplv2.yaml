@@ -8,10 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    env:
-      CLANG_VERSION: 18
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
@@ -19,29 +17,18 @@ jobs:
           ca-certificates curl wget gnupg make cmake lsb-release software-properties-common \
           libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
           libgtest-dev libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev libnanoflann-dev \
-          && pip3 install trimesh urdfpy && \
-          wget https://apt.llvm.org/llvm.sh && \
-          sed -i "s/add-apt-repository \"${REPO_NAME}\"/add-apt-repository \"${REPO_NAME}\" -y/g" llvm.sh && \
-          chmod +x llvm.sh && \
-          sudo ./llvm.sh $CLANG_VERSION -y && \
-          sudo apt-get install -y --no-install-recommends clang-$CLANG_VERSION clang-tidy-$CLANG_VERSION clang-format-$CLANG_VERSION \
-          llvm-$CLANG_VERSION-dev libc++-$CLANG_VERSION-dev libomp-$CLANG_VERSION-dev libc++abi-$CLANG_VERSION-dev libunwind-$CLANG_VERSION-dev
+          && pip3 install trimesh urdfpy
         shell: bash
 
-      - name: Set Clang as default clang++
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$CLANG_VERSION 100
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$CLANG_VERSION 100
-          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-$CLANG_VERSION 100
-
-      - name: Check clang++ version
-        run: clang++ --version
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: x64
 
       - name: Configure with CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++-$CLANG_VERSION
-
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
           cmake --build build --config Release
