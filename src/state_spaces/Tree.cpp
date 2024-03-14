@@ -53,7 +53,7 @@ std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<
 	bool is_out;
 	Eigen::VectorXf q_temp;
 
-	for (int i = 0; i < states->size(); i++)
+	for (size_t i = 0; i < states->size(); i++)
 	{
 		q_temp = getState(i)->getCoord();
 		is_out = false;

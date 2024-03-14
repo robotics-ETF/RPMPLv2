@@ -9,7 +9,7 @@
 #include <glog/logging.h>
 
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, char **argv)
 {
 	google::InitGoogleLogging(argv[0]);
 	std::srand((unsigned int) time(0));
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	try
 	{
 		// std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RGBTConnect>(ss, scenario.getStart(), scenario.getGoal());
-		float d_c;
+		[[maybe_unused]] float d_c{};
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;
 		int num = 0;
 		while (num++ < 1)

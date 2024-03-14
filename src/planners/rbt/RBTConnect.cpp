@@ -220,7 +220,7 @@ void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, b
 			if (path.size() > 0)
 			{
 				output_file << "Path:" << std::endl;
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 					output_file << path.at(i) << std::endl;
 			}
 		}

@@ -46,9 +46,9 @@ int commandLineParser(int argc, char **argv, std::string &scenario_file_path)
 const std::string getProjectPath()
 {
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++) 	// This depends on how deep is this file located
+    for (int i = 0; i < 2; i++) {	// This depends on how deep is this file located
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
-
+	}
 	return project_path;
 }
 
@@ -77,7 +77,7 @@ float getStd(std::vector<float> &v)
 		
 	float mean = getMean(v);
 	float sum = 0;
-	for (int i = 0; i < v.size(); i++)
+	for (size_t i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
 	return std::sqrt(sum / v.size());
@@ -90,7 +90,7 @@ float getStd(std::vector<int> &v)
 		
 	float mean = getMean(v);
 	float sum = 0;
-	for (int i = 0; i < v.size(); i++)
+	for (size_t i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
 	return std::sqrt(sum / v.size());

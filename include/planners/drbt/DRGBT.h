@@ -54,7 +54,7 @@ namespace planning
             std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
             std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
-            int horizon_size;                                                       // Number of states that is required to be in the horizon
+            size_t horizon_size;                                                       // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
             base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed

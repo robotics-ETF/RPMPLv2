@@ -201,7 +201,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 {
-	bool collision;
+	[[maybe_unused]] bool collision{false};
 	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
 	
 	for (int i = 0; i < robot->getNumLinks(); i++)

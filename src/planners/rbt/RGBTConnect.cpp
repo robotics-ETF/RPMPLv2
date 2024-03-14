@@ -39,7 +39,7 @@ bool planning::rbt::RGBTConnect::solve()
 				q_e = getRandomState(q_near);				
 				tie(status, q_new_list) = extendGenSpine2(q_near, q_e);
                 trees[tree_idx]->upgradeTree(q_new_list->front(), q_near);
-                for (int j = 1; j < q_new_list->size(); j++)
+                for (size_t j = 1; j < q_new_list->size(); j++)
 				    trees[tree_idx]->upgradeTree(q_new_list->at(j), q_new_list->at(j-1));
 			}
             q_new = q_new_list->back();
@@ -129,7 +129,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 		{
 			tie(status, q_new_list) = extendGenSpine2(q_temp, q_e);
             tree->upgradeTree(q_new_list->front(), q_temp);
-            for (int i = 1; i < q_new_list->size(); i++)
+            for (size_t i = 1; i < q_new_list->size(); i++)
                 tree->upgradeTree(q_new_list->at(i), q_new_list->at(i-1));
 			
             q_new = q_new_list->back();
@@ -214,7 +214,7 @@ void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, 
 			if (path.size() > 0)
 			{
 				output_file << "Path:" << std::endl;
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 					output_file << path.at(i) << std::endl;
 			}
 		}

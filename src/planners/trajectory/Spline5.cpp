@@ -73,7 +73,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
         abc_right << a(idx), b(idx), c(idx);
 
         // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
-        if (t_f_left == INFINITY && t_f_right == INFINITY || t_f_left == 0 && t_f_right == 0)
+        if ((t_f_left == INFINITY) && (t_f_right == INFINITY || t_f_left == 0) && (t_f_right == 0))
         {
             // std::cout << "No solution! 'q_final' must be changed! \n";
             return false;
@@ -183,7 +183,7 @@ float planning::trajectory::Spline5::computeFinalTime(int idx, float q_f_i)
     std::vector<float> t_sol = solveQubicEquation(c(idx), 3*d(idx), 6*e(idx), 10*(f(idx) - q_f_i));
 
     // std::cout << "For c: " << c(idx) << ", it follows t_f: ";
-    for (int i = 0; i < t_sol.size(); i++)
+    for (size_t i = 0; i < t_sol.size(); i++)
     {
         // std::cout << t_sol[i] << "\t";
         if (t_sol[i] > 0)
@@ -215,7 +215,7 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
     // std::cout << "\t Max. jerk.\t t_max: " << t_max << "\t value: " << std::abs(getJerk(t_max, idx, t_f)) << "\n";
     if (6 * std::abs(c(idx)) > robot->getMaxJerk(idx) + 1e-3 ||
         std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + 1e-3 || 
-        a(idx) != 0 && t_max > 0 && t_max < t_f && std::abs(getJerk(t_max, idx, t_f)) > robot->getMaxJerk(idx))
+        (a(idx) != 0 && t_max > 0 && t_max < t_f && std::abs(getJerk(t_max, idx, t_f)) > robot->getMaxJerk(idx)))
     {
         // std::cout << "\t Maximal jerk constraint not satisfied! \n";
         return false;
@@ -241,7 +241,7 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
     // Maximal velocity constraint
     // Note: Initial and final velocity is zero!
     std::vector<float> t_max_ = solveQubicEquation(20*a(idx), 12*b(idx), 6*c(idx), 2*d(idx));
-    for (int i = 0; i < t_max_.size(); i++)
+    for (size_t i = 0; i < t_max_.size(); i++)
     {
         // std::cout << "\t Max. velocity.\t t_max: " << t_max_[i] << "\t value: " << std::abs(getVelocity(t_max_[i], idx, t_f)) << "\n";
         if (t_max_[i] > 0 && t_max_[i] < t_f && std::abs(getVelocity(t_max_[i], idx, t_f)) > robot->getMaxVel(idx))
@@ -342,7 +342,7 @@ const std::vector<float> planning::trajectory::Spline5::solveQubicEquation(float
         // std::cout << roots[0] << "\n";
 
         float re = -0.5 * (gamma1 + gamma2) - offset;
-        float im = (gamma1 - gamma2) * sqrt(3.0) / 2.0;
+        [[maybe_unused]] float im = (gamma1 - gamma2) * static_cast<float>(sqrt(3.0) / 2.0);
         if (abs(discriminant) < 1e-16)                // Equal roots
         {
             roots.emplace_back(re);
