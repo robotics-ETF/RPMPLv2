@@ -25,21 +25,24 @@ jobs:
           chmod +x llvm.sh && \
           sudo ./llvm.sh $CLANG_VERSION -y && \
           sudo apt-get install -y --no-install-recommends clang-$CLANG_VERSION clang-tidy-$CLANG_VERSION clang-format-$CLANG_VERSION \
-          llvm-$CLANG_VERSION-dev libc++-$CLANG_VERSION-dev libomp-$CLANG_VERSION-dev libc++abi-$CLANG_VERSION-dev libunwind-$CLANG_VERSION-dev && \
-          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-$CLANG_VERSION 100 && \
-          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-$CLANG_VERSION 100
+          llvm-$CLANG_VERSION-dev libc++-$CLANG_VERSION-dev libomp-$CLANG_VERSION-dev libc++abi-$CLANG_VERSION-dev libunwind-$CLANG_VERSION-dev
         shell: bash
+
+      - name: Set Clang as default clang++
+        run: |
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$CLANG_VERSION 100
+
+      - name: Check clang++ version
+        run: clang++ --version
 
       - name: Configure with CMake
         run: |
-          export CC=/usr/bin/clang
-          export CXX=/usr/bin/clang++
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++-$CLANG_VERSION
 
       - name: Build
         run: |
           mkdir -p build
-          cmake --build build --config Release
+          cmake --build build --config Release -DCMAKE_CXX_COMPILER=clang++-$CLANG_VERSION
 
       - name: Test (optional)
         run: |
