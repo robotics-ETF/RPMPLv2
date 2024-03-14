@@ -23,8 +23,8 @@ jobs:
           wget https://apt.llvm.org/llvm.sh && \
           sed -i "s/add-apt-repository \"${REPO_NAME}\"/add-apt-repository \"${REPO_NAME}\" -y/g" llvm.sh && \
           chmod +x llvm.sh && \
-          ./llvm.sh $CLANG_VERSION -y && \
-          apt-get install -y --no-install-recommends clang-$CLANG_VERSION clang-tidy-$CLANG_VERSION clang-format-$CLANG_VERSION \
+          sudo ./llvm.sh $CLANG_VERSION -y && \
+          sudo apt-get install -y --no-install-recommends clang-$CLANG_VERSION clang-tidy-$CLANG_VERSION clang-format-$CLANG_VERSION \
           llvm-$CLANG_VERSION-dev libc++-$CLANG_VERSION-dev libomp-$CLANG_VERSION-dev libc++abi-$CLANG_VERSION-dev libunwind-$CLANG_VERSION-dev && \
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION $CLANG_VERSION \
           --slave /usr/bin/clang++ clang++ /usr/bin/clang++-$CLANG_VERSION \
