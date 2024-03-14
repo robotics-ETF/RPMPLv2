@@ -9,11 +9,11 @@ project(
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
 
-message("------------------ Using compiler ${CMAKE_CXX_COMPILER_ID} ------------------")
+message("------------------ Using compiler ${CMAKE_CXX_COMPILER} ------------------")
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang++")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
