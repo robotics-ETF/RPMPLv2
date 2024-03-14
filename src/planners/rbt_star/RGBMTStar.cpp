@@ -31,7 +31,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 	int tree_idx;                           // Determines the tree index, i.e., which tree is chosen, 0: from q_init; 1: from q_goal; >1: local trees
     int tree_new_idx = 2;                   // Index of the new tree
     std::shared_ptr<base::State> q_rand, q_near, q_new;
-	base::State::Status status;
+	base::State::Status status(base::State::None);
     std::vector<int> trees_exist;                               // List of trees for which a new tree is extended to
     std::vector<int> trees_reached;                             // List of reached trees
     std::vector<int> trees_connected;                           // List of connected trees
