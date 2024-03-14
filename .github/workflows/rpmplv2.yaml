@@ -20,12 +20,6 @@ jobs:
           && pip3 install trimesh urdfpy
         shell: bash
 
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x64
-
       - name: Configure with CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
