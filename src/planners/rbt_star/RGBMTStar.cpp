@@ -170,7 +170,7 @@ bool planning::rbt_star::RGBMTStar::solve()
         planner_info->addCostConvergence(std::vector<float>(num_states_total - planner_info->getNumStates(), cost_opt));
         planner_info->addStateTimes(std::vector<int>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
         planner_info->setNumStates(num_states_total);
-        if (checkTerminatingCondition())
+        if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
     }
 }
@@ -371,7 +371,7 @@ void planning::rbt_star::RGBMTStar::computePath(std::shared_ptr<base::State> q_c
         std::reverse(path.begin(), path.end());
 }
 
-bool planning::rbt_star::RGBMTStar::checkTerminatingCondition()
+bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
     if ((getElapsedTime(time_start, std::chrono::steady_clock::now()) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
         planner_info->getNumStates() >= RGBMTStarConfig::MAX_NUM_STATES || 

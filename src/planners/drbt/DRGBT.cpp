@@ -133,7 +133,7 @@ bool planning::drbt::DRGBT::solve()
         // Planner info and terminating condition
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
         planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
-        if (checkTerminatingCondition())
+        if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
 
         std::cout << "----------------------------------------------------------------------------------------\n";
@@ -988,7 +988,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
     return is_valid;
 }
 
-bool planning::drbt::DRGBT::checkTerminatingCondition()
+bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
     int t_spline_current = getElapsedTime(time_start, std::chrono::steady_clock::now());    
     // std::cout << "Time elapsed: " << t_spline_current << " [ms] \n";
