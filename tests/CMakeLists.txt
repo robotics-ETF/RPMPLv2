@@ -1,17 +1,19 @@
 # Testing library
 
-
 include_directories(include)
 
 # Tests need to be added as executables first
-add_executable(main_test main_test.cpp)
+add_executable(test_realvectorspacestate test_realvectorspacestate.cpp)
+add_executable(test_vectorf test_vectorf.cpp)
 
-# I'm using C++17 in the test
-target_compile_features(main_test PRIVATE cxx_std_17)
+target_compile_features(test_realvectorspacestate PRIVATE)
+target_compile_features(test_vectorf PRIVATE)
 
 # Should be linked to the main library, as well as the Catch2 testing library
-target_link_libraries(main_test PRIVATE rpmpl_library ${PROJECT_LIBRARIES})
+target_link_libraries(test_realvectorspacestate PRIVATE rpmpl_library ${PROJECT_LIBRARIES})
+target_link_libraries(test_vectorf PRIVATE rpmpl_library ${PROJECT_LIBRARIES})
 
 # If you register a test, then ctest and make test will run it.
 # You can also run examples and check the output, as well.
-add_test(NAME main_test COMMAND main_test) # Command can be a target
+add_test(NAME test_realvectorspacestate COMMAND test_realvectorspacestate) # Command can be a target
+add_test(NAME test_vectorf COMMAND test_vectorf) # Command can be a target

@@ -1,6 +1,4 @@
-//
-// Created by dinko on 28.5.21..
-//
+#include <gtest/gtest.h>
 #include "RealVectorSpaceState.h"
 #include <Eigen/Dense>
 
@@ -21,4 +19,12 @@ TEST(RealVectorSpaceStateTest, testConstructor1)
 
     ASSERT_EQ(q->getNumDimensions(), 6);
     ASSERT_EQ(q->getCoord(), state_coord);
+}
+
+
+
+int main(int argc, char **argv) 
+{
+	::testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }
