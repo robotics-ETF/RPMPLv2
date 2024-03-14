@@ -1,8 +1,9 @@
 # Note that headers are optional, and do not affect add_library, but they will not
 # show up in IDEs unless they are listed in add_library.
 
-set(INCLUDE_DIRS 
-	${PROJECT_SOURCE_DIR}/include
+set(INCLUDE_DIRS
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include/common
         ${PROJECT_SOURCE_DIR}/include/state_spaces
         ${PROJECT_SOURCE_DIR}/include/state_spaces/real_vector_space
         ${PROJECT_SOURCE_DIR}/include/planners
@@ -18,6 +19,7 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include/configurations
         ${PROJECT_SOURCE_DIR}/include/benchmark
         ${PROJECT_SOURCE_DIR}/external/nanoflann/include
+
         # ${PROJECT_SOURCE_DIR}/external/QuadProgpp/src
 )
 
@@ -38,6 +40,6 @@ target_compile_features(rpmpl_library PUBLIC cxx_std_17)
 
 # IDEs should put the headers in a nice place
 source_group(
-  TREE "${PROJECT_SOURCE_DIR}/include"
-  PREFIX "Header Files"
-  FILES ${HEADER_LIST})
+        TREE "${PROJECT_SOURCE_DIR}/include"
+        PREFIX "Header Files"
+        FILES ${HEADER_LIST})
