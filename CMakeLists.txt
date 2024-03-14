@@ -13,7 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message("------------------ Using compiler ${CMAKE_CXX_COMPILER} ------------------")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++")
+  message("------------------ Using lib ${CMAKE_EXE_LINKER_FLAGS} ------------------")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 

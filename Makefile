@@ -4,8 +4,8 @@ clean:
 	rm -r ./build
 
 build:
-	cmake -B build -DCMAKE_BUILD_TYPE=Release
 	mkdir -p build
+	cmake -B build -DCMAKE_BUILD_TYPE=Release
 	cmake --build build --config Release
 
 run_tests:
