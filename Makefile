@@ -9,4 +9,4 @@ build:
 	cmake --build build --config Release
 
 run_tests:
-	if [ -d build/tests ]; then ctest --test-dir build/tests; fi
+	ctest --test-dir build/tests -C Release --output-on-failure
