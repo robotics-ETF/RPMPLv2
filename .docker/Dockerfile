@@ -11,7 +11,7 @@ RUN apt-get update \
     wget \
     gnupg \
     make \
-    cmake \
+    cmake ccache \
     lsb-release \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
