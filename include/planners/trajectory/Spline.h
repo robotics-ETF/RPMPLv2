@@ -6,7 +6,7 @@
 
 #include <chrono>
 
-#include "StateSpace.h"
+#include "AbstractRobot.h"
 
 namespace planning
 {
@@ -15,29 +15,30 @@ namespace planning
         class Spline
         {
         public:
-            Spline(int order_, const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current);
+            Spline(int order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
 		    virtual ~Spline() = 0;
 
-            virtual bool compute(const std::shared_ptr<base::State> q_final) = 0;
+            virtual bool compute(const Eigen::VectorXf &q_final) = 0;
             virtual bool checkConstraints(int idx, float t_f) = 0;
             
-            std::shared_ptr<base::State> getPosition(float t);
+            Eigen::VectorXf getPosition(float t);
             float getPosition(float t, int idx);
             virtual float getPosition(float t, int idx, float t_f) = 0;
 
-            std::shared_ptr<base::State> getVelocity(float t);
+            Eigen::VectorXf getVelocity(float t);
             float getVelocity(float t, int idx);
             virtual float getVelocity(float t, int idx, float t_f) = 0;
 
-            std::shared_ptr<base::State> getAcceleration(float t);
+            Eigen::VectorXf getAcceleration(float t);
             float getAcceleration(float t, int idx);
             virtual float getAcceleration(float t, int idx, float t_f) = 0;
 
-            std::shared_ptr<base::State> getJerk(float t);
+            Eigen::VectorXf getJerk(float t);
             float getJerk(float t, int idx);
             virtual float getJerk(float t, int idx, float t_f) = 0;
 
             float getCoeff(int i, int j) const { return coeff(i, j); }
+            float getTimeFinal() const { return time_final; }
             float getTimeCurrent() const { return time_current; }
             float getTimeBegin() const { return time_begin; }
             float getTimeEnd() const { return time_end; }
@@ -51,7 +52,8 @@ namespace planning
 
         protected:            
             int order;
-            std::shared_ptr<base::StateSpace> ss;
+            int num_dimensions;
+            std::shared_ptr<robots::AbstractRobot> robot;
             Eigen::MatrixXf coeff;                              // Num. of rows = 'num_DOFs', and num. of columns = 'order+1'. Form: sum{j=0, num_DOFs-1} coeff(i,j) * t^j
             std::chrono::steady_clock::time_point time_start;   // Start time point when a spline is created
             float time_final;                                   // Final time in [s] for a spline. After this time, velocity, acceleration and jerk are zero, while position remains constant.

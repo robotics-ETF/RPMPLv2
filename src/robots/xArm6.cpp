@@ -40,7 +40,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 		// LOG(INFO) << links_[i]->name << "\t" << links_[i]->collision->geometry->type;
 		urdf::Pose pose = model.getJoint("joint"+std::to_string(i+1))->parent_to_joint_origin_transform;
 		KDL::Vector pos(pose.position.x, pose.position.y, pose.position.z);
-		double roll, pitch, yaw;
+		double roll{}, pitch{}, yaw{};
 		KDL::Frame link_frame;
 		link_frame.p = pos;
 		link_frame.M = link_frame.M.RPY(roll, pitch, yaw);
@@ -52,7 +52,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
     		model->beginModel();
 			const auto mesh_ptr = dynamic_cast<const urdf::Mesh*>(links_[i]->collision->geometry.get());			
 			stl_reader::StlMesh <float, unsigned int> mesh (urdf_root_path + mesh_ptr->filename);
-			for (int j = 0; j < mesh.num_tris(); j++)
+			for (size_t j = 0; j < mesh.num_tris(); j++)
 			{
 				for (int icorner = 0; icorner < 3; icorner++) 
 				{
@@ -88,7 +88,7 @@ void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
-	for (int i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < links.size(); i++)
 	{
 		tf = frames_fk->at(i);
 		// LOG(INFO) << "kdl\n" << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
@@ -119,7 +119,7 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	{
 		KDL::Frame cart_pos;
 		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		if (kinematics_status >= 0)
+		if (kinematics_status)
 		{
 			frames_fk->emplace_back(cart_pos);
 			// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
@@ -258,7 +258,7 @@ float robots::xArm6::computeStep2(const std::shared_ptr<base::State> q1, const s
 	r(5) = 0;
 
 	Eigen::VectorXf steps(links.size());
-	for (int k = 0; k < links.size(); k++)
+	for (size_t k = 0; k < links.size(); k++)
 		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
 
 	return steps.minCoeff();
@@ -322,7 +322,7 @@ void robots::xArm6::test()
 	CollisionGeometryPtr fclBox(new fcl::Box<float>(0.5, 1.0, 3.0));
 	fcl::Transform3f tf; tf.translation() = fcl::Vector3f(1, 1, 1.5);
 	std::unique_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fclBox, tf));
-	for (int i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < links.size(); i++)
 	{
 		fcl::DistanceRequest<float> request;
 		fcl::DistanceResult<float> result;

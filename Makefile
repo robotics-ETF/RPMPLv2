@@ -5,7 +5,8 @@ clean:
 
 build:
 	mkdir -p build
-	cd build && cmake .. && make
+	cmake -B build -DCMAKE_BUILD_TYPE=Release
+	cmake --build build --config Release
 
 run_tests:
 	ctest --test-dir build/tests -C Release --output-on-failure

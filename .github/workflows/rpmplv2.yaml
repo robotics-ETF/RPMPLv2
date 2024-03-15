@@ -21,11 +21,10 @@ jobs:
         shell: bash
 
       - name: Configure with CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
-          mkdir -p build
           cmake --build build --config Release
 
       - name: Test (optional)

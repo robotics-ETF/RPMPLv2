@@ -1,11 +1,26 @@
 cmake_minimum_required(VERSION 3.12)
 
+find_program(CCACHE_PROGRAM ccache)
+
+if(CCACHE_PROGRAM)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
 # Project name and a few useful settings. Other commands can pick up the results
 project(
   RPMPL
   VERSION 0.1
   DESCRIPTION "Rapid Prototyping Motion Planning Library"
   LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+message("------------------ Using compiler: ${CMAKE_CXX_COMPILER} ------------------")
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

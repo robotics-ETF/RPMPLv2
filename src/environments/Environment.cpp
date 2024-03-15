@@ -15,9 +15,9 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
     YAML::Node node = YAML::LoadFile(root_path + config_file_path);
     int num_added = 0;
 
-    for (int i = 0; i < node["environment"].size(); i++)
-	{
-        try
+    try
+    {
+        for (size_t i = 0; i < node["environment"].size(); i++)
         {
             std::shared_ptr<env::Object> object;
             YAML::Node obstacle = node["environment"][i];
@@ -51,24 +51,26 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                 throw std::domain_error("Object type is wrong! ");
 
             objects.emplace_back(object);
-            std::cout << "Added " << num_added++ << ". " << object;            
+            std::cout << "Added " << num_added++ << ". " << object;
         }
-        catch (std::exception &e)
+
+        if (node["robot"]["table_included"].IsDefined())
+            table_included = node["robot"]["table_included"].as<bool>();
+        else
+            throw std::domain_error("It is not defined whether the table is included! ");
+
+        if (node["robot"]["WS_center"].IsDefined())
         {
-            std::cout << e.what() << "\n";
+            for (int i = 0; i < 3; i++)
+                WS_center(i) = node["robot"]["WS_center"][i].as<float>();
+
+            WS_radius = node["robot"]["WS_radius"].as<float>();
         }
     }
-
-    table_included = node["robot"]["table_included"].as<bool>();
-
-    if (node["robot"]["WS_center"].IsDefined())
+    catch (std::exception &e)
     {
-        for (int i = 0; i < 3; i++)
-            WS_center(i) = node["robot"]["WS_center"][i].as<float>();
-
-        WS_radius = node["robot"]["WS_radius"].as<float>();
+        std::cout << e.what() << "\n";
     }
-	
 }
 
 env::Environment::~Environment()
@@ -136,16 +138,16 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 
     if (table_included)
     {
-        if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
-            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() ||   // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius)                          // Surrounding of robot base
+        if (((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
+            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z() ||   // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius))                          // Surrounding of robot base
             return false;
     }
     else
     {
-        if ((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
-            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() && pos.z() > -base_radius || // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius)                                                  // Surrounding of robot base
+        if (((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
+            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z()) && (pos.z() > -base_radius || // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius))                                                  // Surrounding of robot base
             return false;
     }
 
@@ -169,7 +171,7 @@ void env::Environment::updateEnvironment(float delta_time)
     float vel_intensity;
     fcl::Vector3f pos, vel;
 
-    for (int i = 0; i < objects.size(); i++)
+    for (size_t i = 0; i < objects.size(); i++)
     {
         // std::cout << objects[i];
         if (objects[i]->getLabel() != "dynamic_obstacle")

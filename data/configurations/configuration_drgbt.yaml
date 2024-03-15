@@ -8,3 +8,4 @@ MAX_NUM_MODIFY_ATTEMPTS: 10         # Maximal number of attempts when modifying 
 STATIC_PLANNER_NAME: "RGBMT*"       # Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*"
 REAL_TIME_SCHEDULING: "FPS"         # "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling
 MAX_TIME_TASK1: 50                  # Maximal time in [ms] which Task 1 can take from the processor
+TRAJECTORY_INTERPOLATION: "spline"  # Method for interpolation of trajectory: 'none' or 'spline'

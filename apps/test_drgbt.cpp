@@ -44,8 +44,9 @@ int main(int argc, char **argv)
 	int init_num_success_test = node["testing"]["init_num_success"].as<int>();
 	const int max_num_tests = node["testing"]["max_num"].as<int>();
 	bool reach_successful_tests = node["testing"]["reach_successful_tests"].as<bool>();
-    if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*") 
+    if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*") {
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
+	}
 
 	while (init_num_obs <= max_num_obs)
 	{
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 				{
 					// LOG(INFO) << "Found path: ";
 					std::vector<std::shared_ptr<base::State>> path = planner->getPath();
-					for (int i = 0; i < path.size(); i++)
+					for (size_t i = 0; i < path.size(); i++)
 					{
 						// std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
 						if (i > 0) path_length += ss->getNorm(path.at(i-1), path.at(i));
@@ -149,7 +150,7 @@ int main(int argc, char **argv)
 				if (result)
 				{
 					std::vector<std::vector<int>> routine_times = planner->getPlannerInfo()->getRoutineTimes();
-					for (int idx = 0; idx < routines.size(); idx++)
+					for (size_t idx = 0; idx < routines.size(); idx++)
 					{
 						// LOG(INFO) << "Routine " << routines[idx];
 						// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
 				LOG(ERROR) << e.what();
 			}
 
-			if (reach_successful_tests && num_success_tests == max_num_tests || !reach_successful_tests && num_test > max_num_tests)
+			if ((reach_successful_tests && num_success_tests == max_num_tests) || (!reach_successful_tests && num_test > max_num_tests))
 				break;
 		}
 

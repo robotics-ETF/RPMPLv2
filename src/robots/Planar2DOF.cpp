@@ -31,15 +31,21 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, int num_DOFs_)
 	{
 		float lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
 		float upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
-		limits.emplace_back(std::pair<float, float>(lower, upper));
+		limits.emplace_back(lower, upper);
 	}
 
-	for (int i = 0; i < links_.size()-1; i++)
+	for (size_t i = 0; i < links_.size()-1; i++)
 	{
 		
 		if (links_[i]->visual->geometry->type == urdf::Geometry::BOX)
 		{
+			#ifdef __GNUC__
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			auto box = (std::shared_ptr<urdf::Box>&) links_[i]->visual->geometry;
+				#pragma GCC diagnostic pop
+			#endif
+			
 			KDL::Vector origin(links_[i]->visual->origin.position.x, 
 							   links_[i]->visual->origin.position.y,
 							   links_[i]->visual->origin.position.z);
@@ -65,7 +71,7 @@ void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
 	KDL::Frame tf;
-	for (int i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < links.size(); i++)
 	{
 		tf = frames_fk->at(i) * init_poses[i];
 		//LOG(INFO) << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
@@ -88,20 +94,21 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 	for (int i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 	
-	for (int i = 0; i < robot_tree.getNrOfSegments(); i++)
+	for (size_t i = 0; i < robot_tree.getNrOfSegments(); i++)
 	{
 		KDL::Frame cart_pos;
 		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		if (kinematics_status >= 0)
+		if (kinematics_status)
 			frames_fk->emplace_back(cart_pos);
 	}
 	return frames_fk;
 }
 
-std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
-																		  const std::shared_ptr<base::State> q_init)
+std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[maybe_unused]] const KDL::Rotation &R, [[maybe_unused]] const KDL::Vector &p, 
+																		  [[maybe_unused]] const std::shared_ptr<base::State> q_init)
 {
 	// TODO (if needed)
+	return nullptr;
 }
 
 std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State> q)
@@ -118,12 +125,12 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::
 float robots::Planar2DOF::computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
 	float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
-	float d = 0;
-	float r;
-	for (int i = 0; i < links.size(); i++)
+	float d{0.f};
+	float r{};
+	for (size_t i = 0; i < links.size(); i++)
 	{
 		r = 0;
-		for (int k = i+1; k <= links.size(); k++)
+		for (size_t k = i+1; k <= links.size(); k++)
 			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
 		
 		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
@@ -135,22 +142,22 @@ float robots::Planar2DOF::computeStep(const std::shared_ptr<base::State> q1, con
 float robots::Planar2DOF::computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
 	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
-	float d = 0;
+	[[maybe_unused]] float d{0.f};
 	Eigen::VectorXf r = Eigen::VectorXf::Zero(links.size());
-	for (int i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < links.size(); i++)
 	{
-		for (int k = i+1; k <= links.size(); k++)
+		for (size_t k = i+1; k <= links.size(); k++)
 			r(i) = std::max(r(i), (skeleton->col(k) - skeleton->col(i)).norm());
 	}
 
 	Eigen::VectorXf steps(links.size());
-	for (int k = 0; k < links.size(); k++)
+	for (size_t k = 0; k < links.size(); k++)
 		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
 
 	return steps.minCoeff();
 }
 
-fcl::Vector3f robots::Planar2DOF::transformPoint(fcl::Vector3f& v, fcl::Transform3f t)
+fcl::Vector3f robots::Planar2DOF::transformPoint([[maybe_unused]] fcl::Vector3f& v, fcl::Transform3f t)
 {
 	fcl::Vector3f fclVec = t.translation();
 	Eigen::Vector4f trans = Eigen::Vector4f(fclVec[0], fclVec[1], fclVec[2], 1);
@@ -196,7 +203,7 @@ void robots::Planar2DOF::test(const std::shared_ptr<env::Environment> env, const
 	setState(q);
 	std::shared_ptr<fcl::CollisionObject<float>> ob = env->getCollObject(0);
 
-	for (int i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < links.size(); i++)
 	{
 		fcl::DistanceRequest<float> request(true, 0.00, 0.00, fcl::GST_INDEP);
 		fcl::DistanceResult<float> result;

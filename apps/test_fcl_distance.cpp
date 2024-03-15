@@ -7,7 +7,7 @@
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, char **argv)
 {
 	google::InitGoogleLogging(argv[0]);
 	std::srand((unsigned int)time(0));

@@ -5,14 +5,15 @@
 #include <glog/logging.h>
 #include <RealVectorSpace.h>
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, char **argv)
 {
 	google::InitGoogleLogging(argv[0]);
 	FLAGS_logtostderr = true;
 	
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 2; i++) {
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
+	}
 
 	std::shared_ptr<robots::xArm6> robot = std::make_shared<robots::xArm6>(project_path + "/data/xarm6/xarm6.urdf");
 

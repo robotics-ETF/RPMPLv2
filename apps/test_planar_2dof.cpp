@@ -43,8 +43,9 @@ int main(int argc, char **argv)
 	}
 
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 2; i++) {
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
+	}
 
 	ConfigurationReader::initConfiguration();
 	scenario::Scenario scenario(project_path + scenario_file_path);

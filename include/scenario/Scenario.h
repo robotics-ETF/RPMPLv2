@@ -21,13 +21,15 @@ namespace scenario
 	{
 	public:
 		Scenario(const std::string &config_file_path, const std::string &root_path = "");
+        Scenario(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> q_start_, std::shared_ptr<base::State> q_goal_);
+        ~Scenario() {}
         
         inline std::shared_ptr<robots::AbstractRobot> getRobot() const { return robot; }		
         inline std::shared_ptr<env::Environment> getEnvironment() const { return env; }
         inline std::shared_ptr<base::StateSpace> getStateSpace() const { return ss; }
         inline std::shared_ptr<base::State> getStart() const { return q_start; }
         inline std::shared_ptr<base::State> getGoal() const { return q_goal; }
-        inline const std::string &getSpaceType() const { return spaceType; }
+        inline StateSpaceType getStateSpaceType() const { return state_space_type; }
         inline int getNumDimensions() const { return num_dimensions; }
 
         inline void setStart(const std::shared_ptr<base::State> q_start_) { q_start = q_start_; }
@@ -39,7 +41,7 @@ namespace scenario
         std::shared_ptr<env::Environment> env;
         std::shared_ptr<base::State> q_start;
         std::shared_ptr<base::State> q_goal;
-        std::string spaceType;
+        StateSpaceType state_space_type;
         int num_dimensions;         // Number of dimensions of the state-space (also 'num_DOFs' of the used robot)
 	};
 }

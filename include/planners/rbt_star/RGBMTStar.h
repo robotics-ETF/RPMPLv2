@@ -18,11 +18,12 @@ namespace planning
                       const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
             
 			bool solve() override;
-            bool checkTerminatingCondition();
-			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
+            
+            bool checkTerminatingCondition(base::State::Status status) override;
+            void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 
 		protected:
-            std::vector<int> num_states;                // Total number of states for each tree
+            std::vector<size_t> num_states;                // Total number of states for each tree
             float cost_opt;                             // Cost of the final path 
             std::shared_ptr<base::State> q_con_opt;     // State (takes start or goal conf.) from which the optimal path is constructed
 	

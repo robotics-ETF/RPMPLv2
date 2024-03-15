@@ -11,11 +11,11 @@ Available planners are:
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
 
 # 2. How to use
-## 2.0 Use docker and devcontainer
+## 2.1 Use docker and devcontainer
 
-If VS Code (or any other IDE with a support for VS Code's devcontainers), then just open and use "Rebuild and open in container" option. Then proceed with 2.5. Otherwise, continue with 2.1.
+If VS Code (or any other IDE with a support for VS Code's devcontainers), then just open and use "Rebuild and open in container" option. Then proceed with 2.6. Otherwise, continue with 2.2.
 
-## 2.1 Obtain source code of "RPMPLv2" repository
+## 2.2 Obtain source code of "RPMPLv2" repository
 Choose the location for a target workspace, e.g.:
 ```
 cd ~/
@@ -25,7 +25,7 @@ DO NOT omit "--recursive"，or the source code of dependent submodules will not 
 git clone https://github.com/roboticsETF/RPMPLv2.git --recursive
 ```
 
-## 2.2 Update "RPMPLv2" repository
+## 2.3 Update "RPMPLv2" repository
 ```
 cd ~/RPMPLv2
 git pull
@@ -33,7 +33,7 @@ git submodule sync
 git submodule update --init --remote
 ```
 
-## 2.3 Install required packages
+## 2.4 Install required packages
 For planning:
 ```
 sudo apt install libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev libyaml-cpp-dev liburdf-dev
@@ -43,14 +43,14 @@ For visualization:
 pip3 install trimesh urdfpy
 ```
 
-## 2.4 Install dependencies
+## 2.5 Install dependencies
 ```
 cd ~/RPMPLv2
 rosdep update
 make dependencies
 ```
 
-## 2.5 Build "RPMPLv2" repository
+## 2.6 Build "RPMPLv2" repository
 ```
 make build
 ```
@@ -136,7 +136,8 @@ In the file ```/data/configurations/configuration_drgbt```, you can set the foll
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
 - ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*";
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "", no real-time scheduling will be used;
-- ```MAX_TIME_TASK1```: Maximal time in [ms] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 20.
+- ```MAX_TIME_TASK1```: Maximal time in [ms] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 20;
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'none' or 'spline'. If 'none' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 

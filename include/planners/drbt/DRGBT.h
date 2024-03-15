@@ -22,8 +22,8 @@ namespace planning
             ~DRGBT();                         
             
             bool solve() override;
-            bool checkTerminatingCondition();
-			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
+            bool checkTerminatingCondition(base::State::Status status) override;
+            void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
             
 		protected:
             void generateHorizon();
@@ -36,7 +36,8 @@ namespace planning
             void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
             void computeNextState();
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
-            void updateCurrentState();
+            float updateCurrentState();
+            void updateCurrentState2();
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
@@ -44,6 +45,7 @@ namespace planning
             virtual void replan(int max_planning_time);
             void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
+            bool checkMotionValidity2(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
             std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
             std::shared_ptr<base::State> q_current;                                 // Current robot configuration
@@ -52,7 +54,7 @@ namespace planning
             std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
             std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
-            int horizon_size;                                                       // Number of states that is required to be in the horizon
+            size_t horizon_size;                                                       // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
             base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
