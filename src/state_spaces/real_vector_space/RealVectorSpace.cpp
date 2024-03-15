@@ -22,10 +22,12 @@ base::RealVectorSpace::RealVectorSpace(int num_dimensions_, const std::shared_pt
 
 base::RealVectorSpace::~RealVectorSpace() {}
 
-std::ostream &base::operator<<(std::ostream &os, const base::RealVectorSpace &space)
+namespace base {
+std::ostream& operator<<(std::ostream &os, const base::RealVectorSpace &space)
 {
 	os << " Num. of dimensions: " << space.num_dimensions;
 	return os;
+}
 }
 
 // Get a random state with uniform distribution, which is limited by robot joint limits
@@ -201,7 +203,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 {
-	bool collision;
+	[[maybe_unused]] bool collision{false};
 	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
 	
 	for (int i = 0; i < robot->getNumLinks(); i++)

@@ -45,8 +45,8 @@ public:
 	inline int getPlanningTime() const { return planning_time; }
 	inline int getNumCollisionQueries() const { return num_collision_queries; }
 	inline int getNumDistanceQueries() const { return num_distance_queries; }
-	inline int getNumStates() const { return num_states; }
-	inline int getNumIterations() const { return num_iterations; }
+	inline size_t getNumStates() const { return num_states; }
+	inline size_t getNumIterations() const { return num_iterations; }
 	inline bool getSuccessState() const { return success_state; }
 	inline bool getTask1Interrupted() const { return task1_interrupted; }
 

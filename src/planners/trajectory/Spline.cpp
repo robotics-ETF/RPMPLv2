@@ -125,7 +125,8 @@ void planning::trajectory::Spline::setTimeCurrent(float time_current_)
     }
 }
 
-std::ostream &planning::trajectory::operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
+namespace planning::trajectory {
+std::ostream& operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
 {
     for (int i = 0; i < spline->num_dimensions; i++)
     {
@@ -137,4 +138,5 @@ std::ostream &planning::trajectory::operator<<(std::ostream &os, const std::shar
     }
 
     return os;
+}
 }

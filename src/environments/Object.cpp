@@ -6,7 +6,8 @@
 
 env::Object::~Object() {}
 
-std::ostream &env::operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
+namespace env {
+std::ostream& operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
 {
     obj->coll_object->computeAABB();
 
@@ -17,6 +18,7 @@ std::ostream &env::operator<<(std::ostream &os, const std::shared_ptr<env::Objec
     os << "Max. acc: " << obj->getMaxAcc() << "\n";
 
     return os;
+}
 }
 
 void env::Object::setPosition(const fcl::Vector3f &position_) 

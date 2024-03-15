@@ -14,22 +14,18 @@
 
 // TODO: NOT working with smart pointer changes
 
-void generateRandomStates(base::StateSpace* ss, std::vector<base::State*>& states, int N = 20)
+void generateRandomStates([[maybe_unused]] base::StateSpace* ss, [[maybe_unused]] std::vector<base::State*>& states, [[maybe_unused]] int N = 20)
 {
-
+	return;
 }
 
-void buildKDTree(std::vector<base::State*>& states)
+void buildKDTree([[maybe_unused]] std::vector<base::State*>& states)
 {
-
+	return; 
 }
 
 int main()
 {
-	/*base::StateSpace *ss = new base::RealVectorSpace(2);
-	std::vector<base::State*> states;
-	generateRandomStates(ss, states, 100);
-	buildKDTree(states);
-	return 0;*/
+	return 0;
 }
 

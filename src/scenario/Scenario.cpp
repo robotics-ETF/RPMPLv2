@@ -18,7 +18,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         YAML::Node node = YAML::LoadFile(root_path + config_file_path);
         YAML::Node robot_node = node["robot"];
         std::string type = robot_node["type"].as<std::string>();
-        int num_DOFs = robot_node["num_DOFs"].as<int>();
+        size_t num_DOFs = robot_node["num_DOFs"].as<size_t>();
         if (type == "xarm6")
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
                                                     robot_node["gripper_length"].as<float>(),
@@ -37,7 +37,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
                 throw std::logic_error("Number of capsules is not correct!");
                 
             std::vector<float> capsules_radius;
-            for (int i = 0; i < num_DOFs; i++)
+            for (size_t i = 0; i < num_DOFs; i++)
                 capsules_radius.emplace_back(capsules_radius_node[i].as<float>());
 
             robot->setCapsulesRadius(capsules_radius);
@@ -50,7 +50,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
                 throw std::logic_error("The size of 'max_vel' is not correct!");
 
             std::vector<float> max_vel;
-            for (int i = 0; i < num_DOFs; i++)
+            for (size_t i = 0; i < num_DOFs; i++)
                 max_vel.emplace_back(max_vel_node[i].as<float>());
 
             robot->setMaxVel(max_vel);
@@ -63,7 +63,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
                 throw std::logic_error("The size of 'max_acc' is not correct!");
 
             std::vector<float> max_acc;
-            for (int i = 0; i < num_DOFs; i++)
+            for (size_t i = 0; i < num_DOFs; i++)
                 max_acc.emplace_back(max_acc_node[i].as<float>());
 
             robot->setMaxAcc(max_acc);
@@ -76,7 +76,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
                 throw std::logic_error("The size of 'max_jerk' is not correct!");
 
             std::vector<float> max_jerk;
-            for (int i = 0; i < num_DOFs; i++)
+            for (size_t i = 0; i < num_DOFs; i++)
                 max_jerk.emplace_back(max_jerk_node[i].as<float>());
                 
             robot->setMaxJerk(max_jerk);
@@ -98,7 +98,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         
         Eigen::VectorXf q_start_vec(num_DOFs);
         Eigen::VectorXf q_goal_vec(num_DOFs);
-        for (int i = 0; i < num_DOFs; i++)
+        for (size_t i = 0; i < num_DOFs; i++)
         {
             q_start_vec(i) = q_start_node[i].as<float>();
             q_goal_vec(i) = q_goal_node[i].as<float>();

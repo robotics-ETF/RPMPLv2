@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 				final_costs.emplace_back(planner->getPlannerInfo()->getCostConvergence().back());
 				final_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 				final_num_states.emplace_back(planner->getPlannerInfo()->getNumStates());
-				for (int i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
+				for (size_t i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
 				{
 					if (planner->getPlannerInfo()->getCostConvergence()[i] < INFINITY)
 					{
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 
 			// output_file << "Cost convergence: \n" 
             //             << "Cost [rad]\t\tNum. states\t\tTime [ms]" << std::endl;
-			for (int i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
+			for (size_t i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
                 output_file << planner->getPlannerInfo()->getCostConvergence()[i] << "\t\t"
 							<< i+1 << "\t\t"
 							<< planner->getPlannerInfo()->getStateTimes()[i] << std::endl;

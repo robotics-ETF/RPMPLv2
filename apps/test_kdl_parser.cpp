@@ -3,6 +3,7 @@
 // simple kdl_parser test
 //
 
+#include <kdl/frames.hpp>
 #include <nanoflann.hpp>
 
 #include <ctime>
@@ -29,7 +30,7 @@ KDL::Vector getCartForSegment(KDL::Tree& robot_tree, KDL::Segment& segment)
 	KDL::Frame cartpos; 
 
 	bool kinematics_status = treefksolver.JntToCart(jointpositions, cartpos, segment.getName());
-	if(kinematics_status >= 0)
+	if(kinematics_status)
 	{
         LOG(INFO) << "x: " << cartpos.p.x() << ";" << "y: " << cartpos.p.y() << ";" << "z: " << cartpos.p.z() ;
 		return cartpos.p;
@@ -38,6 +39,7 @@ KDL::Vector getCartForSegment(KDL::Tree& robot_tree, KDL::Segment& segment)
 	{
         LOG(INFO) << "Error: could not calculate forward kinematics!";
     }
+	return KDL::Vector();
 
 }
 
@@ -54,7 +56,7 @@ bool parse_file(std::string filename)
 	KDL::Chain robot_chain;
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	
-	for (int i = 0; i < robot_tree.getNrOfSegments(); i++)
+	for (size_t i = 0; i < robot_tree.getNrOfSegments(); i++)
 	{
 		KDL::Vector pos = getCartForSegment(robot_tree, robot_chain.getSegment(i));
 		LOG(INFO) << robot_chain.getSegment(i).getName() << " pos is: " << pos.x() << ";" << pos.y() << ";" << pos.z();
@@ -62,12 +64,12 @@ bool parse_file(std::string filename)
 	return true;
 }
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, char **argv)
 {
 	google::InitGoogleLogging(argv[0]);
 	FLAGS_logtostderr = true;
 
-	bool parsed = parse_file("data/planar_2dof/planar_2dof.urdf");
+	[[maybe_unused]] bool parsed = parse_file("data/planar_2dof/planar_2dof.urdf");
 
 	return 0;
 }

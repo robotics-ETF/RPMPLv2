@@ -1,5 +1,6 @@
 #include "CollisionAndDistance.h"
 #include "RealVectorSpaceConfig.h"
+#include <tuple>
 
 // Check collision between capsule (determined with line segment AB and 'radius') and box (determined with 'obs = (x_min, y_min, z_min, x_max, y_max, z_max)')
 bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)
@@ -7,20 +8,22 @@ bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A,
     bool collision = false;
     float r_new = radius * sqrt(3) / 3;
 
-	if (A(0) > obs(0) - r_new && A(1) > obs(1) - r_new && A(2) > obs(2) - r_new &&
-		A(0) < obs(3) + r_new && A(1) < obs(4) + r_new && A(2) < obs(5) + r_new ||
-		B(0) > obs(0) - r_new && B(1) > obs(1) - r_new && B(2) > obs(2) - r_new &&
-		B(0) < obs(3) + r_new && B(1) < obs(4) + r_new && B(2) < obs(5) + r_new)
+	if ((A(0) > obs(0) - r_new && A(1) > obs(1) - r_new && A(2) > obs(2) - r_new &&
+		A(0) < obs(3) + r_new && A(1) < obs(4) + r_new && A(2) < obs(5) + r_new) ||
+		(B(0) > obs(0) - r_new && B(1) > obs(1) - r_new && B(2) > obs(2) - r_new &&
+		B(0) < obs(3) + r_new && B(1) < obs(4) + r_new && B(2) < obs(5) + r_new))
 		return true;
-    else if (A(0) < obs(0) - radius && B(0) < obs(0) - radius || A(0) > obs(3) + radius && B(0) > obs(3) + radius ||
-           	 A(1) < obs(1) - radius && B(1) < obs(1) - radius || A(1) > obs(4) + radius && B(1) > obs(4) + radius ||
-           	 A(2) < obs(2) - radius && B(2) < obs(2) - radius || A(2) > obs(5) + radius && B(2) > obs(5) + radius)
+    else if ((A(0) < obs(0) - radius && B(0) < obs(0) - radius) || (A(0) > obs(3) + radius && B(0) > obs(3) + radius) ||
+           	 (A(1) < obs(1) - radius && B(1) < obs(1) - radius) || (A(1) > obs(4) + radius && B(1) > obs(4) + radius) ||
+           	 (A(2) < obs(2) - radius && B(2) < obs(2) - radius) || (A(2) > obs(5) + radius && B(2) > obs(5) + radius))
 		return false;
     
-    if (A(0) < obs(0))      				// < x_min
+    if (A(0) < obs(0)) {    				// < x_min
         collision = collisionCapsuleToRectangle(A, B, radius, obs, 0);
-    else if (A(0) > obs(3))  				// > x_max
+	}
+    else if (A(0) > obs(3)) {  				// > x_max
         collision = collisionCapsuleToRectangle(A, B, radius, obs, 3);
+	}
     
 	if (!collision)
 	{
@@ -46,8 +49,9 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 															 Eigen::VectorXf &obs, int coord)
 {
 	float obs_coord = obs(coord);
-    if (coord > 2)
+    if (coord > 2) {
         coord -= 3;
+	}
     
 	Eigen::Vector4f rec; rec << obs.head(coord), obs.segment(coord+1, 2-coord), obs.segment(3, coord), obs.tail(2-coord);
 	Eigen::Vector2f A_rec; A_rec << A.head(coord), A.tail(2-coord);
@@ -61,12 +65,12 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 		if (M(0) > rec(0) - radius && M(0) < rec(2) + radius && 
 			M(1) > rec(1) - radius && M(1) < rec(3) + radius) 	// Whether point lies on the oversized rectangle
 		{
-			if (M(0) > rec(0) - radius && M(0) < rec(2) + radius && M(1) > rec(1) && M(1) < rec(3) || 
-				M(1) > rec(1) - radius && M(1) < rec(3) + radius && M(0) > rec(0) && M(0) < rec(2) ||
-				M(0) < rec(0) && M(1) < rec(2) && (M - Eigen::Vector2f(rec(0), rec(2))).norm() < radius ||
-				M(0) < rec(0) && M(1) > rec(3) && (M - Eigen::Vector2f(rec(0), rec(3))).norm() < radius ||
-				M(0) > rec(1) && M(1) < rec(2) && (M - Eigen::Vector2f(rec(1), rec(2))).norm() < radius ||
-				M(0) > rec(1) && M(1) > rec(3) && (M - Eigen::Vector2f(rec(1), rec(3))).norm() < radius)
+			if ((M(0) > rec(0) - radius && M(0) < rec(2) + radius && M(1) > rec(1) && M(1) < rec(3)) || 
+				(M(1) > rec(1) - radius && M(1) < rec(3) + radius && M(0) > rec(0) && M(0) < rec(2)) ||
+				(M(0) < rec(0) && M(1) < rec(2) && (M - Eigen::Vector2f(rec(0), rec(2))).norm() < radius) ||
+				(M(0) < rec(0) && M(1) > rec(3) && (M - Eigen::Vector2f(rec(0), rec(3))).norm() < radius) ||
+				(M(0) > rec(1) && M(1) < rec(2) && (M - Eigen::Vector2f(rec(1), rec(2))).norm() < radius) ||
+				(M(0) > rec(1) && M(1) > rec(3) && (M - Eigen::Vector2f(rec(1), rec(3))).norm() < radius))
 				return true;
 		}
 	}
@@ -187,7 +191,7 @@ bool base::CollisionAndDistance::collisionCapsuleToSphere(const Eigen::Vector3f 
 		{
             float t1 = (-b + sqrt(D)) / (2 * a);
             float t2 = (-b - sqrt(D)) / (2 * a);
-            if (t1 > 0 && t1 < 1 || t2 > 0 && t2 < 1)
+            if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1))
                 return true;
         }
     }
@@ -743,49 +747,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 // Get distance (and nearest points) between capsule (determined with line segment AB and 'radius') 
 // and box (determined with 'obs = (x_min, y_min, z_min, x_max, y_max, z_max)') using QuadProgPP
 std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceCapsuleToBoxQP
-	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)
+	([[maybe_unused]] const Eigen::Vector3f &A, [[maybe_unused]] const Eigen::Vector3f &B, [[maybe_unused]] float radius, [[maybe_unused]] Eigen::VectorXf &obs)
 {
-    // std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-    // Eigen::Vector3f AB = B - A;
-    // Eigen::Matrix4f G_temp(4, 4); 	G_temp << 	2,       	0,   		0,   		-2*AB(0),
-	// 								 			0,       	2,   		0,  		-2*AB(1),
-	// 								 			0,       	0,  		2,   		-2*AB(2),
-	// 								 			-2*AB(0), 	-2*AB(1), 	-2*AB(2), 	2*AB.squaredNorm();
-    // Eigen::Vector4f g0_temp; 		g0_temp << -2 * A, 2 * A.dot(AB);
-	// Eigen::MatrixXf CI_temp(8, 4); 	CI_temp << Eigen::MatrixXf::Identity(4, 4), -1 * Eigen::MatrixXf::Identity(4, 4);
-	// Eigen::VectorXf ci0_temp(8); 	ci0_temp << -1 * obs.head(3), 0, obs.tail(3), 1;
-	// Eigen::Vector4f sol_temp; 		sol_temp << (obs.head(3) + obs.tail(3)) / 2, 0.5;
-
-	// quadprogpp::Matrix<double> G(4, 4), CE(4, 0), CI(4, 8);
-  	// quadprogpp::Vector<double> g0(4), ce0(0), ci0(8), sol(4);
-	// for (int i = 0; i < 4; i++)
-	// 	for (int j = 0; j < 4; j++)
-	// 		G[i][j] = G_temp(i, j);
-
-	// for (int i = 0; i < 8; i++)
-	// 	for (int j = 0; j < 4; j++)
-	// 		CI[j][i] = CI_temp(i, j);
-
-	// for (int i = 0; i < 4; i++)
-	// 	g0[i] = g0_temp(i);
-
-	// for (int i = 0; i < 8; i++)
-	// 	ci0[i] = ci0_temp(i);
-
-	// for (int i = 0; i < 4; i++)
-	// 	sol[i] = sol_temp(i);
-
-	// // 	minimizes 1/2 x^T G x + x^T g0
-	// //  s.t.
-	// //  CE^T * x + ce0 =  0
-	// //  CI^T * x + ci0 >= 0
-	// double sol_val = quadprogpp::solve_quadprog(G, g0, CE, ce0, CI, ci0, sol);
-
-    // float d_c = sqrt(sol_val + A.squaredNorm());
-    // if (d_c < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-	// 	return {0, nullptr};
-	
-	// nearest_pts->col(0) = A + AB * sol[3];
-	// nearest_pts->col(1) << sol[0], sol[1], sol[2];
-	// return {d_c - radius, nearest_pts};
+    return std::make_tuple(0.f, nullptr);
 }

@@ -35,8 +35,9 @@ planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss
 
 planning::rrt::RRTConnect::~RRTConnect()
 {
-    for (int i = 0; i < trees.size(); i++)
+    for (size_t i = 0; i < trees.size(); i++) {
         trees[i]->clearTree();
+	}
 
 	trees.clear();
 	path.clear();
@@ -197,7 +198,7 @@ void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, b
 			if (path.size() > 0)
 			{
 				output_file << "Path:" << std::endl;
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 					output_file << path.at(i) << std::endl;
 			}
 		}

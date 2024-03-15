@@ -17,7 +17,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
     try
     {
-        for (int i = 0; i < node["environment"].size(); i++)
+        for (size_t i = 0; i < node["environment"].size(); i++)
         {
             std::shared_ptr<env::Object> object;
             YAML::Node obstacle = node["environment"][i];
@@ -138,16 +138,16 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 
     if (table_included)
     {
-        if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
-            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() ||   // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius)                          // Surrounding of robot base
+        if (((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
+            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z() ||   // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius))                          // Surrounding of robot base
             return false;
     }
     else
     {
-        if ((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
-            pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() && pos.z() > -base_radius || // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius)                                                  // Surrounding of robot base
+        if (((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
+            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z()) && (pos.z() > -base_radius || // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius))                                                  // Surrounding of robot base
             return false;
     }
 
@@ -171,7 +171,7 @@ void env::Environment::updateEnvironment(float delta_time)
     float vel_intensity;
     fcl::Vector3f pos, vel;
 
-    for (int i = 0; i < objects.size(); i++)
+    for (size_t i = 0; i < objects.size(); i++)
     {
         // std::cout << objects[i];
         if (objects[i]->getLabel() != "dynamic_obstacle")

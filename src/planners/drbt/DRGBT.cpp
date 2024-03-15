@@ -120,8 +120,8 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if (DRGBTConfig::TRAJECTORY_INTERPOLATION == "spline" && !checkMotionValidity() ||
-            DRGBTConfig::TRAJECTORY_INTERPOLATION == "none" && !checkMotionValidity2())
+        if ((DRGBTConfig::TRAJECTORY_INTERPOLATION == "spline" && !checkMotionValidity()) ||
+            (DRGBTConfig::TRAJECTORY_INTERPOLATION == "none" && !checkMotionValidity2()))
         {
             std::cout << "Collision has been occured!!! \n";
             planner_info->setSuccessState(false);
@@ -133,7 +133,7 @@ bool planning::drbt::DRGBT::solve()
         // Planner info and terminating condition
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
         planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
-        if (checkTerminatingCondition())
+        if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
 
         std::cout << "----------------------------------------------------------------------------------------\n";
@@ -162,10 +162,10 @@ void planning::drbt::DRGBT::generateHorizon()
     }
 
     // Generating horizon
-    int num_states = horizon_size - (horizon.size() + num_lateral_states);
+    size_t num_states = horizon_size - (horizon.size() + num_lateral_states);
     if (status == base::State::Status::Reached && !predefined_path.empty())
     {
-        int idx;    // Designates from which state in predefined path new states are added to the horizon
+        size_t idx;    // Designates from which state in predefined path new states are added to the horizon
         if (!horizon.empty())
             idx = horizon.back()->getIndex() + 1;
         else
@@ -174,12 +174,12 @@ void planning::drbt::DRGBT::generateHorizon()
         // std::cout << "Adding states from the predefined path starting from " << idx << ". state... \n";
         if (idx + num_states <= predefined_path.size())
         {
-            for (int i = idx; i < idx + num_states; i++)
+            for (size_t i = idx; i < idx + num_states; i++)
                 horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(predefined_path[i], i));
         }
         else if (idx < predefined_path.size())
         {
-            for (int i = idx; i < predefined_path.size(); i++)
+            for (size_t i = idx; i < predefined_path.size(); i++)
                 horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(predefined_path[i], i));
             
             horizon.back()->setStatus(planning::drbt::HorizonState::Status::Goal);
@@ -240,7 +240,7 @@ void planning::drbt::DRGBT::generateGBur()
     int max_num_attempts;
     planner_info->setTask1Interrupted(false);
 
-    for (int idx = 0; idx < horizon.size(); idx++)
+    for (size_t idx = 0; idx < horizon.size(); idx++)
     {
         computeReachedState(horizon[idx]);
         // std::cout << idx << ". state:\n" << horizon[idx] << "\n";
@@ -254,7 +254,7 @@ void planning::drbt::DRGBT::generateGBur()
             {
                 // Delete horizon states for which there is no enough remaining time to be processed
                 // This is OK since better states are usually located at the beginning of horizon
-                for (int i = horizon.size() - 1; i > idx; i--)
+                for (size_t i = horizon.size() - 1; i > idx; i--)
                 {
                     if (q_next == horizon[i])   // 'q_next' will be deleted
                         q_next = horizon.front();
@@ -459,7 +459,7 @@ void planning::drbt::DRGBT::computeNextState()
     int d_goal_min_idx = -1;
     float d_c_max = 0;
 
-    for (int i = 0; i < horizon.size(); i++)
+    for (size_t i = 0; i < horizon.size(); i++)
     {
         dist_to_goal[i] = ss->getNorm(horizon[i]->getStateReached(), q_goal);
         if (dist_to_goal[i] < d_goal_min)
@@ -478,7 +478,7 @@ void planning::drbt::DRGBT::computeNextState()
     }
 
     std::vector<float> weights_dist(horizon.size());
-    for (int i = 0; i < horizon.size(); i++)
+    for (size_t i = 0; i < horizon.size(); i++)
         weights_dist[i] = d_goal_min / dist_to_goal[i];        
     
     d_max_mean = (planner_info->getNumIterations() * d_max_mean + d_c_max) / (planner_info->getNumIterations() + 1);
@@ -487,7 +487,7 @@ void planning::drbt::DRGBT::computeNextState()
     float weight;
     int idx_best = -1;
 
-    for (int i = 0; i < horizon.size(); i++)
+    for (size_t i = 0; i < horizon.size(); i++)
     {
         if (horizon[i]->getStatus() == planning::drbt::HorizonState::Status::Critical)  // 'weight' is already set to zero
             continue;
@@ -528,7 +528,7 @@ void planning::drbt::DRGBT::computeNextState()
             float hysteresis = 0.1 * DRGBTConfig::TRESHOLD_WEIGHT;  // Hysteresis size when choosing the next state
 
             // "The best" state nearest to the goal is chosen as the next state
-            for (int i = 0; i < horizon.size(); i++)
+            for (size_t i = 0; i < horizon.size(); i++)
             {
                 if (std::abs(q_next->getWeight() - horizon[i]->getWeight()) < hysteresis && dist_to_goal[i] < d_min)
                 {
@@ -563,7 +563,7 @@ void planning::drbt::DRGBT::computeNextState()
 // Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
 int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q)
 {
-    for (int idx = 0; idx < horizon.size(); idx++)
+    for (size_t idx = 0; idx < horizon.size(); idx++)
     {
         if (q == horizon[idx])
             return idx;
@@ -799,7 +799,7 @@ bool planning::drbt::DRGBT::whetherToReplan()
     
     float weight_max = 0;
     float weight_sum = 0;
-    for (int i = 0; i < horizon.size(); i++)
+    for (size_t i = 0; i < horizon.size(); i++)
     {
         weight_max = std::max(weight_max, horizon[i]->getWeight());
         weight_sum += horizon[i]->getWeight();
@@ -889,7 +889,7 @@ void planning::drbt::DRGBT::acquirePredefinedPath(const std::vector<std::shared_
     base::State::Status status_temp;
     std::shared_ptr<base::State> q_new;
 
-    for (int i = 1; i < path_.size(); i++)
+    for (size_t i = 1; i < path_.size(); i++)
     {
         status_temp = base::State::Status::Advanced;
         q_new = path_[i-1];
@@ -988,7 +988,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
     return is_valid;
 }
 
-bool planning::drbt::DRGBT::checkTerminatingCondition()
+bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
     int t_spline_current = getElapsedTime(time_start, std::chrono::steady_clock::now());    
     // std::cout << "Time elapsed: " << t_spline_current << " [ms] \n";
@@ -1041,7 +1041,7 @@ void planning::drbt::DRGBT::outputPlannerData(const std::string &filename, bool 
 			if (path.size() > 0)
 			{
 				output_file << "Path:" << std::endl;
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 					output_file << path.at(i) << std::endl;
 			}
 		}

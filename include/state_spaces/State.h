@@ -16,7 +16,7 @@ namespace base
 	class State
 	{
 	public:
-		enum Status {Advanced, Trapped, Reached};
+		enum Status {None, Advanced, Trapped, Reached};
 		
 	protected:
 		StateSpaceType state_space_type;
@@ -40,7 +40,7 @@ namespace base
 		inline StateSpaceType getStateSpaceType() const { return state_space_type; }
 		inline int getNumDimensions() const { return num_dimensions; }
 		inline const Eigen::VectorXf &getCoord() const { return coord; }
-		inline float getCoord(int idx) const { return coord(idx); }
+		inline float getCoord(size_t idx) const { return coord(idx); }
 		inline int getTreeIdx() const { return tree_idx; }
 		inline int getIdx() const { return idx; }
 		inline float getDistance() const { return d_c; }
