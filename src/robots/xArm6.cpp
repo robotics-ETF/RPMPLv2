@@ -6,6 +6,7 @@
 #include "xArm6.h"
 #include "RealVectorSpaceState.h"
 
+#include <memory>
 #include <urdf/model.h>
 #include <glog/logging.h>
 #include <stl_reader.h>
@@ -78,6 +79,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	Eigen::VectorXf state = Eigen::VectorXf::Zero(num_DOFs);
 	if (gripper_length > 0)
 		state << 0, 0, 0, M_PI, M_PI_2, 0; 	// Starting configuration in case the gripper is attached
+
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
 
 	LOG(INFO) << type << " robot created.";
@@ -86,7 +88,9 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 
 void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 {
+	LOG(INFO) << "FK about to be computed...";
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
+	LOG(INFO) << "FK computed";
 	KDL::Frame tf;
 	for (size_t i = 0; i < links.size(); i++)
 	{
@@ -108,7 +112,7 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 {
 	setConfiguration(q);
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = std::make_shared<std::vector<KDL::Frame>>();
+	std::vector<KDL::Frame> frames_fk(num_DOFs);
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
 
@@ -121,15 +125,14 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		if (kinematics_status)
 		{
-			frames_fk->emplace_back(cart_pos);
+			frames_fk[i] = cart_pos;
 			// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
 			// std::cout << "Frame p" << i << ": " << frames_fk->at(i).p << std::endl;
 		}
 	}
-	
-	frames_fk->back().p += gripper_length * frames_fk->back().M.UnitZ();
+	frames_fk.back().p += gripper_length * frames_fk.back().M.UnitZ();
 
-	return frames_fk;
+	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
 }
 
 std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
