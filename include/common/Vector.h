@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 #include <valarray>
@@ -10,10 +11,12 @@ namespace base {
 template <class ValueType> struct Vector;
 
 using VectorF = Vector<float>;
+using VectorD = Vector<double>;
 
 template <class ValueType> struct Vector {
   using VectorType = std::valarray<ValueType>;
   VectorType coord{};
+  static constexpr ValueType ZERO{};
 
   // constructors
   Vector();
@@ -30,8 +33,17 @@ template <class ValueType> struct Vector {
 
   // arithmetic operators
   Vector operator+(const Vector &other) const;
+  Vector operator+(const ValueType &other) const;
   ValueType dot(const Vector &other) const;
   ValueType norm() const;
+
+  // overload compound operators
+  Vector& operator+=(const ValueType& other);
+  Vector& operator+=(const Vector& other);
+
+  // zero, one
+  static Vector zeros(size_t dim);
+  static Vector ones(size_t dim);
 
   // methods
   size_t size() const;
@@ -102,6 +114,24 @@ Vector<ValueType> Vector<ValueType>::operator+(const Vector<ValueType> &other) c
 }
 
 template <class ValueType>
+Vector<ValueType> Vector<ValueType>::operator+(const ValueType &other) const {
+  return Vector{coord + other};
+}
+
+template <class ValueType>
+Vector<ValueType>& Vector<ValueType>::operator+=(const Vector<ValueType>& other) {
+  assert(coord.size() == other.coord.size());
+  this->coord += other.coord;
+  return *this;
+}
+
+template <class ValueType>
+Vector<ValueType>& Vector<ValueType>::operator+=(const ValueType& other) {
+  this->coord += other;
+  return *this;
+}
+
+template <class ValueType>
 ValueType Vector<ValueType>::dot(const Vector<ValueType> &other) const {
   assert(coord.size() == other.coord.size());
   return (coord * other.coord).sum();
@@ -110,6 +140,16 @@ ValueType Vector<ValueType>::dot(const Vector<ValueType> &other) const {
 template <class ValueType> 
 ValueType Vector<ValueType>::norm() const {
   return std::sqrt(this->dot(*this));
+}
+
+template <class ValueType> 
+Vector<ValueType> Vector<ValueType>::zeros(size_t dim) {
+  return Vector({VectorType(ZERO, dim)});
+}
+
+template <class ValueType> 
+Vector<ValueType> Vector<ValueType>::ones(size_t dim) {
+  return Vector({VectorType(ZERO+1, dim)});
 }
 
 } // namespace base
