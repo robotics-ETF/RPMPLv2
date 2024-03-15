@@ -4,3 +4,4 @@ log
 .vscode
 *.log
 .ccache
+vgcore*
