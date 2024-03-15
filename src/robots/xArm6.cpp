@@ -6,7 +6,6 @@
 #include "xArm6.h"
 #include "RealVectorSpaceState.h"
 
-#include <memory>
 #include <urdf/model.h>
 #include <glog/logging.h>
 #include <stl_reader.h>
