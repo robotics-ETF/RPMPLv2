@@ -8,4 +8,4 @@ build:
 	cd build && cmake .. && make
 
 run_tests:
-
+	ctest --test-dir build/tests -C Release --output-on-failure

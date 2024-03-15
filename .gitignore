@@ -3,3 +3,6 @@ install
 log
 .vscode
 *.log
+.ccache
+.cache
+Testing
