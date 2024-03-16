@@ -72,7 +72,7 @@ bool planning::drbt::DRGBT::solve()
 
     while (true)
     {
-        std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
+        // std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
         // std::cout << "TASK 1: Computing next configuration... \n";
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
         
@@ -103,7 +103,7 @@ bool planning::drbt::DRGBT::solve()
         else if (DRGBTConfig::TRAJECTORY_INTERPOLATION == "none")
             updateCurrentState2();      // ~ 1 [us]
 
-        std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
+        // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
         // ------------------------------------------------------------------------------- //
         // Replanning procedure assessment
@@ -117,10 +117,10 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
-        std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
-        if (time_iter_remain < 0)
-            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
+        // float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
+        // if (time_iter_remain < 0)
+        //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
@@ -140,7 +140,7 @@ bool planning::drbt::DRGBT::solve()
         if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
 
-        std::cout << "----------------------------------------------------------------------------------------\n";
+        // std::cout << "----------------------------------------------------------------------------------------\n";
     }
 }
 
@@ -648,14 +648,14 @@ float planning::drbt::DRGBT::updateCurrentState()
 
     q_current = ss->getNewState(spline_current->getPosition(t_spline_current));
 
-    std::cout << "Iter. time:        " << t_iter * 1000 << " [ms] \n";
-    std::cout << "Max. spline time:  " << t_spline_max * 1000 << " [ms] \n";
-    std::cout << "Remain. time:      " << t_iter_remain * 1000 << " [ms] \n";
-    std::cout << "Begin spline time: " << spline_current->getTimeBegin() * 1000 << " [ms] \n";
-    std::cout << "Curr. spline time: " << t_spline_current * 1000 << " [ms] \n";
-    std::cout << "q_current: " << q_current << "\n";
-    std::cout << "q_target:  " << q_target << "\n";
-    std::cout << "q_next:    " << q_next << "\n";
+    // std::cout << "Iter. time:        " << t_iter * 1000 << " [ms] \n";
+    // std::cout << "Max. spline time:  " << t_spline_max * 1000 << " [ms] \n";
+    // std::cout << "Remain. time:      " << t_iter_remain * 1000 << " [ms] \n";
+    // std::cout << "Begin spline time: " << spline_current->getTimeBegin() * 1000 << " [ms] \n";
+    // std::cout << "Curr. spline time: " << t_spline_current * 1000 << " [ms] \n";
+    // std::cout << "q_current: " << q_current << "\n";
+    // std::cout << "q_target:  " << q_target << "\n";
+    // std::cout << "q_next:    " << q_next << "\n";
 
     if (ss->isEqual(q_current, q_goal))
     {
@@ -668,12 +668,12 @@ float planning::drbt::DRGBT::updateCurrentState()
     if ((q_next->getStateReached()->getCoord() - spline_current->getPosition(INFINITY)).norm() 
         < RealVectorSpaceConfig::EQUALITY_THRESHOLD)  // Coordinates of q_next_reached did not change
     {
-        std::cout << "Not computing a new spline! \n";
+        // std::cout << "Not computing a new spline! \n";
         found = false;
     }
     else if (ss->isEqual(q_next->getState(), q_target))
     {
-        std::cout << "Robot is urgently stopping! \n";
+        // std::cout << "Robot is urgently stopping! \n";
         found = false;
         // TODO: Urgently stopping needs to be implemented using quartic spline.
     }
@@ -693,18 +693,18 @@ float planning::drbt::DRGBT::updateCurrentState()
         {
             if (spline_next->compute(q_next->getStateReached()->getCoord()))
             {
-                std::cout << "New spline is computed! \n";
+                // std::cout << "New spline is computed! \n";
                 found = true;                
                 break;
             }
             else if (!changeNextState(visited_states))
             {
-                std::cout << "Spline could not be changed! Continuing with the previous spline! \n";
+                // std::cout << "Spline could not be changed! Continuing with the previous spline! \n";
                 found = false;                    
                 break;
             }
         }
-        std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, planning::TimeUnit::us) << " [us] \n";
+        // std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, planning::TimeUnit::us) << " [us] \n";
     }
 
     if (found)
@@ -721,9 +721,9 @@ float planning::drbt::DRGBT::updateCurrentState()
     // TODO: New spline needs to be validated on collision, at least during the current iteration!
     
     q_target = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1));
-    std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
-    std::cout << "q_target:      " << q_target << "\n";
-    std::cout << "Spline next: \n" << spline_next << "\n";
+    // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
+    // std::cout << "q_target:      " << q_target << "\n";
+    // std::cout << "Spline next: \n" << spline_next << "\n";
     
     if (!ss->isEqual(q_current, q_target))
     {
@@ -746,7 +746,7 @@ float planning::drbt::DRGBT::updateCurrentState()
 
 bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
 {
-    std::cout << "Change of q_next is required! \n";
+    // std::cout << "Change of q_next is required! \n";
     std::shared_ptr<planning::drbt::HorizonState> q_new = nullptr;
     float weight_max = 0;
     bool visited;
@@ -778,10 +778,10 @@ bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning
         visited_states.emplace_back(q_new);
         q_next = q_new;
 
-        std::cout << "Horizon size: " << horizon.size() << "\t Visited idx: ";
-        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
-            std::cout << getIndexInHorizon(q_visited) << " ";
-        std::cout << "\n" << "New q_next: " << q_next << "\n";
+        // std::cout << "Horizon size: " << horizon.size() << "\t Visited idx: ";
+        // for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+        //     std::cout << getIndexInHorizon(q_visited) << " ";
+        // std::cout << "\n" << "New q_next: " << q_next << "\n";
 
         return true;
     }
@@ -968,14 +968,14 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
         {
             t = spline_current->getTimeBegin() + num_check * delta_time1;
             q_current = ss->getNewState(spline_current->getPosition(t));
-            std::cout << "t: " << t * 1000 << " [ms]\t from curr. spline \t" << q_current << "\n";
+            // std::cout << "t: " << t * 1000 << " [ms]\t from curr. spline \t" << q_current << "\n";
             ss->env->updateEnvironment(delta_time1);
         }
         else
         {
             t = spline_next->getTimeCurrent() + (num_check - num_checks1) * delta_time2;
             q_current = ss->getNewState(spline_next->getPosition(t));
-            std::cout << "t: " << t * 1000 << " [ms]\t from next  spline \t" << q_current << "\n";
+            // std::cout << "t: " << t * 1000 << " [ms]\t from next  spline \t" << q_current << "\n";
             ss->env->updateEnvironment(delta_time2);
         }
 
