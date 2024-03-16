@@ -87,9 +87,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 
 void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 {
-	LOG(INFO) << "FK about to be computed...";
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
-	LOG(INFO) << "FK computed";
 	KDL::Frame tf;
 	for (size_t i = 0; i < links.size(); i++)
 	{
@@ -121,13 +119,10 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	for (int i = 0; i < num_DOFs; i++)
 	{
 		KDL::Frame cart_pos;
-		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		if (kinematics_status)
-		{
-			frames_fk[i] = cart_pos;
-			// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
-			// std::cout << "Frame p" << i << ": " << frames_fk->at(i).p << std::endl;
-		}
+		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
+		frames_fk[i] = cart_pos;
+		// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
+		// std::cout << "Frame p" << i << ": " << frames_fk->at(i).p << std::endl;
 	}
 	frames_fk.back().p += gripper_length * frames_fk.back().M.UnitZ();
 

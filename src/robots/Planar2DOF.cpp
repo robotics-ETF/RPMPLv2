@@ -97,9 +97,8 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 	for (size_t i = 0; i < robot_tree.getNrOfSegments(); i++)
 	{
 		KDL::Frame cart_pos;
-		bool kinematics_status = tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		if (kinematics_status)
-			frames_fk[i] = cart_pos;
+		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
+		frames_fk[i] = cart_pos;
 	}
 	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
 }
