@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	const int max_num_obs = node["random_obstacles"]["max_num"].as<int>();
 	const float max_vel_obs = node["random_obstacles"]["max_vel"].as<float>();
 	const float max_acc_obs = node["random_obstacles"]["max_acc"].as<float>();
-	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME * 0.001) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
+	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
 	Eigen::Vector3f obs_dim;
 	for (int i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << "DRGBT" << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
-			output_file << "Maximal algorithm time [ms]:                            " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
+			output_file << "Maximal algorithm time [s]:                             " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
 			output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
 			output_file << "Treshold for the replanning assessment:                 " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
 			output_file << "Critical distance in W-space [m]:                       " << DRGBTConfig::D_CRIT << std::endl;
@@ -69,9 +69,9 @@ int main(int argc, char **argv)
 			output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
 			output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
-			output_file << "Real-time scheduling:                                   " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : DRGBTConfig::REAL_TIME_SCHEDULING) << std::endl;
-			output_file	<< "Maximal iteration time [ms]:                            " << DRGBTConfig::MAX_ITER_TIME << std::endl;
-			output_file << "Maximal time of Task 1 [ms]:                            " << (DRGBTConfig::REAL_TIME_SCHEDULING.empty() ? "NONE" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+			output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
+			output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
+			output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == "none" ? "none" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;
 			output_file << "Obstacles motion:                                       " << "random" << std::endl;
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 				
 				LOG(INFO) << "DRGBT planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-				LOG(INFO) << "Algorithm time: " << planner->getPlannerInfo()->getPlanningTime() << " [ms]";
+				LOG(INFO) << "Algorithm time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				LOG(INFO) << "Task 1 interrupted: " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
 				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
@@ -143,13 +143,13 @@ int main(int argc, char **argv)
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
 				output_file << "Success:\n" << result << std::endl;
 				output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
-				output_file << "Algorithm execution time [ms]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
+				output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
 				output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 				if (result)
 				{
-					std::vector<std::vector<int>> routine_times = planner->getPlannerInfo()->getRoutineTimes();
+					std::vector<std::vector<float>> routine_times = planner->getPlannerInfo()->getRoutineTimes();
 					for (size_t idx = 0; idx < routines.size(); idx++)
 					{
 						// LOG(INFO) << "Routine " << routines[idx];
@@ -184,8 +184,8 @@ int main(int argc, char **argv)
 		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
 
 		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
-		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [ms]";
-		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) << " +- " << getStd(iter_times) << " [ms]";
+		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
+		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) << " +- " << getStd(iter_times) << " [s]";
 		LOG(INFO) << "Average path length: " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
 		LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 	}

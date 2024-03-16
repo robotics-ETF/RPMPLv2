@@ -41,8 +41,8 @@ namespace planning
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
-            std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(int max_planning_time);
-            virtual void replan(int max_planning_time);
+            std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
+            virtual void replan(float max_planning_time);
             void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
             bool checkMotionValidity2(int num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
@@ -60,7 +60,6 @@ namespace planning
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
             int num_lateral_states;                                                 // Number of lateral states
             float delta_q_max;                                                      // Maximal edge length when acquiring a new predefined path
-            std::chrono::steady_clock::time_point time_iter_start;                  // Start time point at each iteration
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
         };

@@ -1,11 +1,12 @@
-MAX_NUM_ITER: 1000000		            # Maximal number of algorithm iterations
-MAX_ITER_TIME: 100 		              # Maximal runtime of a single iteration in [ms]
-MAX_PLANNING_TIME: 30000	          # Maximal algorithm runtime in [ms]
-INIT_HORIZON_SIZE: 10		            # Initial horizon size
-TRESHOLD_WEIGHT: 0.5			          # Treshold for the replanning assessment. Range: between 0 and 1
-D_CRIT: 0.05			                  # Critical distance in W-space to compute critical nodes
-MAX_NUM_MODIFY_ATTEMPTS: 10         # Maximal number of attempts when modifying bad or critical states
-STATIC_PLANNER_NAME: "RGBMT*"       # Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*"
-REAL_TIME_SCHEDULING: "FPS"         # "FPS" - Fixed Priority Scheduling; "" - Without real-time scheduling
-MAX_TIME_TASK1: 50                  # Maximal time in [ms] which Task 1 can take from the processor
-TRAJECTORY_INTERPOLATION: "spline"  # Method for interpolation of trajectory: 'none' or 'spline'
+MAX_NUM_ITER: 1000000		                # Maximal number of algorithm iterations
+MAX_ITER_TIME: 0.1 		                  # Maximal runtime of a single iteration in [s]
+MAX_PLANNING_TIME: 30	                  # Maximal algorithm runtime in [s]
+INIT_HORIZON_SIZE: 10		                # Initial horizon size
+TRESHOLD_WEIGHT: 0.5			              # Treshold for the replanning assessment. Range: between 0 and 1
+D_CRIT: 0.05			                      # Critical distance in W-space to compute critical nodes
+MAX_NUM_MODIFY_ATTEMPTS: 10             # Maximal number of attempts when modifying bad or critical states
+STATIC_PLANNER_NAME: "RGBMT*"           # Name of a static planner (for obtaining the predefined path). Default: "RGBMT*" or "RGBTConnect"
+REAL_TIME_SCHEDULING: "FPS"             # "FPS" - Fixed Priority Scheduling; "none" - Without real-time scheduling
+MAX_TIME_TASK1: 0.050                   # Maximal time in [s] which Task 1 can take from the processor
+MAX_TIME_UPDATE_CURRENT_STATE: 0.002    # Maximal time in [s] for the routine 'updateCurrentState'
+TRAJECTORY_INTERPOLATION: "spline"      # Method for interpolation of trajectory: 'none' or 'spline'

@@ -29,27 +29,28 @@ void planning::drbt::HorizonState::setWeight(float weight_)
         setStatus(planning::drbt::HorizonState::Status::Bad);
 }
 
-namespace planning::drbt {
-std::ostream& operator<<(std::ostream &os, const std::shared_ptr<planning::drbt::HorizonState> q)
+namespace planning::drbt 
 {
-    os << "q:         (" << q->getCoord().transpose() << ")" << std::endl;
-    if (q->getStateReached() == nullptr)
-        os << "q_reached: NONE " << std::endl;
-    else
-        os << "q_reached: (" << q->getStateReached()->getCoord().transpose() << ")" << std::endl;
-        
-    if (q->getStatus() == planning::drbt::HorizonState::Status::Good)
-        os << "status:     " << "Good " << std::endl;
-    else if (q->getStatus() == planning::drbt::HorizonState::Status::Bad)
-        os << "status:     " << "Bad " << std::endl;
-    else if (q->getStatus() == planning::drbt::HorizonState::Status::Critical)
-        os << "status:     " << "Critical " << std::endl;
-    else if (q->getStatus() == planning::drbt::HorizonState::Status::Goal)
-        os << "status:     " << "Goal " << std::endl;
+    std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::drbt::HorizonState> q)
+    {
+        os << "q:         (" << q->getCoord().transpose() << ")" << std::endl;
+        if (q->getStateReached() == nullptr)
+            os << "q_reached: NONE " << std::endl;
+        else
+            os << "q_reached: (" << q->getStateReached()->getCoord().transpose() << ")" << std::endl;
+            
+        if (q->getStatus() == planning::drbt::HorizonState::Status::Good)
+            os << "status:     " << "Good " << std::endl;
+        else if (q->getStatus() == planning::drbt::HorizonState::Status::Bad)
+            os << "status:     " << "Bad " << std::endl;
+        else if (q->getStatus() == planning::drbt::HorizonState::Status::Critical)
+            os << "status:     " << "Critical " << std::endl;
+        else if (q->getStatus() == planning::drbt::HorizonState::Status::Goal)
+            os << "status:     " << "Goal " << std::endl;
 
-    os << "idx path:   " << q->getIndex() << std::endl;
-    os << "d_c:        " << q->getDistance() << std::endl;
-    os << "weight:     " << q->getWeight() << std::endl;
-    return os;
-}
+        os << "idx path:   " << q->getIndex() << std::endl;
+        os << "d_c:        " << q->getDistance() << std::endl;
+        os << "weight:     " << q->getWeight() << std::endl;
+        return os;
+    }
 }

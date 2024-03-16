@@ -63,8 +63,8 @@ int main(int argc, char **argv)
 
 	std::vector<float> initial_costs;
 	std::vector<float> final_costs;
-	std::vector<int> initial_times;
-	std::vector<int> final_times;
+	std::vector<float> initial_times;
+	std::vector<float> final_times;
 	std::vector<float> initial_num_states;
 	std::vector<float> final_num_states;
 	std::ofstream output_file;
@@ -73,11 +73,11 @@ int main(int argc, char **argv)
 	if (use_recommended_planning_times)
 	{
 		if (ss->num_dimensions == 2)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 10e3;		// 10 sec
+			RGBMTStarConfig::MAX_PLANNING_TIME = 10;
 		else if (ss->num_dimensions == 6)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 120e3; 	// 2 min
+			RGBMTStarConfig::MAX_PLANNING_TIME = 120;
 		else
-			RGBMTStarConfig::MAX_PLANNING_TIME = 60e3;		// 1 min
+			RGBMTStarConfig::MAX_PLANNING_TIME = 60;
 	}
 	
 	int num_test = 0;
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
 			LOG(INFO) << "RGBMT* planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
-			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [ms]";
+			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			
 			if (result)
 			{
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 						initial_costs.emplace_back(planner->getPlannerInfo()->getCostConvergence()[i]);
 						initial_times.emplace_back(planner->getPlannerInfo()->getStateTimes()[i]);
 						initial_num_states.emplace_back(i);
-						LOG(INFO) << "Path is found after " << i << " states (after " << initial_times.back() << " [ms])";
+						LOG(INFO) << "Path is found after " << i << " states (after " << initial_times.back() << " [s])";
 						break;
 					}
 				}		
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 									   + "_rgbmtstar_test" + std::to_string(num_test) + ".log");
 
 			// output_file << "Cost convergence: \n" 
-            //             << "Cost [rad]\t\tNum. states\t\tTime [ms]" << std::endl;
+            //             << "Cost [rad]\t\tNum. states\t\tTime [s]" << std::endl;
 			for (size_t i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)
                 output_file << planner->getPlannerInfo()->getCostConvergence()[i] << "\t\t"
 							<< i+1 << "\t\t"
@@ -144,8 +144,8 @@ int main(int argc, char **argv)
 	output_file << "\t Success rate [%]:                                    " << (float) num_success / max_num_tests * 100  << std::endl;
 	output_file << "\t Average initial path cost [rad]:                     " << getMean(initial_costs) << " +- " << getStd(initial_costs) << std::endl;
 	output_file << "\t Average final path cost [rad]:                       " << getMean(final_costs) << " +- " << getStd(final_costs) << std::endl;
-	output_file << "\t Average time when the first path is found [s]:       " << getMean(initial_times) / 1000 << " +- " << getStd(initial_times) / 1000 << std::endl;
-	output_file << "\t Average planning time [s]:                           " << getMean(final_times) / 1000 << " +- " << getStd(final_times) / 1000 << std::endl;
+	output_file << "\t Average time when the first path is found [s]:       " << getMean(initial_times) << " +- " << getStd(initial_times) << std::endl;
+	output_file << "\t Average planning time [s]:                           " << getMean(final_times) << " +- " << getStd(final_times) << std::endl;
 	output_file << "\t Average num. of states when the first path is found: " << getMean(initial_num_states) << " +- " << getStd(initial_num_states) << std::endl;
 	output_file << "\t Average num. of states:                              " << getMean(final_num_states) << " +- " << getStd(final_num_states) << std::endl;
 	output_file << std::string(75, '-') << std::endl;		

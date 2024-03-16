@@ -54,7 +54,7 @@ public:
             LOG(INFO) << "RRTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RRTConnectConfig::MAX_NUM_STATES;
         
         if (RRTConnectConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            RRTConnectConfig::MAX_PLANNING_TIME = RRTConnectConfigRoot["MAX_PLANNING_TIME"].as<int>();
+            RRTConnectConfig::MAX_PLANNING_TIME = RRTConnectConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
             LOG(INFO) << "RRTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RRTConnectConfig::MAX_PLANNING_TIME;
         
@@ -80,7 +80,7 @@ public:
             LOG(INFO) << "RBTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RBTConnectConfig::MAX_NUM_STATES;
         
         if (RBTConnectConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            RBTConnectConfig::MAX_PLANNING_TIME = RBTConnectConfigRoot["MAX_PLANNING_TIME"].as<int>();
+            RBTConnectConfig::MAX_PLANNING_TIME = RBTConnectConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
             LOG(INFO) << "RBTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RBTConnectConfig::MAX_PLANNING_TIME;
         
@@ -121,7 +121,7 @@ public:
             LOG(INFO) << "RGBTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RGBTConnectConfig::MAX_NUM_STATES;
         
         if (RGBTConnectConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            RGBTConnectConfig::MAX_PLANNING_TIME = RGBTConnectConfigRoot["MAX_PLANNING_TIME"].as<int>();
+            RGBTConnectConfig::MAX_PLANNING_TIME = RGBTConnectConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
             LOG(INFO) << "RGBTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RGBTConnectConfig::MAX_PLANNING_TIME;
         
@@ -142,7 +142,7 @@ public:
             LOG(INFO) << "RGBMTStarConfig::MAX_NUM_STATES is not defined! Using default value of " << RGBMTStarConfig::MAX_NUM_STATES;
         
         if (RGBMTStarConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            RGBMTStarConfig::MAX_PLANNING_TIME = RGBMTStarConfigRoot["MAX_PLANNING_TIME"].as<int>();
+            RGBMTStarConfig::MAX_PLANNING_TIME = RGBMTStarConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
             LOG(INFO) << "RGBMTStarConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RGBMTStarConfig::MAX_PLANNING_TIME;
         
@@ -158,12 +158,12 @@ public:
             LOG(INFO) << "DRGBTConfig::MAX_NUM_ITER is not defined! Using default value of " << DRGBTConfig::MAX_NUM_ITER;
         
         if (DRGBTConfigRoot["MAX_ITER_TIME"].IsDefined())
-            DRGBTConfig::MAX_ITER_TIME = DRGBTConfigRoot["MAX_ITER_TIME"].as<int>();
+            DRGBTConfig::MAX_ITER_TIME = DRGBTConfigRoot["MAX_ITER_TIME"].as<float>();
         else
             LOG(INFO) << "DRGBTConfig::MAX_ITER_TIME is not defined! Using default value of " << DRGBTConfig::MAX_ITER_TIME;
         
         if (DRGBTConfigRoot["MAX_PLANNING_TIME"].IsDefined())
-            DRGBTConfig::MAX_PLANNING_TIME = DRGBTConfigRoot["MAX_PLANNING_TIME"].as<int>();
+            DRGBTConfig::MAX_PLANNING_TIME = DRGBTConfigRoot["MAX_PLANNING_TIME"].as<float>();
         else
             LOG(INFO) << "DRGBTConfig::MAX_PLANNING_TIME is not defined! Using default value of " << DRGBTConfig::MAX_PLANNING_TIME;
         
@@ -198,9 +198,14 @@ public:
             LOG(INFO) << "DRGBTConfig::REAL_TIME_SCHEDULING is not defined! Using default value of " << DRGBTConfig::REAL_TIME_SCHEDULING;
         
         if (DRGBTConfigRoot["MAX_TIME_TASK1"].IsDefined())
-            DRGBTConfig::MAX_TIME_TASK1 = DRGBTConfigRoot["MAX_TIME_TASK1"].as<int>();
+            DRGBTConfig::MAX_TIME_TASK1 = DRGBTConfigRoot["MAX_TIME_TASK1"].as<float>();
         else
             LOG(INFO) << "DRGBTConfig::MAX_TIME_TASK1 is not defined! Using default value of " << DRGBTConfig::MAX_TIME_TASK1;
+        
+        if (DRGBTConfigRoot["MAX_TIME_UPDATE_CURRENT_STATE"].IsDefined())
+            DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE = DRGBTConfigRoot["MAX_TIME_UPDATE_CURRENT_STATE"].as<float>();
+        else
+            LOG(INFO) << "DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE is not defined! Using default value of " << DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE;
         
         if (DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
             DRGBTConfig::TRAJECTORY_INTERPOLATION = DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>();

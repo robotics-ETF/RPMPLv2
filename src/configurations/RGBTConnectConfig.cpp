@@ -5,6 +5,6 @@
 #include "RGBTConnectConfig.h"
 
 unsigned long RGBTConnectConfig::MAX_NUM_ITER   = 1e9;
-unsigned long RGBTConnectConfig::MAX_NUM_STATES = 10000;
-int RGBTConnectConfig::MAX_PLANNING_TIME        = 60e3;
+unsigned long RGBTConnectConfig::MAX_NUM_STATES = 1e9;
+float RGBTConnectConfig::MAX_PLANNING_TIME      = 60;
 int RGBTConnectConfig::NUM_LAYERS               = 5;

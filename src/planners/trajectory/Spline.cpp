@@ -121,7 +121,7 @@ void planning::trajectory::Spline::setTimeCurrent(float time_current_)
     else
     {
         std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
-        time_current = (std::chrono::duration_cast<std::chrono::microseconds>(time_start_ - time_start).count()) * 1e-6;
+        time_current = (std::chrono::duration_cast<std::chrono::nanoseconds>(time_start_ - time_start).count()) * 1e-9;
     }
 }
 
