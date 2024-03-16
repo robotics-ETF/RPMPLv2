@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 
 		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
-		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) << " +- " << getStd(iter_times) << " [s]";
+		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) * 1e3 << " +- " << getStd(iter_times) * 1e3 << " [ms]";
 		LOG(INFO) << "Average path length: " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
 		LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 	}

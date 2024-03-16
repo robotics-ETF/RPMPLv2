@@ -6,19 +6,20 @@
 
 env::Object::~Object() {}
 
-namespace env {
-std::ostream& operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
+namespace env 
 {
-    obj->coll_object->computeAABB();
+    std::ostream &operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj)
+    {
+        obj->coll_object->computeAABB();
 
-    os << "Object " << obj->getLabel() << "\t";
-    os << "Range: (" << obj->getCollObject()->getAABB().min_.transpose() << ") to (" 
-                     << obj->getCollObject()->getAABB().max_.transpose() << ")\t ";
-    os << "Max. vel: " << obj->getMaxVel() << "\t";
-    os << "Max. acc: " << obj->getMaxAcc() << "\n";
+        os << "Object " << obj->getLabel() << "\t";
+        os << "Range: (" << obj->getCollObject()->getAABB().min_.transpose() << ") to (" 
+                        << obj->getCollObject()->getAABB().max_.transpose() << ")\t ";
+        os << "Max. vel: " << obj->getMaxVel() << "\t";
+        os << "Max. acc: " << obj->getMaxAcc() << "\n";
 
-    return os;
-}
+        return os;
+    }
 }
 
 void env::Object::setPosition(const fcl::Vector3f &position_) 
