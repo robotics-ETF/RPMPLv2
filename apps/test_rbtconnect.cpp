@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 	std::shared_ptr<base::State> q_start = scenario.getStart();
 	std::shared_ptr<base::State> q_goal = scenario.getGoal();
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+	std::unique_ptr<planning::AbstractPlanner> planner;
 
 	bool result = false;
 	int num_obs = env->getNumObjects();
@@ -66,10 +67,10 @@ int main(int argc, char **argv)
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
+			planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
 			result = planner->solve();
 
-			LOG(INFO) << "RBTConnect planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";

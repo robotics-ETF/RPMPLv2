@@ -187,10 +187,20 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS is not defined! Using default value of " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;
 
-        if (DRGBTConfigRoot["STATIC_PLANNER_NAME"].IsDefined())
-            DRGBTConfig::STATIC_PLANNER_NAME = DRGBTConfigRoot["STATIC_PLANNER_NAME"].as<std::string>();
+        if (DRGBTConfigRoot["STATIC_PLANNER_TYPE"].IsDefined())
+        {
+            std::string static_planner_type = DRGBTConfigRoot["STATIC_PLANNER_TYPE"].as<std::string>();
+            if (static_planner_type == "RGBMT*")
+                DRGBTConfig::STATIC_PLANNER_TYPE = planning::PlannerType::RGBMTStar;
+            else if (static_planner_type == "RGBT-Connect")
+                DRGBTConfig::STATIC_PLANNER_TYPE = planning::PlannerType::RGBTConnect;
+            else if (static_planner_type == "RBT-Connect")
+                DRGBTConfig::STATIC_PLANNER_TYPE = planning::PlannerType::RBTConnect;
+            else if (static_planner_type == "RRT-Connect")
+                DRGBTConfig::STATIC_PLANNER_TYPE = planning::PlannerType::RRTConnect;
+        }
         else
-            LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_NAME is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_NAME;
+            LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_TYPE is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_TYPE;
 
         if (DRGBTConfigRoot["REAL_TIME_SCHEDULING"].IsDefined())
             DRGBTConfig::REAL_TIME_SCHEDULING = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();

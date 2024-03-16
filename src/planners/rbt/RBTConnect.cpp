@@ -10,10 +10,16 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) {}
+planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) 
+{
+    planner_type = planning::PlannerType::RBTConnect;
+}
 
 planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
-                                      const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_) {}
+                                      const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_) 
+{
+    planner_type = planning::PlannerType::RBTConnect;
+}
 
 bool planning::rbt::RBTConnect::solve()
 {
@@ -192,7 +198,7 @@ void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, b
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "RBTConnect" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;

@@ -7,13 +7,13 @@
 
 base::RealVectorSpaceState::RealVectorSpaceState(const Eigen::VectorXf &coord_) : State(coord_)
 {
-	state_space_type = StateSpaceType::RealVectorSpace;
+	state_space_type = base::StateSpaceType::RealVectorSpace;
 }
 
 // Make a copy of 'state'
 base::RealVectorSpaceState::RealVectorSpaceState(const std::shared_ptr<base::State> state) : State()
 {
-	state_space_type = StateSpaceType::RealVectorSpace;
+	state_space_type = base::StateSpaceType::RealVectorSpace;
 	coord = state->getCoord();
 	num_dimensions = state->getNumDimensions();
 	tree_idx = state->getTreeIdx();

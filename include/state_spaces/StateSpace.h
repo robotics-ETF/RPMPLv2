@@ -11,7 +11,7 @@ namespace base
 	class StateSpace
 	{
 	public:
-		StateSpaceType state_space_type;
+		base::StateSpaceType state_space_type;
 		int num_dimensions;
 		std::shared_ptr<robots::AbstractRobot> robot;
 		std::shared_ptr<env::Environment> env;
@@ -22,9 +22,9 @@ namespace base
 				   const std::shared_ptr<env::Environment> env_);
 		virtual ~StateSpace() = 0;
 		
-		inline void setStateSpaceType(StateSpaceType state_space_type_) { state_space_type = state_space_type_; };
+		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; };
 		inline int getNumDimensions() { return num_dimensions; }
-		inline virtual StateSpaceType getStateSpaceType() const { return state_space_type; };
+		inline virtual base::StateSpaceType getStateSpaceType() const { return state_space_type; };
 		virtual std::shared_ptr<base::State> getRandomState(const std::shared_ptr<base::State> q_center = nullptr) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const Eigen::VectorXf &coord) = 0;

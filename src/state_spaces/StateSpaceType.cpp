@@ -4,30 +4,33 @@
 
 #include "StateSpaceType.h"
 
-std::ostream &operator<<(std::ostream &os, const StateSpaceType &type) 
+namespace base
 {
-	switch (type)
+	std::ostream &operator<<(std::ostream &os, const base::StateSpaceType &type) 
 	{
-		case StateSpaceType::Abstract:
-			os << "Abstract type";
-			break;
+		switch (type)
+		{
+			case base::StateSpaceType::Abstract:
+				os << "Abstract type";
+				break;
 
-		case StateSpaceType::RealVectorSpace:
-			os << "RealVectorSpace type";
-			break;
+			case base::StateSpaceType::RealVectorSpace:
+				os << "RealVectorSpace type";
+				break;
 
-		case StateSpaceType::RealVectorSpaceFCL:
-			os << "RealVectorSpaceFCL type";
-			break;
+			case base::StateSpaceType::RealVectorSpaceFCL:
+				os << "RealVectorSpaceFCL type";
+				break;
 
-		case StateSpaceType::SO2:
-			os << "SO2 type";
-			break;
+			case base::StateSpaceType::SO2:
+				os << "SO2 type";
+				break;
 
-		case StateSpaceType::SO3:
-			os << "SO3 type";
-			break;
+			case base::StateSpaceType::SO3:
+				os << "SO3 type";
+				break;
+		}
+
+		return os;
 	}
-
-	return os;
 }

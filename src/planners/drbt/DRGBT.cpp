@@ -9,12 +9,16 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
+planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) 
+{
+    planner_type = planning::PlannerType::DRGBT;
+}
 
 planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
                              const std::shared_ptr<base::State> q_goal_) : RGBTConnect(ss_)
 {
 	// std::cout << "Initializing DRGBT planner... \n";
+    planner_type = planning::PlannerType::DRGBT;
     q_start = q_start_;
     q_goal = q_goal_;
 	if (!ss->isValid(q_start))
@@ -85,7 +89,7 @@ bool planning::drbt::DRGBT::solve()
             q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
             // std::cout << "Not updating the robot current state since d_c < 0. \n";
         }
-        planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::time_unit::us), 1);
+        planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -99,7 +103,7 @@ bool planning::drbt::DRGBT::solve()
         else if (DRGBTConfig::TRAJECTORY_INTERPOLATION == "none")
             updateCurrentState2();      // ~ 1 [us]
 
-        std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::time_unit::us) << " [us] \n";
+        std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
         // ------------------------------------------------------------------------------- //
         // Replanning procedure assessment
@@ -113,10 +117,10 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        float time_iter_remain = DRGBTConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start);
-        std::cout << "Remaining iteration time is " << time_iter_remain << " [s] \n";
+        float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
         if (time_iter_remain < 0)
-            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [s] exceeded!!! *************** \n";
+            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
@@ -198,7 +202,7 @@ void planning::drbt::DRGBT::generateHorizon()
     // for (int i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
     
-    planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::time_unit::us), 3);
+    planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
 }
 
 // Update the horizon size, and add lateral spines.
@@ -228,7 +232,7 @@ void planning::drbt::DRGBT::updateHorizon(float d_c)
     // std::cout << "Adding " << num_lateral_states << " lateral states... \n";
     addLateralStates();
     horizon_size = horizon.size();
-    planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, planning::time_unit::us), 4);
+    planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, planning::TimeUnit::us), 4);
 }
 
 // Generate the generalized bur from 'q_target', i.e., compute the horizon spines.
@@ -264,7 +268,7 @@ void planning::drbt::DRGBT::generateGBur()
                 
                 // std::cout << "Deleting " << horizon_size - horizon.size() << " of " << horizon_size << " horizon states...\n";
                 planner_info->setTask1Interrupted(true);
-                planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::time_unit::ms), 2);
+                planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
                 return;
             }
             max_num_attempts = std::ceil((1 - time_elapsed / (DRGBTConfig::MAX_TIME_TASK1 - DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE)) 
@@ -278,7 +282,7 @@ void planning::drbt::DRGBT::generateGBur()
             horizon[idx]->getStatus() == planning::drbt::HorizonState::Status::Critical)
             modifyState(horizon[idx], max_num_attempts);
     }
-    planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::time_unit::ms), 2);
+    planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
 }
 
 // Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
@@ -700,7 +704,7 @@ float planning::drbt::DRGBT::updateCurrentState()
                 break;
             }
         }
-        std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, planning::time_unit::us) << " [us] \n";
+        std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, planning::TimeUnit::us) << " [us] \n";
     }
 
     if (found)
@@ -812,29 +816,28 @@ bool planning::drbt::DRGBT::whetherToReplan()
 // Initialize static planner, to plan the path from 'q_target' to 'q_goal' in 'max_planning_time' 
 std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBT::initStaticPlanner(float max_planning_time)
 {
-    // std::cout << "Static planner (for replanning): " << DRGBTConfig::STATIC_PLANNER_NAME << "\n";
-    if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*")
+    // std::cout << "Static planner (for replanning): " << DRGBTConfig::STATIC_PLANNER_TYPE << "\n";
+    switch (DRGBTConfig::STATIC_PLANNER_TYPE)
     {
+    case planning::PlannerType::RGBMTStar:
         RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_target, q_goal);
-    }
-    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBTConnect")
-    {
+
+    case planning::PlannerType::RGBTConnect:
         RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt::RGBTConnect>(ss, q_target, q_goal);
-    }
-    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RBTConnect")
-    {
+    
+    case planning::PlannerType::RBTConnect:
         RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rbt::RBTConnect>(ss, q_target, q_goal);
-    }
-    else if (DRGBTConfig::STATIC_PLANNER_NAME == "RRTConnect")
-    {
+
+    case planning::PlannerType::RRTConnect:
         RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
         return std::make_unique<planning::rrt::RRTConnect>(ss, q_target, q_goal);
+
+    default:
+        throw std::domain_error("The requested static planner is not found! ");
     }
-    else
-        throw std::domain_error("The requested static planner " + DRGBTConfig::STATIC_PLANNER_NAME + " is not found! ");
 }
 
 // Try to replan the predefined path from the target to the goal configuration within the specified time
@@ -1032,7 +1035,7 @@ void planning::drbt::DRGBT::outputPlannerData(const std::string &filename, bool 
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "DRGBT" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;

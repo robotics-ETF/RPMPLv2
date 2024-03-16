@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	int init_num_success_test = node["testing"]["init_num_success"].as<int>();
 	const int max_num_tests = node["testing"]["max_num"].as<int>();
 	bool reach_successful_tests = node["testing"]["reach_successful_tests"].as<bool>();
-    if (DRGBTConfig::STATIC_PLANNER_NAME == "RGBMT*") {
+    if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 	}
 
@@ -58,8 +58,8 @@ int main(int argc, char **argv)
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
 							"_routine_times" + std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
-			output_file << "Dynamic planner:                                        " << "DRGBT" << std::endl;
-			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_NAME << std::endl;
+			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
+			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
 			output_file << "Maximal algorithm time [s]:                             " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
 			output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
 			output_file << "Treshold for the replanning assessment:                 " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 				std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::drbt::DRGBT>(ss, q_start, q_goal);
 				bool result = planner->solve();
 				
-				LOG(INFO) << "DRGBT planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				LOG(INFO) << "Task 1 interrupted: " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 		init_num_success_test = 0;
 		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
 
-		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " %";
+		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
 		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) * 1e3 << " +- " << getStd(iter_times) * 1e3 << " [ms]";
 		LOG(INFO) << "Average path length: " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";

@@ -19,7 +19,7 @@ namespace base
 		enum Status {None, Advanced, Trapped, Reached};
 		
 	protected:
-		StateSpaceType state_space_type;
+		base::StateSpaceType state_space_type;
 		int num_dimensions;												// Dimensionality in C-space
 		Eigen::VectorXf coord;											// Coordinates in C-space
 		int tree_idx;													// Tree index in which the state is stored
@@ -37,7 +37,7 @@ namespace base
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 
-		inline StateSpaceType getStateSpaceType() const { return state_space_type; }
+		inline base::StateSpaceType getStateSpaceType() const { return state_space_type; }
 		inline int getNumDimensions() const { return num_dimensions; }
 		inline const Eigen::VectorXf &getCoord() const { return coord; }
 		inline float getCoord(size_t idx) const { return coord(idx); }
@@ -51,7 +51,7 @@ namespace base
 		inline std::shared_ptr<State> getParent() const { return parent; }
 		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; };
 
-		inline void setStateSpaceType(StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
+		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
 		inline void setNumDimensions(int num_dimensions_) { num_dimensions = num_dimensions_; }
 		inline void setCoord(const Eigen::VectorXf &coord_) { coord = coord_; }
 		inline void setCoord(const float coord_, int idx) { coord(idx) = coord_; }

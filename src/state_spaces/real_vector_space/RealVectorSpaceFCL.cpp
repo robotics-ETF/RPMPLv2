@@ -12,7 +12,7 @@ base::RealVectorSpaceFCL::~RealVectorSpaceFCL() {}
 base::RealVectorSpaceFCL::RealVectorSpaceFCL(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 											 const std::shared_ptr<env::Environment> env_) : RealVectorSpace(num_dimensions_, robot_, env_)
 {
-	setStateSpaceType(StateSpaceType::RealVectorSpaceFCL);
+	setStateSpaceType(base::StateSpaceType::RealVectorSpaceFCL);
 	collision_manager_robot = std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>();
 	collision_manager_env = std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>();
 }

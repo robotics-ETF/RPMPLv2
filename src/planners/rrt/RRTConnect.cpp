@@ -11,12 +11,16 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) {}
+planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) 
+{
+	planner_type = planning::PlannerType::RRTConnect;
+}
 
 planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
 									  const std::shared_ptr<base::State> q_goal_) : AbstractPlanner(ss_, q_start_, q_goal_)
 {
 	// std::cout << "Initializing planner...\n";
+	planner_type = planning::PlannerType::RRTConnect;
 	if (!ss->isValid(q_start))
 		throw std::domain_error("Start position is invalid!");
 	if (!ss->isValid(q_goal))
@@ -185,7 +189,7 @@ void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, b
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "RRTConnect" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;

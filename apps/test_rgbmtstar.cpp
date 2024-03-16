@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 	std::shared_ptr<base::State> q_start = scenario.getStart();
 	std::shared_ptr<base::State> q_goal = scenario.getGoal();
 	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+	std::unique_ptr<planning::AbstractPlanner> planner;
 
 	bool result = false;
 	int num_obs = env->getNumObjects();
@@ -87,10 +88,10 @@ int main(int argc, char **argv)
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);					
+			planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);					
 			result = planner->solve();
 
-			LOG(INFO) << "RGBMT* planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
 			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
 	output_file << std::string(75, '-') << std::endl;
 	output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 	output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-	output_file << "Planner type:    " << "RGBMT*" << std::endl;
+	output_file << "Planner type:    " << planner->getPlannerType() << std::endl;
 	output_file << "Using scenario:  " << project_path + scenario_file_path << std::endl;
 	output_file << "Planner info:\n";
 	output_file << "\t Success rate [%]:                                    " << (float) num_success / max_num_tests * 100  << std::endl;

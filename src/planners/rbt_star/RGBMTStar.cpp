@@ -10,12 +10,16 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) {}
+planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace> ss_) : RGBTConnect(ss_) 
+{
+    planner_type = planning::PlannerType::RGBMTStar;
+}
 
 planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
                                          const std::shared_ptr<base::State> q_goal_) : RGBTConnect(ss_, q_start_, q_goal_)
 {
     // Additionally the following is required:
+    planner_type = planning::PlannerType::RGBMTStar;
 	q_start->setCost(0);
     q_goal->setCost(0);
     num_states = {1, 1};
@@ -144,7 +148,7 @@ bool planning::rbt_star::RGBMTStar::solve()
                 // Unification of tree 'idx' with 'tree_idx'. Main trees are never unified mutually
                 else if (idx > 1 && std::find(trees_reached.begin(), trees_reached.end(), idx) != trees_reached.end())
                 {
-                    unifyTrees(trees[idx], trees[tree_idx], states_reached[idx], q_new);
+                    unifyTrees(trees[tree_idx], states_reached[idx], q_new);
                     trees_connected.emplace_back(idx);
                 }
             }
@@ -304,24 +308,24 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     return q_new;
 }
 
-// Optimally unifies a local tree 'tree' with 'tree0'
-// 'q_con' - a state that connects 'tree' with 'tree0'
-// 'q0_con' - a state that connects 'tree0' with 'tree'
-void planning::rbt_star::RGBMTStar::unifyTrees([[maybe_unused]] const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::Tree> tree0, 
-                                               const std::shared_ptr<base::State> q_con, const std::shared_ptr<base::State> q0_con)
+// Optimally unifies a local tree 'tree[idx]' with 'tree0'
+// 'q_con' - a state that connects 'tree[idx]' with 'tree0'
+// 'q0_con' - a state that connects 'tree0' with 'tree[idx]'
+void planning::rbt_star::RGBMTStar::unifyTrees(const std::shared_ptr<base::Tree> tree0, const std::shared_ptr<base::State> q_con, 
+                                               const std::shared_ptr<base::State> q0_con)
 {
     std::shared_ptr<base::State> q_considered = nullptr;
-    std::shared_ptr<base::State> q_conNew = ss->getNewState(q_con);
-    std::shared_ptr<base::State> q0_conNew = ss->getNewState(q0_con);
+    std::shared_ptr<base::State> q_con_new = ss->getNewState(q_con);
+    std::shared_ptr<base::State> q0_con_new = ss->getNewState(q0_con);
     while (true)
     {
-        considerChildren(q_conNew, tree0, q0_conNew, q_considered);
-        if (q_conNew->getParent() == nullptr)
+        considerChildren(q_con_new, tree0, q0_con_new, q_considered);
+        if (q_con_new->getParent() == nullptr)
             break;
 
-        q0_conNew = optimize(q_conNew->getParent(), tree0, q0_conNew);
-        q_considered = q_conNew;
-        q_conNew = q_conNew->getParent();
+        q0_con_new = optimize(q_con_new->getParent(), tree0, q0_con_new);
+        q_considered = q_con_new;
+        q_con_new = q_con_new->getParent();
     }
 }
 
@@ -404,7 +408,7 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filenam
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "RGBMT*" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;
