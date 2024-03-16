@@ -21,6 +21,10 @@ namespace planning
             bool compute(const Eigen::VectorXf &q_final) override;
             bool checkConstraints(int idx, float t_f) override;
 
+            std::vector<float> getMaxVelocityTimes(int idx) override;
+            std::vector<float> getMaxAccelerationTimes(int idx) override;
+            std::vector<float> getMaxJerkTimes(int idx) override;
+
             float getPosition(float t, int idx, float t_f) override;
             float getVelocity(float t, int idx, float t_f) override;
             float getAcceleration(float t, int idx, float t_f) override;

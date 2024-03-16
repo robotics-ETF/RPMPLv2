@@ -1,4 +1,5 @@
 #include "Spline5.h"
+#include "RealVectorSpaceConfig.h"
 
 // #include <unsupported/Eigen/Polynomials>
 
@@ -209,42 +210,41 @@ float planning::trajectory::Spline5::computeFinalTime(int idx, float q_f_i)
 bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
 {
     // Maximal jerk constraint
-    float t_max = -b(idx) / (5*a(idx));
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6 * std::abs(c(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    // std::cout << "\t Max. jerk.\t t_max: " << t_max << "\t value: " << std::abs(getJerk(t_max, idx, t_f)) << "\n";
-    if (6 * std::abs(c(idx)) > robot->getMaxJerk(idx) + 1e-3 ||
-        std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + 1e-3 || 
-        (a(idx) != 0 && t_max > 0 && t_max < t_f && std::abs(getJerk(t_max, idx, t_f)) > robot->getMaxJerk(idx)))
+    std::vector<float> t_max = getMaxJerkTimes(idx);
+    for (size_t i = 0; i < t_max.size(); i++)
     {
-        // std::cout << "\t Maximal jerk constraint not satisfied! \n";
-        return false;
+        // std::cout << "\t Max. jerk.\t t_max: " << t_max[i] << "\t value: " << std::abs(getJerk(t_max[i], idx, t_f)) << "\n";
+        if (6 * std::abs(c(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||
+            std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
+            (std::abs(getJerk(t_max[i], idx, t_f)) > robot->getMaxJerk(idx)))
+        {
+            // std::cout << "\t Maximal jerk constraint not satisfied! \n";
+            return false;
+        }
     }
 
     // Maximal acceleration constraint
-    // Note: Initial and final acceleration is zero!
-    float D = 576*b(idx)*b(idx) - 1440*a(idx)*c(idx);
-    if (a(idx) != 0 && D >= 0)
+    // Note: Initial and final acceleration are zero!
+    t_max = getMaxAccelerationTimes(idx);
+    for (size_t i = 0; i < t_max.size(); i++)
     {
-        for (int sign : {-1, 1})
+        // std::cout << "\t Max. acceleration.\t t_max: " << t_max[i] << "\t value: " << std::abs(getAcceleration(t_max[i], idx, t_f)) << "\n";
+        if (std::abs(getAcceleration(t_max[i], idx, t_f)) > robot->getMaxAcc(idx))
         {
-            t_max = (-24*b(idx) + sign*std::sqrt(D)) / (120*a(idx));
-            // std::cout << "\t Max. acceleration.\t t_max: " << t_max << "\t value: " << std::abs(getAcceleration(t_max, idx, t_f)) << "\n";
-            if (t_max > 0 && t_max < t_f && std::abs(getAcceleration(t_max, idx, t_f)) > robot->getMaxAcc(idx))
-            {
-                // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
-                return false;
-            }
+            // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
+            return false;
         }
     }
 
     // Maximal velocity constraint
-    // Note: Initial and final velocity is zero!
-    std::vector<float> t_max_ = solveQubicEquation(20*a(idx), 12*b(idx), 6*c(idx), 2*d(idx));
-    for (size_t i = 0; i < t_max_.size(); i++)
+    // Note: Initial and final velocity are zero!
+    t_max = getMaxVelocityTimes(idx);
+    for (size_t i = 0; i < t_max.size(); i++)
     {
-        // std::cout << "\t Max. velocity.\t t_max: " << t_max_[i] << "\t value: " << std::abs(getVelocity(t_max_[i], idx, t_f)) << "\n";
-        if (t_max_[i] > 0 && t_max_[i] < t_f && std::abs(getVelocity(t_max_[i], idx, t_f)) > robot->getMaxVel(idx))
+        // std::cout << "\t Max. velocity.\t t_max: " << t_max[i] << "\t value: " << std::abs(getVelocity(t_max[i], idx, t_f)) << "\n";
+        if (std::abs(getVelocity(t_max[i], idx, t_f)) > robot->getMaxVel(idx))
         {
             // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
@@ -253,6 +253,38 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
 
     // std::cout << "\t All constraints are satisfied! \n";
     return true;
+}
+
+std::vector<float> planning::trajectory::Spline5::getMaxVelocityTimes(int idx)
+{
+    return solveQubicEquation(20*a(idx), 12*b(idx), 6*c(idx), 2*d(idx));
+}
+
+std::vector<float> planning::trajectory::Spline5::getMaxAccelerationTimes(int idx)
+{
+    std::vector<float> t_max;
+
+    if (a(idx) != 0)
+    {
+        float D = 576*b(idx)*b(idx) - 1440*a(idx)*c(idx);
+        if (D >= 0)
+        {
+            for (int sign : {-1, 1})
+                t_max.emplace_back((-24*b(idx) + sign*std::sqrt(D)) / (120*a(idx)));
+        }
+    }
+
+    return t_max;
+}
+
+std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(int idx)
+{
+    std::vector<float> t_max;
+
+    if (a(idx) != 0)
+        t_max.emplace_back(-b(idx) / (5*a(idx)));
+
+    return t_max;
 }
 
 float planning::trajectory::Spline5::getPosition(float t, int idx, float t_f)
