@@ -114,7 +114,7 @@ base::State::Status planning::rrt::RRTConnect::connect
 	// std::cout << "Inside connect. \n";
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
-	int num_ext = 0;
+	size_t num_ext = 0;
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
 		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
