@@ -11,12 +11,10 @@
 
 #include "StateSpace.h"
 #include "PlannerInfo.h"
-#include "PlannerType.h"
+#include "PlanningTypes.h"
 
 namespace planning
 {
-	enum TimeUnit {s, ms, us, ns};
-
 	class AbstractPlanner
 	{
 	public:

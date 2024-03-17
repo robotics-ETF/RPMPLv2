@@ -2,7 +2,7 @@
 // Created by nermin on 16.03.24.
 //
 
-#include "PlannerType.h"
+#include "PlanningTypes.h"
 
 namespace planning
 {
@@ -32,6 +32,38 @@ namespace planning
 
 			case planning::PlannerType::DRGBT:
 				os << "DRGBT";
+				break;
+		}
+
+		return os;
+	}
+
+	std::ostream &operator<<(std::ostream &os, const planning::RealTimeScheduling &type)
+	{
+		switch (type)
+		{
+			case planning::RealTimeScheduling::None:
+				os << "none";
+				break;
+
+			case planning::RealTimeScheduling::FPS:
+				os << "FPS";
+				break;
+		}
+
+		return os;
+	}
+
+	std::ostream &operator<<(std::ostream &os, const planning::TrajectoryInterpolation &type)
+	{
+		switch (type)
+		{
+			case planning::TrajectoryInterpolation::None:
+				os << "none";
+				break;
+
+			case planning::TrajectoryInterpolation::Spline:
+				os << "spline";
 				break;
 		}
 

@@ -18,7 +18,7 @@ namespace planning
             HorizonState(const std::shared_ptr<base::State> state_, int index_);
             ~HorizonState() {}
 
-            enum Status {Good, Bad, Critical, Goal};
+            enum class Status {Good, Bad, Critical, Goal};
 
             inline std::shared_ptr<base::State> getState() const { return state; }
             inline std::shared_ptr<base::State> getStateReached() const { return state_reached; }

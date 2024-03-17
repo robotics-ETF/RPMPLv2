@@ -27,7 +27,7 @@ bool planning::rbt::RGBTConnect::solve()
 	int tree_idx = 0;  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
-	base::State::Status status{base::State::None};
+	base::State::Status status {base::State::Status::None};
 
 	while (true)
 	{

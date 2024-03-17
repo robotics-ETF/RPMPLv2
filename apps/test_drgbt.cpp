@@ -71,7 +71,8 @@ int main(int argc, char **argv)
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
 			output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
-			output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == "none" ? "none" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+			output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == planning::RealTimeScheduling::None ? 
+																						 "None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;
 			output_file << "Obstacles motion:                                       " << "random" << std::endl;

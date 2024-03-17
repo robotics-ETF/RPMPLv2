@@ -16,7 +16,7 @@ namespace base
 	class State
 	{
 	public:
-		enum Status {None, Advanced, Trapped, Reached};
+		enum class Status {None, Advanced, Trapped, Reached};
 		
 	protected:
 		base::StateSpaceType state_space_type;

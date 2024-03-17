@@ -203,7 +203,13 @@ public:
             LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_TYPE is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_TYPE;
 
         if (DRGBTConfigRoot["REAL_TIME_SCHEDULING"].IsDefined())
-            DRGBTConfig::REAL_TIME_SCHEDULING = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();
+        {
+            std::string real_time_scheduling = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();
+            if (real_time_scheduling == "None")
+                DRGBTConfig::REAL_TIME_SCHEDULING = planning::RealTimeScheduling::None;
+            else if (real_time_scheduling == "FPS")
+                DRGBTConfig::REAL_TIME_SCHEDULING = planning::RealTimeScheduling::FPS;
+        }
         else
             LOG(INFO) << "DRGBTConfig::REAL_TIME_SCHEDULING is not defined! Using default value of " << DRGBTConfig::REAL_TIME_SCHEDULING;
         
@@ -218,7 +224,13 @@ public:
             LOG(INFO) << "DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE is not defined! Using default value of " << DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE;
         
         if (DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
-            DRGBTConfig::TRAJECTORY_INTERPOLATION = DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>();
+        {
+            std::string trajectory_interpolation = DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>();
+            if (trajectory_interpolation == "None")
+                DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::TrajectoryInterpolation::None;
+            else if (trajectory_interpolation == "Spline")
+                DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::TrajectoryInterpolation::Spline;
+        }
         else
             LOG(INFO) << "DRGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << DRGBTConfig::TRAJECTORY_INTERPOLATION;
         

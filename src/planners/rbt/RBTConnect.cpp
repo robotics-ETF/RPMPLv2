@@ -26,7 +26,7 @@ bool planning::rbt::RBTConnect::solve()
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
 	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
-	base::State::Status status{base::State::None};
+	base::State::Status status {base::State::Status::None};
 
 	while (true)
 	{

@@ -98,10 +98,17 @@ bool planning::drbt::DRGBT::solve()
         updateHorizon(d_c);             // ~ 10 [us]
         generateGBur();                 // ~ 10 [ms] Time consuming routine... 
         computeNextState();             // ~ 1 [us]
-        if (DRGBTConfig::TRAJECTORY_INTERPOLATION == "spline")
+        
+        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::Spline:
             updateCurrentState();       // ~ 1 [ms]
-        else if (DRGBTConfig::TRAJECTORY_INTERPOLATION == "none")
+            break;
+        
+        case planning::TrajectoryInterpolation::None:
             updateCurrentState2();      // ~ 1 [us]
+            break;
+        }
 
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
@@ -124,8 +131,19 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if ((DRGBTConfig::TRAJECTORY_INTERPOLATION == "spline" && !checkMotionValidity()) ||
-            (DRGBTConfig::TRAJECTORY_INTERPOLATION == "none" && !checkMotionValidity2()))
+        bool is_valid;
+        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::Spline:
+            is_valid = checkMotionValidity();
+            break;
+        
+        case planning::TrajectoryInterpolation::None:
+            is_valid = checkMotionValidity2();
+            break;
+        }
+
+        if (!is_valid)
         {
             std::cout << "Collision has been occured!!! \n";
             planner_info->setSuccessState(false);
@@ -249,7 +267,7 @@ void planning::drbt::DRGBT::generateGBur()
         computeReachedState(horizon[idx]);
         // std::cout << idx << ". state:\n" << horizon[idx] << "\n";
 
-        if (DRGBTConfig::REAL_TIME_SCHEDULING != "none")   // Some scheduling is chosen
+        if (DRGBTConfig::REAL_TIME_SCHEDULING != planning::RealTimeScheduling::None)   // Some scheduling is chosen
         {
             // Check whether the elapsed time for Task 1 is exceeded
             float time_elapsed = getElapsedTime(time_iter_start);
@@ -851,19 +869,21 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
         if (max_planning_time <= 0)
             throw std::runtime_error("Not enough time for replanning! ");
 
-        if (DRGBTConfig::REAL_TIME_SCHEDULING == "FPS")         // Fixed Priority Scheduling
+        switch (DRGBTConfig::REAL_TIME_SCHEDULING)
         {
+        case planning::RealTimeScheduling::FPS:
             // std::cout << "Replanning with Fixed Priority Scheduling \n";
             // std::cout << "Trying to replan in " << max_planning_time << " [s]... \n";
             planner = initStaticPlanner(max_planning_time);
             result = planner->solve();
-        }
-        else                                                    // No real-time scheduling
-        {
+            break;
+        
+        case planning::RealTimeScheduling::None:
             // std::cout << "Replanning without real-time scheduling \n";
             // std::cout << "Trying to replan in " << max_planning_time << " [s]... \n";
             planner = initStaticPlanner(max_planning_time);
             result = planner->solve();
+            break;
         }
 
         // New path is found within the specified time limit, thus update the predefined path to the goal
