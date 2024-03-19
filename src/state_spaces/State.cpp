@@ -27,13 +27,14 @@ void base::State::addChild(const std::shared_ptr<base::State> child)
 	children->emplace_back(child);
 }
 
-namespace base {
-std::ostream& operator<<(std::ostream &os, const std::shared_ptr<base::State> state)
+namespace base 
 {
-	if (state->getParent() == nullptr)
-		os << "q: (" << state->getCoord().transpose() << "); parent q: NONE";
-	else
-		os << "q: (" << state->getCoord().transpose() << "); parent q: (" << state->getParent()->getCoord().transpose() << ")";
-	return os;
-}
+	std::ostream &operator<<(std::ostream &os, const std::shared_ptr<base::State> state)
+	{
+		if (state->getParent() == nullptr)
+			os << "q: (" << state->getCoord().transpose() << "); parent q: NONE";
+		else
+			os << "q: (" << state->getCoord().transpose() << "); parent q: (" << state->getParent()->getCoord().transpose() << ")";
+		return os;
+	}
 }

@@ -121,22 +121,23 @@ void planning::trajectory::Spline::setTimeCurrent(float time_current_)
     else
     {
         std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
-        time_current = (std::chrono::duration_cast<std::chrono::microseconds>(time_start_ - time_start).count()) * 1e-6;
+        time_current = (std::chrono::duration_cast<std::chrono::nanoseconds>(time_start_ - time_start).count()) * 1e-9;
     }
 }
 
-namespace planning::trajectory {
-std::ostream& operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
+namespace planning::trajectory 
 {
-    for (int i = 0; i < spline->num_dimensions; i++)
+    std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
     {
-        os << "q_" << i << "(t) = ";
-        for (int j = 0; j <= spline->order; j++)
-            os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
-        
-        os << "\t for t in [0, " << spline->time_final << "] [s] \n";
-    }
+        for (int i = 0; i < spline->num_dimensions; i++)
+        {
+            os << "q_" << i << "(t) = ";
+            for (int j = 0; j <= spline->order; j++)
+                os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
+            
+            os << "\t for t in [0, " << spline->time_final << "] [s] \n";
+        }
 
-    return os;
-}
+        return os;
+    }
 }

@@ -23,21 +23,33 @@ planning::AbstractPlanner::AbstractPlanner(const std::shared_ptr<base::StateSpac
 
 planning::AbstractPlanner::~AbstractPlanner() {}
 
-// Get elapsed time (in milliseconds by default) from 'time_init' to 'time_current'
-int planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init,
-											  const std::chrono::steady_clock::time_point &time_current,
-										      const std::string &time_unit)
+/// @brief Get elapsed time from 'time_init' to now.
+/// @param time_init Time point from which measuring time starts.
+/// @param time_unit Time unit in which elapsed time is returned.
+/// @return Elapsed time in specified 'time_unit'. Default: seconds.
+float planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init, const planning::time_unit time_unit)
 {
 	try
 	{
-		if (time_unit == "ms")
-			return std::chrono::duration_cast<std::chrono::milliseconds>(time_current - time_init).count();
-		else if (time_unit == "us")
-			return std::chrono::duration_cast<std::chrono::microseconds>(time_current - time_init).count();
-		else if (time_unit == "ns")
-			return std::chrono::duration_cast<std::chrono::nanoseconds>(time_current - time_init).count();
-		else
+		auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_init).count();
+
+		switch (time_unit)
+		{
+		case planning::time_unit::s:
+			return time * 1e-9;
+
+		case planning::time_unit::ms:
+			return time * 1e-6;
+
+		case planning::time_unit::us:
+			return time * 1e-3;
+
+		case planning::time_unit::ns:
+			return float(time);
+		
+		default:
 			throw std::runtime_error("Error in measuring time! ");
+		}
 	}
 	catch(std::exception &e)
 	{

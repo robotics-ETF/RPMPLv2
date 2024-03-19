@@ -105,13 +105,14 @@ void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std
 	q_new->setNearestPoints(q_ref->getNearestPoints());
 }
 
-namespace base {
-std::ostream& operator<<(std::ostream &os, const Tree &tree)
+namespace base 
 {
-	os << "Tree: " << tree.getTreeName() << std::endl;
-	for (int i = 0; i < tree.getNumStates(); i++)
-		os << tree.getState(i) << std::endl;
-		
-	return os;
-}
+	std::ostream &operator<<(std::ostream &os, const Tree &tree)
+	{
+		os << "Tree: " << tree.getTreeName() << std::endl;
+		for (int i = 0; i < tree.getNumStates(); i++)
+			os << tree.getState(i) << std::endl;
+			
+		return os;
+	}
 }

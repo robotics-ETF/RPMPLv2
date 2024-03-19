@@ -59,9 +59,9 @@ make build
 ## 3.1 Set configuration parameters
 On the location ```/data/configurations``` you can find the configuration yaml files, which can be modified in order to set the desired configuration parameters for each planner.
 
-For example, open ```configuration_rgbmtstar.yaml```, and set the maximal planning time to 10 sec:
+For example, open ```configuration_rgbmtstar.yaml```, and set the maximal planning time to 10 seconds:
 ```
-MAX_PLANNING_TIME: 10000
+MAX_PLANNING_TIME: 10
 ```
 
 ## 3.2 Set scenario parameters for static planning
@@ -128,15 +128,15 @@ Parameters ```init_num``` and ```init_num_success``` are useful if you suddenly 
 
 In the file ```/data/configurations/configuration_drgbt```, you can set the following DRGBT parameters:
 - ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
-- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [ms]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [mm] during a single iteration;
-- ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [ms];
+- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [s]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [m] during a single iteration;
+- ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [s];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
 - ```D_CRIT```: Critical distance in W-space to compute critical nodes;
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
-- ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBTConnect" or "RGBMT*";
-- ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "", no real-time scheduling will be used;
-- ```MAX_TIME_TASK1```: Maximal time in [ms] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 20;
+- ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBMT*" or "RGBTConnect";
+- ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "none", no real-time scheduling will be used;
+- ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
 - ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'none' or 'spline'. If 'none' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.

@@ -14,6 +14,8 @@
 
 namespace planning
 {
+	enum time_unit {s, ms, us, ns};
+
 	class AbstractPlanner
 	{
 	public:
@@ -29,15 +31,16 @@ namespace planning
 		virtual bool solve() = 0;
 		virtual bool checkTerminatingCondition(base::State::Status status) = 0;
 		virtual void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const = 0;
-		int getElapsedTime(const std::chrono::steady_clock::time_point &time_init, const std::chrono::steady_clock::time_point &time_current,
-						   const std::string &time_unit = "ms");
+		float getElapsedTime(const std::chrono::steady_clock::time_point &time_init, const planning::time_unit time_unit = planning::time_unit::s);
+
 	protected:
 		std::shared_ptr<base::StateSpace> ss;
 		std::shared_ptr<PlannerInfo> planner_info;
 		std::shared_ptr<base::State> q_start;
 		std::shared_ptr<base::State> q_goal;
 		std::vector<std::shared_ptr<base::State>> path;
-		std::chrono::steady_clock::time_point time_start;
+		std::chrono::steady_clock::time_point time_alg_start;		// Start time point of the used algorithm
+		std::chrono::steady_clock::time_point time_iter_start;   	// Start time point at each iteration
 	};
 }
 #endif //RPMPL_ABSTRACTPLANNER_H

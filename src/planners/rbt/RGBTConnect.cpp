@@ -17,7 +17,7 @@ planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> 
 
 bool planning::rbt::RGBTConnect::solve()
 {
-	time_start = std::chrono::steady_clock::now();		// Start the clock
+	time_alg_start = std::chrono::steady_clock::now();		// Start the clock
 	int tree_idx = 0;  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
@@ -34,7 +34,7 @@ bool planning::rbt::RGBTConnect::solve()
 		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
-			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
+			for (size_t i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
 			{
 				q_e = getRandomState(q_near);				
 				tie(status, q_new_list) = extendGenSpine2(q_near, q_e);
@@ -62,7 +62,7 @@ bool planning::rbt::RGBTConnect::solve()
 
 		/* Planner info and terminating condition */
 	 	planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-		planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
+		planner_info->addIterationTime(getElapsedTime(time_alg_start));
 		planner_info->setNumStates(trees[0]->getNumStates() + trees[1]->getNumStates());
 		if (checkTerminatingCondition(status))
 			return planner_info->getSuccessState();
@@ -79,7 +79,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status;
 
-    for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
+    for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         tie(status, q_new) = extendSpine(q_new, q_e);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
@@ -100,7 +100,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 	std::vector<std::shared_ptr<base::State>> q_new_list;
     base::State::Status status;
 
-    for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
+    for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
         tie(status, q_new) = extendSpine(q_temp, q_e);
@@ -120,7 +120,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 	std::shared_ptr<base::State> q_new = q;
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
 	base::State::Status status = base::State::Status::Advanced;
-	int num_ext = 0;
+	size_t num_ext = 0;
 	
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
@@ -151,11 +151,11 @@ bool planning::rbt::RGBTConnect::checkTerminatingCondition(base::State::Status s
 	{
 		computePath();
 		planner_info->setSuccessState(true);
-		planner_info->setPlanningTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
+		planner_info->setPlanningTime(getElapsedTime(time_alg_start));
 		return true;
 	}
 
-	int time_current = getElapsedTime(time_start, std::chrono::steady_clock::now());
+	float time_current = getElapsedTime(time_alg_start);
 	if (time_current >= RGBTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RGBTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RGBTConnectConfig::MAX_NUM_ITER)
@@ -185,7 +185,7 @@ void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, 
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;
 		output_file << "\t Number of states:     " << planner_info->getNumStates() << std::endl;
-		output_file << "\t Planning time [ms]:   " << planner_info->getPlanningTime() << std::endl;
+		output_file << "\t Planning time [s]:    " << planner_info->getPlanningTime() << std::endl;
 		if (output_states_and_paths)
 		{
 			// Just to check how many states have real or underestimation of distance-to-obstacles computed

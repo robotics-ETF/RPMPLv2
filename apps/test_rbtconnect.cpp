@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
 	int num_test = 0;
 	int num_success = 0;
-	std::vector<int> planning_times;
+	std::vector<float> planning_times;
 	while (num_test++ < max_num_tests)
 	{
 		try
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 			LOG(INFO) << "RBTConnect planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [ms]";
+			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				
 			if (result)
 			{
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 		}
 	}
 	LOG(INFO) << "Success rate: " << (float) num_success / max_num_tests * 100 << " [%]";
-	LOG(INFO) << "Average planning time: " << getMean(planning_times) << " +- " << getStd(planning_times) << " [ms]";
+	LOG(INFO) << "Average planning time: " << getMean(planning_times) << " +- " << getStd(planning_times) << " [s]";
 
 	google::ShutDownCommandLineFlags();
 	return 0;

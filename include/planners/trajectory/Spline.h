@@ -21,6 +21,10 @@ namespace planning
             virtual bool compute(const Eigen::VectorXf &q_final) = 0;
             virtual bool checkConstraints(int idx, float t_f) = 0;
             
+            virtual std::vector<float> getMaxVelocityTimes(int idx) = 0;
+            virtual std::vector<float> getMaxAccelerationTimes(int idx) = 0;
+            virtual std::vector<float> getMaxJerkTimes(int idx) = 0;
+
             Eigen::VectorXf getPosition(float t);
             float getPosition(float t, int idx);
             virtual float getPosition(float t, int idx, float t_f) = 0;

@@ -61,29 +61,7 @@ float getMean(std::vector<float> &v)
 	return sum / v.size();
 }
 
-float getMean(std::vector<int> &v)
-{
-	if (v.empty()) 
-		return INFINITY;
-		
-	float sum = std::accumulate(v.begin(), v.end(), 0.0);
-	return sum / v.size();
-}
-
 float getStd(std::vector<float> &v)
-{
-	if (v.empty()) 
-		return INFINITY;
-		
-	float mean = getMean(v);
-	float sum = 0;
-	for (size_t i = 0; i < v.size(); i++)
-		sum += (v[i] - mean) * (v[i] - mean);
-
-	return std::sqrt(sum / v.size());
-}
-
-float getStd(std::vector<int> &v)
 {
 	if (v.empty()) 
 		return INFINITY;

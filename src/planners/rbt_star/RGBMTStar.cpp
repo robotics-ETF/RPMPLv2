@@ -27,7 +27,7 @@ planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace>
 
 bool planning::rbt_star::RGBMTStar::solve()
 {
-	time_start = std::chrono::steady_clock::now();     // Start the clock
+	time_alg_start = std::chrono::steady_clock::now();     // Start the clock
 	int tree_idx;                           // Determines the tree index, i.e., which tree is chosen, 0: from q_init; 1: from q_goal; >1: local trees
     int tree_new_idx = 2;                   // Index of the new tree
     std::shared_ptr<base::State> q_rand, q_near, q_new;
@@ -159,7 +159,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 
 		/* Planner info and terminating condition */
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-		planner_info->addIterationTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
+		planner_info->addIterationTime(getElapsedTime(time_alg_start));
 		int num_states_total = 0;
         num_states.resize(trees.size());
         for(size_t idx = 0; idx < trees.size(); idx++)
@@ -168,7 +168,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 		    num_states_total += num_states[idx];
         }
         planner_info->addCostConvergence(std::vector<float>(num_states_total - planner_info->getNumStates(), cost_opt));
-        planner_info->addStateTimes(std::vector<int>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
+        planner_info->addStateTimes(std::vector<float>(num_states_total - planner_info->getNumStates(), planner_info->getIterationTimes().back()));
         planner_info->setNumStates(num_states_total);
         if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
@@ -373,8 +373,8 @@ void planning::rbt_star::RGBMTStar::computePath(std::shared_ptr<base::State> q_c
 
 bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
-    if ((getElapsedTime(time_start, std::chrono::steady_clock::now()) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
-        planner_info->getNumStates() >= RGBMTStarConfig::MAX_NUM_STATES || 
+    if ((getElapsedTime(time_alg_start) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
+        planner_info->getNumStates() >= RGBMTStarConfig::MAX_NUM_STATES ||
         planner_info->getNumIterations() >= RGBMTStarConfig::MAX_NUM_ITER ||
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND) && (cost_opt < INFINITY))
     {
@@ -386,9 +386,9 @@ bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] b
         else
 		    planner_info->setSuccessState(false);
         
-        planner_info->setPlanningTime(getElapsedTime(time_start, std::chrono::steady_clock::now()));
+        planner_info->setPlanningTime(getElapsedTime(time_alg_start));
         return true;
-    }        
+    }
     return false;
 }
 
@@ -409,7 +409,7 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filenam
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;
 		output_file << "\t Number of states:     " << planner_info->getNumStates() << std::endl;
-		output_file << "\t Planning time [ms]:   " << planner_info->getPlanningTime() << std::endl;
+		output_file << "\t Planning time [s]:    " << planner_info->getPlanningTime() << std::endl;
 		output_file << "\t Path cost [rad]:      " << planner_info->getCostConvergence().back() << std::endl;
 		if (output_states_and_paths)
 		{
@@ -438,7 +438,7 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filenam
                 output_file << *trees[i];
 
             output_file << "Cost convergence: \n" 
-                        << "Cost [rad]\t\tNum. states\t\tTime [ms]" << std::endl;
+                        << "Cost [rad]\t\tNum. states\t\tTime [s]" << std::endl;
 			for (size_t i = 0; i < planner_info->getNumStates(); i++)
                 output_file << planner_info->getCostConvergence()[i] << "\t\t"
 							<< i+1 << "\t\t"
