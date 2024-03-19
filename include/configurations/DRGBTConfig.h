@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <PlanningTypes.h>
 
 typedef unsigned long size_t;
 
@@ -18,8 +19,8 @@ public:
     static size_t MAX_NUM_VALIDITY_CHECKS;                                  // Maximal number of validity checks when robot moves from previous to current configuration, while the obstacles are moving simultaneously
     static size_t MAX_NUM_MODIFY_ATTEMPTS;                                  // Maximal number of attempts when modifying bad or critical states
     static planning::PlannerType STATIC_PLANNER_TYPE;                       // Name of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect" 
-    static planning::RealTimeScheduling REAL_TIME_SCHEDULING;               // "FPS" - Fixed Priority Scheduling; "none" - Without real-time scheduling    
+    static planning::RealTimeScheduling REAL_TIME_SCHEDULING;               // "FPS" - Fixed Priority Scheduling; "None" - Without real-time scheduling    
     static float MAX_TIME_TASK1;                                            // Maximal time which Task 1 can take from the processor
     static float MAX_TIME_UPDATE_CURRENT_STATE;                             // Maximal time for the routine 'updateCurrentState'
-    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "none" or "spline"
+    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None" or "Spline"
 };
