@@ -39,7 +39,7 @@ bool planning::rbt::RBTConnect::solve()
 		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
-			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
+			for (size_t i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
 			{
 				q_e = getRandomState(q_near);
 				tie(status, q_new) = extendSpine(q_near, q_e);
@@ -99,7 +99,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 	std::vector<float> rho_profile(ss->robot->getNumLinks(), 0);	// The path length in W-space for each robot's link
 	float rho = 0; 														// The path length in W-space for complete robot
 	float step;
-	int counter = 0;
+	size_t counter = 0;
 	std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
 	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
 	std::shared_ptr<Eigen::MatrixXf> skeleton_new = skeleton;
@@ -142,7 +142,7 @@ base::State::Status planning::rbt::RBTConnect::connectSpine
 	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
-	int num_ext = 0;
+	size_t num_ext = 0;
 
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{

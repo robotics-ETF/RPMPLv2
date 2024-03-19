@@ -40,7 +40,7 @@ bool planning::rbt::RGBTConnect::solve()
 		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
-			for (int i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
+			for (size_t i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
 			{
 				q_e = getRandomState(q_near);				
 				tie(status, q_new_list) = extendGenSpine2(q_near, q_e);
@@ -85,7 +85,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status;
 
-    for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
+    for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         tie(status, q_new) = extendSpine(q_new, q_e);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
@@ -106,7 +106,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 	std::vector<std::shared_ptr<base::State>> q_new_list;
     base::State::Status status;
 
-    for (int i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
+    for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
         tie(status, q_new) = extendSpine(q_temp, q_e);
@@ -126,7 +126,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 	std::shared_ptr<base::State> q_new = q;
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
 	base::State::Status status = base::State::Status::Advanced;
-	int num_ext = 0;
+	size_t num_ext = 0;
 	
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{

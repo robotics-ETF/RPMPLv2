@@ -33,7 +33,7 @@ public:
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
-            RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS = RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].as<int>();
+            RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS = RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].as<size_t>();
         else
             LOG(INFO) << "RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS is not defined! Using default value of " << RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS;
         
@@ -44,12 +44,12 @@ public:
 
         // RRTConnectConfigRoot
         if (RRTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
-            RRTConnectConfig::MAX_NUM_ITER = RRTConnectConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+            RRTConnectConfig::MAX_NUM_ITER = RRTConnectConfigRoot["MAX_NUM_ITER"].as<size_t>();
         else
             LOG(INFO) << "RRTConnectConfig::MAX_NUM_ITER is not defined! Using default value of " << RRTConnectConfig::MAX_NUM_ITER;
         
         if (RRTConnectConfigRoot["MAX_NUM_STATES"].IsDefined())
-            RRTConnectConfig::MAX_NUM_STATES = RRTConnectConfigRoot["MAX_NUM_STATES"].as<unsigned long>();
+            RRTConnectConfig::MAX_NUM_STATES = RRTConnectConfigRoot["MAX_NUM_STATES"].as<size_t>();
         else
             LOG(INFO) << "RRTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RRTConnectConfig::MAX_NUM_STATES;
         
@@ -59,7 +59,7 @@ public:
             LOG(INFO) << "RRTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RRTConnectConfig::MAX_PLANNING_TIME;
         
         if (RRTConnectConfigRoot["MAX_EXTENSION_STEPS"].IsDefined())
-            RRTConnectConfig::MAX_EXTENSION_STEPS = RRTConnectConfigRoot["MAX_EXTENSION_STEPS"].as<int>();
+            RRTConnectConfig::MAX_EXTENSION_STEPS = RRTConnectConfigRoot["MAX_EXTENSION_STEPS"].as<size_t>();
         else
             LOG(INFO) << "RRTConnectConfig::MAX_EXTENSION_STEPS is not defined! Using default value of " << RRTConnectConfig::MAX_EXTENSION_STEPS;
         
@@ -70,12 +70,12 @@ public:
 
         // RBTConnectConfigRoot
         if (RBTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
-            RBTConnectConfig::MAX_NUM_ITER = RBTConnectConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+            RBTConnectConfig::MAX_NUM_ITER = RBTConnectConfigRoot["MAX_NUM_ITER"].as<size_t>();
         else
             LOG(INFO) << "RBTConnectConfig::MAX_NUM_ITER is not defined! Using default value of " << RBTConnectConfig::MAX_NUM_ITER;
         
         if (RBTConnectConfigRoot["MAX_NUM_STATES"].IsDefined())
-            RBTConnectConfig::MAX_NUM_STATES = RBTConnectConfigRoot["MAX_NUM_STATES"].as<unsigned long>();
+            RBTConnectConfig::MAX_NUM_STATES = RBTConnectConfigRoot["MAX_NUM_STATES"].as<size_t>();
         else
             LOG(INFO) << "RBTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RBTConnectConfig::MAX_NUM_STATES;
         
@@ -95,12 +95,12 @@ public:
             LOG(INFO) << "RBTConnectConfig::DELTA is not defined! Using default value of " << RBTConnectConfig::DELTA;
         
         if (RBTConnectConfigRoot["NUM_SPINES"].IsDefined())
-            RBTConnectConfig::NUM_SPINES = RBTConnectConfigRoot["NUM_SPINES"].as<int>();
+            RBTConnectConfig::NUM_SPINES = RBTConnectConfigRoot["NUM_SPINES"].as<size_t>();
         else
             LOG(INFO) << "RBTConnectConfig::NUM_SPINES is not defined! Using default value of " << RBTConnectConfig::NUM_SPINES;
         
         if (RBTConnectConfigRoot["NUM_ITER_SPINE"].IsDefined())
-            RBTConnectConfig::NUM_ITER_SPINE = RBTConnectConfigRoot["NUM_ITER_SPINE"].as<int>();
+            RBTConnectConfig::NUM_ITER_SPINE = RBTConnectConfigRoot["NUM_ITER_SPINE"].as<size_t>();
         else
             LOG(INFO) << "RBTConnectConfig::NUM_ITER_SPINE is not defined! Using default value of " << RBTConnectConfig::NUM_ITER_SPINE;
 
@@ -111,12 +111,12 @@ public:
 
         // RGBTConnectConfigRoot
         if (RGBTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
-            RGBTConnectConfig::MAX_NUM_ITER = RGBTConnectConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+            RGBTConnectConfig::MAX_NUM_ITER = RGBTConnectConfigRoot["MAX_NUM_ITER"].as<size_t>();
         else
             LOG(INFO) << "RGBTConnectConfig::MAX_NUM_ITER is not defined! Using default value of " << RGBTConnectConfig::MAX_NUM_ITER;
         
         if (RGBTConnectConfigRoot["MAX_NUM_STATES"].IsDefined())
-            RGBTConnectConfig::MAX_NUM_STATES = RGBTConnectConfigRoot["MAX_NUM_STATES"].as<unsigned long>();
+            RGBTConnectConfig::MAX_NUM_STATES = RGBTConnectConfigRoot["MAX_NUM_STATES"].as<size_t>();
         else
             LOG(INFO) << "RGBTConnectConfig::MAX_NUM_STATES is not defined! Using default value of " << RGBTConnectConfig::MAX_NUM_STATES;
         
@@ -126,18 +126,18 @@ public:
             LOG(INFO) << "RGBTConnectConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RGBTConnectConfig::MAX_PLANNING_TIME;
         
         if (RGBTConnectConfigRoot["NUM_LAYERS"].IsDefined())
-            RGBTConnectConfig::NUM_LAYERS = RGBTConnectConfigRoot["NUM_LAYERS"].as<int>();
+            RGBTConnectConfig::NUM_LAYERS = RGBTConnectConfigRoot["NUM_LAYERS"].as<size_t>();
         else
             LOG(INFO) << "RGBTConnectConfig::NUM_LAYERS is not defined! Using default value of " << RGBTConnectConfig::NUM_LAYERS;
         
         // RGBMTStarConfigRoot
         if (RGBMTStarConfigRoot["MAX_NUM_ITER"].IsDefined())
-            RGBMTStarConfig::MAX_NUM_ITER = RGBMTStarConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+            RGBMTStarConfig::MAX_NUM_ITER = RGBMTStarConfigRoot["MAX_NUM_ITER"].as<size_t>();
         else
             LOG(INFO) << "RGBMTStarConfig::MAX_NUM_ITER is not defined! Using default value of " << RGBMTStarConfig::MAX_NUM_ITER;
         
         if (RGBMTStarConfigRoot["MAX_NUM_STATES"].IsDefined())
-            RGBMTStarConfig::MAX_NUM_STATES = RGBMTStarConfigRoot["MAX_NUM_STATES"].as<unsigned long>();
+            RGBMTStarConfig::MAX_NUM_STATES = RGBMTStarConfigRoot["MAX_NUM_STATES"].as<size_t>();
         else
             LOG(INFO) << "RGBMTStarConfig::MAX_NUM_STATES is not defined! Using default value of " << RGBMTStarConfig::MAX_NUM_STATES;
         
@@ -153,7 +153,7 @@ public:
 
         // DRGBTConfigRoot
         if (DRGBTConfigRoot["MAX_NUM_ITER"].IsDefined())
-            DRGBTConfig::MAX_NUM_ITER = DRGBTConfigRoot["MAX_NUM_ITER"].as<unsigned long>();
+            DRGBTConfig::MAX_NUM_ITER = DRGBTConfigRoot["MAX_NUM_ITER"].as<size_t>();
         else
             LOG(INFO) << "DRGBTConfig::MAX_NUM_ITER is not defined! Using default value of " << DRGBTConfig::MAX_NUM_ITER;
         
@@ -168,7 +168,7 @@ public:
             LOG(INFO) << "DRGBTConfig::MAX_PLANNING_TIME is not defined! Using default value of " << DRGBTConfig::MAX_PLANNING_TIME;
         
         if (DRGBTConfigRoot["INIT_HORIZON_SIZE"].IsDefined())
-            DRGBTConfig::INIT_HORIZON_SIZE = DRGBTConfigRoot["INIT_HORIZON_SIZE"].as<int>();
+            DRGBTConfig::INIT_HORIZON_SIZE = DRGBTConfigRoot["INIT_HORIZON_SIZE"].as<size_t>();
         else
             LOG(INFO) << "DRGBTConfig::INIT_HORIZON_SIZE is not defined! Using default value of " << DRGBTConfig::INIT_HORIZON_SIZE;
         
@@ -183,7 +183,7 @@ public:
             LOG(INFO) << "DRGBTConfig::D_CRIT is not defined! Using default value of " << DRGBTConfig::D_CRIT;
 
         if (DRGBTConfigRoot["MAX_NUM_MODIFY_ATTEMPTS"].IsDefined())
-            DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS = DRGBTConfigRoot["MAX_NUM_MODIFY_ATTEMPTS"].as<int>();
+            DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS = DRGBTConfigRoot["MAX_NUM_MODIFY_ATTEMPTS"].as<size_t>();
         else
             LOG(INFO) << "DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS is not defined! Using default value of " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;
 
