@@ -146,7 +146,7 @@ All test files are available within the folder ```/apps```. For example, open ``
 
 In the new tab type:
 ```
-cd ~/RPMPLv2/install/rpmpl_library/apps
+cd ~/RPMPLv2/build/rpmpl_library/apps
 ```
 
 Test RRT-Connect:
