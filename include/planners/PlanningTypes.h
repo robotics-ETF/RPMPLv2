@@ -19,7 +19,7 @@ namespace planning
 		ns
 	};
 
-	std::unordered_map<std::string, planning::TimeUnit> time_unit_map = 
+	static std::unordered_map<std::string, planning::TimeUnit> time_unit_map = 
 	{
 		{ "s", planning::TimeUnit::s },
 		{ "ms", planning::TimeUnit::ms },
@@ -37,7 +37,7 @@ namespace planning
 		DRGBT
 	};
 
-	std::unordered_map<std::string, planning::PlannerType> planner_type_map = 
+	static std::unordered_map<std::string, planning::PlannerType> planner_type_map = 
 	{
 		{ "Abstract", planning::PlannerType::Abstract },
 		{ "RRT-Connect", planning::PlannerType::RRTConnect },
@@ -53,7 +53,7 @@ namespace planning
 		FPS
 	};
 
-	std::unordered_map<std::string, planning::RealTimeScheduling> real_time_scheduling_map = 
+	static std::unordered_map<std::string, planning::RealTimeScheduling> real_time_scheduling_map = 
 	{
 		{ "None", planning::RealTimeScheduling::None },
 		{ "FPS", planning::RealTimeScheduling::FPS}
@@ -65,7 +65,7 @@ namespace planning
 		Spline
 	};
 
-	std::unordered_map<std::string, planning::TrajectoryInterpolation> trajectory_interpolation_map = 
+	static std::unordered_map<std::string, planning::TrajectoryInterpolation> trajectory_interpolation_map = 
 	{
 		{ "None", planning::TrajectoryInterpolation::None },
 		{ "Spline", planning::TrajectoryInterpolation::Spline}
