@@ -32,14 +32,14 @@ planning::rbt_star::RGBMTStar::RGBMTStar(const std::shared_ptr<base::StateSpace>
 bool planning::rbt_star::RGBMTStar::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now();     // Start the clock
-	int tree_idx;                           // Determines the tree index, i.e., which tree is chosen, 0: from q_init; 1: from q_goal; >1: local trees
-    int tree_new_idx = 2;                   // Index of the new tree
+	size_t tree_idx;                           // Determines a tree index, i.e., which tree is chosen, 0: from q_init; 1: from q_goal; >1: local trees
+    size_t tree_new_idx = 2;                   // Index of a new tree
     std::shared_ptr<base::State> q_rand, q_near, q_new;
 	base::State::Status status {base::State::Status::None};
-    std::vector<int> trees_exist;                               // List of trees for which a new tree is extended to
-    std::vector<int> trees_reached;                             // List of reached trees
-    std::vector<int> trees_connected;                           // List of connected trees
-    std::vector<std::shared_ptr<base::State>> states_reached;   // Reached states from other trees
+    std::vector<size_t> trees_exist;                                // List of trees for which a new tree is extended to
+    std::vector<size_t> trees_reached;                              // List of reached trees
+    std::vector<size_t> trees_connected;                            // List of connected trees
+    std::vector<std::shared_ptr<base::State>> states_reached;       // Reached states from other trees
 
     while (true)
     {
@@ -63,7 +63,7 @@ bool planning::rbt_star::RGBMTStar::solve()
         states_reached = std::vector<std::shared_ptr<base::State>>(tree_new_idx, nullptr);
 
         // Considering all previous trees
-        for (int idx = 0; idx < tree_new_idx; idx++)
+        for (size_t idx = 0; idx < tree_new_idx; idx++)
         {
             // If the connection with 'q_near' is not possible, attempt to connect with 'parent(q_near)', etc.
             q_near = trees[idx]->getNearestState(q_rand);
@@ -115,8 +115,8 @@ bool planning::rbt_star::RGBMTStar::solve()
 
             // Considering all edges from the new tree
             q_rand = optimize(q_rand, trees[tree_idx], states_reached[tree_idx]);
-            int k = 0;  // Index of the state from the new tree 'tree_new_idx'
-            for (int idx : trees_exist)
+            size_t k = 0;  // Index of the state from the new tree 'tree_new_idx'
+            for (size_t idx : trees_exist)
             {
                 k += 1;
                 if (idx == tree_idx)  // It was considered previously, so just skip now
@@ -164,7 +164,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 		/* Planner info and terminating condition */
         planner_info->setNumIterations(planner_info->getNumIterations() + 1);
 		planner_info->addIterationTime(getElapsedTime(time_alg_start));
-		int num_states_total = 0;
+		size_t num_states_total = 0;
         num_states.resize(trees.size());
         for(size_t idx = 0; idx < trees.size(); idx++)
         {
@@ -181,7 +181,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 
 std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
 {
-    int tree_idx;
+    size_t tree_idx;
     std::shared_ptr<base::State> q_rand, q_near;
     base::State::Status status;
     while (true)
@@ -211,7 +211,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 	float d_c = ss->computeDistance(q);
 	std::shared_ptr<base::State> q_new = q;
 	base::State::Status status = base::State::Status::Advanced;
-	int num_ext = 0;
+	size_t num_ext = 0;
 	while (status == base::State::Status::Advanced)
 	{
 		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
@@ -264,10 +264,10 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
         Eigen::VectorXf q_opt_ = q_reached->getCoord();  // It is surely collision-free. It will become an optimal state later
         Eigen::VectorXf q_parent_ = q_reached->getParent()->getCoord();   // Needs to be collision-checked
         std::shared_ptr<base::State> q_middle = ss->getRandomState();
-        int max_iter = std::floor(std::log2(10 * ss->getNorm(q_reached->getParent(), q_reached)));
+        size_t max_iter = std::floor(std::log2(10 * ss->getNorm(q_reached->getParent(), q_reached)));
         bool update = false;
 
-        for (int i = 0; i < max_iter; i++)
+        for (size_t i = 0; i < max_iter; i++)
         {
             q_middle->setCoord((q_opt_ + q_parent_) / 2);
             if (std::get<0>(connectGenSpine(q, q_middle)) == base::State::Status::Reached)
@@ -356,7 +356,7 @@ void planning::rbt_star::RGBMTStar::considerChildren(const std::shared_ptr<base:
 }
 
 // Delete all trees with indices 'idx'
-void planning::rbt_star::RGBMTStar::deleteTrees(const std::vector<int> &trees_connected)
+void planning::rbt_star::RGBMTStar::deleteTrees(const std::vector<size_t> &trees_connected)
 {
     for (int i = trees_connected.size()-1; i >= 0; i--)
         trees.erase(trees.begin() + trees_connected[i]);
@@ -418,8 +418,8 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filenam
 		if (output_states_and_paths)
 		{
             // Just to check how many states have real or underestimation of distance-to-obstacles computed
-            // int num_real = 0, num_underest = 0, num_total = 0;
-            // for (int i = 0; i < trees.size(); i++)
+            // size_t num_real = 0, num_underest = 0, num_total = 0;
+            // for (size_t i = 0; i < trees.size(); i++)
             // {
             //     output_file << *trees[i];
             //     for (auto q : *trees[i]->getStates())

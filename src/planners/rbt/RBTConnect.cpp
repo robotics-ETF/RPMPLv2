@@ -24,7 +24,7 @@ planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss
 bool planning::rbt::RBTConnect::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
-	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	size_t tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
 	base::State::Status status {base::State::Status::None};
 
@@ -126,7 +126,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		skeleton_new = ss->robot->computeSkeleton(q_new);
 		float rho_k;
 		float rho_k1 = 0;
-		for (int k = 1; k <= ss->robot->getNumLinks(); k++)
+		for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
 		{
 			rho_k = (skeleton->col(k) - skeleton_new->col(k)).norm();
 			rho_profile[k-1] = std::max(rho_k1, rho_k);
@@ -207,8 +207,8 @@ void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, b
 		if (output_states_and_paths)
 		{
 			// Just to check how many states have distance-to-obstacles computed
-            // int num_real = 0, num_total = 0;
-            // for (int i = 0; i < trees.size(); i++)
+            // size_t num_real = 0, num_total = 0;
+            // for (size_t i = 0; i < trees.size(); i++)
             // {
             //     output_file << *trees[i];
             //     for (auto q : *trees[i]->getStates())

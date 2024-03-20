@@ -40,7 +40,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     path.emplace_back(q_start);                               // State 'q_start' is added to the realized path
 
     delta_q_max = 0;
-    for (int i = 0; i < ss->num_dimensions; i++)
+    for (size_t i = 0; i < ss->num_dimensions; i++)
         delta_q_max += std::pow(ss->robot->getMaxVel(i), 2);
     delta_q_max = std::sqrt(delta_q_max) * DRGBTConfig::MAX_ITER_TIME;
 
@@ -217,7 +217,7 @@ void planning::drbt::DRGBT::generateHorizon()
     q_next = horizon.front();
 
     // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
-    // for (int i = 0; i < horizon.size(); i++)
+    // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
     
     planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
@@ -259,7 +259,7 @@ void planning::drbt::DRGBT::generateGBur()
 {
     // std::cout << "Generating gbur by computing reached states... \n";
     auto time_generateGBur = std::chrono::steady_clock::now();
-    int max_num_attempts;
+    size_t max_num_attempts;
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)
@@ -304,9 +304,9 @@ void planning::drbt::DRGBT::generateGBur()
 }
 
 // Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
-void planning::drbt::DRGBT::shortenHorizon(int num)
+void planning::drbt::DRGBT::shortenHorizon(size_t num)
 {
-    int num_deleted = 0;
+    size_t num_deleted = 0;
     for (int i = horizon.size() - 1; i >= 0; i--)
     {
         if (horizon[i]->getStatus() == planning::drbt::HorizonState::Status::Bad)
@@ -341,10 +341,10 @@ void planning::drbt::DRGBT::shortenHorizon(int num)
     }
 }
 
-void planning::drbt::DRGBT::addRandomStates(int num)
+void planning::drbt::DRGBT::addRandomStates(size_t num)
 {
     std::shared_ptr<base::State> q_rand;
-    for (int i = 0; i < num; i++)
+    for (size_t i = 0; i < num; i++)
     {
         q_rand = getRandomState(q_target);
         horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_rand, -1));
@@ -354,7 +354,7 @@ void planning::drbt::DRGBT::addRandomStates(int num)
 
 void planning::drbt::DRGBT::addLateralStates()
 {
-    int num_added = 0;
+    size_t num_added = 0;
     if (ss->num_dimensions == 2)   // In 2D C-space only two possible lateral spines exist
     {
         std::shared_ptr<base::State> q_new;
@@ -376,7 +376,7 @@ void planning::drbt::DRGBT::addLateralStates()
     }
     else
     {
-        int idx;
+        size_t idx;
         for (idx = 0; idx < ss->num_dimensions; idx++)
             if (std::abs(q_next->getCoord(idx) - q_target->getCoord(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
                 break;
@@ -385,7 +385,7 @@ void planning::drbt::DRGBT::addLateralStates()
         {
             std::shared_ptr<base::State> q_new;
             float coord;
-            for (int i = 0; i < num_lateral_states; i++)
+            for (size_t i = 0; i < num_lateral_states; i++)
             {
                 q_new = ss->getRandomState(q_target);
                 coord = q_target->getCoord(idx) + q_new->getCoord(idx) -
@@ -409,7 +409,7 @@ void planning::drbt::DRGBT::addLateralStates()
 // Modify state 'q' by replacing it with a random state, which is generated using biased distribution,
 // i.e., oriented weight around 'q' ('q->getStatus()' == Bad), or around '-q' ('q->getStatus()' == Critical).
 // Return whether the modification is successful
-bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonState> &q, int max_num_attempts)
+bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonState> &q, size_t max_num_attempts)
 {
     std::shared_ptr<planning::drbt::HorizonState> q_new_horizon_state;
     std::shared_ptr<base::State> q_new;
@@ -417,7 +417,7 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonS
     float norm = ss->getNorm(q_target, q_reached);
     float coeff = 0;
     
-    for (int num = 0; num < max_num_attempts; num++)
+    for (size_t num = 0; num < max_num_attempts; num++)
     {
         Eigen::VectorXf vec = Eigen::VectorXf::Random(ss->num_dimensions) * norm / std::sqrt(ss->num_dimensions - 1);
         vec(0) = (vec(0) > 0) ? 1 : -1;
@@ -479,7 +479,7 @@ void planning::drbt::DRGBT::computeNextState()
 {
     std::vector<float> dist_to_goal(horizon.size());
     float d_goal_min = INFINITY;
-    int d_goal_min_idx = -1;
+    size_t d_goal_min_idx;
     float d_c_max = 0;
 
     for (size_t i = 0; i < horizon.size(); i++)
@@ -579,7 +579,7 @@ void planning::drbt::DRGBT::computeNextState()
     // std::cout << "Setting the robot next state to: " << q_next->getCoord().transpose() << "\n";
     
     // std::cout << "Horizon consists of " << horizon.size() << " states: \n";
-    // for (int i = 0; i < horizon.size(); i++)
+    // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
 }
 
@@ -612,7 +612,7 @@ void planning::drbt::DRGBT::updateCurrentState2()
 
     // If all velocities are not the same, the following can be used:
     std::vector<std::pair<float, float>> limits;
-    for (int i = 0; i < ss->num_dimensions; i++)
+    for (size_t i = 0; i < ss->num_dimensions; i++)
     {
         limits.emplace_back(std::pair<float, float>
             (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, 
@@ -924,7 +924,7 @@ void planning::drbt::DRGBT::acquirePredefinedPath(const std::vector<std::shared_
     }
 
     // std::cout << "Predefined path is: \n";
-    // for (int i = 0; i < predefined_path.size(); i++)
+    // for (size_t i = 0; i < predefined_path.size(); i++)
     //     std::cout << predefined_path.at(i) << "\n";
     // std::cout << std::endl;
 }
@@ -934,7 +934,7 @@ void planning::drbt::DRGBT::acquirePredefinedPath(const std::vector<std::shared_
 /// @param num_checks Number of checks of motion validity, which depends on maximal velocity of obstacles.
 /// @return The validity of motion.
 /// @note In reality, this motion would happen continuously during the execution of the current algorithm iteration.
-bool planning::drbt::DRGBT::checkMotionValidity2(int num_checks)
+bool planning::drbt::DRGBT::checkMotionValidity2(size_t num_checks)
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
     std::shared_ptr<base::State> q_temp;
@@ -942,7 +942,7 @@ bool planning::drbt::DRGBT::checkMotionValidity2(int num_checks)
     float delta_time = DRGBTConfig::MAX_ITER_TIME / num_checks;
     bool is_valid = true;
 
-    for (int num_check = 1; num_check <= num_checks; num_check++)
+    for (size_t num_check = 1; num_check <= num_checks; num_check++)
     {
         ss->env->updateEnvironment(delta_time);
         q_temp = ss->interpolateEdge(q_previous, q_current, dist * num_check / num_checks, dist);
@@ -952,7 +952,7 @@ bool planning::drbt::DRGBT::checkMotionValidity2(int num_checks)
             break;
     }
 
-    // for (int i = 0; i < ss->env->getNumObjects(); i++)
+    // for (size_t i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
     return is_valid;
@@ -964,12 +964,12 @@ bool planning::drbt::DRGBT::checkMotionValidity2(int num_checks)
 /// @param num_checks Number of checks of motion validity, which depends on maximal velocity of obstacles.
 /// @return The validity of motion.
 /// @note In reality, this motion would happen continuously during the execution of the current algorithm iteration.
-bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
+bool planning::drbt::DRGBT::checkMotionValidity(size_t num_checks)
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
-    int num_checks1 = std::ceil((spline_current->getTimeCurrent() - spline_current->getTimeBegin()) * num_checks 
-                                / DRGBTConfig::MAX_ITER_TIME);
-    int num_checks2 = num_checks - num_checks1;
+    size_t num_checks1 = std::ceil((spline_current->getTimeCurrent() - spline_current->getTimeBegin()) * num_checks 
+                                   / DRGBTConfig::MAX_ITER_TIME);
+    size_t num_checks2 = num_checks - num_checks1;
     float delta_time1 = (spline_current->getTimeCurrent() - spline_current->getTimeBegin()) / num_checks1;
     float delta_time2 = (spline_next->getTimeEnd() - spline_next->getTimeCurrent()) / num_checks2;
     float t;
@@ -982,7 +982,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
     //                                         << spline_next->getTimeCurrent() * 1000 << " [ms] \t"
     //                                         << spline_next->getTimeEnd() * 1000 << " [ms] \n";
 
-    for (int num_check = 1; num_check <= num_checks; num_check++)
+    for (size_t num_check = 1; num_check <= num_checks; num_check++)
     {
         if (num_check <= num_checks1)
         {
@@ -1005,7 +1005,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(int num_checks)
             break;
     }
     
-    // for (int i = 0; i < ss->env->getNumObjects(); i++)
+    // for (size_t i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
     return is_valid;

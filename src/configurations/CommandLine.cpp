@@ -19,15 +19,15 @@ void CommandLine::printHelp(std::ostream &os) const
     // Find the argument with the longest combined flag length (in order
     // to align the help messages).
 
-    int maxFlagLength = 0;
+    size_t maxFlagLength = 0;
 
     for (auto const &argument : mArguments)
     {
-        int flagLength = 0;
+        size_t flagLength = 0;
         for (auto const &flag : argument.mFlags)
         {
             // Plus comma and space.
-            flagLength += static_cast<int>(flag.size()) + 2;
+            flagLength += static_cast<size_t>(flag.size()) + 2;
         }
 
         maxFlagLength = std::max(maxFlagLength, flagLength);
@@ -52,10 +52,10 @@ void CommandLine::printHelp(std::ostream &os) const
         // Print the help for each argument. This is a bit more involved
         // since we do line wrapping for long descriptions.
         size_t spacePos = 0;
-        int lineWidth = 0;
+        size_t lineWidth = 0;
         while (spacePos != std::string::npos)
         {
-            int nextspacePos = argument.mHelp.find_first_of(' ', spacePos + 1);
+            size_t nextspacePos = argument.mHelp.find_first_of(' ', spacePos + 1);
             sstr << argument.mHelp.substr(spacePos, nextspacePos - spacePos);
             lineWidth += nextspacePos - spacePos;
             spacePos = nextspacePos;

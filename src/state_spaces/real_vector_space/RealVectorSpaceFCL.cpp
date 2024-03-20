@@ -9,7 +9,7 @@
 
 base::RealVectorSpaceFCL::~RealVectorSpaceFCL() {}
 
-base::RealVectorSpaceFCL::RealVectorSpaceFCL(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+base::RealVectorSpaceFCL::RealVectorSpaceFCL(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 											 const std::shared_ptr<env::Environment> env_) : RealVectorSpace(num_dimensions_, robot_, env_)
 {
 	setStateSpaceType(base::StateSpaceType::RealVectorSpaceFCL);
@@ -22,9 +22,9 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	robot->setState(q);	
 	fcl::DefaultCollisionData<float> collision_data;
 
-	for (int i = 0; i < robot->getNumLinks(); i++)
+	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{	
-		for (int j = 0; j < env->getNumObjects(); j++)
+		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
 				robot->getType().find("with_table") != std::string::npos)
@@ -64,10 +64,10 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 	fcl::DefaultDistanceData<float> distance_data;
 	robot->setState(q);
 	
-	for (int i = 0; i < robot->getNumLinks(); i++)
+	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
 		d_c_profile[i] = INFINITY;
-		for (int j = 0; j < env->getNumObjects(); j++)
+		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
 				robot->getType().find("with_table") != std::string::npos)

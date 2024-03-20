@@ -24,7 +24,7 @@ planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> 
 bool planning::rbt::RGBTConnect::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now();		// Start the clock
-	int tree_idx = 0;  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	size_t tree_idx = 0;  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e, q_near, q_new;
     std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
 	base::State::Status status {base::State::Status::None};
@@ -195,8 +195,8 @@ void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, 
 		if (output_states_and_paths)
 		{
 			// Just to check how many states have real or underestimation of distance-to-obstacles computed
-            // int num_real = 0, num_underest = 0, num_total = 0;
-            // for (int i = 0; i < trees.size(); i++)
+            // size_t num_real = 0, num_underest = 0, num_total = 0;
+            // for (size_t i = 0; i < trees.size(); i++)
             // {
             //     output_file << *trees[i];
             //     for (auto q : *trees[i]->getStates())

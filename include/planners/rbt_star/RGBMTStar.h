@@ -34,7 +34,7 @@ namespace planning
                                                   std::shared_ptr<base::State> q_reached);
             void unifyTrees(const std::shared_ptr<base::Tree> tree0, const std::shared_ptr<base::State> q_con, 
                             const std::shared_ptr<base::State> q0_con);
-            void deleteTrees(const std::vector<int> &trees_connected);
+            void deleteTrees(const std::vector<size_t> &trees_connected);
             std::shared_ptr<base::State> getRandomState();
             void computePath(std::shared_ptr<base::State> q_con);
     

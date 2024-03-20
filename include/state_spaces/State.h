@@ -20,7 +20,7 @@ namespace base
 		
 	protected:
 		base::StateSpaceType state_space_type;
-		int num_dimensions;												// Dimensionality in C-space
+		size_t num_dimensions;											// Dimensionality in C-space
 		Eigen::VectorXf coord;											// Coordinates in C-space
 		int tree_idx;													// Tree index in which the state is stored
 		int idx; 														// Index of the state in the tree
@@ -38,7 +38,7 @@ namespace base
 		virtual ~State() = 0;
 
 		inline base::StateSpaceType getStateSpaceType() const { return state_space_type; }
-		inline int getNumDimensions() const { return num_dimensions; }
+		inline size_t getNumDimensions() const { return num_dimensions; }
 		inline const Eigen::VectorXf &getCoord() const { return coord; }
 		inline float getCoord(size_t idx) const { return coord(idx); }
 		inline int getTreeIdx() const { return tree_idx; }
@@ -52,9 +52,9 @@ namespace base
 		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; };
 
 		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
-		inline void setNumDimensions(int num_dimensions_) { num_dimensions = num_dimensions_; }
+		inline void setNumDimensions(size_t num_dimensions_) { num_dimensions = num_dimensions_; }
 		inline void setCoord(const Eigen::VectorXf &coord_) { coord = coord_; }
-		inline void setCoord(const float coord_, int idx) { coord(idx) = coord_; }
+		inline void setCoord(const float coord_, size_t idx) { coord(idx) = coord_; }
 		inline void setTreeIdx(int tree_idx_) { tree_idx = tree_idx_; }
 		inline void setIdx(int idx_) { idx = idx_; }
 		inline void setDistance(float d_c_) { d_c = d_c_; }

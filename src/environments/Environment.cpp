@@ -13,7 +13,7 @@
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
     YAML::Node node = YAML::LoadFile(root_path + config_file_path);
-    int num_added = 0;
+    size_t num_added = 0;
 
     try
     {
@@ -61,7 +61,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
         if (node["robot"]["WS_center"].IsDefined())
         {
-            for (int i = 0; i < 3; i++)
+            for (size_t i = 0; i < 3; i++)
                 WS_center(i) = node["robot"]["WS_center"][i].as<float>();
 
             WS_radius = node["robot"]["WS_radius"].as<float>();
@@ -87,7 +87,7 @@ void env::Environment::addObject(const std::shared_ptr<env::Object> object, cons
 }
 
 // Remove object at 'idx' position
-void env::Environment::removeObject(int idx)
+void env::Environment::removeObject(size_t idx)
 {
     objects.erase(objects.begin() + idx);
 }
@@ -157,7 +157,7 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 // void env::Environment::updateEnvironment(float delta_time)
 // {
 //     fcl::Vector3f pos;
-//     for (int i = 0; i < objects.size(); i++)
+//     for (size_t i = 0; i < objects.size(); i++)
 //     {
 //         pos = objects[i]->getPosition();
 //         pos(0) -= delta_time * objects[i]->getMaxVel();    // Move along x-axis

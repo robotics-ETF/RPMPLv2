@@ -46,7 +46,7 @@ int commandLineParser(int argc, char **argv, std::string &scenario_file_path)
 const std::string getProjectPath()
 {
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++) {	// This depends on how deep is this file located
+    for (size_t i = 0; i < 2; i++) {	// This depends on how deep is this file located
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
 	}
 	return project_path;
@@ -74,7 +74,7 @@ float getStd(std::vector<float> &v)
 	return std::sqrt(sum / v.size());
 }
 
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
+void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
@@ -84,12 +84,12 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 
 	Eigen::Vector3f pos;
 	float r, fi, theta;
-	int num_obs = env->getNumObjects();
+	size_t num_obs = env->getNumObjects();
 	std::random_device rd;
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
 	
-	for (int i = num_obs; i < num_obs + num_obstacles; i++)
+	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
 		r = distribution(generator) * env->getWSRadius();
 		fi = distribution(generator) * 2 * M_PI;
@@ -112,7 +112,7 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 	}
 }
 
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
+void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
 	float max_vel, float max_acc)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
@@ -125,13 +125,13 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 	env->removeAllObjects();
 
 	Eigen::Vector3f pos, vel, acc;
-	int num_obs = env->getNumObjects();
+	size_t num_obs = env->getNumObjects();
 	float r, fi, theta;
 	std::random_device rd;
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
 	
-	for (int i = num_obs; i < num_obs + num_obstacles; i++)
+	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
 		r = distribution(generator) * env->getWSRadius();
 		fi = distribution(generator) * 2 * M_PI;

@@ -10,14 +10,14 @@ base::StateSpace::StateSpace()
     env = nullptr;
 }
 
-base::StateSpace::StateSpace(int num_dimensions_)
+base::StateSpace::StateSpace(size_t num_dimensions_)
 {
     num_dimensions = num_dimensions_;
     robot = nullptr;
     env = nullptr;
 }
 
-base::StateSpace::StateSpace(int num_dimensions_, std::shared_ptr<robots::AbstractRobot> robot_, std::shared_ptr<env::Environment> env_)
+base::StateSpace::StateSpace(size_t num_dimensions_, std::shared_ptr<robots::AbstractRobot> robot_, std::shared_ptr<env::Environment> env_)
 {
     num_dimensions = num_dimensions_;
     robot = robot_;

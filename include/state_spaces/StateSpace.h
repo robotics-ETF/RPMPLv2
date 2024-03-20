@@ -12,18 +12,18 @@ namespace base
 	{
 	public:
 		base::StateSpaceType state_space_type;
-		int num_dimensions;
+		size_t num_dimensions;
 		std::shared_ptr<robots::AbstractRobot> robot;
 		std::shared_ptr<env::Environment> env;
 
 		StateSpace();
-		StateSpace(int num_dimensions_);
-		StateSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+		StateSpace(size_t num_dimensions_);
+		StateSpace(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 				   const std::shared_ptr<env::Environment> env_);
 		virtual ~StateSpace() = 0;
 		
 		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; };
-		inline int getNumDimensions() { return num_dimensions; }
+		inline size_t getNumDimensions() { return num_dimensions; }
 		inline virtual base::StateSpaceType getStateSpaceType() const { return state_space_type; };
 		virtual std::shared_ptr<base::State> getRandomState(const std::shared_ptr<base::State> q_center = nullptr) = 0;
 		virtual std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) = 0;

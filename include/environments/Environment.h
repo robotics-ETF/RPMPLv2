@@ -21,15 +21,15 @@ namespace env
 		inline void setTableIncluded(bool table_included_) { table_included = table_included_; }
 
 		inline const std::vector<std::shared_ptr<env::Object>> &getObjects() const { return objects; }
-		inline std::shared_ptr<env::Object> getObject(int idx) const { return objects[idx]; }
-		inline std::shared_ptr<fcl::CollisionObjectf> getCollObject(int idx) const { return objects[idx]->getCollObject(); }
-		inline int getNumObjects() const { return objects.size(); }
+		inline std::shared_ptr<env::Object> getObject(size_t idx) const { return objects[idx]; }
+		inline std::shared_ptr<fcl::CollisionObjectf> getCollObject(size_t idx) const { return objects[idx]->getCollObject(); }
+		inline size_t getNumObjects() const { return objects.size(); }
 		inline const fcl::Vector3f &getWSCenter() const { return WS_center; }
 		inline float getWSRadius() const { return WS_radius; }
 
 		void addObject(const std::shared_ptr<env::Object> object, const fcl::Vector3f &velocity = fcl::Vector3f::Zero(), 
 			const fcl::Vector3f &acceleration = fcl::Vector3f::Zero());
-		void removeObject(int idx);
+		void removeObject(size_t idx);
 		void removeObjects(int start_idx, int end_idx = -1);
 		void removeObjects(const std::string &label, bool with_label = true);
 		void removeAllObjects();

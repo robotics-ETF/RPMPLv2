@@ -46,7 +46,7 @@ bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A,
 // Check collision between capsule (determined with line segment AB and 'radius') and rectangle (determined with 'obs',
 // where 'coord' determines which coordinate is constant: {0,1,2,3,4,5} = {x_min, y_min, z_min, x_max, y_max, z_max}
 bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, 
-															 Eigen::VectorXf &obs, int coord)
+															 Eigen::VectorXf &obs, size_t coord)
 {
 	float obs_coord = obs(coord);
     if (coord > 2) {
@@ -112,7 +112,7 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 }
 
 float base::CollisionAndDistance::checkCases(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector4f &rec, 
-											 Eigen::Vector2f &point, float obs_coord, int coord)
+											 Eigen::Vector2f &point, float obs_coord, size_t coord)
 {
 	float d_c1 = INFINITY;
 	float d_c2 = INFINITY;
@@ -144,7 +144,7 @@ float base::CollisionAndDistance::checkCases(const Eigen::Vector3f &A, const Eig
 	return std::min(d_c1, d_c2);
 }
 
-const Eigen::Vector3f base::CollisionAndDistance::get3DPoint(const Eigen::Vector2f &point, float coord_value, int coord)
+const Eigen::Vector3f base::CollisionAndDistance::get3DPoint(const Eigen::Vector2f &point, float coord_value, size_t coord)
 {
 	Eigen::Vector3f point_new;
 	point_new << point.head(coord), coord_value, point.tail(2-coord);
@@ -240,7 +240,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 							(A - D).dot(A - B) / alpha1,	// s = 1
 							(A - C).dot(D - C) / alpha3,	// t = 0
 							(B - C).dot(D - C) / alpha3);	// t = 1
-        for (int i = 0; i < 4; i++)
+        for (size_t i = 0; i < 4; i++)
 		{
             if (opt(i) < 0)
 			{
@@ -409,10 +409,10 @@ void base::CollisionAndDistance::CapsuleToBox::compute()
 		return;
 	}
 
-	int num_proj = (projections.col(0) + projections.col(1)).maxCoeff();
+	size_t num_proj = (projections.col(0) + projections.col(1)).maxCoeff();
 	if (num_proj > 0) 					// Projection of one or two points exists
 	{
-		int idx_point = (dist_AB_obs(0) < dist_AB_obs(1)) ? 0 : 1;
+		size_t idx_point = (dist_AB_obs(0) < dist_AB_obs(1)) ? 0 : 1;
 		d_c = dist_AB_obs.minCoeff();
 		nearest_pts->col(0) = AB.col(idx_point);
 		Eigen::Index idx_coord;
@@ -438,10 +438,10 @@ void base::CollisionAndDistance::CapsuleToBox::compute()
 	d_c -= radius;
 }
 
-void base::CollisionAndDistance::CapsuleToBox::projectionLineSegOnSide(int min1, int min2, int min3, int max1, int max2, int max3)
+void base::CollisionAndDistance::CapsuleToBox::projectionLineSegOnSide(size_t min1, size_t min2, size_t min3, size_t max1, size_t max2, size_t max3)
 {
 	// 'min3' and 'max3' corresponds to the coordinate which is constant
-	for (int i = 0; i < 2; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		if (AB(min1, i) >= obs(min1) && AB(min1, i) <= obs(max1) && AB(min2, i) >= obs(min2) && AB(min2, i) <= obs(max2))
 		{
@@ -464,7 +464,7 @@ void base::CollisionAndDistance::CapsuleToBox::projectionLineSegOnSide(int min1,
 	}
 }
 
-void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point, int idx)
+void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point, size_t idx)
 {
 	std::shared_ptr<Eigen::MatrixXf> line_segments;
 	if (projections(0, idx))  		// Projection on x_min
@@ -531,10 +531,10 @@ void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point
 }
 
 std::shared_ptr<Eigen::MatrixXf> base::CollisionAndDistance::CapsuleToBox::getLineSegments
-	(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, float coord_value, int coord)
+	(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, float coord_value, size_t coord)
 {
 	std::shared_ptr<Eigen::MatrixXf> line_segments = std::make_shared<Eigen::MatrixXf>(3, 2);
-	int num = 0;
+	size_t num = 0;
 	if (point(0) < min1)
 	{
 		line_segments->col(0) = get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
@@ -725,7 +725,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 					
 			else
 			{
-				for (int kk = 0; kk < 6; kk++)    		// Check collision with all sides
+				for (size_t kk = 0; kk < 6; kk++)    		// Check collision with all sides
 				{
 					if (collisionCapsuleToRectangle(A, B, 0, obs, kk))
 					{
@@ -741,13 +741,4 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 			}      
 		}
 	}
-}
-// -----------------------------------------------------------------------------------------------------------------------------//
-
-// Get distance (and nearest points) between capsule (determined with line segment AB and 'radius') 
-// and box (determined with 'obs = (x_min, y_min, z_min, x_max, y_max, z_max)') using QuadProgPP
-std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceCapsuleToBoxQP
-	([[maybe_unused]] const Eigen::Vector3f &A, [[maybe_unused]] const Eigen::Vector3f &B, [[maybe_unused]] float radius, [[maybe_unused]] Eigen::VectorXf &obs)
-{
-    return std::make_tuple(0.f, nullptr);
 }

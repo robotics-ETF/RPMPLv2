@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
 	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
 
-	int max_num_tests = 30;
+	size_t max_num_tests = 30;
 	bool use_recommended_planning_times = false;
 	
 	// -------------------------------------------------------------------------------------- //
@@ -30,9 +30,9 @@ int main(int argc, char **argv)
 	const std::string project_path = getProjectPath();
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	int num_random_obstacles = node["random_obstacles"]["num"].as<int>();
+	size_t num_random_obstacles = node["random_obstacles"]["num"].as<size_t>();
 	Eigen::Vector3f obs_dim;
-	for (int i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	std::unique_ptr<planning::AbstractPlanner> planner;
 
 	bool result = false;
-	int num_obs = env->getNumObjects();
+	size_t num_obs = env->getNumObjects();
 	while (!result && num_random_obstacles > 0)
 	{
 		env->removeObjects(num_obs);
@@ -81,8 +81,8 @@ int main(int argc, char **argv)
 			RGBMTStarConfig::MAX_PLANNING_TIME = 60;
 	}
 	
-	int num_test = 0;
-	int num_success = 0;
+	size_t num_test = 0;
+	size_t num_success = 0;
 	while (num_test++ < max_num_tests)
 	{
 		try

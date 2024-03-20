@@ -31,18 +31,18 @@ int main(int argc, char **argv)
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
 
-	int init_num_obs = node["random_obstacles"]["init_num"].as<int>();
-	const int max_num_obs = node["random_obstacles"]["max_num"].as<int>();
+	size_t init_num_obs = node["random_obstacles"]["init_num"].as<size_t>();
+	const size_t max_num_obs = node["random_obstacles"]["max_num"].as<size_t>();
 	const float max_vel_obs = node["random_obstacles"]["max_vel"].as<float>();
 	const float max_acc_obs = node["random_obstacles"]["max_acc"].as<float>();
 	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
 	Eigen::Vector3f obs_dim;
-	for (int i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 
-	int init_num_test = node["testing"]["init_num"].as<int>();
-	int init_num_success_test = node["testing"]["init_num_success"].as<int>();
-	const int max_num_tests = node["testing"]["max_num"].as<int>();
+	size_t init_num_test = node["testing"]["init_num"].as<size_t>();
+	size_t init_num_success_test = node["testing"]["init_num_success"].as<size_t>();
+	const size_t max_num_tests = node["testing"]["max_num"].as<size_t>();
 	bool reach_successful_tests = node["testing"]["reach_successful_tests"].as<bool>();
     if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
@@ -85,8 +85,8 @@ int main(int argc, char **argv)
 		std::vector<float> alg_times;
 		std::vector<float> iter_times;
 		std::vector<float> path_lengths;
-		int num_test = init_num_test;
-		int num_success_tests = init_num_success_test;
+		size_t num_test = init_num_test;
+		size_t num_success_tests = init_num_success_test;
 
 		while (true)
 		{

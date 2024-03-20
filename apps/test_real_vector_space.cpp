@@ -32,7 +32,7 @@ int main([[maybe_unused]] int argc, char **argv)
 		// std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RGBTConnect>(ss, scenario.getStart(), scenario.getGoal());
 		[[maybe_unused]] float d_c{};
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;
-		int num = 0;
+		size_t num = 0;
 		while (num++ < 1)
 		{
 			// std::shared_ptr<base::State> q = ss->getRandomState();

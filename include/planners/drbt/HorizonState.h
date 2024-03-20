@@ -28,7 +28,7 @@ namespace planning
             inline float getDistancePrevious() const { return d_c_previous; }
             inline float getWeight() const { return weight; }
             inline const Eigen::VectorXf &getCoord() const { return state->getCoord(); }
-            inline float getCoord(int idx) const { return state->getCoord(idx); }
+            inline float getCoord(size_t idx) const { return state->getCoord(idx); }
             inline bool getIsReached() const { return is_reached; }
 
             inline void setStateReached(const std::shared_ptr<base::State> state_reached_) { state_reached = state_reached_; }

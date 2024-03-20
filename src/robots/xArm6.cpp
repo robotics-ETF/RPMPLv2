@@ -23,7 +23,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	if (!model.initFile(robot_desc))
     	throw std::runtime_error("Failed to parse urdf file");
 	
-	const int last_slash_idx = robot_desc.rfind('/');
+	const size_t last_slash_idx = robot_desc.rfind('/');
 	std::string urdf_root_path = robot_desc.substr(0, last_slash_idx) + "/";
 	type = model.getName();
 	std::vector<urdf::LinkSharedPtr> links_;
@@ -31,7 +31,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	num_DOFs = robot_chain.getNrOfJoints();
 
-	for (int i = 0; i < num_DOFs; i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 	{
 		float lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
 		float upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
@@ -54,7 +54,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 			stl_reader::StlMesh <float, unsigned int> mesh (urdf_root_path + mesh_ptr->filename);
 			for (size_t j = 0; j < mesh.num_tris(); j++)
 			{
-				for (int icorner = 0; icorner < 3; icorner++) 
+				for (size_t icorner = 0; icorner < 3; icorner++) 
 				{
 					const float* c = mesh.vrt_coords (mesh.tri_corner_ind (j, icorner));
 					// LOG(INFO) << "(" << c[0] << ", " << c[1] << ", " << c[2] << ") ";
@@ -113,10 +113,10 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
 
-	for (int i = 0; i < num_DOFs; i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 
-	for (int i = 0; i < num_DOFs; i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 	{
 		KDL::Frame cart_pos;
 		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
@@ -145,25 +145,25 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 
 	srand((unsigned int) time(0));
 	float error = INFINITY;
-	int num = 0;
+	size_t num = 0;
 	while (error > 1e-5)
 	{
 		if (q_init == nullptr)
 		{
 			Eigen::VectorXf rand = Eigen::VectorXf::Random(num_DOFs);
-			for (int i = 0; i < num_DOFs; i++)
+			for (size_t i = 0; i < num_DOFs; i++)
 				q_in.data(i) = ((limits[i].second - limits[i].first) * rand(i) + limits[i].first + limits[i].second) / 2;
 		}
 		else
 		{
-			for (int i = 0; i < num_DOFs; i++)
+			for (size_t i = 0; i < num_DOFs; i++)
 				q_in.data(i) = q_init->getCoord(i);
 		}
 
 		ik_solver_pos.CartToJnt(q_in, goal_frame, q_out);
 		error = ik_solver_pos.getError();
 		// std::cout << "error: " << error << std::endl;
-		for (int i = 0; i < num_DOFs; i++)
+		for (size_t i = 0; i < num_DOFs; i++)
 		{
 			// Set the angle between -PI and PI
 			q_result(i) = q_out.data(i) - int(q_out.data(i) / (2*M_PI)) * 2*M_PI;

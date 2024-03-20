@@ -13,7 +13,7 @@ typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
 robots::Planar2DOF::~Planar2DOF() {}
 
-robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, int num_DOFs_)
+robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 {
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
@@ -27,7 +27,7 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, int num_DOFs_)
 	model.getLinks(links_);
 	num_DOFs = num_DOFs_;
 
-	for (int i = 0; i < num_DOFs; i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 	{
 		float lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
 		float upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
@@ -91,7 +91,7 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
 
-	for (int i = 0; i < num_DOFs; i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 	
 	for (size_t i = 0; i < robot_tree.getNrOfSegments(); i++)
@@ -114,7 +114,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
 	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1);
-	for (int k = 0; k <= num_DOFs; k++)
+	for (size_t k = 0; k <= num_DOFs; k++)
 		skeleton->col(k) << frames->at(k).p(0), frames->at(k).p(1), frames->at(k).p(2);
 	
 	return skeleton;
@@ -162,10 +162,10 @@ fcl::Vector3f robots::Planar2DOF::transformPoint([[maybe_unused]] fcl::Vector3f&
 	Eigen::Vector4f trans = Eigen::Vector4f(fclVec[0], fclVec[1], fclVec[2], 1);
 	fcl::Matrix3f rot = t.rotation();
 	Eigen::MatrixXf M = Eigen::MatrixXf::Identity(4,4);
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)	
+	for (size_t i = 0; i < 3; i++)
+		for (size_t j = 0; j < 3; j++)	
 			M(i,j) = rot(i,j);
-	for (int i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 		M(i,3) = fclVec[i];
 
 	// LOG(INFO) << "obj TF:\n" << M << "\n\n"; 

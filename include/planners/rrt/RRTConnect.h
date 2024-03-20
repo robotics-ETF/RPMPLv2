@@ -21,7 +21,7 @@ namespace planning
 			~RRTConnect();
 			
 			bool solve() override;
-			base::Tree getTree(int tree_idx) const;
+			base::Tree getTree(size_t tree_idx) const;
 			const std::vector<std::shared_ptr<base::State>> &getPath() const override;
 			bool checkTerminatingCondition(base::State::Status status) override;
 			void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;

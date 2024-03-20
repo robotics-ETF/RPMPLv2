@@ -11,7 +11,7 @@ int main([[maybe_unused]] int argc, char **argv)
 	FLAGS_logtostderr = true;
 	
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 2; i++) {
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
 	}
 
@@ -36,11 +36,11 @@ int main([[maybe_unused]] int argc, char **argv)
 	// Test inverse kinematics
 	srand((unsigned int) time(0));
 	const std::vector<std::pair<float, float>> limits = robot->getLimits();
-	for (int k = 0; k < 10000; k++)
+	for (size_t k = 0; k < 10000; k++)
 	{
 		LOG(INFO) << "k = " << k;
 		Eigen::VectorXf rand = Eigen::VectorXf::Random(6);
-		for (int i = 0; i < 6; i++)
+		for (size_t i = 0; i < 6; i++)
 			rand(i) = ((limits[i].second - limits[i].first) * rand(i) + limits[i].first + limits[i].second) / 2;
 		std::shared_ptr<base::State> state = std::make_shared<base::RealVectorSpaceState>(rand);
 		// LOG(INFO) << "State: " << state;
@@ -63,9 +63,9 @@ int main([[maybe_unused]] int argc, char **argv)
 		// LOG(INFO) << "p_new: " << p_new;
 
 		float error = 0;
-		for (int i = 0; i < 9; i++)
+		for (size_t i = 0; i < 9; i++)
 			error += std::pow(R.data[i] - R_new.data[i], 2);
-		for (int i = 0; i < 3; i++)
+		for (size_t i = 0; i < 3; i++)
 			error += std::pow(p.data[i] - p_new.data[i], 2);
 		if (error > 1e-5)
 		{

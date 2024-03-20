@@ -17,7 +17,7 @@ namespace robots
 	class Planar2DOF : public AbstractRobot
 	{
 	public:
-		Planar2DOF(const std::string &robot_desc, int num_DOFs_ = 2);
+		Planar2DOF(const std::string &robot_desc, size_t num_DOFs_ = 2);
 		~Planar2DOF();
 
 		const KDL::Tree &getRobotTree() const { return robot_tree; }
