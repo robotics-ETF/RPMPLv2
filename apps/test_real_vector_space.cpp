@@ -1,7 +1,7 @@
-#include <ConfigurationReader.h>
-#include <RealVectorSpace.h>
-#include <RealVectorSpaceFCL.h>
-#include <CommonFunctions.h>
+#include "ConfigurationReader.h"
+#include "RealVectorSpace.h"
+#include "RealVectorSpaceFCL.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char **argv)
 {

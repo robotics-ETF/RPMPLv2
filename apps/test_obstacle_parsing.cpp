@@ -3,10 +3,9 @@
 #include <yaml-cpp/parser.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
-
-#include <Environment.h>
-
 #include <glog/logging.h>
+
+#include "Environment.h"
 
 int main([[maybe_unused]] int argc, char **argv)
 {

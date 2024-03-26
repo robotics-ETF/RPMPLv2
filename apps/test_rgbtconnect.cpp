@@ -1,6 +1,6 @@
-#include <RGBTConnect.h>
-#include <ConfigurationReader.h>
-#include <CommonFunctions.h>
+#include "RGBTConnect.h"
+#include "ConfigurationReader.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char **argv)
 {

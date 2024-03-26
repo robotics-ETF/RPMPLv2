@@ -1,6 +1,6 @@
-#include <RGBMTStar.h>
-#include <ConfigurationReader.h>
-#include <CommonFunctions.h>
+#include "RGBMTStar.h"
+#include "ConfigurationReader.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char **argv)
 {

@@ -3,14 +3,16 @@
 // Taken from nanoflann examples
 //
 
-#include <nanoflann.hpp>
 
 #include <ctime>
 #include <cstdlib>
 #include <ostream>
-#include <RealVectorSpaceState.h>
-#include <RealVectorSpace.h>
-#include <State.h>
+
+#include <nanoflann.hpp>
+
+#include "RealVectorSpaceState.h"
+#include "RealVectorSpace.h"
+#include "State.h"
 
 // TODO: NOT working with smart pointer changes
 

@@ -1,6 +1,6 @@
-#include <DRGBT.h>
-#include <ConfigurationReader.h>
-#include <CommonFunctions.h>
+#include "DRGBT.h"
+#include "ConfigurationReader.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char **argv)
 {

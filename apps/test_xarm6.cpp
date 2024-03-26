@@ -1,10 +1,10 @@
 #include <ostream>
 #include <memory>
 
-#include <ConfigurationReader.h>
-#include <CommonFunctions.h>
-#include <xArm6.h>
-#include <RealVectorSpaceFCL.h>
+#include "ConfigurationReader.h"
+#include "CommonFunctions.h"
+#include "xArm6.h"
+#include "RealVectorSpaceFCL.h"
 
 int main([[maybe_unused]] int argc, char **argv)
 {

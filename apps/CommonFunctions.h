@@ -3,10 +3,10 @@
 #include <memory>
 #include <ostream>
 #include <numeric>
-
-#include <Scenario.h>
-#include <CommandLine.h>
 #include <glog/logging.h>
+
+#include "Scenario.h"
+#include "CommandLine.h"
 
 void initGoogleLogging(char **argv)
 {
