@@ -24,4 +24,5 @@ robot:
   WS_radius: 1.0                                            # Workspace radius in [m] assuming spherical workspace shape
 
 testing:
-  max_num: 1000                                             # Maximal number of tests that should be carried out
+  max_num: 10                                               # Maximal number of tests that should be carried out
+  

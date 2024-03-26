@@ -34,3 +34,7 @@ robot:
   table_included: false                                       # Please check whether 'table' is added in 'environment'  
   WS_center: [0.0, 0.0, 0.267]                                # Workspace center point in [m]
   WS_radius: 1.0                                              # Workspace radius in [m] assuming spherical workspace shape
+
+testing:
+  max_num: 10                                               # Maximal number of tests that should be carried out
+  

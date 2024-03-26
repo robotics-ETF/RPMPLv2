@@ -20,10 +20,6 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario2/scenario2.yaml"
 		// "/data/xarm6/scenario3/scenario3.yaml"
 	};
-
-	size_t max_num_tests = 10;
-
-	// -------------------------------------------------------------------------------------- //
 	
 	initGoogleLogging(argv);
 	int clp = commandLineParser(argc, argv, scenario_file_path);
@@ -33,8 +29,9 @@ int main(int argc, char **argv)
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 
-	size_t num_random_obstacles = node["random_obstacles"]["num"].as<size_t>();
-	Eigen::Vector3f obs_dim;
+	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
+	const size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
+	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 		

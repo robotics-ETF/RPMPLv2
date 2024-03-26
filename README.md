@@ -95,6 +95,8 @@ Note that ```gripper_length``` and ```table_included``` are only available for `
 
 Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be ommited.
 
+Total number of tests/runs can be specified by ```max_num``` within the ```testing``` node.
+
 For example, if you do not want to use FCL (Flexible Collision Library) in planning, just set:
 ```
 space: "RealVectorSpace"

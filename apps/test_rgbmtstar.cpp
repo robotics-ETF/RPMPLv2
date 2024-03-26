@@ -21,11 +21,6 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario3/scenario3.yaml"
 	};
 
-	size_t max_num_tests = 30;
-	bool use_recommended_planning_times = false;
-	
-	// -------------------------------------------------------------------------------------- //
-
 	initGoogleLogging(argv);
 	int clp = commandLineParser(argc, argv, scenario_file_path);
 	if (clp != 0) return clp;
@@ -34,7 +29,8 @@ int main(int argc, char **argv)
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 
-	size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
+	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
+	const size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
 	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
@@ -74,16 +70,6 @@ int main(int argc, char **argv)
 	std::vector<float> final_num_states {};
 	std::ofstream output_file {};
 	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_rgbmtstar.log", std::ofstream::out);
-	
-	if (use_recommended_planning_times)
-	{
-		if (ss->num_dimensions == 2)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 10;
-		else if (ss->num_dimensions == 6)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 120;
-		else
-			RGBMTStarConfig::MAX_PLANNING_TIME = 60;
-	}
 	
 	size_t num_test { 0 };
 	size_t num_success { 0 };

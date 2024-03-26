@@ -25,3 +25,7 @@ robot:
   q_goal:  [3.1415, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   WS_center: [0.0, 0.0, 0.0]                          # Workspace center point in [m]
   WS_radius: 10                                       # Workspace radius in [m] assuming spherical workspace shape
+
+testing:
+  max_num: 10                                               # Maximal number of tests that should be carried out
+  
