@@ -183,7 +183,7 @@ bool planning::rbt_star::RGBMTStar::solve()
 
 std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
 {
-    size_t tree_idx { 0};
+    size_t tree_idx { 0 };
     std::shared_ptr<base::State> q_rand { nullptr };
     std::shared_ptr<base::State> q_near { nullptr };
     base::State::Status status { base::State::Status::None };
@@ -204,6 +204,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
         else if (ss->isValid(q_rand))    // If 'q_rand' is collision-free, it is accepted
             return q_rand;
     }
+    return nullptr;
 }
 
 // Connect state 'q' with state 'q_e'
