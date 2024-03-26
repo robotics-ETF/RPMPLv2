@@ -5,7 +5,7 @@
 // Check collision between capsule (determined with line segment AB and 'radius') and box (determined with 'obs = (x_min, y_min, z_min, x_max, y_max, z_max)')
 bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)
 {
-    bool collision = false;
+    bool collision { false };
     float r_new = radius * sqrt(3) / 3;
 
 	if ((A(0) > obs(0) - r_new && A(1) > obs(1) - r_new && A(2) > obs(2) - r_new &&
@@ -48,18 +48,19 @@ bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A,
 bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, 
 															 Eigen::VectorXf &obs, size_t coord)
 {
-	float obs_coord = obs(coord);
+	float obs_coord { obs(coord) };
     if (coord > 2) {
         coord -= 3;
 	}
     
-	Eigen::Vector4f rec; rec << obs.head(coord), obs.segment(coord+1, 2-coord), obs.segment(3, coord), obs.tail(2-coord);
-	Eigen::Vector2f A_rec; A_rec << A.head(coord), A.tail(2-coord);
-	Eigen::Vector2f B_rec; B_rec << B.head(coord), B.tail(2-coord);
-    float t = (B(coord) - A(coord)) != 0 ? (obs_coord - A(coord)) / (B(coord) - A(coord)) : INFINITY;
-	Eigen::Vector2f M = A_rec + t * (B_rec - A_rec);
-	Eigen::Vector3f A_proj = get3DPoint(A_rec, obs_coord, coord);
-	Eigen::Vector3f B_proj = get3DPoint(B_rec, obs_coord, coord);
+	Eigen::Vector4f rec {}; rec << obs.head(coord), obs.segment(coord+1, 2-coord), obs.segment(3, coord), obs.tail(2-coord);
+	Eigen::Vector2f A_rec {}; A_rec << A.head(coord), A.tail(2-coord);
+	Eigen::Vector2f B_rec {}; B_rec << B.head(coord), B.tail(2-coord);
+    float t { (B(coord) - A(coord)) != 0 ? (obs_coord - A(coord)) / (B(coord) - A(coord)) : INFINITY };
+	Eigen::Vector2f M { A_rec + t * (B_rec - A_rec) };
+	Eigen::Vector3f A_proj { get3DPoint(A_rec, obs_coord, coord) };
+	Eigen::Vector3f B_proj { get3DPoint(B_rec, obs_coord, coord) };
+
     if (t > 0 && t < 1)		// Line segment AB intersects the plane 'obs(coord)'
 	{
 		if (M(0) > rec(0) - radius && M(0) < rec(2) + radius && 
@@ -114,39 +115,43 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 float base::CollisionAndDistance::checkCases(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector4f &rec, 
 											 Eigen::Vector2f &point, float obs_coord, size_t coord)
 {
-	float d_c1 = INFINITY;
-	float d_c2 = INFINITY;
+	float d_c1 { INFINITY };
+	float d_c2 { INFINITY };
+	Eigen::Vector3f C {};
+	Eigen::Vector3f D {};
+	
 	if (point(0) < rec(0))
 	{
-		Eigen::Vector3f C = get3DPoint(Eigen::Vector2f(rec(0), rec(1)), obs_coord, coord);
-		Eigen::Vector3f D = get3DPoint(Eigen::Vector2f(rec(0), rec(3)), obs_coord, coord);
+		C = get3DPoint(Eigen::Vector2f(rec(0), rec(1)), obs_coord, coord);
+		D = get3DPoint(Eigen::Vector2f(rec(0), rec(3)), obs_coord, coord);
 		d_c1 = std::get<0>(distanceLineSegToLineSeg(A, B, C, D));
 	}
 	else if (point(0) > rec(2))
 	{
-		Eigen::Vector3f C = get3DPoint(Eigen::Vector2f(rec(2), rec(1)), obs_coord, coord);
-		Eigen::Vector3f D = get3DPoint(Eigen::Vector2f(rec(2), rec(3)), obs_coord, coord);
+		C = get3DPoint(Eigen::Vector2f(rec(2), rec(1)), obs_coord, coord);
+		D = get3DPoint(Eigen::Vector2f(rec(2), rec(3)), obs_coord, coord);
 		d_c1 = std::get<0>(distanceLineSegToLineSeg(A, B, C, D));
 	}
 	
 	if (d_c1 > 0 && point(1) < rec(1))
 	{
-		Eigen::Vector3f C = get3DPoint(Eigen::Vector2f(rec(0), rec(1)), obs_coord, coord);
-		Eigen::Vector3f D = get3DPoint(Eigen::Vector2f(rec(2), rec(1)), obs_coord, coord);
+		C = get3DPoint(Eigen::Vector2f(rec(0), rec(1)), obs_coord, coord);
+		D = get3DPoint(Eigen::Vector2f(rec(2), rec(1)), obs_coord, coord);
 		d_c2 = std::get<0>(distanceLineSegToLineSeg(A, B, C, D));
 	}
 	else if (d_c1 > 0 && point(1) > rec(3))
 	{
-		Eigen::Vector3f C = get3DPoint(Eigen::Vector2f(rec(0), rec(3)), obs_coord, coord);
-		Eigen::Vector3f D = get3DPoint(Eigen::Vector2f(rec(2), rec(3)), obs_coord, coord);
+		C = get3DPoint(Eigen::Vector2f(rec(0), rec(3)), obs_coord, coord);
+		D = get3DPoint(Eigen::Vector2f(rec(2), rec(3)), obs_coord, coord);
 		d_c2 = std::get<0>(distanceLineSegToLineSeg(A, B, C, D));
 	}
+
 	return std::min(d_c1, d_c2);
 }
 
 const Eigen::Vector3f base::CollisionAndDistance::get3DPoint(const Eigen::Vector2f &point, float coord_value, size_t coord)
 {
-	Eigen::Vector3f point_new;
+	Eigen::Vector3f point_new {};
 	point_new << point.head(coord), coord_value, point.tail(2-coord);
 	return point_new;
 }
@@ -154,15 +159,16 @@ const Eigen::Vector3f base::CollisionAndDistance::get3DPoint(const Eigen::Vector
 // Check collision between two line segments, AB and CD
 bool base::CollisionAndDistance::collisionLineSegToLineSeg(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector3f &C, Eigen::Vector3f &D)
 {
-    Eigen::Vector3f P1, P2;
-    float alpha1 = (B - A).squaredNorm();
-    float alpha2 = (B - A).dot(D - C);
-    float beta1 = (C - D).dot(B - A);
-    float beta2 = (C - D).dot(D - C);
-    float gamma1 = (A - C).dot(A - B);
-    float gamma2 = (A - C).dot(C - D);
-    float s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
-    float t = (gamma1 - beta1 * s) / alpha1;
+    float alpha1 { (B - A).squaredNorm() };
+    float alpha2 { (B - A).dot(D - C) };
+    float beta1  { (C - D).dot(B - A) };
+    float beta2  { (C - D).dot(D - C) };
+    float gamma1 { (A - C).dot(A - B) };
+    float gamma2 { (A - C).dot(C - D) };
+    float s { (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1) };
+    float t { (gamma1 - beta1 * s) / alpha1 };
+    Eigen::Vector3f P1 {};
+    Eigen::Vector3f P2 {};
 
     if (t > 0 && t < 1 && s > 0 && s < 1)
 	{
@@ -183,10 +189,11 @@ bool base::CollisionAndDistance::collisionCapsuleToSphere(const Eigen::Vector3f 
 
     else
 	{
-        float a = (B - A).squaredNorm();
-        float b = 2 * (A.dot(B) + (A - B).dot(obs.head(3)) - A.squaredNorm());
-        float c = A.squaredNorm() + obs.head(3).squaredNorm() - 2 * A.dot(obs.head(3)) - radius * radius;
-        float D = b * b - 4 * a * c;
+        float a { (B - A).squaredNorm() };
+        float b { 2 * (A.dot(B) + (A - B).dot(obs.head(3)) - A.squaredNorm()) };
+        float c { A.squaredNorm() + obs.head(3).squaredNorm() - 2 * A.dot(obs.head(3)) - radius * radius };
+        float D { b * b - 4 * a * c };
+
         if (D >= 0)
 		{
             float t1 = (-b + sqrt(D)) / (2 * a);
@@ -212,17 +219,17 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceLineSegToLineSeg
 	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, const Eigen::Vector3f &C, const Eigen::Vector3f &D)
 {
-    float d_c = INFINITY;
-    std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-    std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp = std::make_shared<Eigen::MatrixXf>(3, 2);
-    float alpha1 = (B - A).squaredNorm();
-    float alpha2 = (B - A).dot(D - C);
-    float beta1  = (C - D).dot(B - A);
-    float beta2  = (C - D).dot(D - C);
-    float gamma1 = (A - C).dot(A - B);
-    float gamma2 = (A - C).dot(C - D);
-    float s = (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1);
-    float t = (gamma1 - beta1 * s) / alpha1;
+    float d_c { INFINITY };
+    std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
+    std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp { std::make_shared<Eigen::MatrixXf>(3, 2) };
+    float alpha1 { (B - A).squaredNorm() };
+    float alpha2 { (B - A).dot(D - C) };
+    float beta1  { (C - D).dot(B - A) };
+    float beta2  { (C - D).dot(D - C) };
+    float gamma1 { (A - C).dot(A - B) };
+    float gamma2 { (A - C).dot(C - D) };
+    float s { (alpha1 * gamma2 - alpha2 * gamma1) / (alpha1 * beta2 - alpha2 * beta1) };
+    float t { (gamma1 - beta1 * s) / alpha1 };
 	
 	if (t > 0 && t < 1 && s > 0 && s < 1)
 	{
@@ -234,12 +241,13 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
     }
     else
 	{
-		float d_c_temp;
-        float alpha3 = (C - D).squaredNorm();
+		float d_c_temp { 0 };
+        float alpha3 { (C - D).squaredNorm() };
         Eigen::Vector4f opt((A - C).dot(A - B) / alpha1,	// s = 0
 							(A - D).dot(A - B) / alpha1,	// s = 1
 							(A - C).dot(D - C) / alpha3,	// t = 0
 							(B - C).dot(D - C) / alpha3);	// t = 1
+
         for (size_t i = 0; i < 4; i++)
 		{
             if (opt(i) < 0)
@@ -317,9 +325,10 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceLineSegToPoint
 	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, const Eigen::Vector3f &C)
 {
-    std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
+    std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
     nearest_pts->col(1) = C;
-    float t_opt = (C - A).dot(B - A) / (B - A).squaredNorm();
+    float t_opt { (C - A).dot(B - A) / (B - A).squaredNorm() };
+
     if (t_opt < 0)
 		nearest_pts->col(0) = A;
     else if (t_opt > 1)
@@ -327,7 +336,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
     else
 		nearest_pts->col(0) = A + t_opt * (B - A);
 	
-	float d_c = (nearest_pts->col(1) - nearest_pts->col(0)).norm();
+	float d_c { (nearest_pts->col(1) - nearest_pts->col(0)).norm() };
 	if (d_c < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
 		return {0, nullptr};
 
@@ -339,24 +348,25 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceCapsuleToSphere
 	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)
 {
-    std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-	float AO = (A - obs.head(3)).norm();
-    float d_c = AO - obs(3);
+    std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
+	float AO { (A - obs.head(3)).norm() };
+    float d_c { AO - obs(3) };
     if (d_c < radius)	// The collision occurs
         return {0, nullptr};
     
-    float BO = (B - obs.head(3)).norm();
-    float d_c_temp = BO - obs(3);
+    float BO { (B - obs.head(3)).norm() };
+    float d_c_temp { BO - obs(3) };
     if (d_c_temp < radius) 	// The collision occurs
-        return {0, nullptr};    
+        return {0, nullptr};
     
     if (d_c_temp < d_c)
         d_c = d_c_temp; 
 
-    float AB = (A - B).norm();
-    float s = (AB + AO + BO) / 2;
+    float AB { (A - B).norm() };
+    float s { (AB + AO + BO) / 2 };
     float alpha = acos((AO * AO + AB * AB - BO * BO) / (2 * AO * AB));
     d_c_temp = 2 * sqrt(s * (s - AB) * (s - AO) * (s - BO)) / AB - obs(3);     // h = 2 * P / AB; d_c_temp = h - obs(3);
+
     if (alpha < M_PI / 2)
 	{
         float beta = acos((BO * BO + AB * AB - AO * AO) / (2 * BO * AB));
@@ -415,8 +425,9 @@ void base::CollisionAndDistance::CapsuleToBox::compute()
 		size_t idx_point = (dist_AB_obs(0) < dist_AB_obs(1)) ? 0 : 1;
 		d_c = dist_AB_obs.minCoeff();
 		nearest_pts->col(0) = AB.col(idx_point);
-		Eigen::Index idx_coord;
+		Eigen::Index idx_coord {};
 		projections.col(idx_point).maxCoeff(&idx_coord);
+
 		if (idx_coord == 0 || idx_coord == 3)
 			nearest_pts->col(1) << obs(idx_coord), AB.col(idx_point).tail(2);
 		else if (idx_coord == 1 || idx_coord == 4)
@@ -466,7 +477,7 @@ void base::CollisionAndDistance::CapsuleToBox::projectionLineSegOnSide(size_t mi
 
 void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point, size_t idx)
 {
-	std::shared_ptr<Eigen::MatrixXf> line_segments;
+	std::shared_ptr<Eigen::MatrixXf> line_segments { nullptr };
 	if (projections(0, idx))  		// Projection on x_min
 	{
 		if (!collisionCapsuleToRectangle(A, B, 0, obs, 0))
@@ -533,8 +544,9 @@ void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point
 std::shared_ptr<Eigen::MatrixXf> base::CollisionAndDistance::CapsuleToBox::getLineSegments
 	(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, float coord_value, size_t coord)
 {
-	std::shared_ptr<Eigen::MatrixXf> line_segments = std::make_shared<Eigen::MatrixXf>(3, 2);
-	size_t num = 0;
+	std::shared_ptr<Eigen::MatrixXf> line_segments { std::make_shared<Eigen::MatrixXf>(3, 2) };
+	size_t num { 0 };
+
 	if (point(0) < min1)
 	{
 		line_segments->col(0) = get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
@@ -565,8 +577,9 @@ std::shared_ptr<Eigen::MatrixXf> base::CollisionAndDistance::CapsuleToBox::getLi
 	
 void base::CollisionAndDistance::CapsuleToBox::distanceToMoreLineSegments(const Eigen::MatrixXf &line_segments)
 {
-	float d_c_temp;
-	std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp;
+	float d_c_temp { 0 };
+	std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp { nullptr };
+	
 	for (int k = 0; k < line_segments.cols(); k += 2)
 	{
 		tie(d_c_temp, nearest_pts_temp) = distanceLineSegToLineSeg(A, B, line_segments.col(k), line_segments.col(k+1));

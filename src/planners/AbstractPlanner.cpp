@@ -33,7 +33,7 @@ float planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock:
 {
 	try
 	{
-		auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_init).count();
+		auto time { std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_init).count() };
 
 		switch (time_unit)
 		{

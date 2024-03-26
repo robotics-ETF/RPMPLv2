@@ -24,12 +24,12 @@ class ConfigurationReader
 public:
     static void initConfiguration(std::string root_path = "")
     {
-        YAML::Node RealVectorSpaceConfigRoot    = YAML::LoadFile(root_path + "/data/configurations/configuration_realvectorspace.yaml");
-        YAML::Node RRTConnectConfigRoot         = YAML::LoadFile(root_path + "/data/configurations/configuration_rrtconnect.yaml");
-        YAML::Node RBTConnectConfigRoot         = YAML::LoadFile(root_path + "/data/configurations/configuration_rbtconnect.yaml");
-        YAML::Node RGBTConnectConfigRoot        = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml");
-        YAML::Node RGBMTStarConfigRoot          = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml");
-        YAML::Node DRGBTConfigRoot              = YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml");
+        YAML::Node RealVectorSpaceConfigRoot    { YAML::LoadFile(root_path + "/data/configurations/configuration_realvectorspace.yaml") };
+        YAML::Node RRTConnectConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtconnect.yaml") };
+        YAML::Node RBTConnectConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_rbtconnect.yaml") };
+        YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
+        YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
+        YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())

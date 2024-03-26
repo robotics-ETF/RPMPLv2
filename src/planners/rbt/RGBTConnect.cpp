@@ -24,10 +24,12 @@ planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> 
 bool planning::rbt::RGBTConnect::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now();		// Start the clock
-	size_t tree_idx = 0;  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
-	std::shared_ptr<base::State> q_e, q_near, q_new;
-    std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
-	base::State::Status status {base::State::Status::None};
+	size_t tree_idx { 0 };  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	std::shared_ptr<base::State> q_e { nullptr };
+	std::shared_ptr<base::State> q_near { nullptr };
+	std::shared_ptr<base::State> q_new { nullptr };
+    std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list { nullptr };
+	base::State::Status status { base::State::Status::None };
 
 	while (true)
 	{
@@ -81,9 +83,9 @@ bool planning::rbt::RGBTConnect::solve()
 std::tuple<base::State::Status, std::shared_ptr<base::State>> 
     planning::rbt::RGBTConnect::extendGenSpine(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
-    float d_c = ss->computeDistance(q);
-	std::shared_ptr<base::State> q_new = q;
-	base::State::Status status;
+    float d_c { ss->computeDistance(q) };
+	std::shared_ptr<base::State> q_new { q };
+	base::State::Status status { base::State::Status::None };
 
     for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
@@ -101,14 +103,15 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
 std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> 
     planning::rbt::RGBTConnect::extendGenSpine2(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
-    float d_c = ss->computeDistance(q);
-	std::shared_ptr<base::State> q_new = q;
-	std::vector<std::shared_ptr<base::State>> q_new_list;
-    base::State::Status status;
+    float d_c { ss->computeDistance(q) };
+	std::shared_ptr<base::State> q_new { q };
+	std::shared_ptr<base::State> q_temp { nullptr };
+	std::vector<std::shared_ptr<base::State>> q_new_list {};
+    base::State::Status status { base::State::Status::None };
 
     for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
-        std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
+        q_temp = ss->getNewState(q_new);
         tie(status, q_new) = extendSpine(q_temp, q_e);
 		q_new_list.emplace_back(q_new);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
@@ -122,15 +125,16 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
-    float d_c = ss->computeDistance(q);
-	std::shared_ptr<base::State> q_new = q;
-    std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list;
-	base::State::Status status = base::State::Status::Advanced;
-	size_t num_ext = 0;
+    float d_c { ss->computeDistance(q) };
+	std::shared_ptr<base::State> q_new { q };
+	std::shared_ptr<base::State> q_temp { nullptr };
+    std::shared_ptr<std::vector<std::shared_ptr<base::State>>> q_new_list { nullptr };
+	base::State::Status status { base::State::Status::Advanced };
+	size_t num_ext { 0 };
 	
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
+		q_temp = ss->getNewState(q_new);
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new_list) = extendGenSpine2(q_temp, q_e);
@@ -176,8 +180,8 @@ bool planning::rbt::RGBTConnect::checkTerminatingCondition(base::State::Status s
 
 void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
-	std::ofstream output_file;
-	std::ios_base::openmode mode = std::ofstream::out;
+	std::ofstream output_file {};
+	std::ios_base::openmode mode { std::ofstream::out };
 	if (append_output)
 		mode = std::ofstream::app;
 
@@ -195,7 +199,9 @@ void planning::rbt::RGBTConnect::outputPlannerData(const std::string &filename, 
 		if (output_states_and_paths)
 		{
 			// Just to check how many states have real or underestimation of distance-to-obstacles computed
-            // size_t num_real = 0, num_underest = 0, num_total = 0;
+            // size_t num_real { 0 };
+			// size_t num_underest { 0 };
+			// size_t num_total { 0 };
             // for (size_t i = 0; i < trees.size(); i++)
             // {
             //     output_file << *trees[i];

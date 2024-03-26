@@ -12,8 +12,8 @@
 
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
-    YAML::Node node = YAML::LoadFile(root_path + config_file_path);
-    size_t num_added = 0;
+    YAML::Node node { YAML::LoadFile(root_path + config_file_path) };
+    size_t num_added { 0 };
 
     try
     {
@@ -134,7 +134,7 @@ void env::Environment::removeAllObjects()
 // Check whether an object position 'pos' is valid when the object moves at 'vel' velocity
 bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 {
-    float tol_radius = std::max(vel / robot_max_vel, base_radius);
+    float tol_radius {std::max(vel / robot_max_vel, base_radius)};
 
     if (table_included)
     {

@@ -4,19 +4,22 @@
 
 int main(int argc, char **argv)
 {
-	// std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario2/scenario2.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario3/scenario3.yaml";
+	std::string scenario_file_path
+	{
+		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
+		// "/data/planar_2dof/scenario1/scenario1.yaml"
+		// "/data/planar_2dof/scenario2/scenario2.yaml"
+		// "/data/planar_2dof/scenario3/scenario3.yaml"
 
-	// std::string scenario_file_path = "/data/planar_10dof/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/planar_10dof/scenario2/scenario2.yaml";
-	
-	std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
+		// "/data/planar_10dof/scenario_test/scenario_test.yaml"
+		// "/data/planar_10dof/scenario1/scenario1.yaml"
+		// "/data/planar_10dof/scenario2/scenario2.yaml"
+
+		"/data/xarm6/scenario_test/scenario_test.yaml"
+		// "/data/xarm6/scenario1/scenario1.yaml"
+		// "/data/xarm6/scenario2/scenario2.yaml"
+		// "/data/xarm6/scenario3/scenario3.yaml"
+	};
 
 	size_t max_num_tests = 10;
 
@@ -26,28 +29,29 @@ int main(int argc, char **argv)
 	int clp = commandLineParser(argc, argv, scenario_file_path);
 	if (clp != 0) return clp;
 
-	const std::string project_path = getProjectPath();
+	const std::string project_path { getProjectPath() };
 	ConfigurationReader::initConfiguration(project_path);
-    YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	size_t num_random_obstacles = node["random_obstacles"]["num"].as<size_t>();
-	Eigen::Vector3f obs_dim;
+    YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
+
+	size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
+	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 		
 	scenario::Scenario scenario(scenario_file_path, project_path);
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<base::State> q_start = scenario.getStart();
-	std::shared_ptr<base::State> q_goal = scenario.getGoal();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-	std::unique_ptr<planning::AbstractPlanner> planner;
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<base::State> q_start { scenario.getStart() };
+	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 
-	bool result = false;
-	size_t num_obs = env->getNumObjects();
+	bool result { false };
+	size_t num_obs { env->getNumObjects() };
 	while (!result && num_random_obstacles > 0)
 	{
 		env->removeObjects(num_obs);
 		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
-		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
+		planner = std::make_unique<planning::rbt::RBTConnect>(ss, q_start, q_goal);
 		result = planner->solve();
 		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
 	}
@@ -59,9 +63,9 @@ int main(int argc, char **argv)
 	LOG(INFO) << "Start: " << q_start;
 	LOG(INFO) << "Goal: " << q_goal;
 
-	size_t num_test = 0;
-	size_t num_success = 0;
-	std::vector<float> planning_times;
+	size_t num_test { 0 };
+	size_t num_success { 0 };
+	std::vector<float> planning_times {};
 	while (num_test++ < max_num_tests)
 	{
 		try
@@ -80,7 +84,7 @@ int main(int argc, char **argv)
 				num_success++;
 				planning_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 				// LOG(INFO) << "Found path: ";
-				// std::vector<std::shared_ptr<base::State>> path = planner->getPath();
+				// std::vector<std::shared_ptr<base::State>> path { planner->getPath() };
 				// for (size_t i = 0; i < path.size(); i++)
 				// 	std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
 			}

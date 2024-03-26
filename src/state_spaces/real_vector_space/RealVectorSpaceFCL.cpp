@@ -20,7 +20,7 @@ base::RealVectorSpaceFCL::RealVectorSpaceFCL(size_t num_dimensions_, const std::
 bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 {
 	robot->setState(q);	
-	fcl::DefaultCollisionData<float> collision_data;
+	fcl::DefaultCollisionData<float> collision_data {};
 
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{	
@@ -56,11 +56,11 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
 	
-	float d_c = INFINITY;
+	float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
-	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
-		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())));
-	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
+	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
+		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks()))) };
+	std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
 	fcl::DefaultDistanceData<float> distance_data;
 	robot->setState(q);
 	

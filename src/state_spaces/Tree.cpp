@@ -30,13 +30,13 @@ void base::Tree::clearTree()
 
 std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<base::State> q)
 {
-	const size_t num_results = 1;
-	size_t q_near_idx;
-	float out_dist_sqr;
+	const size_t num_results { 1 };
+	size_t q_near_idx { 0 };
+	float out_dist_sqr { 0 };
 	nanoflann::KNNResultSet<float> result_set(num_results);
 	result_set.init(&q_near_idx, &out_dist_sqr);
 
-	Eigen::VectorXf v = q->getCoord();
+	Eigen::VectorXf v { q->getCoord() };
 	std::vector<float> vec(&v[0], v.data()+v.cols()*v.rows());
 
 	float *vec_c = &vec[0];
@@ -48,10 +48,10 @@ std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<b
 // Get nearest state without using nanoflann library
 std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<base::State> q)
 {
-	size_t q_near_idx = 0;
-	float d, d_min = INFINITY;
-	bool is_out;
-	Eigen::VectorXf q_temp;
+	size_t q_near_idx { 0 };
+	float d { 0 }, d_min { INFINITY };
+	bool is_out { false };
+	Eigen::VectorXf q_temp {};
 
 	for (size_t i = 0; i < states->size(); i++)
 	{
@@ -82,7 +82,7 @@ std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<
 // 'q_parent' - parent of 'q_new'
 void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent)
 {
-	size_t N = states->size();
+	size_t N { states->size() };
 	states->emplace_back(q_new);
 	kd_tree->addPoints(N, N); 	// Comment this line if you are not using Kd-Trees
 	q_new->setTreeIdx(getTreeIdx());

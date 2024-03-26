@@ -19,7 +19,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
 
-	urdf::Model model;
+	urdf::Model model {};
 	if (!model.initFile(robot_desc))
     	throw std::runtime_error("Failed to parse urdf file");
 	
@@ -30,17 +30,19 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	model.getLinks(links_);
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	num_DOFs = robot_chain.getNrOfJoints();
+	float lower { 0 };
+	float upper { 0 };
 
 	for (size_t i = 0; i < num_DOFs; i++)
 	{
-		float lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
-		float upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
+		lower = model.getJoint("joint"+std::to_string(i+1))->limits->lower;
+		upper = model.getJoint("joint"+std::to_string(i+1))->limits->upper;
 		limits.emplace_back(std::pair<float, float>(lower, upper));
 
 		// LOG(INFO) << links_[i]->name << "\t" << links_[i]->collision->geometry->type;
 		urdf::Pose pose = model.getJoint("joint"+std::to_string(i+1))->parent_to_joint_origin_transform;
 		KDL::Vector pos(pose.position.x, pose.position.y, pose.position.z);
-		double roll{}, pitch{}, yaw{};
+		double roll { 0 }, pitch { 0 }, yaw { 0 };
 		KDL::Frame link_frame;
 		link_frame.p = pos;
 		link_frame.M = link_frame.M.RPY(roll, pitch, yaw);
@@ -48,15 +50,15 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 		if (links_[i]->collision->geometry->type == urdf::Geometry::MESH)
 		{
 			fcl::Vector3f p[3];
-			fcl::BVHModel<fcl::OBBRSS<float>>* model = new fcl::BVHModel<fcl::OBBRSS<float>>;
+			fcl::BVHModel<fcl::OBBRSS<float>>* model { new fcl::BVHModel<fcl::OBBRSS<float>> };
     		model->beginModel();
-			const auto mesh_ptr = dynamic_cast<const urdf::Mesh*>(links_[i]->collision->geometry.get());			
+			const auto mesh_ptr { dynamic_cast<const urdf::Mesh*>(links_[i]->collision->geometry.get()) };			
 			stl_reader::StlMesh <float, unsigned int> mesh (urdf_root_path + mesh_ptr->filename);
 			for (size_t j = 0; j < mesh.num_tris(); j++)
 			{
 				for (size_t icorner = 0; icorner < 3; icorner++) 
 				{
-					const float* c = mesh.vrt_coords (mesh.tri_corner_ind (j, icorner));
+					const float* c { mesh.vrt_coords (mesh.tri_corner_ind (j, icorner)) };
 					// LOG(INFO) << "(" << c[0] << ", " << c[1] << ", " << c[2] << ") ";
 					p[icorner] = fcl::Vector3f(c[0], c[1], c[2]); 
 				}
@@ -75,7 +77,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	if (table_included)
 		type += "_with_table";
 
-	Eigen::VectorXf state = Eigen::VectorXf::Zero(num_DOFs);
+	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	if (gripper_length > 0)
 		state << 0, 0, 0, M_PI, M_PI_2, 0; 	// Starting configuration in case the gripper is attached
 
@@ -87,8 +89,8 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 
 void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 {
-	std::shared_ptr<std::vector<KDL::Frame>> frames_fk = computeForwardKinematics(q);
-	KDL::Frame tf;
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk { computeForwardKinematics(q) };
+	KDL::Frame tf {};
 	for (size_t i = 0; i < links.size(); i++)
 	{
 		tf = frames_fk->at(i);
@@ -111,14 +113,14 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
 	std::vector<KDL::Frame> frames_fk(num_DOFs);
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
-	KDL::JntArray joint_pos = KDL::JntArray(num_DOFs);
+	KDL::JntArray joint_pos { KDL::JntArray(num_DOFs) };
 
 	for (size_t i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 
 	for (size_t i = 0; i < num_DOFs; i++)
 	{
-		KDL::Frame cart_pos;
+		KDL::Frame cart_pos {};
 		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		frames_fk[i] = cart_pos;
 		// std::cout << "Frame R" << i << ": " << frames_fk->at(i).M << std::endl;
@@ -132,7 +134,7 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
 																	 const std::shared_ptr<base::State> q_init)
 {
-	KDL::Vector p_new = p - gripper_length * R.UnitZ();
+	KDL::Vector p_new { p - gripper_length * R.UnitZ() };
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	KDL::ChainFkSolverPos_recursive fk_solver(robot_chain);
 	KDL::ChainIkSolverVel_pinv ik_solver(robot_chain);
@@ -144,13 +146,13 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 	Eigen::VectorXf q_result(num_DOFs);
 
 	srand((unsigned int) time(0));
-	float error = INFINITY;
-	size_t num = 0;
+	float error { INFINITY };
+	size_t num { 0 };
 	while (error > 1e-5)
 	{
 		if (q_init == nullptr)
 		{
-			Eigen::VectorXf rand = Eigen::VectorXf::Random(num_DOFs);
+			Eigen::VectorXf rand { Eigen::VectorXf::Random(num_DOFs) };
 			for (size_t i = 0; i < num_DOFs; i++)
 				q_in.data(i) = ((limits[i].second - limits[i].first) * rand(i) + limits[i].first + limits[i].second) / 2;
 		}
@@ -205,23 +207,23 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 
 std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::shared_ptr<base::State> q)
 {
-	std::shared_ptr<std::vector<KDL::Frame>> frames = computeForwardKinematics(q);
-	std::shared_ptr<Eigen::MatrixXf> skeleton = std::make_shared<Eigen::MatrixXf>(3, links.size() + 1);
+	std::shared_ptr<std::vector<KDL::Frame>> frames { computeForwardKinematics(q) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, links.size() + 1) };
 	skeleton->col(0) << 0, 0, 0;
 	skeleton->col(1) << frames->at(1).p(0), frames->at(1).p(1), frames->at(1).p(2);
 	skeleton->col(2) << frames->at(2).p(0), frames->at(2).p(1), frames->at(2).p(2);
 
-	// KDL::Vector p3 = frames->at(2).p + frames->at(2).M.UnitX() * 0.0775;
-	KDL::Vector p3 = frames->at(3).p - frames->at(3).M.UnitZ() * 0.25;
+	// KDL::Vector p3 { frames->at(2).p + frames->at(2).M.UnitX() * 0.0775 };
+	KDL::Vector p3 { frames->at(3).p - frames->at(3).M.UnitZ() * 0.25 };
 	skeleton->col(3) << p3(0), p3(1), p3(2);
 	skeleton->col(4) << frames->at(4).p(0), frames->at(4).p(1), frames->at(4).p(2);
 
-	KDL::Vector p5 = frames->at(4).p + frames->at(4).M.UnitX() * 0.076;
+	KDL::Vector p5 { frames->at(4).p + frames->at(4).M.UnitX() * 0.076 };
 	skeleton->col(5) << p5(0), p5(1), p5(2);
 	skeleton->col(6) << frames->at(5).p(0), frames->at(5).p(1), frames->at(5).p(2);
 
     // Correct the last skeleton point regarding the attached gripper.
-	KDL::Vector a = frames->back().M.UnitZ();
+	KDL::Vector a { frames->back().M.UnitZ() };
 	skeleton->col(6) -= 0.3 * gripper_length * Eigen::Vector3f(a.x(), a.y(), a.z());
 	
 	return skeleton;
@@ -263,7 +265,7 @@ float robots::xArm6::computeStep2(const std::shared_ptr<base::State> q1, const s
 
 float robots::xArm6::getEnclosingRadius(const std::shared_ptr<Eigen::MatrixXf> skeleton, int j_start, int j_proj)
 {
-	float r = 0;
+	float r { 0 };
 	if (j_proj == -2)	// Special case when all frame origins starting from j_start are projected on {x,y} plane
 	{
 		for (int j = j_start; j < skeleton->cols(); j++)
@@ -276,10 +278,10 @@ float robots::xArm6::getEnclosingRadius(const std::shared_ptr<Eigen::MatrixXf> s
 	}
 	else	// Projection of all frame origins starting from j_start to the link (j_proj, j_proj+1) is needed
 	{
-		float t;
-		Eigen::Vector3f A = skeleton->col(j_proj);
-		Eigen::Vector3f B = skeleton->col(j_proj+1);
-		Eigen::Vector3f P, P_proj;
+		float t { 0 };
+		Eigen::Vector3f A { skeleton->col(j_proj) };
+		Eigen::Vector3f B { skeleton->col(j_proj+1) };
+		Eigen::Vector3f P {}, P_proj {};
 		for (int j = j_start; j < skeleton->cols(); j++)
 		{
 			t = (skeleton->col(j) - A).dot(B - A) / (B - A).squaredNorm();
@@ -292,23 +294,24 @@ float robots::xArm6::getEnclosingRadius(const std::shared_ptr<Eigen::MatrixXf> s
 
 fcl::Transform3f robots::xArm6::KDL2fcl(const KDL::Frame &in)
 {
-	fcl::Transform3f out;
-    double x, y, z, w;
+	fcl::Transform3f out {};
+    double x { 0 }, y { 0 }, z { 0 }, w { 0 };
     in.M.GetQuaternion(x, y, z, w);
     fcl::Vector3f t(in.p[0], in.p[1], in.p[2]);
     fcl::Quaternionf q(w, x, y, z);
     out.linear() = q.matrix();
     out.translation() = t;
+
     return out;
 }
 
 KDL::Frame robots::xArm6::fcl2KDL(const fcl::Transform3f &in)
 {
-    fcl::Matrix3f R = in.rotation();
+    fcl::Matrix3f R { in.rotation() };
 	fcl::Quaternionf q(R);
-    fcl::Vector3f t = in.translation();
+    fcl::Vector3f t { in.translation() };
 
-    KDL::Frame f;
+    KDL::Frame f {};
     f.p = KDL::Vector(t[0],t[1],t[2]);
     f.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
     return f;
@@ -317,12 +320,13 @@ KDL::Frame robots::xArm6::fcl2KDL(const fcl::Transform3f &in)
 void robots::xArm6::test()
 {
 	CollisionGeometryPtr fclBox(new fcl::Box<float>(0.5, 1.0, 3.0));
-	fcl::Transform3f tf; tf.translation() = fcl::Vector3f(1, 1, 1.5);
+	fcl::Transform3f tf {}; 
+	tf.translation() = fcl::Vector3f(1, 1, 1.5);
 	std::unique_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fclBox, tf));
 	for (size_t i = 0; i < links.size(); i++)
 	{
-		fcl::DistanceRequest<float> request;
-		fcl::DistanceResult<float> result;
+		fcl::DistanceRequest<float> request {};
+		fcl::DistanceResult<float> result {};
 		fcl::distance(links[i].get(), ob.get(), request, result);
 		LOG(INFO) << links[i]->getAABB().min_ <<"\t;\t" << links[i]->getAABB().max_ << std::endl << "*******************" << std::endl;
 		LOG(INFO) << "Distance from " << i+1 << ": " << result.min_distance << std::endl;

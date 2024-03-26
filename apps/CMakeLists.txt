@@ -9,10 +9,12 @@ target_link_libraries(test_kdl_parser PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 add_executable(test_planar_2dof test_planar_2dof.cpp)
 target_compile_features(test_planar_2dof PRIVATE cxx_std_17)
 target_link_libraries(test_planar_2dof PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_planar_2dof PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_xarm6 test_xarm6.cpp)
 target_compile_features(test_xarm6 PRIVATE cxx_std_17)
 target_link_libraries(test_xarm6 PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_xarm6 PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_obstacle_parsing test_obstacle_parsing.cpp)
 target_compile_features(test_obstacle_parsing PRIVATE cxx_std_17)
@@ -21,6 +23,7 @@ target_link_libraries(test_obstacle_parsing PUBLIC rpmpl_library ${PROJECT_LIBRA
 add_executable(test_real_vector_space test_real_vector_space.cpp)
 target_compile_features(test_real_vector_space PRIVATE cxx_std_17)
 target_link_libraries(test_real_vector_space PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_real_vector_space PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 add_executable(test_fcl_distance test_fcl_distance.cpp)
 target_compile_features(test_fcl_distance PRIVATE cxx_std_17)

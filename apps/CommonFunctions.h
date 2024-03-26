@@ -18,7 +18,7 @@ void initGoogleLogging(char **argv)
 
 int commandLineParser(int argc, char **argv, std::string &scenario_file_path)
 {
-	bool print_help = false;
+	bool print_help { false };
 	CommandLine args("Test command line parser.");
 	args.addArgument({"-s", "--scenario"}, &scenario_file_path, "Scenario .yaml description file path");
 	args.addArgument({"-h", "--help"},     &print_help, "Use --scenario scenario_yaml_file_path to run with different scenario");
@@ -57,8 +57,7 @@ float getMean(std::vector<float> &v)
 	if (v.empty()) 
 		return INFINITY;
 		
-	float sum = std::accumulate(v.begin(), v.end(), 0.0);
-	return sum / v.size();
+	return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
 }
 
 float getStd(std::vector<float> &v)
@@ -66,8 +65,8 @@ float getStd(std::vector<float> &v)
 	if (v.empty()) 
 		return INFINITY;
 		
-	float mean = getMean(v);
-	float sum = 0;
+	float mean { getMean(v) };
+	float sum { 0 };
 	for (size_t i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
@@ -78,16 +77,17 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-	const Eigen::Vector3f WS_center = env->getWSCenter();
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	const Eigen::Vector3f WS_center { env->getWSCenter() };
 
-	Eigen::Vector3f pos;
-	float r, fi, theta;
-	size_t num_obs = env->getNumObjects();
-	std::random_device rd;
+	Eigen::Vector3f pos {};
+	float r { 0 }, fi { 0 }, theta { 0 };
+	size_t num_obs { env->getNumObjects() };
+	std::random_device rd {};
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	std::shared_ptr<env::Object> object { nullptr };
 	
 	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
@@ -98,8 +98,7 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
 
-		std::shared_ptr<env::Object> object = 
-			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
+		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
 		env->addObject(object);
 
 		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
@@ -117,19 +116,20 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-	const Eigen::Vector3f WS_center = env->getWSCenter();
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	const Eigen::Vector3f WS_center { env->getWSCenter() };
 
-	std::vector<std::shared_ptr<env::Object>> fixed_objects = env->getObjects();
+	std::vector<std::shared_ptr<env::Object>> fixed_objects { env->getObjects() };
 	env->removeAllObjects();
 
-	Eigen::Vector3f pos, vel, acc;
-	size_t num_obs = env->getNumObjects();
-	float r, fi, theta;
-	std::random_device rd;
+	Eigen::Vector3f pos {}, vel {}, acc {};
+	size_t num_obs { env->getNumObjects() };
+	float r { 0 }, fi { 0 }, theta { 0 };
+	std::random_device rd {};
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	std::shared_ptr<env::Object> object { nullptr };
 	
 	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
@@ -140,8 +140,7 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
 
-		std::shared_ptr<env::Object> object = 
-			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
+		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
 		object->setMaxVel(max_vel);
 		object->setMaxAcc(max_acc);
 

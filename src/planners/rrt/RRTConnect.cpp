@@ -51,9 +51,11 @@ bool planning::rrt::RRTConnect::solve()
 {
 	// std::cout << "Entering solve ...\n";
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
-	size_t tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
-	std::shared_ptr<base::State> q_rand, q_near, q_new;
-	base::State::Status status {base::State::Status::None};
+	size_t tree_idx { 0 };  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	std::shared_ptr<base::State> q_rand { nullptr }; 
+	std::shared_ptr<base::State> q_near { nullptr };
+	std::shared_ptr<base::State> q_new { nullptr };
+	base::State::Status status { base::State::Status::None };
 
 	while (true)
 	{
@@ -102,9 +104,10 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRT
 	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside extend. \n";
-	base::State::Status status;
-	std::shared_ptr<base::State> q_new;
+	base::State::Status status { base::State::Status::None };
+	std::shared_ptr<base::State> q_new { nullptr };
 	tie(status, q_new) = ss->interpolateEdge2(q, q_e, RRTConnectConfig::EPS_STEP);
+
 	if (ss->isValid(q, q_new))
 		return {status, q_new};
 	else
@@ -116,12 +119,13 @@ base::State::Status planning::rrt::RRTConnect::connect
 	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside connect. \n";
-	std::shared_ptr<base::State> q_new = q;
-	base::State::Status status = base::State::Status::Advanced;
-	size_t num_ext = 0;
+	std::shared_ptr<base::State> q_new { q };
+	base::State::Status status { base::State::Status::Advanced };
+	size_t num_ext { 0 };
+
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
+		std::shared_ptr<base::State> q_temp { ss->getNewState(q_new) };
 		tie(status, q_new) = extend(q_temp, q_e);
 		if (status != base::State::Status::Trapped)
 			tree->upgradeTree(q_new, q_temp);
@@ -133,7 +137,7 @@ base::State::Status planning::rrt::RRTConnect::connect
 void planning::rrt::RRTConnect::computePath()
 {
 	path.clear();
-	std::shared_ptr<base::State> q_con = trees[0]->getStates()->back();		
+	std::shared_ptr<base::State> q_con { trees[0]->getStates()->back() };		
 	while (q_con->getParent() != nullptr)
 	{
 		path.emplace_back(q_con->getParent());
@@ -164,7 +168,7 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 		return true;
 	}
 
-	float time_current = getElapsedTime(time_alg_start);
+	float time_current { getElapsedTime(time_alg_start) };
 	if (time_current >= RRTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RRTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RRTConnectConfig::MAX_NUM_ITER)
@@ -179,8 +183,8 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 
 void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
-	std::ofstream output_file;
-	std::ios_base::openmode mode = std::ofstream::out;
+	std::ofstream output_file {};
+	std::ios_base::openmode mode { std::ofstream::out };
 	if (append_output)
 		mode = std::ofstream::app;
 

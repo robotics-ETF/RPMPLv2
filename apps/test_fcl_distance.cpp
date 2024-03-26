@@ -1,9 +1,8 @@
 #include <ostream>
 #include <memory>
 
+#include <fcl/fcl.h>
 #include <glog/logging.h>
-
-#include "fcl/fcl.h"
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
@@ -16,9 +15,8 @@ int main([[maybe_unused]] int argc, char **argv)
 
 	Eigen::IOFormat fmt(4, 0, ", ", "\n", "[", "]");
 
-	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> manager1 = std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>();
-	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> manager2 = std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>();
-
+	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> manager1 { std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>() };
+	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> manager2 { std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>() };
 
 	CollisionGeometryPtr obs1(new fcl::Boxf(1.0005, 0.1, 0.1));
 	fcl::Vector3f tr1(0.5, 0, 0);
@@ -29,11 +27,12 @@ int main([[maybe_unused]] int argc, char **argv)
 	std::shared_ptr<fcl::CollisionObjectf> ob1(new fcl::CollisionObjectf(obs1, tf1));
 	ob1->computeAABB();
 
-
 	CollisionGeometryPtr obs2(new fcl::Boxf(0.2, 0.2, 0.2));
 	fcl::Vector3f tr2(1.5, 0, 0);
     fcl::Quaternionf quat2(0, 0, 0, 0);
-    fcl::Transform3f tf2(fcl::Transform3f::Identity()); tf2.translation() = tr2; tf2.linear() = quat2.normalized().matrix();
+    fcl::Transform3f tf2(fcl::Transform3f::Identity()); 
+	tf2.translation() = tr2; 
+	tf2.linear() = quat2.normalized().matrix();
 
 	std::shared_ptr<fcl::CollisionObjectf> ob2(new fcl::CollisionObjectf(obs2, tf2));
 	ob2->computeAABB();
