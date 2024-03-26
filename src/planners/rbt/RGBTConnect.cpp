@@ -24,7 +24,7 @@ planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> 
 bool planning::rbt::RGBTConnect::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now();		// Start the clock
-	size_t tree_idx { 0 };  // Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	size_t tree_idx { 0 };  	// Determines a tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_e { nullptr };
 	std::shared_ptr<base::State> q_near { nullptr };
 	std::shared_ptr<base::State> q_new { nullptr };

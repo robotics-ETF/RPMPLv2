@@ -9,8 +9,8 @@ base::State::State(const Eigen::VectorXf &coord_)
 {
 	coord = coord_;
 	num_dimensions = coord.size();
-	tree_idx = -1;
-	idx = -1;
+	tree_idx = 0;
+	idx = 0;
 	d_c = -1;
 	d_c_profile = std::vector<float>();
 	is_real_d_c = true;

@@ -51,7 +51,7 @@ bool planning::rrt::RRTConnect::solve()
 {
 	// std::cout << "Entering solve ...\n";
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
-	size_t tree_idx { 0 };  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	size_t tree_idx { 0 };  	// Determines a tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
 	std::shared_ptr<base::State> q_rand { nullptr }; 
 	std::shared_ptr<base::State> q_near { nullptr };
 	std::shared_ptr<base::State> q_new { nullptr };
