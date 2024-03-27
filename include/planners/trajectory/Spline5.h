@@ -19,19 +19,19 @@ namespace planning
 		    ~Spline5() {}
 
             bool compute(const Eigen::VectorXf &q_final) override;
-            bool checkConstraints(int idx, float t_f) override;
+            bool checkConstraints(size_t idx, float t_f) override;
 
-            std::vector<float> getMaxVelocityTimes(int idx) override;
-            std::vector<float> getMaxAccelerationTimes(int idx) override;
-            std::vector<float> getMaxJerkTimes(int idx) override;
+            std::vector<float> getMaxVelocityTimes(size_t idx) override;
+            std::vector<float> getMaxAccelerationTimes(size_t idx) override;
+            std::vector<float> getMaxJerkTimes(size_t idx) override;
 
-            float getPosition(float t, int idx, float t_f) override;
-            float getVelocity(float t, int idx, float t_f) override;
-            float getAcceleration(float t, int idx, float t_f) override;
-            float getJerk(float t, int idx, float t_f) override;
+            float getPosition(float t, size_t idx, float t_f) override;
+            float getVelocity(float t, size_t idx, float t_f) override;
+            float getAcceleration(float t, size_t idx, float t_f) override;
+            float getJerk(float t, size_t idx, float t_f) override;
 
         private:
-            float computeFinalTime(int idx, float q_f_i);
+            float computeFinalTime(size_t idx, float q_f_i);
             const std::vector<float> solveQubicEquation(float a, float b, float c, float d);
             
             Eigen::VectorXf a, b, c, d, e, f;   // Coefficients of a spline a*t⁵ + b*t⁴ + c*t³ + d*t² + e*t + f

@@ -6,6 +6,7 @@
 
 planning::AbstractPlanner::AbstractPlanner(std::shared_ptr<base::StateSpace> ss_)
 {
+	planner_type = planning::PlannerType::Abstract;
     ss = ss_;
     q_start = nullptr;
     q_goal = nullptr;
@@ -15,6 +16,7 @@ planning::AbstractPlanner::AbstractPlanner(std::shared_ptr<base::StateSpace> ss_
 planning::AbstractPlanner::AbstractPlanner(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_, 
                                            const std::shared_ptr<base::State> q_goal_)
 {
+	planner_type = planning::PlannerType::Abstract;
     ss = ss_;
     q_start = q_start_;
     q_goal = q_goal_;
@@ -27,24 +29,24 @@ planning::AbstractPlanner::~AbstractPlanner() {}
 /// @param time_init Time point from which measuring time starts.
 /// @param time_unit Time unit in which elapsed time is returned.
 /// @return Elapsed time in specified 'time_unit'. Default: seconds.
-float planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init, const planning::time_unit time_unit)
+float planning::AbstractPlanner::getElapsedTime(const std::chrono::steady_clock::time_point &time_init, const planning::TimeUnit time_unit)
 {
 	try
 	{
-		auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_init).count();
+		auto time { std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_init).count() };
 
 		switch (time_unit)
 		{
-		case planning::time_unit::s:
+		case planning::TimeUnit::s:
 			return time * 1e-9;
 
-		case planning::time_unit::ms:
+		case planning::TimeUnit::ms:
 			return time * 1e-6;
 
-		case planning::time_unit::us:
+		case planning::TimeUnit::us:
 			return time * 1e-3;
 
-		case planning::time_unit::ns:
+		case planning::TimeUnit::ns:
 			return float(time);
 		
 		default:

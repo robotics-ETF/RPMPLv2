@@ -29,9 +29,9 @@ void PlannerInfo::addCostConvergence(const std::vector<float> &cost_convergence)
 		PlannerInfo::cost_convergence.emplace_back(cost_convergence[i]);
 }
 
-void PlannerInfo::addRoutineTime(float time, int idx)
+void PlannerInfo::addRoutineTime(float time, size_t idx)
 {
-	for (int i = routine_times.size(); i <= idx; i++)
+	for (size_t i = routine_times.size(); i <= idx; i++)
 		routine_times.emplace_back(std::vector<float>());
 	routine_times[idx].emplace_back(time);
 }

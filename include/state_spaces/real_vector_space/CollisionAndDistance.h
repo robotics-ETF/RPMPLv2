@@ -8,7 +8,6 @@
 #include <vector>
 #include <memory>
 #include <Eigen/Dense>
-// #include <QuadProg++.hh>
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
 
@@ -20,13 +19,11 @@ namespace base
         CollisionAndDistance() {}
 
 		static bool collisionCapsuleToBox(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);
-		static bool collisionCapsuleToRectangle(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs, int coord);
+		static bool collisionCapsuleToRectangle(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs, size_t coord);
 		static bool collisionLineSegToLineSeg(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector3f &C, Eigen::Vector3f &D);
 		static bool collisionCapsuleToSphere(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);
 
         static std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> distanceCapsuleToBox
-			(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);
-		std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> distanceCapsuleToBoxQP
 			(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);
 		static std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> distanceLineSegToLineSeg
 			(const Eigen::Vector3f &A, const Eigen::Vector3f &B, const Eigen::Vector3f &C, const Eigen::Vector3f &D);
@@ -37,8 +34,8 @@ namespace base
 
     private:
 		static float checkCases(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector4f &rec, Eigen::Vector2f &point, 
-                                float obs_coord, int coord);
-		static const Eigen::Vector3f get3DPoint(const Eigen::Vector2f &point, float coord_value, int coord);
+                                float obs_coord, size_t coord);
+		static const Eigen::Vector3f get3DPoint(const Eigen::Vector2f &point, float coord_value, size_t coord);
         
         class CapsuleToBox
         {
@@ -52,10 +49,10 @@ namespace base
             float d_c;
             float radius;
 
-            void projectionLineSegOnSide(int min1, int min2, int min3, int max1, int max2, int max3);
-            void checkEdges(Eigen::Vector3f &point, int k);
+            void projectionLineSegOnSide(size_t min1, size_t min2, size_t min3, size_t max1, size_t max2, size_t max3);
+            void checkEdges(Eigen::Vector3f &point, size_t k);
             std::shared_ptr<Eigen::MatrixXf> getLineSegments(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, 
-                                                             float coord_value, int coord);
+                                                             float coord_value, size_t coord);
             void distanceToMoreLineSegments(const Eigen::MatrixXf &line_segments);
             void checkOtherCases();
 

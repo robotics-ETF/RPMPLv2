@@ -25,15 +25,15 @@ namespace robots
 		virtual ~AbstractRobot() = 0;
 		
 		inline const std::string &getType() const { return type; }
-		inline int getNumDOFs() const { return num_DOFs; }
-		inline int getNumLinks() const { return links.size(); }
+		inline size_t getNumDOFs() const { return num_DOFs; }
+		inline size_t getNumLinks() const { return links.size(); }
 		inline const std::vector<std::unique_ptr<fcl::CollisionObjectf>> &getLinks() const { return links; }
 		inline const std::vector<std::pair<float, float>> &getLimits() const { return limits; }
 		inline std::shared_ptr<base::State> getConfiguration() const { return configuration; }
-		inline float getCapsuleRadius(int num) const { return capsules_radius[num]; }
-		inline float getMaxVel(int num) const { return max_vel[num]; }
-		inline float getMaxAcc(int num) const { return max_acc[num]; }
-		inline float getMaxJerk(int num) const { return max_jerk[num]; }
+		inline float getCapsuleRadius(size_t idx) const { return capsules_radius[idx]; }
+		inline float getMaxVel(size_t idx) const { return max_vel[idx]; }
+		inline float getMaxAcc(size_t idx) const { return max_acc[idx]; }
+		inline float getMaxJerk(size_t idx) const { return max_jerk[idx]; }
 
 		inline void setConfiguration(const std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
 		inline void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
@@ -53,7 +53,7 @@ namespace robots
 
 	protected:
 		std::string type;
-		int num_DOFs;
+		size_t num_DOFs;
 		std::vector<std::unique_ptr<fcl::CollisionObjectf>> links;
 		std::vector<std::pair<float, float>> limits;
 		std::shared_ptr<base::State> configuration;

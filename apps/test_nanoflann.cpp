@@ -3,11 +3,13 @@
 // Taken from nanoflann examples
 //
 
-#include <nanoflann.hpp>
 
 #include <ctime>
 #include <cstdlib>
 #include <ostream>
+
+#include <nanoflann.hpp>
+
 #include "RealVectorSpaceState.h"
 #include "RealVectorSpace.h"
 #include "State.h"

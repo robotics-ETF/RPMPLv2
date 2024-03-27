@@ -11,12 +11,16 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) {}
+planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) 
+{
+	planner_type = planning::PlannerType::RRTConnect;
+}
 
 planning::rrt::RRTConnect::RRTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
 									  const std::shared_ptr<base::State> q_goal_) : AbstractPlanner(ss_, q_start_, q_goal_)
 {
 	// std::cout << "Initializing planner...\n";
+	planner_type = planning::PlannerType::RRTConnect;
 	if (!ss->isValid(q_start))
 		throw std::domain_error("Start position is invalid!");
 	if (!ss->isValid(q_goal))
@@ -47,9 +51,11 @@ bool planning::rrt::RRTConnect::solve()
 {
 	// std::cout << "Entering solve ...\n";
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
-	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
-	std::shared_ptr<base::State> q_rand, q_near, q_new;
-	base::State::Status status;
+	size_t tree_idx { 0 };  	// Determines a tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	std::shared_ptr<base::State> q_rand { nullptr }; 
+	std::shared_ptr<base::State> q_near { nullptr };
+	std::shared_ptr<base::State> q_new { nullptr };
+	base::State::Status status { base::State::Status::None };
 
 	while (true)
 	{
@@ -89,7 +95,7 @@ bool planning::rrt::RRTConnect::solve()
 	}
 }
 
-base::Tree planning::rrt::RRTConnect::getTree(int tree_idx) const
+base::Tree planning::rrt::RRTConnect::getTree(size_t tree_idx) const
 {
 	return *trees[tree_idx];
 }
@@ -98,9 +104,10 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrt::RRT
 	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside extend. \n";
-	base::State::Status status;
-	std::shared_ptr<base::State> q_new;
+	base::State::Status status { base::State::Status::None };
+	std::shared_ptr<base::State> q_new { nullptr };
 	tie(status, q_new) = ss->interpolateEdge2(q, q_e, RRTConnectConfig::EPS_STEP);
+
 	if (ss->isValid(q, q_new))
 		return {status, q_new};
 	else
@@ -112,12 +119,13 @@ base::State::Status planning::rrt::RRTConnect::connect
 	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
 	// std::cout << "Inside connect. \n";
-	std::shared_ptr<base::State> q_new = q;
-	base::State::Status status = base::State::Status::Advanced;
-	size_t num_ext = 0;
+	std::shared_ptr<base::State> q_new { q };
+	base::State::Status status { base::State::Status::Advanced };
+	size_t num_ext { 0 };
+
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
+		std::shared_ptr<base::State> q_temp { ss->getNewState(q_new) };
 		tie(status, q_new) = extend(q_temp, q_e);
 		if (status != base::State::Status::Trapped)
 			tree->upgradeTree(q_new, q_temp);
@@ -129,7 +137,7 @@ base::State::Status planning::rrt::RRTConnect::connect
 void planning::rrt::RRTConnect::computePath()
 {
 	path.clear();
-	std::shared_ptr<base::State> q_con = trees[0]->getStates()->back();		
+	std::shared_ptr<base::State> q_con { trees[0]->getStates()->back() };		
 	while (q_con->getParent() != nullptr)
 	{
 		path.emplace_back(q_con->getParent());
@@ -160,7 +168,7 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 		return true;
 	}
 
-	float time_current = getElapsedTime(time_alg_start);
+	float time_current { getElapsedTime(time_alg_start) };
 	if (time_current >= RRTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RRTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RRTConnectConfig::MAX_NUM_ITER)
@@ -175,8 +183,8 @@ bool planning::rrt::RRTConnect::checkTerminatingCondition(base::State::Status st
 
 void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
-	std::ofstream output_file;
-	std::ios_base::openmode mode = std::ofstream::out;
+	std::ofstream output_file {};
+	std::ios_base::openmode mode { std::ofstream::out };
 	if (append_output)
 		mode = std::ofstream::app;
 
@@ -185,7 +193,7 @@ void planning::rrt::RRTConnect::outputPlannerData(const std::string &filename, b
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "RRTConnect" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;

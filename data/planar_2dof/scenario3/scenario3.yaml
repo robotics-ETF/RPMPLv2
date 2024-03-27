@@ -26,3 +26,6 @@ robot:
   WS_center: [0.0, 0.0, 0.0]                          # Workspace center point in [m]
   WS_radius: 2                                        # Workspace radius in [m] assuming spherical workspace shape
   
+testing:
+  max_num: 10                                               # Maximal number of tests that should be carried out
+  

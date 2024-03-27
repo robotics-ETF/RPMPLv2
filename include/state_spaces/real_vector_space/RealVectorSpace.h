@@ -16,8 +16,8 @@ namespace base
 							public base::CollisionAndDistance
 	{
 	public:
-		RealVectorSpace(int num_dimensions_);
-		RealVectorSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+		RealVectorSpace(size_t num_dimensions_);
+		RealVectorSpace(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 						const std::shared_ptr<env::Environment> env_);
 		virtual ~RealVectorSpace();
 

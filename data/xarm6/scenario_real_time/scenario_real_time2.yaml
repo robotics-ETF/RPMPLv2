@@ -60,3 +60,9 @@ robot:
   max_vel:  [3.1415, 3.1415, 3.1415, 3.1415, 3.1415, 3.1415]  # Maximal velocity of each robot's joint in [rad/s]
   max_acc:  [6.3611, 6.3611, 6.3611, 6.3611, 6.3611, 6.3611]  # Maximal acceleration of each robot's joint in [rad/s²]
   max_jerk: [159.15, 159.15, 159.15, 159.15, 159.15, 159.15]  # Maximal jerk of each robot's joint in [rad/s³]
+
+testing:
+  init_num: 1                     # Number of testing to start with
+  init_num_success: 0             # Initial number of already achieved successful tests
+  max_num: 1000                   # Maximal number of tests that should be carried out
+  reach_successful_tests: false	  # If true, run totally 'max_num' successful tests 

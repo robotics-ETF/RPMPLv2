@@ -16,14 +16,14 @@ namespace base
 	class State
 	{
 	public:
-		enum Status {None, Advanced, Trapped, Reached};
+		enum class Status {None, Advanced, Trapped, Reached};
 		
 	protected:
-		StateSpaceType state_space_type;
-		int num_dimensions;												// Dimensionality in C-space
+		base::StateSpaceType state_space_type;
+		size_t num_dimensions;											// Dimensionality in C-space
 		Eigen::VectorXf coord;											// Coordinates in C-space
-		int tree_idx;													// Tree index in which the state is stored
-		int idx; 														// Index of the state in the tree
+		size_t tree_idx;												// Tree index in which the state is stored
+		size_t idx; 													// Index of the state in the tree
 		float d_c;														// Distance-to-obstacles
 		std::vector<float> d_c_profile; 								// Distance-to-obstacles for each robot's link
 		bool is_real_d_c;												// Is real or underestimation of distance-to-obstacles used
@@ -37,12 +37,12 @@ namespace base
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 
-		inline StateSpaceType getStateSpaceType() const { return state_space_type; }
-		inline int getNumDimensions() const { return num_dimensions; }
+		inline base::StateSpaceType getStateSpaceType() const { return state_space_type; }
+		inline size_t getNumDimensions() const { return num_dimensions; }
 		inline const Eigen::VectorXf &getCoord() const { return coord; }
 		inline float getCoord(size_t idx) const { return coord(idx); }
-		inline int getTreeIdx() const { return tree_idx; }
-		inline int getIdx() const { return idx; }
+		inline size_t getTreeIdx() const { return tree_idx; }
+		inline size_t getIdx() const { return idx; }
 		inline float getDistance() const { return d_c; }
 		inline const std::vector<float> &getDistanceProfile() const {return d_c_profile; }
 		inline bool getIsRealDistance() const { return is_real_d_c; }
@@ -51,12 +51,12 @@ namespace base
 		inline std::shared_ptr<State> getParent() const { return parent; }
 		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; };
 
-		inline void setStateSpaceType(StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
-		inline void setNumDimensions(int num_dimensions_) { num_dimensions = num_dimensions_; }
+		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
+		inline void setNumDimensions(size_t num_dimensions_) { num_dimensions = num_dimensions_; }
 		inline void setCoord(const Eigen::VectorXf &coord_) { coord = coord_; }
-		inline void setCoord(const float coord_, int idx) { coord(idx) = coord_; }
-		inline void setTreeIdx(int tree_idx_) { tree_idx = tree_idx_; }
-		inline void setIdx(int idx_) { idx = idx_; }
+		inline void setCoord(const float coord_, size_t idx) { coord(idx) = coord_; }
+		inline void setTreeIdx(size_t tree_idx_) { tree_idx = tree_idx_; }
+		inline void setIdx(size_t idx_) { idx = idx_; }
 		inline void setDistance(float d_c_) { d_c = d_c_; }
 		inline void setDistanceProfile(const std::vector<float> &d_c_profile_) { d_c_profile = d_c_profile_; }
 		inline void setIsRealDistance(bool is_real_d_c_) { is_real_d_c = is_real_d_c_; }

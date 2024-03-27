@@ -3,10 +3,10 @@
 #include <memory>
 #include <ostream>
 #include <numeric>
-
-#include <Scenario.h>
-#include <CommandLine.h>
 #include <glog/logging.h>
+
+#include "Scenario.h"
+#include "CommandLine.h"
 
 void initGoogleLogging(char **argv)
 {
@@ -18,7 +18,7 @@ void initGoogleLogging(char **argv)
 
 int commandLineParser(int argc, char **argv, std::string &scenario_file_path)
 {
-	bool print_help = false;
+	bool print_help { false };
 	CommandLine args("Test command line parser.");
 	args.addArgument({"-s", "--scenario"}, &scenario_file_path, "Scenario .yaml description file path");
 	args.addArgument({"-h", "--help"},     &print_help, "Use --scenario scenario_yaml_file_path to run with different scenario");
@@ -46,7 +46,7 @@ int commandLineParser(int argc, char **argv, std::string &scenario_file_path)
 const std::string getProjectPath()
 {
 	std::string project_path(__FILE__);
-    for (int i = 0; i < 2; i++) {	// This depends on how deep is this file located
+    for (size_t i = 0; i < 2; i++) {	// This depends on how deep is this file located
         project_path = project_path.substr(0, project_path.find_last_of("/\\"));
 	}
 	return project_path;
@@ -57,8 +57,7 @@ float getMean(std::vector<float> &v)
 	if (v.empty()) 
 		return INFINITY;
 		
-	float sum = std::accumulate(v.begin(), v.end(), 0.0);
-	return sum / v.size();
+	return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
 }
 
 float getStd(std::vector<float> &v)
@@ -66,30 +65,31 @@ float getStd(std::vector<float> &v)
 	if (v.empty()) 
 		return INFINITY;
 		
-	float mean = getMean(v);
-	float sum = 0;
+	float mean { getMean(v) };
+	float sum { 0 };
 	for (size_t i = 0; i < v.size(); i++)
 		sum += (v[i] - mean) * (v[i] - mean);
 
 	return std::sqrt(sum / v.size());
 }
 
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
+void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-	const Eigen::Vector3f WS_center = env->getWSCenter();
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	const Eigen::Vector3f WS_center { env->getWSCenter() };
 
-	Eigen::Vector3f pos;
-	float r, fi, theta;
-	int num_obs = env->getNumObjects();
-	std::random_device rd;
+	Eigen::Vector3f pos {};
+	float r { 0 }, fi { 0 }, theta { 0 };
+	size_t num_obs { env->getNumObjects() };
+	std::random_device rd {};
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	std::shared_ptr<env::Object> object { nullptr };
 	
-	for (int i = num_obs; i < num_obs + num_obstacles; i++)
+	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
 		r = distribution(generator) * env->getWSRadius();
 		fi = distribution(generator) * 2 * M_PI;
@@ -98,8 +98,7 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
 
-		std::shared_ptr<env::Object> object = 
-			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
+		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
 		env->addObject(object);
 
 		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
@@ -112,26 +111,27 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 	}
 }
 
-void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
+void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
 	float max_vel, float max_acc)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
-	const Eigen::Vector3f WS_center = env->getWSCenter();
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	const Eigen::Vector3f WS_center { env->getWSCenter() };
 
-	std::vector<std::shared_ptr<env::Object>> fixed_objects = env->getObjects();
+	std::vector<std::shared_ptr<env::Object>> fixed_objects { env->getObjects() };
 	env->removeAllObjects();
 
-	Eigen::Vector3f pos, vel, acc;
-	int num_obs = env->getNumObjects();
-	float r, fi, theta;
-	std::random_device rd;
+	Eigen::Vector3f pos {}, vel {}, acc {};
+	size_t num_obs { env->getNumObjects() };
+	float r { 0 }, fi { 0 }, theta { 0 };
+	std::random_device rd {};
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.0, 1.0);
+	std::shared_ptr<env::Object> object { nullptr };
 	
-	for (int i = num_obs; i < num_obs + num_obstacles; i++)
+	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
 	{
 		r = distribution(generator) * env->getWSRadius();
 		fi = distribution(generator) * 2 * M_PI;
@@ -140,8 +140,7 @@ void initRandomObstacles(int num_obstacles, const Eigen::Vector3f &dim, scenario
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
 		pos.z() = WS_center.z() + r * std::cos(theta);
 
-		std::shared_ptr<env::Object> object = 
-			std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
+		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
 		object->setMaxVel(max_vel);
 		object->setMaxAcc(max_acc);
 

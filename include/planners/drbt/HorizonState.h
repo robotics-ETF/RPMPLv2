@@ -18,7 +18,7 @@ namespace planning
             HorizonState(const std::shared_ptr<base::State> state_, int index_);
             ~HorizonState() {}
 
-            enum Status {Good, Bad, Critical, Goal};
+            enum class Status {Good, Bad, Critical, Goal};
 
             inline std::shared_ptr<base::State> getState() const { return state; }
             inline std::shared_ptr<base::State> getStateReached() const { return state_reached; }
@@ -28,7 +28,7 @@ namespace planning
             inline float getDistancePrevious() const { return d_c_previous; }
             inline float getWeight() const { return weight; }
             inline const Eigen::VectorXf &getCoord() const { return state->getCoord(); }
-            inline float getCoord(int idx) const { return state->getCoord(idx); }
+            inline float getCoord(size_t idx) const { return state->getCoord(idx); }
             inline bool getIsReached() const { return is_reached; }
 
             inline void setStateReached(const std::shared_ptr<base::State> state_reached_) { state_reached = state_reached_; }

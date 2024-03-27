@@ -24,12 +24,12 @@ class ConfigurationReader
 public:
     static void initConfiguration(std::string root_path = "")
     {
-        YAML::Node RealVectorSpaceConfigRoot    = YAML::LoadFile(root_path + "/data/configurations/configuration_realvectorspace.yaml");
-        YAML::Node RRTConnectConfigRoot         = YAML::LoadFile(root_path + "/data/configurations/configuration_rrtconnect.yaml");
-        YAML::Node RBTConnectConfigRoot         = YAML::LoadFile(root_path + "/data/configurations/configuration_rbtconnect.yaml");
-        YAML::Node RGBTConnectConfigRoot        = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml");
-        YAML::Node RGBMTStarConfigRoot          = YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml");
-        YAML::Node DRGBTConfigRoot              = YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml");
+        YAML::Node RealVectorSpaceConfigRoot    { YAML::LoadFile(root_path + "/data/configurations/configuration_realvectorspace.yaml") };
+        YAML::Node RRTConnectConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtconnect.yaml") };
+        YAML::Node RBTConnectConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_rbtconnect.yaml") };
+        YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
+        YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
+        YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -187,13 +187,13 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS is not defined! Using default value of " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;
 
-        if (DRGBTConfigRoot["STATIC_PLANNER_NAME"].IsDefined())
-            DRGBTConfig::STATIC_PLANNER_NAME = DRGBTConfigRoot["STATIC_PLANNER_NAME"].as<std::string>();
+        if (DRGBTConfigRoot["STATIC_PLANNER_TYPE"].IsDefined())
+            DRGBTConfig::STATIC_PLANNER_TYPE = planning::planner_type_map[DRGBTConfigRoot["STATIC_PLANNER_TYPE"].as<std::string>()];
         else
-            LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_NAME is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_NAME;
+            LOG(INFO) << "DRGBTConfig::STATIC_PLANNER_TYPE is not defined! Using default value of " << DRGBTConfig::STATIC_PLANNER_TYPE;
 
         if (DRGBTConfigRoot["REAL_TIME_SCHEDULING"].IsDefined())
-            DRGBTConfig::REAL_TIME_SCHEDULING = DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>();
+            DRGBTConfig::REAL_TIME_SCHEDULING = planning::real_time_scheduling_map[DRGBTConfigRoot["REAL_TIME_SCHEDULING"].as<std::string>()];
         else
             LOG(INFO) << "DRGBTConfig::REAL_TIME_SCHEDULING is not defined! Using default value of " << DRGBTConfig::REAL_TIME_SCHEDULING;
         
@@ -208,7 +208,7 @@ public:
             LOG(INFO) << "DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE is not defined! Using default value of " << DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE;
         
         if (DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
-            DRGBTConfig::TRAJECTORY_INTERPOLATION = DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>();
+            DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::trajectory_interpolation_map[DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>()];
         else
             LOG(INFO) << "DRGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << DRGBTConfig::TRAJECTORY_INTERPOLATION;
         

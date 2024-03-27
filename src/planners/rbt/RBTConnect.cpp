@@ -10,17 +10,25 @@
 // WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
 // If you get this error, just use std::cout for console output.
 
-planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) {}
+planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) 
+{
+    planner_type = planning::PlannerType::RBTConnect;
+}
 
 planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
-                                      const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_) {}
+                                      const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_) 
+{
+    planner_type = planning::PlannerType::RBTConnect;
+}
 
 bool planning::rbt::RBTConnect::solve()
 {
 	time_alg_start = std::chrono::steady_clock::now(); 	// Start the clock
-	int tree_idx = 0;  	// Determines the tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
-	std::shared_ptr<base::State> q_e, q_near, q_new;
-	base::State::Status status{base::State::None};
+	size_t tree_idx { 0 };  	// Determines a tree index, i.e., which tree is chosen, 0: from q_start; 1: from q_goal
+	std::shared_ptr<base::State> q_e { nullptr };
+	std::shared_ptr<base::State> q_near { nullptr };
+	std::shared_ptr<base::State> q_new { nullptr };
+	base::State::Status status { base::State::Status::None };
 
 	while (true)
 	{
@@ -70,7 +78,7 @@ bool planning::rbt::RBTConnect::solve()
 // The spine from 'q_center' to 'q_rand' is saturated and prunned.
 std::shared_ptr<base::State> planning::rbt::RBTConnect::getRandomState(const std::shared_ptr<base::State> q_center)
 {
-	std::shared_ptr<base::State> q_rand;
+	std::shared_ptr<base::State> q_rand { nullptr };
 	do
 	{
 		q_rand = ss->getRandomState(q_center);
@@ -91,12 +99,12 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		ss->computeDistance(q);
 	
 	std::vector<float> rho_profile(ss->robot->getNumLinks(), 0);	// The path length in W-space for each robot's link
-	float rho = 0; 														// The path length in W-space for complete robot
-	float step;
-	size_t counter = 0;
-	std::shared_ptr<base::State> q_new = ss->getNewState(q->getCoord());
-	std::shared_ptr<Eigen::MatrixXf> skeleton = ss->robot->computeSkeleton(q);
-	std::shared_ptr<Eigen::MatrixXf> skeleton_new = skeleton;
+	float rho { 0 }; 														// The path length in W-space for complete robot
+	float step { 0 };
+	size_t counter { 0 };
+	std::shared_ptr<base::State> q_new { ss->getNewState(q->getCoord()) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(q) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton_new { skeleton };
 	
 	while (true)
 	{
@@ -118,9 +126,10 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 
 		rho_profile = std::vector<float>(ss->robot->getNumLinks(), 0);
 		skeleton_new = ss->robot->computeSkeleton(q_new);
-		float rho_k;
-		float rho_k1 = 0;
-		for (int k = 1; k <= ss->robot->getNumLinks(); k++)
+		float rho_k { 0 };
+		float rho_k1 { 0 };
+
+		for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
 		{
 			rho_k = (skeleton->col(k) - skeleton_new->col(k)).norm();
 			rho_profile[k-1] = std::max(rho_k1, rho_k);
@@ -133,14 +142,15 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 base::State::Status planning::rbt::RBTConnect::connectSpine
 	(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
-	float d_c = ss->computeDistance(q);
-	std::shared_ptr<base::State> q_new = q;
-	base::State::Status status = base::State::Status::Advanced;
-	size_t num_ext = 0;
+	float d_c { ss->computeDistance(q) };
+	std::shared_ptr<base::State> q_new { q };
+	std::shared_ptr<base::State> q_temp { nullptr };
+	base::State::Status status { base::State::Status::Advanced };
+	size_t num_ext { 0 };
 
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp = ss->getNewState(q_new);
+		q_temp = ss->getNewState(q_new);
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new) = extendSpine(q_temp, q_e);
@@ -167,7 +177,7 @@ bool planning::rbt::RBTConnect::checkTerminatingCondition(base::State::Status st
 		return true;
 	}
 
-	float time_current = getElapsedTime(time_alg_start);
+	float time_current { getElapsedTime(time_alg_start) };
 	if (time_current >= RBTConnectConfig::MAX_PLANNING_TIME ||
 		planner_info->getNumStates() >= RBTConnectConfig::MAX_NUM_STATES || 
 		planner_info->getNumIterations() >= RBTConnectConfig::MAX_NUM_ITER)
@@ -182,8 +192,8 @@ bool planning::rbt::RBTConnect::checkTerminatingCondition(base::State::Status st
 
 void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const
 {
-	std::ofstream output_file;
-	std::ios_base::openmode mode = std::ofstream::out;
+	std::ofstream output_file {};
+	std::ios_base::openmode mode { std::ofstream::out };
 	if (append_output)
 		mode = std::ofstream::app;
 
@@ -192,7 +202,7 @@ void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, b
 	{
 		output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 		output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-		output_file << "Planner type:    " << "RBTConnect" << std::endl;
+		output_file << "Planner type:    " << planner_type << std::endl;
 		output_file << "Planner info:\n";
 		output_file << "\t Succesfull:           " << (planner_info->getSuccessState() ? "yes" : "no") << std::endl;
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;
@@ -201,8 +211,9 @@ void planning::rbt::RBTConnect::outputPlannerData(const std::string &filename, b
 		if (output_states_and_paths)
 		{
 			// Just to check how many states have distance-to-obstacles computed
-            // int num_real = 0, num_total = 0;
-            // for (int i = 0; i < trees.size(); i++)
+            // size_t num_real { 0 };
+			// size_t num_total { 0 };
+            // for (size_t i = 0; i < trees.size(); i++)
             // {
             //     output_file << *trees[i];
             //     for (auto q : *trees[i]->getStates())

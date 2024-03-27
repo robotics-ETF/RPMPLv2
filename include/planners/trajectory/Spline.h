@@ -15,33 +15,33 @@ namespace planning
         class Spline
         {
         public:
-            Spline(int order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
+            Spline(size_t order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
 		    virtual ~Spline() = 0;
 
             virtual bool compute(const Eigen::VectorXf &q_final) = 0;
-            virtual bool checkConstraints(int idx, float t_f) = 0;
+            virtual bool checkConstraints(size_t idx, float t_f) = 0;
             
-            virtual std::vector<float> getMaxVelocityTimes(int idx) = 0;
-            virtual std::vector<float> getMaxAccelerationTimes(int idx) = 0;
-            virtual std::vector<float> getMaxJerkTimes(int idx) = 0;
+            virtual std::vector<float> getMaxVelocityTimes(size_t idx) = 0;
+            virtual std::vector<float> getMaxAccelerationTimes(size_t idx) = 0;
+            virtual std::vector<float> getMaxJerkTimes(size_t idx) = 0;
 
             Eigen::VectorXf getPosition(float t);
-            float getPosition(float t, int idx);
-            virtual float getPosition(float t, int idx, float t_f) = 0;
+            float getPosition(float t, size_t idx);
+            virtual float getPosition(float t, size_t idx, float t_f) = 0;
 
             Eigen::VectorXf getVelocity(float t);
-            float getVelocity(float t, int idx);
-            virtual float getVelocity(float t, int idx, float t_f) = 0;
+            float getVelocity(float t, size_t idx);
+            virtual float getVelocity(float t, size_t idx, float t_f) = 0;
 
             Eigen::VectorXf getAcceleration(float t);
-            float getAcceleration(float t, int idx);
-            virtual float getAcceleration(float t, int idx, float t_f) = 0;
+            float getAcceleration(float t, size_t idx);
+            virtual float getAcceleration(float t, size_t idx, float t_f) = 0;
 
             Eigen::VectorXf getJerk(float t);
-            float getJerk(float t, int idx);
-            virtual float getJerk(float t, int idx, float t_f) = 0;
+            float getJerk(float t, size_t idx);
+            virtual float getJerk(float t, size_t idx, float t_f) = 0;
 
-            float getCoeff(int i, int j) const { return coeff(i, j); }
+            float getCoeff(size_t i, size_t j) const { return coeff(i, j); }
             float getTimeFinal() const { return time_final; }
             float getTimeCurrent() const { return time_current; }
             float getTimeBegin() const { return time_begin; }
@@ -55,8 +55,8 @@ namespace planning
             friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline);
 
         protected:            
-            int order;
-            int num_dimensions;
+            size_t order;
+            size_t num_dimensions;
             std::shared_ptr<robots::AbstractRobot> robot;
             Eigen::MatrixXf coeff;                              // Num. of rows = 'num_DOFs', and num. of columns = 'order+1'. Form: sum{j=0, num_DOFs-1} coeff(i,j) * t^j
             std::chrono::steady_clock::time_point time_start;   // Start time point when a spline is created

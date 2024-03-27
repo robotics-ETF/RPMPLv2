@@ -4,7 +4,7 @@
 
 #include "Tree.h"
 
-base::Tree::Tree(const std::string &tree_name_, int tree_idx_)
+base::Tree::Tree(const std::string &tree_name_, size_t tree_idx_)
 {
 	tree_name = tree_name_;
 	tree_idx = tree_idx_;
@@ -30,13 +30,13 @@ void base::Tree::clearTree()
 
 std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<base::State> q)
 {
-	const int num_results = 1;
-	size_t q_near_idx;
-	float out_dist_sqr;
+	const size_t num_results { 1 };
+	size_t q_near_idx { 0 };
+	float out_dist_sqr { 0 };
 	nanoflann::KNNResultSet<float> result_set(num_results);
 	result_set.init(&q_near_idx, &out_dist_sqr);
 
-	Eigen::VectorXf v = q->getCoord();
+	Eigen::VectorXf v { q->getCoord() };
 	std::vector<float> vec(&v[0], v.data()+v.cols()*v.rows());
 
 	float *vec_c = &vec[0];
@@ -48,16 +48,16 @@ std::shared_ptr<base::State> base::Tree::getNearestState(const std::shared_ptr<b
 // Get nearest state without using nanoflann library
 std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<base::State> q)
 {
-	int q_near_idx = 0;
-	float d, d_min = INFINITY;
-	bool is_out;
-	Eigen::VectorXf q_temp;
+	size_t q_near_idx { 0 };
+	float d { 0 }, d_min { INFINITY };
+	bool is_out { false };
+	Eigen::VectorXf q_temp {};
 
 	for (size_t i = 0; i < states->size(); i++)
 	{
 		q_temp = getState(i)->getCoord();
 		is_out = false;
-		for (int k = 0; k < q->getNumDimensions(); k++)
+		for (size_t k = 0; k < q->getNumDimensions(); k++)
 		{
 			if (abs(q_temp(k) - q->getCoord(k)) > d_min)	// Is outside the box?
 			{
@@ -82,7 +82,7 @@ std::shared_ptr<base::State> base::Tree::getNearestState2(const std::shared_ptr<
 // 'q_parent' - parent of 'q_new'
 void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent)
 {
-	int N = states->size();
+	size_t N { states->size() };
 	states->emplace_back(q_new);
 	kd_tree->addPoints(N, N); 	// Comment this line if you are not using Kd-Trees
 	q_new->setTreeIdx(getTreeIdx());
@@ -110,7 +110,7 @@ namespace base
 	std::ostream &operator<<(std::ostream &os, const Tree &tree)
 	{
 		os << "Tree: " << tree.getTreeName() << std::endl;
-		for (int i = 0; i < tree.getNumStates(); i++)
+		for (size_t i = 0; i < tree.getNumStates(); i++)
 			os << tree.getState(i) << std::endl;
 			
 		return os;

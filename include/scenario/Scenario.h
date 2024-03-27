@@ -29,8 +29,8 @@ namespace scenario
         inline std::shared_ptr<base::StateSpace> getStateSpace() const { return ss; }
         inline std::shared_ptr<base::State> getStart() const { return q_start; }
         inline std::shared_ptr<base::State> getGoal() const { return q_goal; }
-        inline StateSpaceType getStateSpaceType() const { return state_space_type; }
-        inline int getNumDimensions() const { return num_dimensions; }
+        inline base::StateSpaceType getStateSpaceType() const { return state_space_type; }
+        inline size_t getNumDimensions() const { return num_dimensions; }
 
         inline void setStart(const std::shared_ptr<base::State> q_start_) { q_start = q_start_; }
         inline void setGoal(const std::shared_ptr<base::State> q_goal_) { q_goal = q_goal_; }
@@ -41,8 +41,8 @@ namespace scenario
         std::shared_ptr<env::Environment> env;
         std::shared_ptr<base::State> q_start;
         std::shared_ptr<base::State> q_goal;
-        StateSpaceType state_space_type;
-        int num_dimensions;         // Number of dimensions of the state-space (also 'num_DOFs' of the used robot)
+        base::StateSpaceType state_space_type;
+        size_t num_dimensions;         // Number of dimensions of the state-space (also 'num_DOFs' of the used robot)
 	};
 }
 #endif //RPMPL_SCENARIO_H

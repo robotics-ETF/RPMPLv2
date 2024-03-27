@@ -1,6 +1,6 @@
 #include "Spline.h"
 
-planning::trajectory::Spline::Spline(int order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current)
+planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current)
 {
     order = order_;
     robot = robot_;
@@ -18,23 +18,23 @@ planning::trajectory::Spline::~Spline() {}
 
 Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
-    for (int i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
+    for (size_t i = 0; i < num_dimensions; i++)
         q(i) = getPosition(t, i);
 
     // std::cout << "Robot position at time " << t << " [s] is " << q.transpose() << "\n";
     return q;
 }
 
-float planning::trajectory::Spline::getPosition(float t, int idx)
+float planning::trajectory::Spline::getPosition(float t, size_t idx)
 {
     if (t < 0)
         t = 0;
     else if (t > time_final)
         t = time_final;
     
-    float q = 0;
-    for (int i = 0; i <= order; i++)
+    float q { 0 };
+    for (size_t i = 0; i <= order; i++)
         q += coeff(idx, i) * std::pow(t, i);
 
     return q;
@@ -42,20 +42,20 @@ float planning::trajectory::Spline::getPosition(float t, int idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
-    for (int i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
+    for (size_t i = 0; i < num_dimensions; i++)
         q(i) = getVelocity(t, i);
 
     // std::cout << "Robot velocity at time " << t << " [s] is " << q.transpose() << "\n";
     return q;
 }
 
-float planning::trajectory::Spline::getVelocity(float t, int idx)
+float planning::trajectory::Spline::getVelocity(float t, size_t idx)
 {
-    float q = 0;
+    float q { 0 };
     if (t >= 0 && t <= time_final)
     {
-        for (int i = 1; i <= order; i++)
+        for (size_t i = 1; i <= order; i++)
             q += coeff(idx, i) * i * std::pow(t, i-1);
     }
 
@@ -64,20 +64,20 @@ float planning::trajectory::Spline::getVelocity(float t, int idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
-    for (int i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
+    for (size_t i = 0; i < num_dimensions; i++)
         q(i) = getAcceleration(t, i);
 
     // std::cout << "Robot acceleration at time " << t << " [s] is " << q.transpose() << "\n";
     return q;
 }
 
-float planning::trajectory::Spline::getAcceleration(float t, int idx)
+float planning::trajectory::Spline::getAcceleration(float t, size_t idx)
 {
-    float q = 0;
+    float q { 0 };
     if (t >= 0 && t <= time_final)
     {
-        for (int i = 2; i <= order; i++)
+        for (size_t i = 2; i <= order; i++)
             q += coeff(idx, i) * i * (i-1) * std::pow(t, i-2);
     }
 
@@ -86,20 +86,20 @@ float planning::trajectory::Spline::getAcceleration(float t, int idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 {
-    Eigen::VectorXf q = Eigen::VectorXf::Zero(num_dimensions);
-    for (int i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
+    for (size_t i = 0; i < num_dimensions; i++)
         q(i) = getJerk(t, i);
 
     // std::cout << "Robot jerk at time " << t << " [s] is " << q.transpose() << "\n";
     return q;
 }
 
-float planning::trajectory::Spline::getJerk(float t, int idx)
+float planning::trajectory::Spline::getJerk(float t, size_t idx)
 {
-    float q = 0;
+    float q { 0 };
     if (t >= 0 && t <= time_final)
     {
-        for (int i = 3; i <= order; i++)
+        for (size_t i = 3; i <= order; i++)
             q += coeff(idx, i) * i * (i-1) * (i-2) * std::pow(t, i-3);
     }
 
@@ -120,7 +120,7 @@ void planning::trajectory::Spline::setTimeCurrent(float time_current_)
         time_current = time_current_;
     else
     {
-        std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
         time_current = (std::chrono::duration_cast<std::chrono::nanoseconds>(time_start_ - time_start).count()) * 1e-9;
     }
 }
@@ -129,10 +129,10 @@ namespace planning::trajectory
 {
     std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
     {
-        for (int i = 0; i < spline->num_dimensions; i++)
+        for (size_t i = 0; i < spline->num_dimensions; i++)
         {
             os << "q_" << i << "(t) = ";
-            for (int j = 0; j <= spline->order; j++)
+            for (size_t j = 0; j <= spline->order; j++)
                 os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
             
             os << "\t for t in [0, " << spline->time_final << "] [s] \n";

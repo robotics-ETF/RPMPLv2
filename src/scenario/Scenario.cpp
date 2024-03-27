@@ -15,10 +15,11 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
 {
     try
     {
-        YAML::Node node = YAML::LoadFile(root_path + config_file_path);
-        YAML::Node robot_node = node["robot"];
-        std::string type = robot_node["type"].as<std::string>();
-        size_t num_DOFs = robot_node["num_DOFs"].as<size_t>();
+        YAML::Node node { YAML::LoadFile(root_path + config_file_path) };
+        YAML::Node robot_node { node["robot"] };
+        std::string type { robot_node["type"].as<std::string>() };
+        size_t num_DOFs { robot_node["num_DOFs"].as<size_t>() };
+
         if (type == "xarm6")
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
                                                     robot_node["gripper_length"].as<float>(),
@@ -30,52 +31,52 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         else
             throw std::logic_error("Robot type is not correct!");
 
-        YAML::Node capsules_radius_node = robot_node["capsules_radius"];
+        YAML::Node capsules_radius_node { robot_node["capsules_radius"] };
         if (capsules_radius_node.IsDefined())
         {
             if (capsules_radius_node.size() != num_DOFs)
                 throw std::logic_error("Number of capsules is not correct!");
                 
-            std::vector<float> capsules_radius;
+            std::vector<float> capsules_radius {};
             for (size_t i = 0; i < num_DOFs; i++)
                 capsules_radius.emplace_back(capsules_radius_node[i].as<float>());
 
             robot->setCapsulesRadius(capsules_radius);
         }
 
-        YAML::Node max_vel_node = robot_node["max_vel"];
+        YAML::Node max_vel_node { robot_node["max_vel"] };
         if (max_vel_node.IsDefined())
         {
             if (max_vel_node.size() != num_DOFs)
                 throw std::logic_error("The size of 'max_vel' is not correct!");
 
-            std::vector<float> max_vel;
+            std::vector<float> max_vel {};
             for (size_t i = 0; i < num_DOFs; i++)
                 max_vel.emplace_back(max_vel_node[i].as<float>());
 
             robot->setMaxVel(max_vel);
         }
 
-        YAML::Node max_acc_node = robot_node["max_acc"];
+        YAML::Node max_acc_node { robot_node["max_acc"] };
         if (max_acc_node.IsDefined())
         {
             if (max_acc_node.size() != num_DOFs)
                 throw std::logic_error("The size of 'max_acc' is not correct!");
 
-            std::vector<float> max_acc;
+            std::vector<float> max_acc {};
             for (size_t i = 0; i < num_DOFs; i++)
                 max_acc.emplace_back(max_acc_node[i].as<float>());
 
             robot->setMaxAcc(max_acc);
         }
 
-        YAML::Node max_jerk_node = robot_node["max_jerk"];
+        YAML::Node max_jerk_node { robot_node["max_jerk"] };
         if (max_jerk_node.IsDefined())
         {
             if (max_jerk_node.size() != num_DOFs)
                 throw std::logic_error("The size of 'max_jerk' is not correct!");
 
-            std::vector<float> max_jerk;
+            std::vector<float> max_jerk {};
             for (size_t i = 0; i < num_DOFs; i++)
                 max_jerk.emplace_back(max_jerk_node[i].as<float>());
                 
@@ -83,7 +84,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         }
 
         env = std::make_shared<env::Environment>(config_file_path, root_path);
-        std::string state_space = robot_node["space"].as<std::string>();
+        std::string state_space { robot_node["space"].as<std::string>() };
         if (state_space == "RealVectorSpace")
             ss = std::make_shared<base::RealVectorSpace>(num_DOFs, robot, env);
         else if (state_space == "RealVectorSpaceFCL")
@@ -91,8 +92,8 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         else
             throw std::logic_error("State space does not exist!");
 
-        YAML::Node q_start_node = robot_node["q_start"];
-        YAML::Node q_goal_node = robot_node["q_goal"];
+        YAML::Node q_start_node { robot_node["q_start"] };
+        YAML::Node q_goal_node { robot_node["q_goal"] };
         if (q_start_node.size() != num_DOFs || q_goal_node.size() != num_DOFs)
             throw std::logic_error("Start or goal size is not correct!");
         

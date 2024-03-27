@@ -8,16 +8,18 @@
 #include <ostream>
 #include <string>
 
-enum class StateSpaceType
+namespace base
 {
-	Abstract, // only here for placeholding
-	RealVectorSpace,
-	RealVectorSpaceFCL,
-	SO2,
-	SO3
-};
+	enum class StateSpaceType
+	{
+		Abstract, // only here for placeholding
+		RealVectorSpace,
+		RealVectorSpaceFCL,
+		SO2,
+		SO3
+	};
 
-std::ostream &operator<<(std::ostream &os, const StateSpaceType &type);
-
+	std::ostream &operator<<(std::ostream &os, const base::StateSpaceType &type);
+}
 
 #endif //RPMPL_STATESPACETYPE_H

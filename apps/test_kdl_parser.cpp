@@ -20,17 +20,17 @@
 
 KDL::Vector getCartForSegment(KDL::Tree& robot_tree, KDL::Segment& segment)
 {
-	KDL::Chain robot_chain;
+	KDL::Chain robot_chain {};
 	//robot_tree.getChain("base_link", segment.getName(), robot_chain);
-	KDL::TreeFkSolverPos_recursive treefksolver = KDL::TreeFkSolverPos_recursive(robot_tree);
+	KDL::TreeFkSolverPos_recursive treefksolver { KDL::TreeFkSolverPos_recursive(robot_tree) };
 
-	KDL::JntArray jointpositions = KDL::JntArray(2);
+	KDL::JntArray jointpositions { KDL::JntArray(2) };
 	jointpositions(0) = 0.1;
 	jointpositions(1) = -0.1;
-	KDL::Frame cartpos; 
+	KDL::Frame cartpos {}; 
 
-	bool kinematics_status = treefksolver.JntToCart(jointpositions, cartpos, segment.getName());
-	if(kinematics_status)
+	int kinematics_status { treefksolver.JntToCart(jointpositions, cartpos, segment.getName()) };
+	if (kinematics_status > 0)
 	{
         LOG(INFO) << "x: " << cartpos.p.x() << ";" << "y: " << cartpos.p.y() << ";" << "z: " << cartpos.p.z() ;
 		return cartpos.p;

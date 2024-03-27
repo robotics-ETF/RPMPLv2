@@ -15,7 +15,7 @@ namespace base
 		std::shared_ptr<fcl::BroadPhaseCollisionManagerf> collision_manager_robot;
 		std::shared_ptr<fcl::BroadPhaseCollisionManagerf> collision_manager_env;
 
-		RealVectorSpaceFCL(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+		RealVectorSpaceFCL(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 						   const std::shared_ptr<env::Environment> env_);
 		~RealVectorSpaceFCL();
 

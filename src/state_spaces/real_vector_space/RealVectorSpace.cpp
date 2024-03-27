@@ -7,17 +7,17 @@
 #include "RealVectorSpaceConfig.h"
 #include "xArm6.h"
 
-base::RealVectorSpace::RealVectorSpace(int num_dimensions_) : StateSpace(num_dimensions_)
+base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_) : StateSpace(num_dimensions_)
 {
 	srand((unsigned int) time(0));
-	setStateSpaceType(StateSpaceType::RealVectorSpace);
+	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
-base::RealVectorSpace::RealVectorSpace(int num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
+base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 	const std::shared_ptr<env::Environment> env_) : StateSpace(num_dimensions_, robot_, env_)	
 {
 	srand((unsigned int) time(0));
-	setStateSpaceType(StateSpaceType::RealVectorSpace);
+	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
 base::RealVectorSpace::~RealVectorSpace() {}
@@ -35,9 +35,10 @@ namespace base
 // If 'q_center' is passed, it is added to the random state 
 std::shared_ptr<base::State> base::RealVectorSpace::getRandomState(const std::shared_ptr<base::State> q_center)
 {
-	Eigen::VectorXf q_rand = Eigen::VectorXf::Random(num_dimensions);
-	std::vector<std::pair<float, float>> limits = robot->getLimits();
-	for (int i = 0; i < num_dimensions; i++)
+	Eigen::VectorXf q_rand { Eigen::VectorXf::Random(num_dimensions) };
+	std::vector<std::pair<float, float>> limits { robot->getLimits() };
+
+	for (size_t i = 0; i < num_dimensions; i++)
 		q_rand(i) = ((limits[i].second - limits[i].first) * q_rand(i) + limits[i].first + limits[i].second) / 2;
 
 	if (q_center != nullptr)
@@ -83,7 +84,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::interpolateEdge
 	if (dist < 0) 	// 'dist' = -1 is default value
 		dist = getNorm(q1, q2);
 	
-	Eigen::VectorXf q_new_coord;
+	Eigen::VectorXf q_new_coord {};
 	if (dist > 0)
 		q_new_coord = q1->getCoord() + (q2->getCoord() - q1->getCoord()) * (step / dist);
 	else
@@ -101,8 +102,9 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 	if (dist < 0) 	// 'dist' = -1 is default value
 		dist = getNorm(q1, q2);
 	
-	std::shared_ptr<base::State> q_new;
-	base::State::Status status;
+	std::shared_ptr<base::State> q_new { nullptr };
+	base::State::Status status { base::State::Status::None };
+	
 	if (step < dist)
 	{
 		q_new = interpolateEdge(q1, q2, step, dist);
@@ -124,10 +126,10 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 	const std::shared_ptr<base::State> q2, const std::vector<std::pair<float, float>> &limits_)
 {
 	std::vector<float> bounds(num_dimensions);
-	std::vector<int> indices;
-	std::vector<std::pair<float, float>> limits = (limits_.empty()) ? robot->getLimits() : limits_;
+	std::vector<size_t> indices {};
+	std::vector<std::pair<float, float>> limits { (limits_.empty()) ? robot->getLimits() : limits_ };
 
-	for (int k = 0; k < num_dimensions; k++)
+	for (size_t k = 0; k < num_dimensions; k++)
 	{
 		if (q2->getCoord(k) > limits[k].second)
 		{
@@ -141,16 +143,17 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 		}
 	}
 
-	float t;
-	Eigen::VectorXf q_new_coord;
-	bool found;
-	for (int idx : indices)
+	float t { 0 };
+	Eigen::VectorXf q_new_coord {};
+	bool found { false };
+
+	for (size_t idx : indices)
 	{
 		t = (bounds[idx] - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx));
 		q_new_coord = q1->getCoord() + t * (q2->getCoord() - q1->getCoord());
 
 		found = true;
-		for (int k = 0; k < num_dimensions; k++)
+		for (size_t k = 0; k < num_dimensions; k++)
 		{
 			if (q_new_coord(k) < limits[k].first - RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
 				q_new_coord(k) > limits[k].second + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
@@ -171,15 +174,16 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared_ptr<base::State> q1, 
 	const std::shared_ptr<base::State> q2, float delta_q_max)
 {
-	Eigen::VectorXf::Index idx;
-	float delta_q12_max = (q2->getCoord() - q1->getCoord()).cwiseAbs().maxCoeff(&idx);
+	Eigen::VectorXf::Index idx {};
+	float delta_q12_max { (q2->getCoord() - q1->getCoord()).cwiseAbs().maxCoeff(&idx) };
 	
 	if (delta_q12_max > delta_q_max)
 	{
-		int sign = (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1;
-		float limit = q1->getCoord(idx) + sign * delta_q_max;
-		float t = (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx));
-		Eigen::VectorXf q_new_coord = q1->getCoord() + t * (q2->getCoord() - q1->getCoord());
+		int sign { (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1 };
+		float limit { q1->getCoord(idx) + sign * delta_q_max };
+		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };
+		Eigen::VectorXf q_new_coord { q1->getCoord() + t * (q2->getCoord() - q1->getCoord()) };
+		
 		return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
 	}
 
@@ -188,9 +192,9 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
-	int num_checks = RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS;
-	float dist = getNorm(q1, q2);
-	std::shared_ptr<base::State> q_new;
+	size_t num_checks { RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS };
+	float dist { getNorm(q1, q2) };
+	std::shared_ptr<base::State> q_new { nullptr };
 
 	for (float k = num_checks; k >= 1; k--)
 	{
@@ -204,11 +208,11 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 {
-	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
+	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
 	
-	for (int i = 0; i < robot->getNumLinks(); i++)
+	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
-    	for (int j = 0; j < env->getNumObjects(); j++)
+    	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
 				robot->getType().find("with_table") != std::string::npos)
@@ -219,7 +223,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 				// std::cout << "r(i): " << robot->getCapsuleRadius(i) << std::endl;
 				// std::cout << "skeleton(i):   " << skeleton->col(i).transpose() << std::endl;
 				// std::cout << "skeleton(i+1): " << skeleton->col(i+1).transpose() << std::endl;
-				fcl::AABB AABB = env->getCollObject(j)->getAABB();
+				fcl::AABB AABB { env->getCollObject(j)->getAABB() };
 				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
 				if (collisionCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs))
@@ -246,18 +250,18 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
 
-	float d_c_temp;
-	float d_c = INFINITY;
+	float d_c_temp { INFINITY };
+	float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
-	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points = std::make_shared<std::vector<Eigen::MatrixXf>>
-		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())));
-	std::shared_ptr<Eigen::MatrixXf> nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
+	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
+		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks()))) };
+	std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
 
-	for (int i = 0; i < robot->getNumLinks(); i++)
+	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
 		d_c_profile[i] = INFINITY;
-    	for (int j = 0; j < env->getNumObjects(); j++)
+    	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
 				robot->getType().find("with_table") != std::string::npos)
@@ -268,25 +272,17 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 			}
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
-				fcl::AABB AABB = env->getCollObject(j)->getAABB();
+				fcl::AABB AABB { env->getCollObject(j)->getAABB() };
 				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
                 tie(d_c_temp, nearest_pts) = distanceCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
 				
 				// std::cout << "(i, j) = (" << i << ", " << j << "). " << std::endl;
 				// std::cout << "Distance:    " << d_c_temp << std::endl;
-				// // float dQP;
-				// // std::shared_ptr<Eigen::MatrixXf> nearest_ptsQP;
-                // // tie(dQP, nearest_ptsQP) = distanceCapsuleToBoxQP(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
-				// // std::cout << "Distance QP: " << dQP << std::endl;
-				// // if (std::abs(d_c_temp - dQP) > 1e-3)
-				// // 	std::cout << "****************************** DIFFERENT *************************************" << std::endl;
 				// if (nearest_pts != nullptr)
 				// {
 				// 	std::cout << "Nearest point link:    " << nearest_pts->col(0).transpose() << std::endl;
-				// 	// std::cout << "Nearest point link QP: " << nearest_ptsQP->col(0).transpose() << std::endl;
 				// 	std::cout << "Nearest point obs:     " << nearest_pts->col(1).transpose() << std::endl;
-				// 	// std::cout << "Nearest point obs QP:  " << nearest_ptsQP->col(1).transpose() << std::endl;
 				// }
 				// std::cout << "r(i): " << robot->getCapsuleRadius(i) << std::endl;
 				// std::cout << "skeleton(i):   " << skeleton->col(i).transpose() << std::endl;
@@ -333,16 +329,17 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
 	if (q->getDistance() > 0 && q->getIsRealDistance()) 	// Real distance was already computed
 		return q->getDistance();
 	
-	float d_c_temp;
-    float d_c = INFINITY;
+	float d_c_temp { INFINITY };
+    float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
-    Eigen::Vector3f R, O;    // 'R' is robot nearest point, and 'O' is obstacle nearest point
-	std::shared_ptr<Eigen::MatrixXf> skeleton = robot->computeSkeleton(q);
+    Eigen::Vector3f R {};		// Robot's nearest point
+	Eigen::Vector3f O {};    	// Obstacle's nearest point
+	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
     
-    for (int i = 0; i < robot->getNumLinks(); i++)
+    for (size_t i = 0; i < robot->getNumLinks(); i++)
     {
 		d_c_profile[i] = INFINITY;
-        for (int j = 0; j < env->getNumObjects(); j++)
+        for (size_t j = 0; j < env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
 			if (O.norm() < INFINITY)

@@ -5,8 +5,8 @@ Available planners are:
 - Rapidly-exploring Random Trees (RRT-Connect)
 - Rapidly-exploring Bur Trees (RBT-Connect)
 - Rapidly-exploring Generalized Bur Trees (RGBT-Connect)
+- Rapidly-exploring Generalized Bur Multi-Tree star (RGBMT*)
 - Dynamic Rapidly-exploring Generalized Bur Trees (DRGBT)
-- Rapidly-exploring Generalized Bur Multi-Tree (RGBMT*)
 
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
 
@@ -95,6 +95,8 @@ Note that ```gripper_length``` and ```table_included``` are only available for `
 
 Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be ommited.
 
+Total number of tests/runs can be specified by ```max_num``` within the ```testing``` node.
+
 For example, if you do not want to use FCL (Flexible Collision Library) in planning, just set:
 ```
 space: "RealVectorSpace"
@@ -134,10 +136,10 @@ In the file ```/data/configurations/configuration_drgbt```, you can set the foll
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
 - ```D_CRIT```: Critical distance in W-space to compute critical nodes;
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
-- ```STATIC_PLANNER_NAME```: Name of a static planner (for obtaining the predefined path). Default: "RGBMT*" or "RGBTConnect";
-- ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "none", no real-time scheduling will be used;
+- ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
+- ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
-- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'none' or 'spline'. If 'none' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk.
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 
@@ -146,7 +148,7 @@ All test files are available within the folder ```/apps```. For example, open ``
 
 In the new tab type:
 ```
-cd ~/RPMPLv2/install/rpmpl_library/apps
+cd ~/RPMPLv2/build/rpmpl_library/apps
 ```
 
 Test RRT-Connect:

@@ -15,10 +15,10 @@ protected:
 	std::vector<float> cost_convergence;			// Cost vs state convergence rate (cost-state curve)
 	std::vector<std::vector<float>> routine_times; 	// Running times for the specified routine
 	float planning_time;
-	int num_collision_queries;
-	int num_distance_queries;
-	int num_states;
-	int num_iterations;
+	size_t num_collision_queries;
+	size_t num_distance_queries;
+	size_t num_states;
+	size_t num_iterations;
 	bool success_state = false;						// Did the planner succeed to find a solution?
 	bool task1_interrupted;							// Whether Task 1 is interrupted
 
@@ -29,12 +29,12 @@ public:
 	void addIterationTime(float time);
 	void addStateTimes(const std::vector<float> &state_times);
 	void addCostConvergence(const std::vector<float> &cost_convergence);
-	void addRoutineTime(float time, int idx);
+	void addRoutineTime(float time, size_t idx);
 	inline void setPlanningTime(float planning_time_) { planning_time = planning_time_; }
-	inline void setNumCollisionQueries(int num_collision_queries_) { num_collision_queries = num_collision_queries_; }
-	inline void setNumDistanceQueries(int num_distance_queries_) { num_distance_queries = num_distance_queries_; }
-	inline void setNumStates(int num_states_) { num_states = num_states_; }
-	inline void setNumIterations(int num_iterations_) { num_iterations = num_iterations_; }
+	inline void setNumCollisionQueries(size_t num_collision_queries_) { num_collision_queries = num_collision_queries_; }
+	inline void setNumDistanceQueries(size_t num_distance_queries_) { num_distance_queries = num_distance_queries_; }
+	inline void setNumStates(size_t num_states_) { num_states = num_states_; }
+	inline void setNumIterations(size_t num_iterations_) { num_iterations = num_iterations_; }
 	inline void setSuccessState(bool success_state_) { success_state = success_state_; }
 	inline void setTask1Interrupted(bool task1_interrupted_) { task1_interrupted = task1_interrupted_; }
 
@@ -43,8 +43,8 @@ public:
 	inline const std::vector<float> &getCostConvergence() const { return cost_convergence; }
 	inline const std::vector<std::vector<float>> &getRoutineTimes() const {return routine_times; }
 	inline float getPlanningTime() const { return planning_time; }
-	inline int getNumCollisionQueries() const { return num_collision_queries; }
-	inline int getNumDistanceQueries() const { return num_distance_queries; }
+	inline size_t getNumCollisionQueries() const { return num_collision_queries; }
+	inline size_t getNumDistanceQueries() const { return num_distance_queries; }
 	inline size_t getNumStates() const { return num_states; }
 	inline size_t getNumIterations() const { return num_iterations; }
 	inline bool getSuccessState() const { return success_state; }

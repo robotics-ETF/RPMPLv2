@@ -1,53 +1,54 @@
-#include <RGBMTStar.h>
-#include <ConfigurationReader.h>
-#include <CommonFunctions.h>
+#include "RGBMTStar.h"
+#include "ConfigurationReader.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char **argv)
 {
-	// std::string scenario_file_path = "/data/planar_2dof/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario2/scenario2.yaml";
-	// std::string scenario_file_path = "/data/planar_2dof/scenario3/scenario3.yaml";
+	std::string scenario_file_path
+	{
+		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
+		// "/data/planar_2dof/scenario1/scenario1.yaml"
+		// "/data/planar_2dof/scenario2/scenario2.yaml"
+		// "/data/planar_2dof/scenario3/scenario3.yaml"
 
-	// std::string scenario_file_path = "/data/planar_10dof/scenario_test/scenario_test.yaml";
-	// std::string scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/planar_10dof/scenario2/scenario2.yaml";
+		// "/data/planar_10dof/scenario_test/scenario_test.yaml"
+		// "/data/planar_10dof/scenario1/scenario1.yaml"
+		// "/data/planar_10dof/scenario2/scenario2.yaml"
 
-	// std::string scenario_file_path = "/data/xarm6/scenario_test/scenario_test.yaml";
-	std::string scenario_file_path = "/data/xarm6/scenario1/scenario1.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario2/scenario2.yaml";
-	// std::string scenario_file_path = "/data/xarm6/scenario3/scenario3.yaml";
-
-	int max_num_tests = 30;
-	bool use_recommended_planning_times = false;
-	
-	// -------------------------------------------------------------------------------------- //
+		"/data/xarm6/scenario_test/scenario_test.yaml"
+		// "/data/xarm6/scenario1/scenario1.yaml"
+		// "/data/xarm6/scenario2/scenario2.yaml"
+		// "/data/xarm6/scenario3/scenario3.yaml"
+	};
 
 	initGoogleLogging(argv);
 	int clp = commandLineParser(argc, argv, scenario_file_path);
 	if (clp != 0) return clp;
 
-	const std::string project_path = getProjectPath();
+	const std::string project_path { getProjectPath() };
 	ConfigurationReader::initConfiguration(project_path);
-    YAML::Node node = YAML::LoadFile(project_path + scenario_file_path);
-	int num_random_obstacles = node["random_obstacles"]["num"].as<int>();
-	Eigen::Vector3f obs_dim;
-	for (int i = 0; i < 3; i++)
+    YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
+
+	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
+	const size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
+	Eigen::Vector3f obs_dim {};
+	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
-	std::shared_ptr<base::StateSpace> ss = scenario.getStateSpace();
-	std::shared_ptr<base::State> q_start = scenario.getStart();
-	std::shared_ptr<base::State> q_goal = scenario.getGoal();
-	std::shared_ptr<env::Environment> env = scenario.getEnvironment();
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<base::State> q_start { scenario.getStart() };
+	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
+	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 
-	bool result = false;
-	int num_obs = env->getNumObjects();
+	bool result { false };
+	size_t num_obs { env->getNumObjects() };
 	while (!result && num_random_obstacles > 0)
 	{
 		env->removeObjects(num_obs);
 		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
-		std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);
+		planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);
 		RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 		result = planner->solve();
 		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
@@ -61,36 +62,26 @@ int main(int argc, char **argv)
 	LOG(INFO) << "Start: " << q_start;
 	LOG(INFO) << "Goal: " << q_goal;
 
-	std::vector<float> initial_costs;
-	std::vector<float> final_costs;
-	std::vector<float> initial_times;
-	std::vector<float> final_times;
-	std::vector<float> initial_num_states;
-	std::vector<float> final_num_states;
-	std::ofstream output_file;
+	std::vector<float> initial_costs {};
+	std::vector<float> final_costs {};
+	std::vector<float> initial_times {};
+	std::vector<float> final_times {};
+	std::vector<float> initial_num_states {};
+	std::vector<float> final_num_states {};
+	std::ofstream output_file {};
 	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_rgbmtstar.log", std::ofstream::out);
 	
-	if (use_recommended_planning_times)
-	{
-		if (ss->num_dimensions == 2)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 10;
-		else if (ss->num_dimensions == 6)
-			RGBMTStarConfig::MAX_PLANNING_TIME = 120;
-		else
-			RGBMTStarConfig::MAX_PLANNING_TIME = 60;
-	}
-	
-	int num_test = 0;
-	int num_success = 0;
+	size_t num_test { 0 };
+	size_t num_success { 0 };
 	while (num_test++ < max_num_tests)
 	{
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			std::unique_ptr<planning::AbstractPlanner> planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);					
+			planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);					
 			result = planner->solve();
 
-			LOG(INFO) << "RGBMT* planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of states: " << planner->getPlannerInfo()->getNumStates();
 			LOG(INFO) << "Planning time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			
@@ -138,7 +129,7 @@ int main(int argc, char **argv)
 	output_file << std::string(75, '-') << std::endl;
 	output_file << "Space Type:      " << ss->getStateSpaceType() << std::endl;
 	output_file << "Dimensionality:  " << ss->num_dimensions << std::endl;
-	output_file << "Planner type:    " << "RGBMT*" << std::endl;
+	output_file << "Planner type:    " << planner->getPlannerType() << std::endl;
 	output_file << "Using scenario:  " << project_path + scenario_file_path << std::endl;
 	output_file << "Planner info:\n";
 	output_file << "\t Success rate [%]:                                    " << (float) num_success / max_num_tests * 100  << std::endl;

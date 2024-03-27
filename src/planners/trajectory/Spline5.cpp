@@ -27,13 +27,13 @@ planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRob
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 {
     // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
-    int idx_corr = -1;
-    float t_f_opt = -1;
-    float t_f, t_f_left, t_f_right;
-    Eigen::Vector3f abc_left, abc_right;    // a, b and c coefficients, respectively
-    const int max_num_iter = 5;
+    int idx_corr { -1 };
+    float t_f_opt { -1 };
+    float t_f { 0 }, t_f_left { 0 }, t_f_right { 0 };
+    Eigen::Vector3f abc_left {}, abc_right {};       // a, b and c coefficients, respectively
+    const size_t max_num_iter { 5 };
 
-    for (int idx = 0; idx < num_dimensions; idx++)
+    for (size_t idx = 0; idx < num_dimensions; idx++)
     {
         // std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
         // std::cout << "Init. pos: " << f(idx) << "\t Final pos: " << q_final(idx) <<  "\n";
@@ -110,8 +110,8 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
         }
 
         // Using bisection method to find t_f, when t_f_left = 0 and t_f_right = inf, or vice versa
-        bool found = false;
-        for (int num = 0; num < max_num_iter; num++)
+        bool found { false };
+        for (size_t num = 0; num < max_num_iter; num++)
         {
             // std::cout << "Num. iter: " << num << " --------------------------\n";
             // std::cout << "c_left: " << abc_left(2) << "\t c_right: " << abc_right(2) << "\n";
@@ -164,10 +164,10 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 
     // Solution is found. Set the parameters for a new spline
     time_final = t_f_opt;
-    for (int idx = 0; idx < num_dimensions; idx++)
+    for (size_t idx = 0; idx < num_dimensions; idx++)
         coeff.row(idx) << f(idx), e(idx), d(idx), c(idx), b(idx), a(idx);
     
-    // int t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();
+    // auto t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();
     // std::cout << "Elapsed time: " << t_elapsed << " [us] \n";
 
     return true;
@@ -178,10 +178,10 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 /// @param q_f_i Final 'idx'-th desired configuration
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
 /// If final time is infinite, it means there is no solution.
-float planning::trajectory::Spline5::computeFinalTime(int idx, float q_f_i)
+float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f_i)
 {
-    float t_f = INFINITY;
-    std::vector<float> t_sol = solveQubicEquation(c(idx), 3*d(idx), 6*e(idx), 10*(f(idx) - q_f_i));
+    float t_f { INFINITY };
+    std::vector<float> t_sol { solveQubicEquation(c(idx), 3*d(idx), 6*e(idx), 10*(f(idx) - q_f_i)) };
 
     // std::cout << "For c: " << c(idx) << ", it follows t_f: ";
     for (size_t i = 0; i < t_sol.size(); i++)
@@ -207,12 +207,12 @@ float planning::trajectory::Spline5::computeFinalTime(int idx, float q_f_i)
     return t_f;
 }
 
-bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
+bool planning::trajectory::Spline5::checkConstraints(size_t idx, float t_f)
 {
     // Maximal jerk constraint
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6 * std::abs(c(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    std::vector<float> t_max = getMaxJerkTimes(idx);
+    std::vector<float> t_max { getMaxJerkTimes(idx) };
     for (size_t i = 0; i < t_max.size(); i++)
     {
         // std::cout << "\t Max. jerk.\t t_max: " << t_max[i] << "\t value: " << std::abs(getJerk(t_max[i], idx, t_f)) << "\n";
@@ -255,14 +255,14 @@ bool planning::trajectory::Spline5::checkConstraints(int idx, float t_f)
     return true;
 }
 
-std::vector<float> planning::trajectory::Spline5::getMaxVelocityTimes(int idx)
+std::vector<float> planning::trajectory::Spline5::getMaxVelocityTimes(size_t idx)
 {
     return solveQubicEquation(20*a(idx), 12*b(idx), 6*c(idx), 2*d(idx));
 }
 
-std::vector<float> planning::trajectory::Spline5::getMaxAccelerationTimes(int idx)
+std::vector<float> planning::trajectory::Spline5::getMaxAccelerationTimes(size_t idx)
 {
-    std::vector<float> t_max;
+    std::vector<float> t_max {};
 
     if (a(idx) != 0)
     {
@@ -277,9 +277,9 @@ std::vector<float> planning::trajectory::Spline5::getMaxAccelerationTimes(int id
     return t_max;
 }
 
-std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(int idx)
+std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(size_t idx)
 {
-    std::vector<float> t_max;
+    std::vector<float> t_max {};
 
     if (a(idx) != 0)
         t_max.emplace_back(-b(idx) / (5*a(idx)));
@@ -287,7 +287,7 @@ std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(int idx)
     return t_max;
 }
 
-float planning::trajectory::Spline5::getPosition(float t, int idx, float t_f)
+float planning::trajectory::Spline5::getPosition(float t, size_t idx, float t_f)
 {
     if (t < 0)
         t = 0;
@@ -297,7 +297,7 @@ float planning::trajectory::Spline5::getPosition(float t, int idx, float t_f)
     return f(idx) + e(idx)*t + d(idx)*t*t + c(idx)*t*t*t + b(idx)*t*t*t*t + a(idx)*t*t*t*t*t;
 }
 
-float planning::trajectory::Spline5::getVelocity(float t, int idx, float t_f)
+float planning::trajectory::Spline5::getVelocity(float t, size_t idx, float t_f)
 {
     if (t >= 0 && t <= t_f)
         return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t;
@@ -305,7 +305,7 @@ float planning::trajectory::Spline5::getVelocity(float t, int idx, float t_f)
     return 0;
 }
 
-float planning::trajectory::Spline5::getAcceleration(float t, int idx, float t_f)
+float planning::trajectory::Spline5::getAcceleration(float t, size_t idx, float t_f)
 {
     if (t >= 0 && t <= t_f)
         return 2*d(idx) + 6*c(idx)*t + 12*b(idx)*t*t + 20*a(idx)*t*t*t;
@@ -313,7 +313,7 @@ float planning::trajectory::Spline5::getAcceleration(float t, int idx, float t_f
     return 0;
 }
 
-float planning::trajectory::Spline5::getJerk(float t, int idx, float t_f)
+float planning::trajectory::Spline5::getJerk(float t, size_t idx, float t_f)
 {
     if (t >= 0 && t <= t_f)
         return 6*c(idx) + 24*b(idx)*t + 60*a(idx)*t*t;
@@ -331,7 +331,7 @@ float planning::trajectory::Spline5::getJerk(float t, int idx, float t_f)
 const std::vector<float> planning::trajectory::Spline5::solveQubicEquation(float a, float b, float c, float d)
 {
     // 1. option: Using Eigen
-    // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
+    // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     // Eigen::VectorXd poly(4);
     // poly << d, c, b, a;
     // Eigen::PolynomialSolver<double, Eigen::Dynamic> solver;
@@ -343,8 +343,8 @@ const std::vector<float> planning::trajectory::Spline5::solveQubicEquation(float
 
 
     // 2. option: Without using Eigen
-    // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
-    std::vector<float> roots;
+    // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    std::vector<float> roots {};
 
     // Reduced equation: X^3 - 3pX - 2q = 0, where X = x-b/(3a)
     float p = (b * b - 3.0 * a * c) / (9.0 * a * a);
@@ -359,7 +359,7 @@ const std::vector<float> planning::trajectory::Spline5::solveQubicEquation(float
     {
         float theta = acos(q / (p * sqrt(p)));
         float r = 2.0 * sqrt(p);
-        for (int n = 0; n < 3; n++)
+        for (size_t n = 0; n < 3; n++)
         {
             roots.emplace_back(r * cos((theta + 2.0 * n * M_PI) / 3.0) - offset);
             // std::cout << roots[n] << "\n";
@@ -374,7 +374,7 @@ const std::vector<float> planning::trajectory::Spline5::solveQubicEquation(float
         // std::cout << roots[0] << "\n";
 
         float re = -0.5 * (gamma1 + gamma2) - offset;
-        [[maybe_unused]] float im = (gamma1 - gamma2) * static_cast<float>(sqrt(3.0) / 2.0);
+        // float im = (gamma1 - gamma2) * static_cast<float>(sqrt(3.0) / 2.0);
         if (abs(discriminant) < 1e-16)                // Equal roots
         {
             roots.emplace_back(re);
