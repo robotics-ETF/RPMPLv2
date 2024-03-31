@@ -387,10 +387,10 @@ void planning::rbt_star::RGBMTStar::computePath(std::shared_ptr<base::State> q_c
 
 bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
-    if ((getElapsedTime(time_alg_start) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
+    if (getElapsedTime(time_alg_start) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
         planner_info->getNumStates() >= RGBMTStarConfig::MAX_NUM_STATES ||
         planner_info->getNumIterations() >= RGBMTStarConfig::MAX_NUM_ITER ||
-        RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND) && (cost_opt < INFINITY))
+        (RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND && cost_opt < INFINITY))
     {
         if (cost_opt < INFINITY)
         {
