@@ -36,7 +36,7 @@ namespace planning
             void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
             void computeNextState();
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
-            float updateCurrentState();
+            float updateCurrentState(bool measure_time = false);
             void updateCurrentState2();
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);

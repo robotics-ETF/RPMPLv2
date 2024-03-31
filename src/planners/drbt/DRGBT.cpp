@@ -646,10 +646,14 @@ void planning::drbt::DRGBT::updateCurrentState2()
 /// Compute a new spline 'spline_next', or remain 'spline_current'.
 /// Determine a new target state 'q_target' (a new desired current state) of the robot 
 /// by moving from 'q_current' towards 'q_next' while following 'spline_next'.
-/// @return Remaining time in [s] after which 'spline_next' will become active.
+/// @param measure_time If true, elapsed time when computing a spline will be exactly measured. 
+/// If false, elapsed time will be computed (default: false).
+/// @return Remaining time in [s] after which the new spline 'spline_next' will become active.
 /// @note The new spline will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely satisfied.
-float planning::drbt::DRGBT::updateCurrentState()
+/// @note 'measure_time' should always be false when simulation pacing is used, since then a time measuring will not be correct! 
+/// In such case, it is assumed that user was previously set 'measure_time' to a correct value.
+float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     spline_current = spline_next;
 
@@ -659,7 +663,9 @@ float planning::drbt::DRGBT::updateCurrentState()
         t_spline_max = DRGBTConfig::MAX_TIME_TASK1 - t_iter;
     
     float t_iter_remain { DRGBTConfig::MAX_ITER_TIME - t_iter - t_spline_max };
-    float t_spline_current {spline_current->getTimeEnd() + t_iter + t_spline_max };
+    float t_spline_current { measure_time ? 
+                             spline_next->getTimeCurrent(true) + t_spline_max :
+                             spline_next->getTimeEnd() + t_iter + t_spline_max };
 
     spline_current->setTimeBegin(spline_next->getTimeEnd());
     spline_current->setTimeCurrent(t_spline_current);
@@ -707,7 +713,7 @@ float planning::drbt::DRGBT::updateCurrentState()
             spline_current->getAcceleration(t_spline_current)
         );
 
-        while (getElapsedTime(time_start_) < 0.9 * t_spline_max)
+        while (getElapsedTime(time_start_) < t_spline_max - 1e-3 * measure_time)   // 1 [ms] is reserved for publishing trajectory
         {
             if (spline_next->compute(q_next->getStateReached()->getCoord()))
             {
