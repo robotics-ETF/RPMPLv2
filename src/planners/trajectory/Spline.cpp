@@ -106,23 +106,22 @@ float planning::trajectory::Spline::getJerk(float t, size_t idx)
     return q;
 }
 
+/// @brief Get current time of a spline.
+/// @param measure_time If true, current time will be automatically computed/measured (default: false).
+/// @note 'measure_time' should always be false when simulation pacing is used, since then a time measuring will not be correct! 
+/// In such case, it is assumed that user was previously set 'measure_time' to a correct value.
+float planning::trajectory::Spline::getTimeCurrent(bool measure_time)
+{
+    if (!measure_time)
+        return time_current;
+    
+    time_current = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count() * 1e-9;
+    return time_current;
+}
+
 void planning::trajectory::Spline::setTimeStart()
 {
     time_start = std::chrono::steady_clock::now();
-}
-
-/// @brief Set current time.
-/// @param time_current_ Time in [s]. If not passed, it will be automatically computed.
-/// @note 'time_current_' should always be passed when simulation pacing is used, since then a time measuring will not be correct! 
-void planning::trajectory::Spline::setTimeCurrent(float time_current_)
-{
-    if (time_current_ > 0)
-        time_current = time_current_;
-    else
-    {
-        std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
-        time_current = (std::chrono::duration_cast<std::chrono::nanoseconds>(time_start_ - time_start).count()) * 1e-9;
-    }
 }
 
 namespace planning::trajectory 

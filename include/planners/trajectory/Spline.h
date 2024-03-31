@@ -43,12 +43,12 @@ namespace planning
 
             float getCoeff(size_t i, size_t j) const { return coeff(i, j); }
             float getTimeFinal() const { return time_final; }
-            float getTimeCurrent() const { return time_current; }
+            float getTimeCurrent(bool measure_time = false);
             float getTimeBegin() const { return time_begin; }
             float getTimeEnd() const { return time_end; }
 
             void setTimeStart();
-            void setTimeCurrent(float time_current_ = -1);
+            void setTimeCurrent(float time_current_) { time_current = time_current_; }
             void setTimeBegin(float time_begin_) { time_begin = time_begin_; }
             void setTimeEnd(float time_end_) { time_end = time_end_; }
 
