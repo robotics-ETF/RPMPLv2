@@ -56,7 +56,7 @@ namespace planning
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
             size_t horizon_size;                                                    // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
-            base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
+            base::State::Status status;                                             // The status of proceeding from 'q_target' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
             size_t num_lateral_states;                                              // Number of lateral states
             float delta_q_max;                                                      // Maximal edge length when acquiring a new predefined path

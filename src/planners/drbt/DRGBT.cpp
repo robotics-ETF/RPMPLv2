@@ -62,9 +62,9 @@ bool planning::drbt::DRGBT::solve()
     time_iter_start = time_alg_start;
     float d_c { 0 };
 
-    // Initial iteration: Obtaining the inital path using specified static planner
-    // std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
-    // std::cout << "Obtaining the inital path... \n";
+    // Initial iteration: Obtaining an inital path using specified static planner
+    // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+    // std::cout << "Obtaining an inital path... \n";
     replan(DRGBTConfig::MAX_ITER_TIME);
     planner_info->setNumIterations(planner_info->getNumIterations() + 1);
     planner_info->addIterationTime(getElapsedTime(time_iter_start));
@@ -72,7 +72,7 @@ bool planning::drbt::DRGBT::solve()
 
     while (true)
     {
-        // std::cout << "\nIteration num. " << planner_info->getNumIterations() << "\n";
+        // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
         // std::cout << "TASK 1: Computing next configuration... \n";
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
         
@@ -82,7 +82,7 @@ bool planning::drbt::DRGBT::solve()
         d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
         if (d_c <= 0)   // The desired/target conf. is not safe, thus the robot is required to stop immediately, 
         {               // and compute the horizon again from 'q_current'
-            // TODO: Urgently stopping needs to be implemented using quartic spline.
+            // TODO: Emergency stopping needs to be implemented using quartic spline.
             q_target = q_current;
             d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
             clearHorizon(base::State::Status::Trapped, true);
@@ -118,6 +118,7 @@ bool planning::drbt::DRGBT::solve()
         {
             // std::cout << "TASK 2: Replanning... \n";
             replan(DRGBTConfig::MAX_ITER_TIME - getElapsedTime(time_iter_start));
+            // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
         }
         // else
         //     std::cout << "Replanning is not required! \n";
@@ -145,7 +146,7 @@ bool planning::drbt::DRGBT::solve()
 
         if (!is_valid)
         {
-            std::cout << "Collision has been occured!!! \n";
+            std::cout << "Collision has been occurred!!! \n";
             planner_info->setSuccessState(false);
             planner_info->setPlanningTime(planner_info->getIterationTimes().back());
             return false;
@@ -697,9 +698,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     }
     else if (ss->isEqual(q_next->getState(), q_target))
     {
-        // std::cout << "Robot is urgently stopping! \n";
+        // std::cout << "Robot is emergently stopping! \n";
         found = false;
-        // TODO: Urgently stopping needs to be implemented using quartic spline.
+        // TODO: Emergency stopping needs to be implemented using quartic spline.
     }
     else
     {
@@ -879,14 +880,14 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
         {
         case planning::RealTimeScheduling::FPS:
             // std::cout << "Replanning with Fixed Priority Scheduling \n";
-            // std::cout << "Trying to replan in " << max_planning_time << " [s]... \n";
+            // std::cout << "Trying to replan in " << max_planning_time * 1e3 << " [ms]... \n";
             planner = initStaticPlanner(max_planning_time);
             result = planner->solve();
             break;
         
         case planning::RealTimeScheduling::None:
             // std::cout << "Replanning without real-time scheduling \n";
-            // std::cout << "Trying to replan in " << max_planning_time << " [s]... \n";
+            // std::cout << "Trying to replan in " << max_planning_time * 1e3 << " [ms]... \n";
             planner = initStaticPlanner(max_planning_time);
             result = planner->solve();
             break;
@@ -1019,22 +1020,22 @@ bool planning::drbt::DRGBT::checkMotionValidity(size_t num_checks)
 
 bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
-    float t_spline_current { getElapsedTime(time_alg_start) };
-    // std::cout << "Time elapsed: " << t_spline_current << " [s] \n";
+    float time_current { getElapsedTime(time_alg_start) };
+    std::cout << "Time elapsed: " << time_current * 1e3 << " [ms] \n";
 
     if (ss->isEqual(q_current, q_goal))
     {
         std::cout << "Goal configuration has been successfully reached! \n";
 		planner_info->setSuccessState(true);
-        planner_info->setPlanningTime(t_spline_current);
+        planner_info->setPlanningTime(time_current);
         return true;
     }
 	
-    if (t_spline_current >= DRGBTConfig::MAX_PLANNING_TIME)
+    if (time_current >= DRGBTConfig::MAX_PLANNING_TIME)
 	{
         std::cout << "Maximal planning time has been reached! \n";
 		planner_info->setSuccessState(false);
-        planner_info->setPlanningTime(t_spline_current);
+        planner_info->setPlanningTime(time_current);
 		return true;
 	}
     
@@ -1042,7 +1043,7 @@ bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::Sta
 	{
         std::cout << "Maximal number of iterations has been reached! \n";
 		planner_info->setSuccessState(false);
-        planner_info->setPlanningTime(t_spline_current);
+        planner_info->setPlanningTime(time_current);
 		return true;
 	}
 
