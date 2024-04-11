@@ -186,7 +186,8 @@ void planning::drbt::DRGBT::generateHorizon()
 
     // Generating horizon
     size_t num_states { horizon_size - (horizon.size() + num_lateral_states) };
-    if (status == base::State::Status::Reached && !predefined_path.empty())
+    if (status == base::State::Status::Reached && !predefined_path.empty() && 
+        q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
     {
         size_t idx { 0 };    // Designates from which state in predefined path new states are added to the horizon
         if (!horizon.empty())
@@ -208,7 +209,7 @@ void planning::drbt::DRGBT::generateHorizon()
             horizon.back()->setStatus(planning::drbt::HorizonState::Status::Goal);
         }
     }
-    else            // status == base::State::Status::Trapped || predefined_path.empty()
+    else    // status == base::State::Status::Trapped || predefined_path.empty() || q_next->getStatus() == planning::drbt::HorizonState::Status::Goal
     {
         replanning = true;
         addRandomStates(num_states);
@@ -602,7 +603,7 @@ int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<planning::drb
 void planning::drbt::DRGBT::updateCurrentState2()
 {
     q_previous = q_current;
-    q_current = q_target;
+    q_current = q_target;   // Current position at the end of iteration
     if (ss->isEqual(q_current, q_goal))
     {
         status = base::State::Status::Reached;
@@ -628,7 +629,7 @@ void planning::drbt::DRGBT::updateCurrentState2()
 
     if (!ss->isEqual(q_current, q_target))
     {
-        if (ss->isEqual(q_current, q_next->getState()))
+        if (ss->isEqual(q_target, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
@@ -745,6 +746,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     // TODO: New spline needs to be validated on collision, at least during the current iteration!
     
+    q_current = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd()));   // Current position at the end of iteration
     q_target = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1));
     // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
     // std::cout << "q_target:      " << q_target << "\n";
@@ -752,7 +754,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     
     if (!ss->isEqual(q_current, q_target))
     {
-        if (ss->isEqual(q_current, q_next->getState()))
+        if (ss->isEqual(q_target, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
@@ -1021,7 +1023,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(size_t num_checks)
 bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
     float time_current { getElapsedTime(time_alg_start) };
-    std::cout << "Time elapsed: " << time_current * 1e3 << " [ms] \n";
+    // std::cout << "Time elapsed: " << time_current * 1e3 << " [ms] \n";
 
     if (ss->isEqual(q_current, q_goal))
     {
