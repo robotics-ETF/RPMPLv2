@@ -82,11 +82,11 @@ bool planning::drbt::DRGBT::solve()
         d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
         if (d_c <= 0)   // The desired/target conf. is not safe, thus the robot is required to stop immediately, 
         {               // and compute the horizon again from 'q_current'
-            // TODO: Emergency stopping needs to be implemented using quartic spline.
             q_target = q_current;
             d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
             clearHorizon(base::State::Status::Trapped, true);
             q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
+            q_next->setStateReached(q_target);
             // std::cout << "Not updating the robot current state since d_c < 0. \n";
         }
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
@@ -186,8 +186,7 @@ void planning::drbt::DRGBT::generateHorizon()
 
     // Generating horizon
     size_t num_states { horizon_size - (horizon.size() + num_lateral_states) };
-    if (status == base::State::Status::Reached && !predefined_path.empty() && 
-        q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
+    if (status == base::State::Status::Reached && !predefined_path.empty())
     {
         size_t idx { 0 };    // Designates from which state in predefined path new states are added to the horizon
         if (!horizon.empty())
@@ -209,14 +208,15 @@ void planning::drbt::DRGBT::generateHorizon()
             horizon.back()->setStatus(planning::drbt::HorizonState::Status::Goal);
         }
     }
-    else    // status == base::State::Status::Trapped || predefined_path.empty() || q_next->getStatus() == planning::drbt::HorizonState::Status::Goal
+    else    // status == base::State::Status::Trapped || predefined_path.empty()
     {
         replanning = true;
         addRandomStates(num_states);
     }
     
     // Set the next state just for obtaining lateral spines later, since 'q_next' is not set
-    q_next = horizon.front();
+    if (!horizon.empty())
+        q_next = horizon.front();
 
     // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
     // for (size_t i = 0; i < horizon.size(); i++)
@@ -570,9 +570,11 @@ void planning::drbt::DRGBT::computeNextState()
                     q_next = q_next_previous;
         }
     }
-    else    // All states are critical, and q_next cannot be updated! 'status' will surely become Trapped
+    else    // All states are critical, and 'q_next' cannot be updated!
     {
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
+        q_target = q_current;
+        clearHorizon(base::State::Status::Trapped, true);
         q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
         q_next->setStateReached(q_target);
     }
@@ -603,42 +605,43 @@ int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<planning::drb
 void planning::drbt::DRGBT::updateCurrentState2()
 {
     q_previous = q_current;
-    q_current = q_target;   // Current position at the end of iteration
-    if (ss->isEqual(q_current, q_goal))
+
+    if (status != base::State::Status::Trapped)
     {
-        status = base::State::Status::Reached;
-        return;
-    }
+        q_current = q_target;   // Current position at the end of iteration
+        if (ss->isEqual(q_current, q_goal))
+        {
+            status = base::State::Status::Reached;
+            return;
+        }
 
-    q_target = ss->getNewState(q_next->getStateReached()->getCoord());
+        q_target = ss->getNewState(q_next->getStateReached()->getCoord());
 
-    // If all velocities are not the same, the following can be used:
-    std::vector<std::pair<float, float>> limits;
-    for (size_t i = 0; i < ss->num_dimensions; i++)
-    {
-        limits.emplace_back(std::pair<float, float>
-            (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, 
-             q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME));
-    }
-    q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
+        // Option 1: If all velocities are not the same, the following can be used:
+        std::vector<std::pair<float, float>> limits;
+        for (size_t i = 0; i < ss->num_dimensions; i++)
+        {
+            limits.emplace_back(std::pair<float, float>
+                (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, 
+                q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME));
+        }
+        q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
 
-    // If all velocities are the same, the following can be used:
-    // float delta_q_max1 = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
-    // if (ss->getNorm(q_current, q_target) > delta_q_max1)    // Check whether 'q_target' can be reached considering robot max. velocity
-    //     q_target = ss->pruneEdge2(q_current, q_target, delta_q_max1);
+        // Option 2: If all velocities are the same, the following can be used:
+        // float delta_q_max1 = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
+        // if (ss->getNorm(q_current, q_target) > delta_q_max1)    // Check whether 'q_target' can be reached considering robot max. velocity
+        //     q_target = ss->pruneEdge2(q_current, q_target, delta_q_max1);
 
-    if (!ss->isEqual(q_current, q_target))
-    {
-        if (ss->isEqual(q_target, q_next->getState()))
+        if (ss->isEqual(q_current, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
         
         q_target->setParent(q_current);
     }
-    else
-        clearHorizon(base::State::Status::Trapped, true);
 
+    // std::cout << "q_current: " << q_current << "\n";
+    // std::cout << "q_target:  " << q_target << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
@@ -692,16 +695,10 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     bool found { false };
     if ((q_next->getStateReached()->getCoord() - spline_current->getPosition(INFINITY)).norm() 
-        < RealVectorSpaceConfig::EQUALITY_THRESHOLD)  // Coordinates of q_next_reached did not change
+        < RealVectorSpaceConfig::EQUALITY_THRESHOLD)  // Coordinates of 'q_next->getStateReached()' did not change
     {
         // std::cout << "Not computing a new spline! \n";
         found = false;
-    }
-    else if (ss->isEqual(q_next->getState(), q_target))
-    {
-        // std::cout << "Robot is emergently stopping! \n";
-        found = false;
-        // TODO: Emergency stopping needs to be implemented using quartic spline.
     }
     else
     {
@@ -748,22 +745,21 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     
     q_current = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd()));   // Current position at the end of iteration
     q_target = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1));
-    // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
-    // std::cout << "q_target:      " << q_target << "\n";
-    // std::cout << "Spline next: \n" << spline_next << "\n";
     
-    if (!ss->isEqual(q_current, q_target))
+    if (status != base::State::Status::Trapped)
     {
-        if (ss->isEqual(q_target, q_next->getState()))
+        if (ss->isEqual(q_current, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
         
         q_target->setParent(q_current);
     }
-    else
-        clearHorizon(base::State::Status::Trapped, true);
 
+    // std::cout << "q_current:     " << q_current << "\n";
+    // std::cout << "q_target:      " << q_target << "\n";
+    // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
+    // std::cout << "Spline next: \n" << spline_next << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
