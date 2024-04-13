@@ -39,10 +39,10 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);                               // State 'q_start' is added to the realized path
 
-    delta_q_max = 0;
+    max_edge_length = 0;
     for (size_t i = 0; i < ss->num_dimensions; i++)
-        delta_q_max += std::pow(ss->robot->getMaxVel(i), 2);
-    delta_q_max = std::sqrt(delta_q_max) * DRGBTConfig::MAX_ITER_TIME;
+        max_edge_length += std::pow(ss->robot->getMaxVel(i), 2);
+    max_edge_length = std::sqrt(max_edge_length) * DRGBTConfig::MAX_ITER_TIME;
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
@@ -628,9 +628,9 @@ void planning::drbt::DRGBT::updateCurrentState2()
         q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
 
         // Option 2: If all velocities are the same, the following can be used:
-        // float delta_q_max1 = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
-        // if (ss->getNorm(q_current, q_target) > delta_q_max1)    // Check whether 'q_target' can be reached considering robot max. velocity
-        //     q_target = ss->pruneEdge2(q_current, q_target, delta_q_max1);
+        // float max_edge_length_ = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
+        // if (ss->getNorm(q_current, q_target) > max_edge_length_)    // Check whether 'q_target' can be reached considering robot max. velocity
+        //     q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
 
         if (ss->isEqual(q_current, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
@@ -895,7 +895,7 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
         if (result && planner->getPlannerInfo()->getPlanningTime() <= max_planning_time)
         {
             // std::cout << "The path has been replanned in " << planner->getPlannerInfo()->getPlanningTime() * 1000 << " [ms]. \n";
-            acquirePredefinedPath(planner->getPath());
+            ss->preprocessPath(planner->getPath(), predefined_path, max_edge_length);
             clearHorizon(base::State::Status::Reached, false);
             q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
             planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime() * 1e3, 0);  // replan
@@ -908,30 +908,6 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
         // std::cout << "Replanning is required. " << e.what() << "\n";
         replanning = true;
     }
-}
-
-void planning::drbt::DRGBT::acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_)
-{
-    predefined_path.clear();
-    predefined_path.emplace_back(path_.front());
-    base::State::Status status_temp { base::State::Status::None };
-    std::shared_ptr<base::State> q_new { nullptr };
-
-    for (size_t i = 1; i < path_.size(); i++)
-    {
-        status_temp = base::State::Status::Advanced;
-        q_new = path_[i-1];
-        while (status_temp == base::State::Status::Advanced)
-        {
-            std::tie(status_temp, q_new) = ss->interpolateEdge2(q_new, path_[i], delta_q_max);
-            predefined_path.emplace_back(q_new);
-        }
-    }
-
-    // std::cout << "Predefined path is: \n";
-    // for (size_t i = 0; i < predefined_path.size(); i++)
-    //     std::cout << predefined_path.at(i) << "\n";
-    // std::cout << std::endl;
 }
 
 /// @brief Discretely check the validity of motion when robot moves from 'q_previous' to 'q_current', 

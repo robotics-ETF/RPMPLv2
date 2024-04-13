@@ -43,7 +43,6 @@ namespace planning
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
             virtual void replan(float max_planning_time);
-            void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(size_t num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
             bool checkMotionValidity2(size_t num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
@@ -59,7 +58,7 @@ namespace planning
             base::State::Status status;                                             // The status of proceeding from 'q_target' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
             size_t num_lateral_states;                                              // Number of lateral states
-            float delta_q_max;                                                      // Maximal edge length when acquiring a new predefined path
+            float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
         };
