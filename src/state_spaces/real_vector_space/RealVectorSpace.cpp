@@ -241,61 +241,24 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
         while (status == base::State::Status::Advanced)
         {
 			dist = getNorm(q0, q1);
-			// std::cout << "............... i: " << i << "\n";
-			// std::cout << "Norm q0-q1: " << dist << "\n";
-			// std::cout << "q0: " << q0 << "\n";
-			// std::cout << "q1: " << q1 << "\n";
-
             if (dist > max_edge_length)
             {
-				// std::cout << "dist > max_edge_length \n";
 				q0 = interpolateEdge(q0, q1, max_edge_length, dist);
                 status = base::State::Status::Advanced;
             }
-            // else if (i < path.size() - 1)
-            // {
-			// 	// std::cout << "dist < max_edge_length \n";
-        	// 	q2 = path[i+1];
-			// 	float a { (q2->getCoord() - q1->getCoord()).squaredNorm() };
-			// 	float b { 2 * (q1->getCoord() - q0->getCoord()).dot(q2->getCoord() - q1->getCoord()) };
-			// 	float c { (q1->getCoord() - q0->getCoord()).squaredNorm() - max_edge_length * max_edge_length };
-			// 	float D { std::sqrt(b * b - 4 * a * c) };
-			// 	float t1 { (-b + D) / (2 * a) };
-			// 	float t2 { (-b - D) / (2 * a) };
-			// 	// std::cout << "t1: " << t1 << "\t\t t2: " << t2 << "\n";
-
-			// 	if (t1 > 1 || t2 > 1)
-			// 	{
-			// 		q0 = q2;
-            //     	status = base::State::Status::Reached;
-			// 	}
-			// 	else
-			// 	{
-			// 		std::cout << "dc: " << q1->getDistance() << "\n";
-			// 		q0 = getNewState(q1->getCoord() + std::max(t1, t2) * (q2->getCoord() - q1->getCoord()));
-        	// 		q1 = q2;
-			// 		status = base::State::Status::Advanced;
-			// 	}
-			// 	i++;
-            // }
 			else
 			{
-				// std::cout << "ELSE dist < max_edge_length \n";
 				q0 = q1;
                 status = base::State::Status::Reached;
 			}
-
-			// std::cout << "Adding q0: " << q0 << "\n";
-			// std::cout << "Dist: " << getNorm(new_path.back(), q0) << "\n";
-
             new_path.emplace_back(q0);
         }
     }
 
-    std::cout << "Preprocessed path is: \n";
-    for (size_t i = 0; i < new_path.size(); i++)
-        std::cout << new_path[i]->getCoord().transpose() << "\n";
-    std::cout << std::endl;
+    // std::cout << "Preprocessed path is: \n";
+    // for (size_t i = 0; i < new_path.size(); i++)
+    //     std::cout << new_path[i]->getCoord().transpose() << "\n";
+    // std::cout << std::endl;
 }
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
