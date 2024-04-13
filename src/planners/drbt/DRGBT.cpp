@@ -207,6 +207,9 @@ void planning::drbt::DRGBT::generateHorizon()
             
             horizon.back()->setStatus(planning::drbt::HorizonState::Status::Goal);
         }
+
+        if (q_next->getStatus() == planning::drbt::HorizonState::Status::Goal)
+            horizon.emplace_back(q_next);
     }
     else    // status == base::State::Status::Trapped || predefined_path.empty()
     {
@@ -632,7 +635,7 @@ void planning::drbt::DRGBT::updateCurrentState2()
         // if (ss->getNorm(q_current, q_target) > max_edge_length_)    // Check whether 'q_target' can be reached considering robot max. velocity
         //     q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
 
-        if (ss->isEqual(q_current, q_next->getState()))
+        if (ss->isEqual(q_target, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
@@ -743,12 +746,11 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     // TODO: New spline needs to be validated on collision, at least during the current iteration!
     
-    q_current = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd()));   // Current position at the end of iteration
     q_target = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1));
     
     if (status != base::State::Status::Trapped)
     {
-        if (ss->isEqual(q_current, q_next->getState()))
+        if (ss->isEqual(q_target, q_next->getState()))
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
@@ -756,7 +758,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         q_target->setParent(q_current);
     }
 
-    // std::cout << "q_current:     " << q_current << "\n";
     // std::cout << "q_target:      " << q_target << "\n";
     // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
     // std::cout << "Spline next: \n" << spline_next << "\n";
