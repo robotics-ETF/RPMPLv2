@@ -87,6 +87,10 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 				distance_data.request.enable_nearest_points = true;
 				distance_data.result.clear();
 				collision_manager_robot->distance(collision_manager_env.get(), &distance_data, fcl::DefaultDistanceFunction);
+
+				if (distance_data.result.min_distance > env->getObject(j)->getMinDistTol())
+					distance_data.result.min_distance = INFINITY;
+
 				d_c_profile[i] = std::min(d_c_profile[i], distance_data.result.min_distance);
 				nearest_pts->col(0) = distance_data.result.nearest_points[0];
 				nearest_pts->col(1) = distance_data.result.nearest_points[1];

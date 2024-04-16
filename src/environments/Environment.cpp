@@ -33,6 +33,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                 YAML::Node d = obstacle["box"]["dim"];
                 YAML::Node p = obstacle["box"]["pos"];
                 YAML::Node r = obstacle["box"]["rot"];
+                YAML::Node min_dist_tol = obstacle["box"]["min_dist_tol"];
                 
                 fcl::Vector3f dim(d[0].as<float>(), d[1].as<float>(), d[2].as<float>());
                 fcl::Vector3f pos(p[0].as<float>(), p[1].as<float>(), p[2].as<float>());
@@ -42,6 +43,10 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                     rot = fcl::Quaternionf(r[3].as<float>(), r[0].as<float>(), r[1].as<float>(), r[2].as<float>());
 
                 object = std::make_shared<env::Box>(dim, pos, rot, label);
+
+                if (min_dist_tol.IsDefined())
+                    object->setMinDistTol(min_dist_tol.as<float>());
+
             }
             else if (obstacle["sphere"].IsDefined())
             {

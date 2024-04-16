@@ -366,6 +366,9 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
                 tie(d_c_temp, nearest_pts) = distanceCapsuleToSphere(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
             }
 
+			if (d_c_temp > env->getObject(j)->getMinDistTol())
+				d_c_temp = INFINITY;
+
 			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
             if (d_c_profile[i] <= 0)		// The collision occurs
 			{
