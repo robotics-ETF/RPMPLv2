@@ -19,6 +19,8 @@ namespace planning
 		    ~Spline5() {}
 
             bool compute(const Eigen::VectorXf &q_final) override;
+            bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot) override;
+            bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) override;
             bool checkConstraints(size_t idx, float t_f) override;
 
             std::vector<float> getMaxVelocityTimes(size_t idx) override;
@@ -31,7 +33,10 @@ namespace planning
             float getJerk(float t, size_t idx, float t_f) override;
 
         private:
-            float computeFinalTime(size_t idx, float q_f_i);
+            float computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot);
+            float compute_a(size_t idx, float t_f, float q_f_ddot);
+            float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
+            float compute_c(size_t idx, float t_f, float q_f, float q_f_dot, float q_f_ddot);
             const std::vector<float> solveQubicEquation(float a, float b, float c, float d);
             
             Eigen::VectorXf a, b, c, d, e, f;   // Coefficients of a spline a*t⁵ + b*t⁴ + c*t³ + d*t² + e*t + f

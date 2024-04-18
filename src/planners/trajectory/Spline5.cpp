@@ -22,9 +22,32 @@ planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRob
 
 /// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
 /// robot's maximal velocity, acceleration and jerk are satisfied.
-/// @param q_final Final configuration in which the spline is ending.
+/// @param q_final Desired final configuration in which the spline is ending.
 /// @return Success of computing the spline.
+/// @note Velocity and acceleration in a final configuration will be zero!
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
+{
+    return compute(q_final, Eigen::VectorXf::Zero(num_dimensions), Eigen::VectorXf::Zero(num_dimensions));
+}
+
+/// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
+/// robot's maximal velocity, acceleration and jerk are satisfied.
+/// @param q_final Desired final configuration in which the spline is ending.
+/// @param q_final_dot Desired velocity in a final configuration.
+/// @return Success of computing the spline.
+/// @note Acceleration in a final configuration will be zero!
+bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot)
+{
+    return compute(q_final, q_final_dot, Eigen::VectorXf::Zero(num_dimensions));
+}
+
+/// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
+/// robot's maximal velocity, acceleration and jerk are satisfied.
+/// @param q_final Desired final configuration in which the spline is ending.
+/// @param q_final_dot Desired velocity in a final configuration.
+/// @param q_final_ddot Desired acceleration in a final configuration.
+/// @return Success of computing the spline.
+bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot)
 {
     // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
     int idx_corr { -1 };
@@ -50,9 +73,10 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
         if (t_f_opt > 0)
         {
             t_f = t_f_opt;
-            c(idx) = (10*(q_final(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
-            b(idx) = -(3*c(idx)*t_f*t_f + 3*d(idx)*t_f + 2*e(idx)) / (2*t_f*t_f*t_f);
-            a(idx) = -(6*b(idx)*t_f*t_f + 3*c(idx)*t_f + d(idx)) / (10*t_f*t_f*t_f);
+            c(idx) = compute_c(idx, t_f, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+            b(idx) = compute_b(idx, t_f, q_final_dot(idx), q_final_ddot(idx));
+            a(idx) = compute_a(idx, t_f, q_final_ddot(idx));
+
             if (checkConstraints(idx, t_f))
             {
                 // std::cout << "All constraints are satisfied for t_f: " << t_f << " [s]. Just continue! \n";
@@ -66,11 +90,11 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
         }
 
         c(idx) = -robot->getMaxJerk(idx) / 6;
-        t_f_left = computeFinalTime(idx, q_final(idx));
+        t_f_left = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
         abc_left << a(idx), b(idx), c(idx);
 
         c(idx) = robot->getMaxJerk(idx) / 6;
-        t_f_right = computeFinalTime(idx, q_final(idx));
+        t_f_right = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
         abc_right << a(idx), b(idx), c(idx);
 
         // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
@@ -116,7 +140,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
             // std::cout << "Num. iter: " << num << " --------------------------\n";
             // std::cout << "c_left: " << abc_left(2) << "\t c_right: " << abc_right(2) << "\n";
             c(idx) = (abc_left(2) + abc_right(2)) / 2;
-            t_f = computeFinalTime(idx, q_final(idx));
+            t_f = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
 
             if (t_f_left == 0)
             {
@@ -157,9 +181,9 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
     for (int idx = 0; idx < idx_corr; idx++)
     {
         // std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
-        c(idx) = (10*(q_final(idx) - f(idx)) - 6*e(idx)*t_f - 3*d(idx)*t_f*t_f) / (t_f*t_f*t_f);
-        b(idx) = -(3*c(idx)*t_f*t_f + 3*d(idx)*t_f + 2*e(idx)) / (2*t_f*t_f*t_f);
-        a(idx) = -(6*b(idx)*t_f*t_f + 3*c(idx)*t_f + d(idx)) / (10*t_f*t_f*t_f);
+        c(idx) = compute_c(idx, t_f, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+        b(idx) = compute_b(idx, t_f, q_final_dot(idx), q_final_ddot(idx));
+        a(idx) = compute_a(idx, t_f, q_final_ddot(idx));
     }
 
     // Solution is found. Set the parameters for a new spline
@@ -175,13 +199,15 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 
 /// @brief Compute a final time, i.e., a time to reach from 'q_current(idx)' to 'q_final(idx)'.
 /// @param idx Index of robot's joint
-/// @param q_f_i Final 'idx'-th desired configuration
+/// @param q_f Desired final 'idx'-th configuration
+/// @param q_f_dot Desired 'idx'-th velocity in a final configuration
+/// @param q_f_ddot Desired 'idx'-th acceleration in a final configuration
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
 /// If final time is infinite, it means there is no solution.
-float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f_i)
+float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot)
 {
     float t_f { INFINITY };
-    std::vector<float> t_sol { solveQubicEquation(c(idx), 3*d(idx), 6*e(idx), 10*(f(idx) - q_f_i)) };
+    std::vector<float> t_sol { solveQubicEquation(c(idx), 3*d(idx) - 0.5*q_f_ddot, 6*e(idx) + 4*q_f_dot, 10*(f(idx) - q_f)) };
 
     // std::cout << "For c: " << c(idx) << ", it follows t_f: ";
     for (size_t i = 0; i < t_sol.size(); i++)
@@ -195,8 +221,8 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f_i)
     if (t_f == INFINITY)
         return INFINITY;
 
-    b(idx) = -(3*c(idx)*t_f*t_f + 3*d(idx)*t_f + 2*e(idx)) / (2*t_f*t_f*t_f);
-    a(idx) = -(6*b(idx)*t_f*t_f + 3*c(idx)*t_f + d(idx)) / (10*t_f*t_f*t_f);
+    b(idx) = compute_b(idx, t_f, q_f_dot, q_f_ddot);
+    a(idx) = compute_a(idx, t_f, q_f_ddot);
 
     // std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
     //           << "d: " << d(idx) << ",\t e: " << e(idx) << ",\t f: " << f(idx) << "\n";
@@ -205,6 +231,30 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f_i)
         return 0;
 
     return t_f;
+}
+
+float planning::trajectory::Spline5::compute_a(size_t idx, float t_f, float q_f_ddot)
+{
+    return -(6*b(idx) * t_f*t_f 
+            + 3*c(idx) * t_f 
+            + d(idx) - 0.5*q_f_ddot) 
+            / (10*t_f*t_f*t_f);
+}
+
+float planning::trajectory::Spline5::compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot)
+{
+    return -(3*c(idx) * t_f*t_f 
+            + (3*d(idx) + 0.5*q_f_ddot) * t_f 
+            + 2*(e(idx) - q_f_dot)) 
+            / (2*t_f*t_f*t_f);
+}
+
+float planning::trajectory::Spline5::compute_c(size_t idx, float t_f, float q_f, float q_f_dot, float q_f_ddot)
+{
+    return -((3*d(idx) - 0.5*q_f_ddot) * t_f*t_f 
+            + (6*e(idx) + 4*q_f_dot) * t_f 
+            + 10*(f(idx) - q_f)) 
+            / (t_f*t_f*t_f);
 }
 
 bool planning::trajectory::Spline5::checkConstraints(size_t idx, float t_f)
@@ -289,36 +339,42 @@ std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(size_t idx)
 
 float planning::trajectory::Spline5::getPosition(float t, size_t idx, float t_f)
 {
-    if (t < 0)
-        t = 0;
-    else if (t > t_f)
+    if (t > t_f)
         t = t_f;
+    else if (t < 0)
+        t = 0;
     
     return f(idx) + e(idx)*t + d(idx)*t*t + c(idx)*t*t*t + b(idx)*t*t*t*t + a(idx)*t*t*t*t*t;
 }
 
 float planning::trajectory::Spline5::getVelocity(float t, size_t idx, float t_f)
 {
-    if (t >= 0 && t <= t_f)
-        return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t;
+    if (t > t_f)
+        t = t_f;
+    else if (t < 0)
+        t = 0;
 
-    return 0;
+    return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t;
 }
 
 float planning::trajectory::Spline5::getAcceleration(float t, size_t idx, float t_f)
 {
-    if (t >= 0 && t <= t_f)
-        return 2*d(idx) + 6*c(idx)*t + 12*b(idx)*t*t + 20*a(idx)*t*t*t;
+    if (t > t_f)
+        t = t_f;
+    else if (t < 0)
+        t = 0;
 
-    return 0;
+    return 2*d(idx) + 6*c(idx)*t + 12*b(idx)*t*t + 20*a(idx)*t*t*t;
 }
 
 float planning::trajectory::Spline5::getJerk(float t, size_t idx, float t_f)
 {
-    if (t >= 0 && t <= t_f)
-        return 6*c(idx) + 24*b(idx)*t + 60*a(idx)*t*t;
+    if (t > t_f)
+        t = t_f;
+    else if (t < 0)
+        t = 0;
 
-    return 0;
+    return 6*c(idx) + 24*b(idx)*t + 60*a(idx)*t*t;
 }
 
 /// @brief Solve a cubic equation a*t³ + b*t² + c*t + d = 0

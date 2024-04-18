@@ -19,6 +19,8 @@ namespace planning
 		    virtual ~Spline() = 0;
 
             virtual bool compute(const Eigen::VectorXf &q_final) = 0;
+            virtual bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot) = 0;
+            virtual bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) = 0;
             virtual bool checkConstraints(size_t idx, float t_f) = 0;
             
             virtual std::vector<float> getMaxVelocityTimes(size_t idx) = 0;

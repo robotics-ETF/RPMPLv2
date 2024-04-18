@@ -665,6 +665,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     spline_current = spline_next;
 
+    const float t_publish_max { 1e-3 };     // 1 [ms] is reserved for publishing trajectory
     float t_spline_max { DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE };
     float t_iter { getElapsedTime(time_iter_start) };
     if (DRGBTConfig::MAX_TIME_TASK1 - t_iter < t_spline_max)
@@ -705,7 +706,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     }
     else
     {
-        std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
         spline_next = std::make_shared<planning::trajectory::Spline5>
         (
@@ -714,32 +714,60 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             spline_current->getVelocity(t_spline_current),
             spline_current->getAcceleration(t_spline_current)
         );
+        std::cout << "curr pos: " << q_current->getCoord().transpose() << "\n";
+        std::cout << "curr vel: " << spline_current->getVelocity(t_spline_current).transpose() << "\n";
+        std::cout << "curr acc: " << spline_current->getAcceleration(t_spline_current).transpose() << "\n";
 
-        while (getElapsedTime(time_start_) < t_spline_max - 1e-3 * measure_time)   // 1 [ms] is reserved for publishing trajectory
+        do
         {
-            if (spline_next->compute(q_next->getStateReached()->getCoord()))
+            std::cout << "q_final: " << q_next->getStateReached()->getCoord().transpose() << "\n";
+            if (q_next->getIsReached() && 
+                q_next->getIndex() != -1 && 
+                q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
             {
-                // std::cout << "New spline is computed! \n";
-                found = true;                
-                break;
+                Eigen::VectorXf q_final_dot { spline_current->getVelocity(t_spline_current) };  // Try to hold an initial velocity
+                size_t num_iter { 0 }, max_num_iter { 5 };
+
+                do
+                {
+                    std::cout << "num_iter: " << num_iter
+                        << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+
+                    found = spline_next->compute(q_next->getStateReached()->getCoord(), q_final_dot);
+                    std::cout << "\t found with q_final_dot: " << found << "\n";
+
+                    // Reducing the final velocity
+                    if (++num_iter < max_num_iter - 1)
+                        q_final_dot *= 0.5;
+                    else
+                        q_final_dot = Eigen::VectorXf::Zero(ss->num_dimensions);
+                }
+                while (!found && 
+                       num_iter < max_num_iter && 
+                       getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
+                std::cout << "\n";
             }
-            else if (!changeNextState(visited_states))
+            else
             {
-                // std::cout << "Spline could not be changed! Continuing with the previous spline! \n";
-                found = false;                    
-                break;
+                found = spline_next->compute(q_next->getStateReached()->getCoord());
+                std::cout << "\t found with ZERO q_final_dot: " << found << "\n";
             }
         }
-        // std::cout << "Elapsed time for spline computing: " << getElapsedTime(time_start_, planning::TimeUnit::us) << " [us] \n";
+        while (!found && 
+               changeNextState(visited_states) && 
+               getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
+        // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e6 << " [us] \n";
     }
 
     if (found)
     {
+        std::cout << "New spline is computed! \n";
         spline_current->setTimeEnd(t_spline_current);
         spline_next->setTimeEnd(t_iter_remain);
     }
     else
     {
+        std::cout << "Continuing with the previous spline! \n";
         spline_next = spline_current;
         spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
@@ -760,10 +788,11 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     // std::cout << "q_target:      " << q_target << "\n";
     // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
-    // std::cout << "Spline next: \n" << spline_next << "\n";
+    std::cout << "Spline next: \n" << spline_next << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+    std::cout << "----------------------------------------------------------\n";
 
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
