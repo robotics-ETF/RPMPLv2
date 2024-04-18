@@ -190,6 +190,12 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 	return q2;
 }
 
+/// @brief Generate a new path 'new_path' from a path 'original_path' in a way that the distance between two adjacent nodes
+/// is fixed (if possible) to a length of 'max_edge_length'. Geometrically, the new path remains the same as the original one,
+/// but only their nodes may differ.
+/// @param original_path Original path that will be transformed.
+/// @param new_path New resulting path.
+/// @param max_edge_length Maximal edge length.
 void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
     std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length)
 {
