@@ -143,16 +143,16 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 
     if (table_included)
     {
-        if (((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
-            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z() ||   // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius))                          // Surrounding of robot base
+        if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||              // Out of workspace
+            (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z()) ||     // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                              // Surrounding of robot base
             return false;
     }
     else
     {
-        if (((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
-            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z()) && (pos.z() > -base_radius || // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius))                                                  // Surrounding of robot base
+        if ((pos - WS_center).norm() > WS_radius ||                                                     // Out of workspace
+            (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() && pos.z() > -base_radius) ||   // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                                                      // Surrounding of robot base
             return false;
     }
 
