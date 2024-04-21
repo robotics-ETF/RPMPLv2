@@ -18,6 +18,14 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
 
 planning::trajectory::Spline::~Spline() {}
 
+/// @brief Check whether 'q' is a final configuration of the spline.
+/// @param q Configuration to be checked.
+/// @return True if yes, false if not.
+bool planning::trajectory::Spline::isFinalConf(const Eigen::VectorXf &q)
+{
+    return ((q - getPosition(time_final)).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD) ? true : false;
+}
+
 Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
     Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
