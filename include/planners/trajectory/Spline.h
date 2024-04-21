@@ -66,6 +66,8 @@ namespace planning
             float time_current;                                 // Elapsed time in [s] from a time instant when a spline is created. It is used to determine a current robot's position, velocity and acceleration. 
             float time_begin;                                   // Time instance in [s] when a spline begins in the current iteration
             float time_end;                                     // Time instance in [s] when a spline ends in the current iteration
+            bool is_zero_final_vel;                             // Whether final velocity is zero
+            bool is_zero_final_acc;                             // Whether final acceleration is zero
         };
         
     }

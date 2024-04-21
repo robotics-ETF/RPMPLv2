@@ -12,6 +12,8 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
     time_current = 0;
     time_begin = 0;
     time_end = 0;
+    is_zero_final_vel = true;
+    is_zero_final_acc = true;
 }
 
 planning::trajectory::Spline::~Spline() {}
@@ -28,16 +30,26 @@ Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 
 float planning::trajectory::Spline::getPosition(float t, size_t idx)
 {
+    float q { 0 };
+    float delta_t { 0 };
+    float vel_final { 0 };
+
     if (t > time_final)
+    {
+        if (!is_zero_final_vel)
+        {
+            delta_t = t - time_final;
+            vel_final = getVelocity(t, idx);
+        }
         t = time_final;
+    }
     else if (t < 0)
         t = 0;
     
-    float q { 0 };
     for (size_t i = 0; i <= order; i++)
         q += coeff(idx, i) * std::pow(t, i);
 
-    return q;
+    return q + delta_t * vel_final;
 }
 
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
@@ -52,16 +64,26 @@ Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 
 float planning::trajectory::Spline::getVelocity(float t, size_t idx)
 {
+    float q { 0 };
+    float delta_t { 0 };
+    float acc_final { 0 };
+
     if (t > time_final)
+    {
+        if (!is_zero_final_acc)
+        {
+            delta_t = t - time_final;
+            acc_final = getAcceleration(t, idx);
+        }
         t = time_final;
+    }
     else if (t < 0)
         t = 0;
 
-    float q { 0 };
     for (size_t i = 1; i <= order; i++)
         q += coeff(idx, i) * i * std::pow(t, i-1);
 
-    return q;
+    return q + delta_t * acc_final;
 }
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)

@@ -36,6 +36,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 /// @param q_final_dot Desired velocity in a final configuration.
 /// @return Success of computing the spline.
 /// @note Acceleration in a final configuration will be zero!
+/// @note Velocity in a final configuration will be constant!
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot)
 {
     return compute(q_final, q_final_dot, Eigen::VectorXf::Zero(num_dimensions));
@@ -47,9 +48,20 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 /// @param q_final_dot Desired velocity in a final configuration.
 /// @param q_final_ddot Desired acceleration in a final configuration.
 /// @return Success of computing the spline.
+/// @note Velocity and acceleration in a final configuration will be constant!
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot)
 {
     // std::chrono::steady_clock::time_point time_start_ = std::chrono::steady_clock::now();
+    if (q_final_dot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        is_zero_final_vel = true;
+    else
+        is_zero_final_vel = false;
+
+    if (q_final_ddot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        is_zero_final_acc = true;
+    else
+        is_zero_final_acc = false;
+
     int idx_corr { -1 };
     float t_f_opt { -1 };
     float t_f { 0 }, t_f_left { 0 }, t_f_right { 0 };
@@ -339,22 +351,44 @@ std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(size_t idx)
 
 float planning::trajectory::Spline5::getPosition(float t, size_t idx, float t_f)
 {
+    float delta_t { 0 };
+    float vel_final { 0 };
+
     if (t > t_f)
+    {
+        if (!is_zero_final_vel)
+        {
+            delta_t = t - t_f;
+            vel_final = getVelocity(t, idx, t_f);
+        }
         t = t_f;
+    }
     else if (t < 0)
         t = 0;
     
-    return f(idx) + e(idx)*t + d(idx)*t*t + c(idx)*t*t*t + b(idx)*t*t*t*t + a(idx)*t*t*t*t*t;
+    return f(idx) + e(idx)*t + d(idx)*t*t + c(idx)*t*t*t + b(idx)*t*t*t*t + a(idx)*t*t*t*t*t 
+           + delta_t * vel_final;
 }
 
 float planning::trajectory::Spline5::getVelocity(float t, size_t idx, float t_f)
 {
+    float delta_t { 0 };
+    float acc_final { 0 };
+
     if (t > t_f)
+    {
+        if (!is_zero_final_acc)
+        {
+            delta_t = t - t_f;
+            acc_final = getAcceleration(t, idx, t_f);
+        }
         t = t_f;
+    }
     else if (t < 0)
         t = 0;
 
-    return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t;
+    return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t 
+           + delta_t * acc_final;
 }
 
 float planning::trajectory::Spline5::getAcceleration(float t, size_t idx, float t_f)
