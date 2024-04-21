@@ -48,10 +48,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     }
 
     bool found { false };
-    if ((q_next->getStateReached()->getCoord() - spline_current->getPosition(INFINITY)).norm() 
-        < RealVectorSpaceConfig::EQUALITY_THRESHOLD)  // Coordinates of 'q_next->getStateReached()' did not change
+    if (spline_current->isFinalConf(q_next->getStateReached()->getCoord()))     // Coordinates of 'q_next->getStateReached()' did not change!
     {
-        // std::cout << "Not computing a new spline! \n";
+        std::cout << "Not computing a new spline! \n";
         found = false;
     }
     else
@@ -70,21 +69,26 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
         do
         {
-            std::cout << "q_final: " << q_next->getStateReached()->getCoord().transpose() << "\n";
+            std::cout << "q_final: " << q_next->getStateReached()->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";
+            
+            if (spline_current->isFinalConf(q_next->getStateReached()->getCoord()))     // Spline to such 'q_next->getStateReached()' already exists!
+                break;
+
             if (q_next->getIsReached() && 
                 q_next->getIndex() != -1 && 
                 q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
             {
-                Eigen::VectorXf q_final_dot { spline_current->getVelocity(t_spline_current) };  // Try to hold an initial velocity
+                // Eigen::VectorXf q_final_dot { spline_current->getVelocity(t_spline_current) };  // Try to hold an initial velocity
+                float delta_t_max { ((q_next->getStateReached()->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+                Eigen::VectorXf q_final_dot { (q_next->getStateReached()->getCoord() - q_current->getCoord()) / delta_t_max };
                 size_t num_iter { 0 }, max_num_iter { 5 };
 
                 do
                 {
-                    std::cout << "num_iter: " << num_iter
-                        << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+                    std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
                     found = spline_next->compute(q_next->getStateReached()->getCoord(), q_final_dot);
-                    std::cout << "\t found with q_final_dot: " << found << "\n";
+                    if (found) std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
 
                     // Reducing the final velocity
                     if (++num_iter < max_num_iter - 1)
@@ -95,12 +99,11 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                 while (!found && 
                        num_iter < max_num_iter && 
                        getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
-                std::cout << "\n";
             }
             else
             {
                 found = spline_next->compute(q_next->getStateReached()->getCoord());
-                std::cout << "\t found with ZERO q_final_dot: " << found << "\n";
+                if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
             }
         }
         while (!found && 
@@ -125,24 +128,22 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     // TODO: New spline needs to be validated on collision, at least during the current iteration!
     
     q_target = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1));
+    q_target->setParent(q_current);
     
     if (status != base::State::Status::Trapped)
     {
-        if (ss->isEqual(q_target, q_next->getState()))
+        if (spline_next->getTimeFinal() < spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1 + DRGBTConfig::MAX_ITER_TIME)
             status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
         else
             status = base::State::Status::Advanced;
-        
-        q_target->setParent(q_current);
     }
 
     // std::cout << "q_target:      " << q_target << "\n";
-    // std::cout << "q_target time: " << (spline_next->getTimeEnd() + DRGBTConfig::MAX_TIME_TASK1) * 1000 << " [ms] \n";
-    std::cout << "Spline next: \n" << spline_next << "\n";
-    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
-    //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
-    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
-    std::cout << "----------------------------------------------------------\n";
+    // std::cout << "q_target time: " << t_target * 1000 << " [ms] \n";
+    // std::cout << "Spline next: \n" << spline_next << "\n";
+    std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
+                            << (status == base::State::Status::Trapped  ? "Trapped"  : "")
+                            << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
@@ -183,12 +184,6 @@ bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning
     {
         visited_states.emplace_back(q_new);
         q_next = q_new;
-
-        // std::cout << "Horizon size: " << horizon.size() << "\t Visited idx: ";
-        // for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
-        //     std::cout << getIndexInHorizon(q_visited) << " ";
-        // std::cout << "\n" << "New q_next: " << q_next << "\n";
-
         return true;
     }
 
@@ -204,7 +199,7 @@ void planning::drbt::DRGBT::updateCurrentState()
     q_previous = q_current;
     if (status == base::State::Status::Trapped)
     {
-        // std::cout << "Status is Trapped! \n";
+        // std::cout << "Status: Trapped! \n";
         return;
     }
 
@@ -217,7 +212,12 @@ void planning::drbt::DRGBT::updateCurrentState()
 
     q_target = ss->getNewState(q_next->getStateReached()->getCoord());
 
-    // Option 1: If all velocities are not the same, the following can be used:
+    // Option 1: If all velocities are the same, the following can be used:
+    // float max_edge_length_ = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
+    // if (ss->getNorm(q_current, q_target) > max_edge_length_)    // Check whether 'q_target' can be reached considering robot max. velocity
+    //     q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
+
+    // Option 2: If all velocities are not the same, the following can be used:
     std::vector<std::pair<float, float>> limits;
     for (size_t i = 0; i < ss->num_dimensions; i++)
     {
@@ -226,24 +226,15 @@ void planning::drbt::DRGBT::updateCurrentState()
             q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME));
     }
     q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
-
-    // Option 2: If all velocities are the same, the following can be used:
-    // float max_edge_length_ = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
-    // if (ss->getNorm(q_current, q_target) > max_edge_length_)    // Check whether 'q_target' can be reached considering robot max. velocity
-    //     q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
+    q_target->setParent(q_current);
 
     if (ss->isEqual(q_target, q_next->getState()))
-    {
-        // std::cout << "Status is Reached. \n";
         status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
-    }
     else
-    {
-        // std::cout << "Status is Advanced. \n";
         status = base::State::Status::Advanced;
-    }
-    q_target->setParent(q_current);
 
     // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "q_target:  " << q_target << "\n";
+    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
+    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 }
