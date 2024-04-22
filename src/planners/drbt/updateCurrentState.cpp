@@ -78,33 +78,50 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                 q_next->getIndex() != -1 && 
                 q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
             {
-                // Eigen::VectorXf q_final_dot { spline_current->getVelocity(t_spline_current) };  // Try to hold an initial velocity
-                float delta_t_max { ((q_next->getStateReached()->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
-                Eigen::VectorXf q_final_dot { (q_next->getStateReached()->getCoord() - q_current->getCoord()) / delta_t_max };
                 size_t num_iter { 0 }, max_num_iter { 5 };
-
+                float delta_t_max { ((q_next->getStateReached()->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+                Eigen::VectorXf q_final_dot_max { (q_next->getStateReached()->getCoord() - q_current->getCoord()) / delta_t_max };
+                Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
+                Eigen::VectorXf q_final_dot {};
+                std::shared_ptr<planning::trajectory::Spline> spline_new { 
+                    std::make_shared<planning::trajectory::Spline5>
+                    (
+                        ss->robot, 
+                        q_current->getCoord(),
+                        spline_current->getVelocity(t_spline_current),
+                        spline_current->getAcceleration(t_spline_current)
+                    )
+                };
+                
                 do
                 {
+                    q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
                     std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
-                    found = spline_next->compute(q_next->getStateReached()->getCoord(), q_final_dot);
-                    if (found) std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
-
-                    // Reducing the final velocity
-                    if (++num_iter < max_num_iter - 1)
-                        q_final_dot *= 0.5;
+                    if (spline_new->compute(q_next->getStateReached()->getCoord(), q_final_dot)) 
+                    {
+                        *spline_next = *spline_new;
+                        q_final_dot_min = q_final_dot;
+                        found = true;
+                        std::cout << "found \n";
+                    }
                     else
-                        q_final_dot = Eigen::VectorXf::Zero(ss->num_dimensions);
+                    {
+                        q_final_dot_max = q_final_dot;
+                        std::cout << "not found \n";
+                    }
                 }
-                while (!found && 
-                       num_iter < max_num_iter && 
+                while (++num_iter < max_num_iter && 
                        getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
             }
-            else
+            
+            if (!found)
             {
                 found = spline_next->compute(q_next->getStateReached()->getCoord());
                 if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
             }
+            else
+                std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
         }
         while (!found && 
                changeNextState(visited_states) && 
@@ -140,7 +157,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     // std::cout << "q_target:      " << q_target << "\n";
     // std::cout << "q_target time: " << t_target * 1000 << " [ms] \n";
-    // std::cout << "Spline next: \n" << spline_next << "\n";
+    // std::cout << "Spline next: \n" << spline_next << "\n";   // TODO: Provjeriti u MATLAB-u spline na prelazu kod nenulte brzine (pustiti sim_bringup i pogledati)
     std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
                             << (status == base::State::Status::Trapped  ? "Trapped"  : "")
                             << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
