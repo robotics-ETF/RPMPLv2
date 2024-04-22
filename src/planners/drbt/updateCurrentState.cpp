@@ -48,7 +48,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     }
 
     bool found { false };
-    if (spline_current->isFinalConf(q_next->getStateReached()->getCoord()))     // Coordinates of 'q_next->getStateReached()' did not change!
+    if (spline_current->isFinalConf(q_next->getCoordReached()))     // Coordinates of 'q_next->getStateReached()' did not change!
     {
         std::cout << "Not computing a new spline! \n";
         found = false;
@@ -69,9 +69,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
         do
         {
-            std::cout << "q_final: " << q_next->getStateReached()->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";
+            std::cout << "q_final: " << q_next->getCoordReached().transpose() << "\t idx: " << q_next->getIndex() << "\n";
             
-            if (spline_current->isFinalConf(q_next->getStateReached()->getCoord()))     // Spline to such 'q_next->getStateReached()' already exists!
+            if (spline_current->isFinalConf(q_next->getCoordReached()))     // Spline to such 'q_next->getStateReached()' already exists!
                 break;
 
             if (q_next->getIsReached() && 
@@ -79,8 +79,8 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                 q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
             {
                 size_t num_iter { 0 }, max_num_iter { 5 };
-                float delta_t_max { ((q_next->getStateReached()->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
-                Eigen::VectorXf q_final_dot_max { (q_next->getStateReached()->getCoord() - q_current->getCoord()) / delta_t_max };
+                float delta_t_max { ((q_next->getCoordReached() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+                Eigen::VectorXf q_final_dot_max { (q_next->getCoordReached() - q_current->getCoord()) / delta_t_max };
                 Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
                 Eigen::VectorXf q_final_dot {};
                 std::shared_ptr<planning::trajectory::Spline> spline_new { 
@@ -98,7 +98,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                     q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
                     std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
-                    if (spline_new->compute(q_next->getStateReached()->getCoord(), q_final_dot)) 
+                    if (spline_new->compute(q_next->getCoordReached(), q_final_dot)) 
                     {
                         *spline_next = *spline_new;
                         q_final_dot_min = q_final_dot;
@@ -117,7 +117,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             
             if (!found)
             {
-                found = spline_next->compute(q_next->getStateReached()->getCoord());
+                found = spline_next->compute(q_next->getCoordReached());
                 if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
             }
             else
@@ -227,7 +227,7 @@ void planning::drbt::DRGBT::updateCurrentState()
         return;
     }
 
-    q_target = ss->getNewState(q_next->getStateReached()->getCoord());
+    q_target = ss->getNewState(q_next->getCoordReached());
 
     // Option 1: If all velocities are the same, the following can be used:
     // float max_edge_length_ = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
