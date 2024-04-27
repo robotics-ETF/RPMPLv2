@@ -38,11 +38,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     planner_info->setNumStates(1);
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);                               // State 'q_start' is added to the realized path
-
-    max_edge_length = 0;
-    for (size_t i = 0; i < ss->num_dimensions; i++)
-        max_edge_length += std::pow(ss->robot->getMaxVel(i), 2);
-    max_edge_length = std::sqrt(max_edge_length) * DRGBTConfig::MAX_ITER_TIME;
+    max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
@@ -80,12 +76,13 @@ bool planning::drbt::DRGBT::solve()
         // Since the environment may change, a new distance is required!
         auto time_computeDistance { std::chrono::steady_clock::now() };
         d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
+        // std::cout << "d_c: " << d_c << "\n";
         if (d_c <= 0)   // The desired/target conf. is not safe, thus the robot is required to stop immediately, 
         {               // and compute the horizon again from 'q_current'
             q_target = q_current;
             d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
             clearHorizon(base::State::Status::Trapped, true);
-            q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
+            q_next = std::make_shared<planning::drbt::HorizonState>(q_target, -1);
             q_next->setStateReached(q_target);
             // std::cout << "Not updating the robot current state since d_c < 0. \n";
         }
@@ -566,7 +563,7 @@ void planning::drbt::DRGBT::computeNextState()
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
         q_target = q_current;
         clearHorizon(base::State::Status::Trapped, true);
-        q_next = std::make_shared<planning::drbt::HorizonState>(q_target, 0);
+        q_next = std::make_shared<planning::drbt::HorizonState>(q_target, -1);
         q_next->setStateReached(q_target);
     }
 

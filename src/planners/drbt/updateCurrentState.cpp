@@ -50,7 +50,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     bool found { false };
     if (spline_current->isFinalConf(q_next->getCoordReached()))     // Coordinates of 'q_next->getStateReached()' did not change!
     {
-        std::cout << "Not computing a new spline! \n";
+        // std::cout << "Not computing a new spline! \n";
         found = false;
     }
     else
@@ -63,13 +63,13 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             spline_current->getVelocity(t_spline_current),
             spline_current->getAcceleration(t_spline_current)
         );
-        std::cout << "curr pos: " << q_current->getCoord().transpose() << "\n";
-        std::cout << "curr vel: " << spline_current->getVelocity(t_spline_current).transpose() << "\n";
-        std::cout << "curr acc: " << spline_current->getAcceleration(t_spline_current).transpose() << "\n";
+        // std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
+        // std::cout << "Curr. vel: " << spline_current->getVelocity(t_spline_current).transpose() << "\n";
+        // std::cout << "Curr. acc: " << spline_current->getAcceleration(t_spline_current).transpose() << "\n";
 
         do
         {
-            std::cout << "q_final: " << q_next->getCoordReached().transpose() << "\t idx: " << q_next->getIndex() << "\n";
+            // std::cout << "q_final: " << q_next->getCoordReached().transpose() << "\t idx: " << q_next->getIndex() << "\n";
             
             if (spline_current->isFinalConf(q_next->getCoordReached()))     // Spline to such 'q_next->getStateReached()' already exists!
                 break;
@@ -96,19 +96,19 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                 do
                 {
                     q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
-                    std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+                    // std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
                     if (spline_new->compute(q_next->getCoordReached(), q_final_dot)) 
                     {
                         *spline_next = *spline_new;
                         q_final_dot_min = q_final_dot;
                         found = true;
-                        std::cout << "found \n";
+                        // std::cout << "found \n";
                     }
                     else
                     {
                         q_final_dot_max = q_final_dot;
-                        std::cout << "not found \n";
+                        // std::cout << "not found \n";
                     }
                 }
                 while (++num_iter < max_num_iter && 
@@ -118,10 +118,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             if (!found)
             {
                 found = spline_next->compute(q_next->getCoordReached());
-                if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
+                // if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
             }
-            else
-                std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
+            // else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
         }
         while (!found && 
                changeNextState(visited_states) && 
@@ -131,13 +130,13 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     if (found)
     {
-        std::cout << "New spline is computed! \n";
+        // std::cout << "New spline is computed! \n";
         spline_current->setTimeEnd(t_spline_current);
         spline_next->setTimeEnd(t_iter_remain);
     }
     else
     {
-        std::cout << "Continuing with the previous spline! \n";
+        // std::cout << "Continuing with the previous spline! \n";
         spline_next = spline_current;
         spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
@@ -158,9 +157,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     // std::cout << "q_target:      " << q_target << "\n";
     // std::cout << "q_target time: " << t_target * 1000 << " [ms] \n";
     // std::cout << "Spline next: \n" << spline_next << "\n";   // TODO: Provjeriti u MATLAB-u spline na prelazu kod nenulte brzine (pustiti sim_bringup i pogledati)
-    std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
-                            << (status == base::State::Status::Trapped  ? "Trapped"  : "")
-                            << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
+    //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
+    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
