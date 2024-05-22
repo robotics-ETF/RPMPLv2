@@ -145,7 +145,6 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 	KDL::Frame goal_frame(R, p_new);
 	Eigen::VectorXf q_result(num_DOFs);
 
-	srand((unsigned int) time(0));
 	float error { INFINITY };
 	size_t num { 0 };
 	while (error > 1e-5)

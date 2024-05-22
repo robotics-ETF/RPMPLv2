@@ -9,14 +9,12 @@
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_) : StateSpace(num_dimensions_)
 {
-	srand((unsigned int) time(0));
 	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 	const std::shared_ptr<env::Environment> env_) : StateSpace(num_dimensions_, robot_, env_)	
 {
-	srand((unsigned int) time(0));
 	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
