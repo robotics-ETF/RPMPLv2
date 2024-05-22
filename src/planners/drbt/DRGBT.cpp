@@ -156,7 +156,7 @@ void planning::drbt::DRGBT::generateHorizon()
     auto time_generateHorizon { std::chrono::steady_clock::now() };
 
     // Deleting states which are left behind 'q_next', and do not belong to the predefined path
-    int q_next_idx {q_next->getIndex()};
+    int q_next_idx { q_next->getIndex() };
     if (!horizon.empty())   // 'q_next' is reached. Predefined path was not replanned nor 'status' is trapped
     {
         for (int i = horizon.size() - 1; i >= 0; i--)
@@ -558,7 +558,7 @@ void planning::drbt::DRGBT::computeNextState()
                     q_next = q_next_previous;
         }
     }
-    else    // All states are critical, and 'q_next' cannot be updated!
+    else if (predefined_path.empty())   // All states are critical, and 'q_next' cannot be updated!
     {
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
         q_target = q_current;
