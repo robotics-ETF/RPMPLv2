@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 
+	float min_dist_start_goal { node["robot"]["min_dist_start_goal"].as<float>() };
 	size_t init_num_test { node["testing"]["init_num"].as<size_t>() };
 	size_t init_num_success_test { node["testing"]["init_num_success"].as<size_t>() };
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
@@ -104,7 +105,10 @@ int main(int argc, char **argv)
 				std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 				
 				env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
-				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters				
+				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
+
+				if (min_dist_start_goal > 0)
+					generateRandomStartAndGoal(scenario, min_dist_start_goal);
 				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
 
 				LOG(INFO) << "Test number: " << num_test;

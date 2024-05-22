@@ -116,9 +116,11 @@ In the following example, we are using DRGBT algorithm. Please, open the file ``
 - ```max_acc```: Maximal acceleration of each obstacle in [m/s²];
 - ```dim```: Dimensions of each random obstacle in [m].
 
-For example, if you set ```init_num: 1``` and ```max_num: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```init_num : 0``` and ```max_num : 0```.
+For example, if you set ```init_num: 1``` and ```max_num: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```init_num: 0``` and ```max_num: 0```.
 
 You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line (when ```max_acc``` is set to 0) until it reaches the workspace limit, when it returns back by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_vel```.
+
+Additionally, if you want a start ```q_start``` and a goal ```q_goal``` configuration to be generated randomly, you can define a minimal workspace distance ```min_dist_start_goal``` between them within ```robot``` node. If you set ```min_dist_start_goal: 0```, the start and goal configuration will be fixed, thus they must be specified within ```q_start``` and ```q_goal```. The workspace distance between two configurations is computed as a sum of distances between their skeleton points over a middle skeleton, which is determined by an averaged configuration between the start and the goal. 
 
 Moreover, you can set the following in the ```testing``` node:
 - ```init_num```: Number of testing to start with (default: 1);

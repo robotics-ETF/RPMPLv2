@@ -169,4 +169,46 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 	for (std::shared_ptr<env::Object> obj : fixed_objects)
         env->addObject(obj);
 	
+	// Reset all additional data set before for start conf.
+	scenario.getStart()->setDistance(-1);
+	scenario.getStart()->setDistanceProfile(std::vector<float>());
+	scenario.getStart()->setNearestPoints(nullptr);
+}
+
+void generateRandomStartAndGoal(scenario::Scenario &scenario, float min_dist_start_goal)
+{
+	LOG(INFO) << "Generating random start and goal configuration, where minimal distance is " << min_dist_start_goal << " [m]...";
+
+	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+	std::shared_ptr<base::State> q_start { nullptr };
+	std::shared_ptr<base::State> q_goal { nullptr };
+	std::shared_ptr<base::State> q_middle { nullptr };
+	std::shared_ptr<Eigen::MatrixXf> skeleton_start {};
+	std::shared_ptr<Eigen::MatrixXf> skeleton_goal {};
+	std::shared_ptr<Eigen::MatrixXf> skeleton_middle {};
+	float dist { 0 };
+
+	while (dist < min_dist_start_goal)
+	{
+		q_start = ss->getRandomState();
+		q_goal = ss->getRandomState();
+		if (!ss->isValid(q_start) || !ss->isValid(q_goal))
+			continue;
+		
+		q_middle = ss->getNewState((q_start->getCoord() + q_goal->getCoord()) / 2);
+		skeleton_start = ss->robot->computeSkeleton(q_start);
+		skeleton_goal = ss->robot->computeSkeleton(q_goal);
+		skeleton_middle = ss->robot->computeSkeleton(q_middle);
+
+		dist = 0;
+		for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
+		{
+			dist += (skeleton_start->col(k) - skeleton_middle->col(k)).norm() 
+					+ (skeleton_middle->col(k) - skeleton_goal->col(k)).norm();
+		}
+		// std::cout << "dist: " << dist << "\n";
+	}
+
+	scenario.setStart(q_start);
+	scenario.setGoal(q_goal);
 }
