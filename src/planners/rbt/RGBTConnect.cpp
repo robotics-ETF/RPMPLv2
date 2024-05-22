@@ -37,9 +37,9 @@ bool planning::rbt::RGBTConnect::solve()
 		// std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
 		// std::cout << "Num. states: " << planner_info->getNumStates() << "\n";
 		q_e = ss->getRandomState();
-		// std::cout << q_rand->getCoord().transpose() << "\n";
+		// std::cout << q_e->getCoord().transpose() << "\n";
 		q_near = trees[tree_idx]->getNearestState(q_e);
-		// std::cout << "Tree: " << trees[treeNum]->getTreeName() << "\n";
+		// std::cout << "Tree: " << trees[tree_idx]->getTreeName() << "\n";
 		if (ss->computeDistance(q_near) > RBTConnectConfig::D_CRIT)
 		{
 			for (size_t i = 0; i < RBTConnectConfig::NUM_SPINES; i++)
