@@ -8,6 +8,7 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
     coeff = Eigen::MatrixXf::Zero(num_dimensions, order + 1);
     coeff.col(0) = q_current;   // All initial conditions are zero, except position
     time_start = std::chrono::steady_clock::now();
+    time_start_offset = 0;
     time_final = 0;
     time_current = 0;
     time_begin = 0;
@@ -151,13 +152,15 @@ float planning::trajectory::Spline::getTimeCurrent(bool measure_time)
     if (!measure_time)
         return time_current;
     
-    time_current = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count() * 1e-9;
+    time_current = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count() * 1e-9 
+                   - time_start_offset;
     return time_current;
 }
 
-void planning::trajectory::Spline::setTimeStart()
+void planning::trajectory::Spline::setTimeStart(float time_start_offset_)
 {
     time_start = std::chrono::steady_clock::now();
+    time_start_offset = time_start_offset_;
 }
 
 namespace planning::trajectory 

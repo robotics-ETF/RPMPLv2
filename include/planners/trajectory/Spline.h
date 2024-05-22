@@ -51,7 +51,7 @@ namespace planning
             float getTimeBegin() const { return time_begin; }
             float getTimeEnd() const { return time_end; }
 
-            void setTimeStart();
+            void setTimeStart(float time_start_offset_);
             void setTimeCurrent(float time_current_) { time_current = time_current_; }
             void setTimeBegin(float time_begin_) { time_begin = time_begin_; }
             void setTimeEnd(float time_end_) { time_end = time_end_; }
@@ -64,6 +64,7 @@ namespace planning
             std::shared_ptr<robots::AbstractRobot> robot;
             Eigen::MatrixXf coeff;                              // Num. of rows = 'num_DOFs', and num. of columns = 'order+1'. Form: sum{j=0, num_DOFs-1} coeff(i,j) * t^j
             std::chrono::steady_clock::time_point time_start;   // Start time point when a spline is created
+            float time_start_offset;                            // Time offset in [s] which determines how much earlier 'time_start' is created
             float time_final;                                   // Final time in [s] for a spline. After this time, velocity, acceleration and jerk are zero, while position remains constant.
             float time_current;                                 // Elapsed time in [s] from a time instant when a spline is created. It is used to determine a current robot's position, velocity and acceleration. 
             float time_begin;                                   // Time instance in [s] when a spline begins in the current iteration
