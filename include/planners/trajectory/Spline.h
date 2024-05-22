@@ -65,12 +65,12 @@ namespace planning
             Eigen::MatrixXf coeff;                              // Num. of rows = 'num_DOFs', and num. of columns = 'order+1'. Form: sum{j=0, num_DOFs-1} coeff(i,j) * t^j
             std::chrono::steady_clock::time_point time_start;   // Start time point when a spline is created
             float time_start_offset;                            // Time offset in [s] which determines how much earlier 'time_start' is created
-            float time_final;                                   // Final time in [s] for a spline. After this time, velocity, acceleration and jerk are zero, while position remains constant.
+            float time_final;                                   // Final time in [s] for a spline. After this time, velocity, acceleration and jerk are zero (if 'is_zero_final_vel' is true and 'is_zero_final_acc' is true), while position remains constant.
             float time_current;                                 // Elapsed time in [s] from a time instant when a spline is created. It is used to determine a current robot's position, velocity and acceleration. 
             float time_begin;                                   // Time instance in [s] when a spline begins in the current iteration
             float time_end;                                     // Time instance in [s] when a spline ends in the current iteration
-            bool is_zero_final_vel;                             // Whether final velocity is zero
-            bool is_zero_final_acc;                             // Whether final acceleration is zero
+            bool is_zero_final_vel;                             // Whether final velocity is zero. If not, robot will move at constant velocity (if 'is_zero_final_acc' is true) after 'time_final'.
+            bool is_zero_final_acc;                             // Whether final acceleration is zero. If not, robot will move at constant acceleration after 'time_final'.
         };
         
     }
