@@ -34,7 +34,9 @@ namespace base
 		std::shared_ptr<base::State> pruneEdge(const std::shared_ptr<base::State> q1, 
 			const std::shared_ptr<base::State> q2, const std::vector<std::pair<float, float>> &limits_) override;
 		std::shared_ptr<base::State> pruneEdge2(const std::shared_ptr<base::State> q1, 
-			const std::shared_ptr<base::State> q2, float delta_q_max) override;
+			const std::shared_ptr<base::State> q2, float max_edge_length) override;
+		void preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
+			std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length);
 
 		bool isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		virtual bool isValid(const std::shared_ptr<base::State> q) override;

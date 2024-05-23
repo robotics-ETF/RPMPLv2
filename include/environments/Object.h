@@ -26,6 +26,7 @@ namespace env
         inline const fcl::Vector3f &getAcceleration() const { return acceleration; }
         inline float getMaxVel() const { return max_vel; }
         inline float getMaxAcc() const { return max_acc; }
+		inline float getMinDistTol() const { return min_dist_tol; }
         
         inline void setLabel(const std::string &label_) { label = label_; } 
 		inline void setCollObject(const std::shared_ptr<fcl::CollisionObject<float>> coll_object_) { coll_object = coll_object_; }
@@ -34,6 +35,7 @@ namespace env
 		inline void setAcceleration(const fcl::Vector3f &acceleration_) { acceleration = acceleration_; }
 		inline void setMaxVel(float max_vel_) { max_vel = max_vel_; }
 		inline void setMaxAcc(float max_acc_) { max_acc = max_acc_; }
+		inline void setMinDistTol(float min_dist_tol_) { min_dist_tol = min_dist_tol_; }
 
         friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<env::Object> obj);
 
@@ -45,6 +47,7 @@ namespace env
 		fcl::Vector3f acceleration; 						   		// Acceleration vector in [m/s²]
 		float max_vel; 										    	// Maximal velocity in [m/s]
 		float max_acc; 									        	// Maximal acceleration in [m/s²]
+		float min_dist_tol; 										// Minimal distance tolerance for a static obstacle to not be included into a dynamic scene	
 	};
 }
 #endif //RPMPL_OBJECT_H

@@ -32,7 +32,6 @@ int main([[maybe_unused]] int argc, char **argv)
 	
 
 	// Test inverse kinematics
-	srand((unsigned int) time(0));
 	const std::vector<std::pair<float, float>> limits { robot->getLimits() };
 	for (size_t k = 0; k < 10000; k++)
 	{

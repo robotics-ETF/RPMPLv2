@@ -15,5 +15,4 @@ size_t DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS                             = 10;
 planning::PlannerType DRGBTConfig::STATIC_PLANNER_TYPE                  = planning::PlannerType::RGBMTStar;
 planning::RealTimeScheduling DRGBTConfig::REAL_TIME_SCHEDULING          = planning::RealTimeScheduling::FPS;
 float DRGBTConfig::MAX_TIME_TASK1                                       = 0.020;
-float DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE                        = 0.002;
 planning::TrajectoryInterpolation DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::TrajectoryInterpolation::Spline;

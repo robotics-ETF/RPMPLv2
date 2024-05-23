@@ -31,15 +31,18 @@ namespace robots
 		inline const std::vector<std::pair<float, float>> &getLimits() const { return limits; }
 		inline std::shared_ptr<base::State> getConfiguration() const { return configuration; }
 		inline float getCapsuleRadius(size_t idx) const { return capsules_radius[idx]; }
-		inline float getMaxVel(size_t idx) const { return max_vel[idx]; }
-		inline float getMaxAcc(size_t idx) const { return max_acc[idx]; }
-		inline float getMaxJerk(size_t idx) const { return max_jerk[idx]; }
+		inline float getMaxVel(size_t idx) const { return max_vel(idx); }
+		inline float getMaxAcc(size_t idx) const { return max_acc(idx); }
+		inline float getMaxJerk(size_t idx) const { return max_jerk(idx); }
+		inline const Eigen::VectorXf &getMaxVel() const { return max_vel; }
+		inline const Eigen::VectorXf &getMaxAcc() const { return max_acc; }
+		inline const Eigen::VectorXf &getMaxJerk() const { return max_jerk; }
 
 		inline void setConfiguration(const std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
 		inline void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
-		inline void setMaxVel(const std::vector<float> &max_vel_) { max_vel = max_vel_; }
-		inline void setMaxAcc(const std::vector<float> &max_acc_) { max_acc = max_acc_; }
-		inline void setMaxJerk(const std::vector<float> &max_jerk_) { max_jerk = max_jerk_; }
+		inline void setMaxVel(const Eigen::VectorXf &max_vel_) { max_vel = max_vel_; }
+		inline void setMaxAcc(const Eigen::VectorXf &max_acc_) { max_acc = max_acc_; }
+		inline void setMaxJerk(const Eigen::VectorXf &max_jerk_) { max_jerk = max_jerk_; }
 
 		virtual void setState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
@@ -58,9 +61,9 @@ namespace robots
 		std::vector<std::pair<float, float>> limits;
 		std::shared_ptr<base::State> configuration;
 		std::vector<float> capsules_radius;
-		std::vector<float> max_vel;
-		std::vector<float> max_acc;
-		std::vector<float> max_jerk;
+		Eigen::VectorXf max_vel;
+		Eigen::VectorXf max_acc;
+		Eigen::VectorXf max_jerk;
 	};
 }
 #endif //RPMPL_ABSTRACTROBOT_H

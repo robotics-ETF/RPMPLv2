@@ -36,16 +36,14 @@ namespace planning
             void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
             void computeNextState();
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
-            float updateCurrentState();
-            void updateCurrentState2();
+            float updateCurrentState(bool measure_time);
+            void updateCurrentState();
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
             virtual void replan(float max_planning_time);
-            void acquirePredefinedPath(const std::vector<std::shared_ptr<base::State>> &path_);
             bool checkMotionValidity(size_t num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
-            bool checkMotionValidity2(size_t num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
             std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
             std::shared_ptr<base::State> q_current;                                 // Current robot configuration
@@ -56,10 +54,10 @@ namespace planning
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
             size_t horizon_size;                                                    // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
-            base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
+            base::State::Status status;                                             // The status of proceeding from 'q_target' towards 'q_next'
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
             size_t num_lateral_states;                                              // Number of lateral states
-            float delta_q_max;                                                      // Maximal edge length when acquiring a new predefined path
+            float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
         };

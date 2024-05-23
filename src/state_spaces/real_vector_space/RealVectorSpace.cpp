@@ -9,14 +9,12 @@
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_) : StateSpace(num_dimensions_)
 {
-	srand((unsigned int) time(0));
 	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_, const std::shared_ptr<robots::AbstractRobot> robot_, 
 	const std::shared_ptr<env::Environment> env_) : StateSpace(num_dimensions_, robot_, env_)	
 {
-	srand((unsigned int) time(0));
 	setStateSpaceType(base::StateSpaceType::RealVectorSpace);
 }
 
@@ -45,7 +43,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::getRandomState(const std::sh
 		q_rand += q_center->getCoord();
 
 	// std::cout << "Random state coord: " << q_rand.transpose();
-	return std::make_shared<base::RealVectorSpaceState>(q_rand);
+	return getNewState(q_rand);
 }
 
 // Get a copy of 'state'
@@ -90,7 +88,7 @@ std::shared_ptr<base::State> base::RealVectorSpace::interpolateEdge
 	else
 		q_new_coord = q2->getCoord();
 
-	return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
+	return getNewState(q_new_coord);
 }
 
 // Interpolate edge from 'q1' to 'q2' for step 'step'
@@ -163,31 +161,108 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge(const std::shared_
 			}
 		}
 		if (found)
-			return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
+			return getNewState(q_new_coord);
 	}
 
 	return q2;
 }
 
-// Prune the edge from 'q1' to 'q2', where 'q1' is the center of a box which all dimensions are the same and equal to '2*delta_q_max'.
+// Prune the edge from 'q1' to 'q2', where 'q1' is the center of a box which all dimensions are the same and equal to '2*max_edge_length'.
 // Return a result state: 'q_new' if there is prunning, and 'q2' if not.
 std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared_ptr<base::State> q1, 
-	const std::shared_ptr<base::State> q2, float delta_q_max)
+	const std::shared_ptr<base::State> q2, float max_edge_length)
 {
 	Eigen::VectorXf::Index idx {};
 	float delta_q12_max { (q2->getCoord() - q1->getCoord()).cwiseAbs().maxCoeff(&idx) };
 	
-	if (delta_q12_max > delta_q_max)
+	if (delta_q12_max > max_edge_length)
 	{
 		int sign { (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1 };
-		float limit { q1->getCoord(idx) + sign * delta_q_max };
+		float limit { q1->getCoord(idx) + sign * max_edge_length };
 		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };
 		Eigen::VectorXf q_new_coord { q1->getCoord() + t * (q2->getCoord() - q1->getCoord()) };
 		
-		return std::make_shared<base::RealVectorSpaceState>(q_new_coord);
+		return getNewState(q_new_coord);
 	}
 
 	return q2;
+}
+
+/// @brief Generate a new path 'new_path' from a path 'original_path' in a way that the distance between two adjacent nodes
+/// is fixed (if possible) to a length of 'max_edge_length'. Geometrically, the new path remains the same as the original one,
+/// but only their nodes may differ.
+/// @param original_path Original path that will be transformed.
+/// @param new_path New resulting path.
+/// @param max_edge_length Maximal edge length.
+void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
+    std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length)
+{
+    new_path.clear();
+    new_path.emplace_back(original_path.front());
+	std::vector<std::shared_ptr<base::State>> path { original_path.front() };
+    std::shared_ptr<base::State> q0 { nullptr };
+    std::shared_ptr<base::State> q1 { nullptr };
+    std::shared_ptr<base::State> q2 { nullptr };
+
+	// std::cout << "Original path is: \n";
+    // for (size_t i = 0; i < original_path.size(); i++)
+    //     std::cout << original_path[i]->getCoord().transpose() << "\n";
+    // std::cout << std::endl;
+
+	for (size_t i = 1; i < original_path.size() - 1; i++)
+	{
+        q0 = original_path[i-1];
+        q1 = original_path[i];
+		q2 = original_path[i+1];
+
+		for (size_t k = 1; k < num_dimensions; k++)
+		{
+			if (std::abs((q2->getCoord(k) - q1->getCoord(k)) / (q1->getCoord(k) - q0->getCoord(k)) - 
+						 (q2->getCoord(k-1) - q1->getCoord(k-1)) / (q1->getCoord(k-1) - q0->getCoord(k-1))) > 
+				RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+			{
+				path.emplace_back(q1);
+				break;
+			}
+		}
+	}
+	path.emplace_back(original_path.back());
+
+	// std::cout << "Modified path is: \n";
+    // for (size_t i = 0; i < path.size(); i++)
+    //     std::cout << path[i]->getCoord().transpose() << "\n";
+    // std::cout << std::endl;
+
+    base::State::Status status { base::State::Status::None };
+    float dist {};
+
+    for (size_t i = 1; i < path.size(); i++)
+    {
+        status = base::State::Status::Advanced;
+        q0 = path[i-1];
+        q1 = path[i];
+
+        while (status == base::State::Status::Advanced)
+        {
+			dist = getNorm(q0, q1);
+            if (dist > max_edge_length)
+            {
+				q0 = interpolateEdge(q0, q1, max_edge_length, dist);
+                status = base::State::Status::Advanced;
+            }
+			else
+			{
+				q0 = q1;
+                status = base::State::Status::Reached;
+			}
+            new_path.emplace_back(q0);
+        }
+    }
+
+    // std::cout << "Preprocessed path is: \n";
+    // for (size_t i = 0; i < new_path.size(); i++)
+    //     std::cout << new_path[i]->getCoord().transpose() << "\n";
+    // std::cout << std::endl;
 }
 
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
@@ -294,6 +369,9 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 				Eigen::VectorXf obs(4); 	// TODO
                 tie(d_c_temp, nearest_pts) = distanceCapsuleToSphere(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
             }
+
+			if (d_c_temp > env->getObject(j)->getMinDistTol())
+				d_c_temp = INFINITY;
 
 			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
             if (d_c_profile[i] <= 0)		// The collision occurs

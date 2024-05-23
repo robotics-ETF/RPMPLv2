@@ -18,6 +18,7 @@
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
 #include "DRGBTConfig.h"
+#include "Spline5Config.h"
 
 class ConfigurationReader
 {
@@ -30,6 +31,7 @@ public:
         YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
         YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
         YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
+        YAML::Node Spline5ConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_spline5.yaml") };
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -202,15 +204,31 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::MAX_TIME_TASK1 is not defined! Using default value of " << DRGBTConfig::MAX_TIME_TASK1;
         
-        if (DRGBTConfigRoot["MAX_TIME_UPDATE_CURRENT_STATE"].IsDefined())
-            DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE = DRGBTConfigRoot["MAX_TIME_UPDATE_CURRENT_STATE"].as<float>();
-        else
-            LOG(INFO) << "DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE is not defined! Using default value of " << DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE;
-        
         if (DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
             DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::trajectory_interpolation_map[DRGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>()];
         else
             LOG(INFO) << "DRGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << DRGBTConfig::TRAJECTORY_INTERPOLATION;
+        
+        // Spline5ConfigRoot
+        if (Spline5ConfigRoot["MAX_TIME_COMPUTE"].IsDefined())
+            Spline5Config::MAX_TIME_COMPUTE = Spline5ConfigRoot["MAX_TIME_COMPUTE"].as<float>();
+        else
+            LOG(INFO) << "Spline5Config::MAX_TIME_COMPUTE is not defined! Using default value of " << Spline5Config::MAX_TIME_COMPUTE;
+
+        if (Spline5ConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
+            Spline5Config::MAX_TIME_PUBLISH = Spline5ConfigRoot["MAX_TIME_PUBLISH"].as<float>();
+        else
+            LOG(INFO) << "Spline5Config::MAX_TIME_PUBLISH is not defined! Using default value of " << Spline5Config::MAX_TIME_PUBLISH;
+
+        if (Spline5ConfigRoot["FINAL_JERK_STEP"].IsDefined())
+            Spline5Config::FINAL_JERK_STEP = Spline5ConfigRoot["FINAL_JERK_STEP"].as<float>();
+        else
+            LOG(INFO) << "Spline5Config::FINAL_JERK_STEP is not defined! Using default value of " << Spline5Config::FINAL_JERK_STEP;
+        
+        if (Spline5ConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
+            Spline5Config::FINAL_VELOCITY_STEP = Spline5ConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
+        else
+            LOG(INFO) << "Spline5Config::FINAL_VELOCITY_STEP is not defined! Using default value of " << Spline5Config::FINAL_VELOCITY_STEP;
         
         LOG(INFO) << "Configuration parameters read successfully!";
         

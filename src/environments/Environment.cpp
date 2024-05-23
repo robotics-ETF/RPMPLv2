@@ -33,6 +33,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                 YAML::Node d = obstacle["box"]["dim"];
                 YAML::Node p = obstacle["box"]["pos"];
                 YAML::Node r = obstacle["box"]["rot"];
+                YAML::Node min_dist_tol = obstacle["box"]["min_dist_tol"];
                 
                 fcl::Vector3f dim(d[0].as<float>(), d[1].as<float>(), d[2].as<float>());
                 fcl::Vector3f pos(p[0].as<float>(), p[1].as<float>(), p[2].as<float>());
@@ -42,6 +43,10 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                     rot = fcl::Quaternionf(r[3].as<float>(), r[0].as<float>(), r[1].as<float>(), r[2].as<float>());
 
                 object = std::make_shared<env::Box>(dim, pos, rot, label);
+
+                if (min_dist_tol.IsDefined())
+                    object->setMinDistTol(min_dist_tol.as<float>());
+
             }
             else if (obstacle["sphere"].IsDefined())
             {
@@ -138,16 +143,16 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 
     if (table_included)
     {
-        if (((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||          // Out of workspace
-            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z() ||   // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius))                          // Surrounding of robot base
+        if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||              // Out of workspace
+            (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z()) ||     // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                              // Surrounding of robot base
             return false;
     }
     else
     {
-        if (((pos - WS_center).norm() > WS_radius ||                                                 // Out of workspace
-            pos.head(2).norm() < tol_radius) && (pos.z() < WS_center.z()) && (pos.z() > -base_radius || // Surrounding of robot base
-            (pos - WS_center).norm() < tol_radius))                                                  // Surrounding of robot base
+        if ((pos - WS_center).norm() > WS_radius ||                                                     // Out of workspace
+            (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z() && pos.z() > -base_radius) ||   // Surrounding of robot base
+            (pos - WS_center).norm() < tol_radius)                                                      // Surrounding of robot base
             return false;
     }
 
