@@ -125,7 +125,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         while (!found && 
                changeNextState(visited_states) && 
                getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
-        // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e6 << " [us] \n";
+        // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
     }
 
     if (found)
