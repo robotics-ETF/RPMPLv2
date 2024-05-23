@@ -249,7 +249,10 @@ void planning::drbt::DRGBT::generateGBur()
 {
     // std::cout << "Generating gbur by computing reached states... \n";
     auto time_generateGBur { std::chrono::steady_clock::now() };
-    size_t max_num_attempts { 0 };
+    size_t max_num_attempts {};
+    float time_elapsed {};
+    float max_time { DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline ? 
+                     DRGBTConfig::MAX_TIME_TASK1 - Spline5Config::MAX_TIME_COMPUTE : DRGBTConfig::MAX_TIME_TASK1 };
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)
@@ -260,9 +263,8 @@ void planning::drbt::DRGBT::generateGBur()
         if (DRGBTConfig::REAL_TIME_SCHEDULING != planning::RealTimeScheduling::None)   // Some scheduling is chosen
         {
             // Check whether the elapsed time for Task 1 is exceeded
-            float time_elapsed = getElapsedTime(time_iter_start);
-            if (time_elapsed >= DRGBTConfig::MAX_TIME_TASK1 - DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE && 
-                idx < horizon.size() - 1)
+            time_elapsed = getElapsedTime(time_iter_start);
+            if (time_elapsed >= max_time && idx < horizon.size() - 1)
             {
                 // Delete horizon states for which there is no enough remaining time to be processed
                 // This is OK since better states are usually located at the beginning of horizon
@@ -279,8 +281,7 @@ void planning::drbt::DRGBT::generateGBur()
                 planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
                 return;
             }
-            max_num_attempts = std::ceil((1 - time_elapsed / (DRGBTConfig::MAX_TIME_TASK1 - DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE)) 
-                               * DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS);
+            max_num_attempts = std::ceil((1 - time_elapsed / max_time) * DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS);
         }
         else
             max_num_attempts = DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;

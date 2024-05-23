@@ -130,7 +130,7 @@ Moreover, you can set the following in the ```testing``` node:
 
 Parameters ```init_num``` and ```init_num_success``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left just by setting these two parameters.
 
-In the file ```/data/configurations/configuration_drgbt```, you can set the following DRGBT parameters:
+In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the following DRGBT parameters:
 - ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
 - ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [s]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [m] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [s];
@@ -141,7 +141,7 @@ In the file ```/data/configurations/configuration_drgbt```, you can set the foll
 - ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
-- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk.
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_spline5.yaml```.
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 

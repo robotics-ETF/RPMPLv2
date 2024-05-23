@@ -15,18 +15,17 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     spline_current = spline_next;
 
-    const float t_publish_max { 1e-3 };     // 1 [ms] is reserved for publishing trajectory
-    float t_spline_max { DRGBTConfig::MAX_TIME_UPDATE_CURRENT_STATE };
+    float t_spline_max { Spline5Config::MAX_TIME_COMPUTE };
     float t_iter { getElapsedTime(time_iter_start) };
     if (DRGBTConfig::MAX_TIME_TASK1 - t_iter < t_spline_max)
         t_spline_max = DRGBTConfig::MAX_TIME_TASK1 - t_iter;
     
     float t_iter_remain { DRGBTConfig::MAX_ITER_TIME - t_iter - t_spline_max };
     float t_spline_current { measure_time ? 
-                             spline_next->getTimeCurrent(true) + t_spline_max :
-                             spline_next->getTimeEnd() + t_iter + t_spline_max };
+                             spline_current->getTimeCurrent(true) + t_spline_max :
+                             spline_current->getTimeEnd() + t_iter + t_spline_max };
 
-    spline_current->setTimeBegin(spline_next->getTimeEnd());
+    spline_current->setTimeBegin(spline_current->getTimeEnd());
     spline_current->setTimeCurrent(t_spline_current);
 
     q_current = ss->getNewState(spline_current->getPosition(t_spline_current));
@@ -78,7 +77,8 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                 q_next->getIndex() != -1 && 
                 q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
             {
-                size_t num_iter { 0 }, max_num_iter { 5 };
+                size_t num_iter { 0 };
+                size_t max_num_iter = std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / Spline5Config::FINAL_VELOCITY_STEP));
                 float delta_t_max { ((q_next->getCoordReached() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
                 Eigen::VectorXf q_final_dot_max { (q_next->getCoordReached() - q_current->getCoord()) / delta_t_max };
                 Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
@@ -112,7 +112,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
                     }
                 }
                 while (++num_iter < max_num_iter && 
-                       getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
+                       getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
             }
             
             if (!found)
@@ -124,7 +124,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         }
         while (!found && 
                changeNextState(visited_states) && 
-               getElapsedTime(time_iter_start) - t_iter < t_spline_max - t_publish_max * measure_time);
+               getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
         // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
     }
 

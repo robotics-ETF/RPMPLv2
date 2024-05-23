@@ -5,6 +5,7 @@
 #define RPMPL_SPLINE5_H
 
 #include "Spline.h"
+#include "Spline5Config.h"
 
 namespace planning
 {

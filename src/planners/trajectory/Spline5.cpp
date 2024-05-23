@@ -66,7 +66,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
     float t_f_opt { -1 };
     float t_f { 0 }, t_f_left { 0 }, t_f_right { 0 };
     Eigen::Vector3f abc_left {}, abc_right {};       // a, b and c coefficients, respectively
-    const size_t max_num_iter { 10 };
+    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / Spline5Config::FINAL_JERK_STEP));
 
     for (size_t idx = 0; idx < num_dimensions; idx++)
     {
