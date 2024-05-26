@@ -228,23 +228,53 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::share
 	return skeleton;
 }
 
-// Compute step for moving from 'q1' towards 'q2' using ordinary bubble
-float robots::xArm6::computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
-	float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std::shared_ptr<base::State> q)
 {
-	Eigen::VectorXf r(links.size()); 	// For robot xArm6, links.size() = 6
-	r(0) = getEnclosingRadius(skeleton, 2, -2);
-	r(1) = getEnclosingRadius(skeleton, 2, -1);
-	r(2) = getEnclosingRadius(skeleton, 3, -1);
-	r(3) = getEnclosingRadius(skeleton, 5, 3);
-	r(4) = getEnclosingRadius(skeleton, 5, -1);
-	r(5) = 0;
+	if (q->getEnclosingRadii() != nullptr)	// It has been already computed!
+		return q->getEnclosingRadii();
 
-	return (d_c - rho) / r.dot((q1->getCoord() - q2->getCoord()).cwiseAbs()); 	// 'd_c - rho' is the remaining path length in W-space
+	std::shared_ptr<Eigen::MatrixXf> skeleton { computeSkeleton(q) };
+	Eigen::MatrixXf R { Eigen::MatrixXf::Zero(num_DOFs, num_DOFs+1) };
+
+	for (size_t i = 0; i < num_DOFs-1; i++) 		// Starting point on skeleton
+	{
+		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
+		{
+			switch (i)
+			{
+			case 0:	// Special case when all frame origins are projected on {x,y} plane
+				if (j >= 2)
+					R(i, j) = skeleton->col(j).head(2).norm() + capsules_radius[j-1];
+				break;
+
+			case 3:	// Projection of 5. and 6. skeleton point to the link [3-4] is needed
+				if (j >= 5)
+				{
+					Eigen::Vector3f AB { skeleton->col(4) - skeleton->col(3) };
+					float t { (skeleton->col(j) - skeleton->col(3)).dot(AB) / AB.squaredNorm() };
+					Eigen::Vector3f proj { skeleton->col(3) + t * AB };
+					R(i, j) = (skeleton->col(j) - proj).norm() + capsules_radius[j-1];
+				}
+				break;
+			
+			default:	// No projection is needed
+				R(i, j) = (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1];
+				break;
+			}
+		}
+	}
+
+	q->setEnclosingRadii(std::make_shared<Eigen::MatrixXf>(R));
+	return q->getEnclosingRadii();
 }
 
-// Compute step for moving from 'q1' towards 'q2' using expanded bubble
-float robots::xArm6::computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
+/// @brief Check if there exists a self-collision when robot moves from 'q1' to 'q2' following a straight line in C-space.
+/// @param q1 Initial configuration
+/// @param q2 Final configuration
+/// @return True if there exists self-collision. Otherwise, return false.
+/// If there exists self-collision, 'q2' will be modified such that it is equal to a final reached configuration from [q1,q2]-line that is collision-free.
+/// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
+bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
 	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
 {
 	Eigen::VectorXf r(links.size()); 	// For robot xArm6, links.size() = 6

@@ -122,21 +122,22 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::
 	return skeleton;
 }
 
-// Compute step for moving from 'q1' towards 'q2' using ordinary bubble
-float robots::Planar2DOF::computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
-	float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const std::shared_ptr<base::State> q)
 {
-	float d { 0 };
-	float r { 0 };
-	for (size_t i = 0; i < links.size(); i++)
+	if (q->getEnclosingRadii() != nullptr)	// It has been already computed!
+		return q->getEnclosingRadii();
+
+	std::shared_ptr<Eigen::MatrixXf> skeleton { computeSkeleton(q) };
+	Eigen::MatrixXf R { Eigen::MatrixXf::Zero(num_DOFs, num_DOFs+1) };
+
+	for (size_t i = 0; i < num_DOFs; i++) 			// Starting point on skeleton
 	{
-		r = 0;
-		for (size_t k = i+1; k <= links.size(); k++)
-			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
-		
-		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
+		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
+			R(i, j) = (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1];
 	}
-	return (d_c - rho) / d;
+
+	q->setEnclosingRadii(std::make_shared<Eigen::MatrixXf>(R));
+	return q->getEnclosingRadii();
 }
 
 // Compute step for moving from 'q1' towards 'q2' using expanded bubble

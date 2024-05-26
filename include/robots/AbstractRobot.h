@@ -49,7 +49,8 @@ namespace robots
 		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p,
 																	  const std::shared_ptr<base::State> q_init = nullptr) = 0;
 		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> q) = 0;
-		virtual float computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
+		virtual std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> q) = 0;
+		float computeStep(const std::shared_ptr<base::State> q2, float d_c, 
 			float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
 		virtual float computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
 			const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
