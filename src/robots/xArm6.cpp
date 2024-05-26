@@ -206,8 +206,11 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 
 std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::shared_ptr<base::State> q)
 {
+	if (q->getSkeleton() != nullptr)	// It has been already computed!
+		return q->getSkeleton();
+	
 	std::shared_ptr<std::vector<KDL::Frame>> frames { computeForwardKinematics(q) };
-	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, links.size() + 1) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1) };
 	skeleton->col(0) << 0, 0, 0;
 	skeleton->col(1) << frames->at(1).p(0), frames->at(1).p(1), frames->at(1).p(2);
 	skeleton->col(2) << frames->at(2).p(0), frames->at(2).p(1), frames->at(2).p(2);
@@ -225,6 +228,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::share
 	KDL::Vector a { frames->back().M.UnitZ() };
 	skeleton->col(6) -= 0.3 * gripper_length * Eigen::Vector3f(a.x(), a.y(), a.z());
 	
+	q->setSkeleton(skeleton);
 	return skeleton;
 }
 

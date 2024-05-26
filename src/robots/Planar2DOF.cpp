@@ -116,11 +116,16 @@ std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[mayb
 
 std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State> q)
 {
+	if (q->getSkeleton() != nullptr)	// It has been already computed!
+		return q->getSkeleton();
+		
 	std::shared_ptr<std::vector<KDL::Frame>> frames { computeForwardKinematics(q) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1) };
+
 	for (size_t k = 0; k <= num_DOFs; k++)
 		skeleton->col(k) << frames->at(k).p(0), frames->at(k).p(1), frames->at(k).p(2);
 	
+	q->setSkeleton(skeleton);
 	return skeleton;
 }
 
