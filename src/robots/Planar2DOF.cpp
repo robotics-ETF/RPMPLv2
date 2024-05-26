@@ -147,22 +147,10 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const
 	return q->getEnclosingRadii();
 }
 
-// Compute step for moving from 'q1' towards 'q2' using expanded bubble
-float robots::Planar2DOF::computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
-	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+// Planar2DOF robot cannot collide with itself.
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q1, [[maybe_unused]] std::shared_ptr<base::State> &q2)
 {
-	Eigen::VectorXf r { Eigen::VectorXf::Zero(links.size()) };
-	for (size_t i = 0; i < links.size(); i++)
-	{
-		for (size_t k = i+1; k <= links.size(); k++)
-			r(i) = std::max(r(i), (skeleton->col(k) - skeleton->col(i)).norm());
-	}
-
-	Eigen::VectorXf steps(links.size());
-	for (size_t k = 0; k < links.size(); k++)
-		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
-
-	return steps.minCoeff();
+	return false;
 }
 
 fcl::Vector3f robots::Planar2DOF::transformPoint([[maybe_unused]] fcl::Vector3f& v, fcl::Transform3f t)

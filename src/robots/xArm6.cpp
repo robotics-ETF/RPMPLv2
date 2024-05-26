@@ -4,7 +4,7 @@
 //
 
 #include "xArm6.h"
-#include "RealVectorSpaceState.h"
+#include "RealVectorSpace.h"
 
 #include <urdf/model.h>
 #include <glog/logging.h>
@@ -278,51 +278,74 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 /// @return True if there exists self-collision. Otherwise, return false.
 /// If there exists self-collision, 'q2' will be modified such that it is equal to a final reached configuration from [q1,q2]-line that is collision-free.
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
-bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
-	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2)
 {
-	Eigen::VectorXf r(links.size()); 	// For robot xArm6, links.size() = 6
-	r(0) = getEnclosingRadius(skeleton, 2, -2);
-	r(1) = getEnclosingRadius(skeleton, 2, -1);
-	r(2) = getEnclosingRadius(skeleton, 3, -1);
-	r(3) = getEnclosingRadius(skeleton, 5, 3);
-	r(4) = getEnclosingRadius(skeleton, 5, -1);
-	r(5) = 0;
+	std::shared_ptr<Eigen::MatrixXf> skeleton1 { computeSkeleton(q1) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton2 { computeSkeleton(q2) }; 	// Mozda i ne treba...
+	
+	// Paziti na gripper. On se ne provjerava kroz FCL!!!
 
-	Eigen::VectorXf steps(links.size());
-	for (size_t k = 0; k < links.size(); k++)
-		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
+	auto time_start = std::chrono::steady_clock::now();
 
-	return steps.minCoeff();
+	float d_04 { std::get<0>(base::RealVectorSpace::distanceLineSegToLineSeg 	// distance between link0 and link4
+				 (skeleton1->col(0), skeleton1->col(1), skeleton1->col(4), skeleton1->col(5))) 
+				 - getCapsuleRadius(0) - getCapsuleRadius(4) };
+	float d_05 { std::get<0>(base::RealVectorSpace::distanceLineSegToLineSeg	// distance between link0 and link5
+				 (skeleton1->col(0), skeleton1->col(1), skeleton1->col(5), skeleton1->col(6))) 
+				 - getCapsuleRadius(0) - getCapsuleRadius(5) };
+	float d_14 { std::get<0>(base::RealVectorSpace::distanceLineSegToLineSeg	// distance between link1 and link4
+				 (skeleton1->col(1), skeleton1->col(2), skeleton1->col(4), skeleton1->col(5))) 
+				 - getCapsuleRadius(1) - getCapsuleRadius(4) };
+	float d_15 { std::get<0>(base::RealVectorSpace::distanceLineSegToLineSeg	// distance between link1 and link5
+				 (skeleton1->col(1), skeleton1->col(2), skeleton1->col(5), skeleton1->col(6))) 
+				 - getCapsuleRadius(1) - getCapsuleRadius(5) };
+	float d_c_min { std::min(std::min(d_04, d_05), std::min(d_14, d_15)) };
+
+	std::vector<float> rho(7);
+	for (size_t k = 1; k <= getNumLinks(); k++)
+	{
+		rho[k] = (skeleton1->col(k) - skeleton2->col(k)).norm();
+		// std::cout << "k: " << k << "\t rho_k: " << rho[k] << "\n";
+	}
+
+	float phi { std::max(rho[1], rho[2]) + std::max(std::max(rho[4], rho[5]), rho[6]) };
+	std::cout << "Covered distance: " << phi << "\n";
+	std::cout << "Elapsed time: " 
+			  << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count() / 1e3 << " [us]\n";
+
+	if (phi > d_c_min)
+	{
+		std::cout << "******************* Maybe self-collision ******************* \n";
+		setState(q1);
+		std::cout << "Collision 0-1 with 4-5: " << checkRealSelfCollision(0, 4) << "\n";
+		std::cout << "Collision 0-1 with 5-6: " << checkRealSelfCollision(0, 5) << "\n";
+		std::cout << "Collision 1-2 with 4-5: " << checkRealSelfCollision(1, 4) << "\n";
+		std::cout << "Collision 1-2 with 5-6: " << checkRealSelfCollision(1, 5) << "\n";
+		std::cout << "--------------\n";
+	}
+	
+	return false;
 }
 
-float robots::xArm6::getEnclosingRadius(const std::shared_ptr<Eigen::MatrixXf> skeleton, int j_start, int j_proj)
+bool robots::xArm6::checkRealSelfCollision(size_t link1_idx, size_t link2_idx)
 {
-	float r { 0 };
-	if (j_proj == -2)	// Special case when all frame origins starting from j_start are projected on {x,y} plane
-	{
-		for (int j = j_start; j < skeleton->cols(); j++)
-			r = std::max(r, skeleton->col(j).head(2).norm() + capsules_radius[j-1]);
-	}
-	else if (j_proj == -1) 	// No projection
-	{
-		for (int j = j_start; j < skeleton->cols(); j++)
-			r = std::max(r, (skeleton->col(j) - skeleton->col(j_start-1)).norm() + capsules_radius[j-1]);
-	}
-	else	// Projection of all frame origins starting from j_start to the link (j_proj, j_proj+1) is needed
-	{
-		float t { 0 };
-		Eigen::Vector3f A { skeleton->col(j_proj) };
-		Eigen::Vector3f B { skeleton->col(j_proj+1) };
-		Eigen::Vector3f P {}, P_proj {};
-		for (int j = j_start; j < skeleton->cols(); j++)
-		{
-			t = (skeleton->col(j) - A).dot(B - A) / (B - A).squaredNorm();
-			P_proj = A + t * (B - A);
-			r = std::max(r, (skeleton->col(j) - P_proj).norm() + capsules_radius[j-1]);
-		}
-	}
-	return r;
+	auto time_start = std::chrono::steady_clock::now();
+	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> collision_manager_link1 { std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>() };
+	std::shared_ptr<fcl::BroadPhaseCollisionManagerf> collision_manager_link2 { std::make_shared<fcl::DynamicAABBTreeCollisionManagerf>() };
+	fcl::DefaultCollisionData<float> collision_data {};
+
+	collision_manager_link1->clear();
+	collision_manager_link2->clear();
+	collision_manager_link1->registerObject(links[link1_idx].get());
+	collision_manager_link2->registerObject(links[link2_idx].get());
+	collision_manager_link1->setup();
+	collision_manager_link2->setup();
+	collision_manager_link1->collide(collision_manager_link2.get(), &collision_data, fcl::DefaultCollisionFunction);
+
+	std::cout << "Elapsed time for real self-collision: " 
+			  << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count() / 1e3 << " [us]\n";
+
+	return collision_data.result.isCollision();
 }
 
 fcl::Transform3f robots::xArm6::KDL2fcl(const KDL::Frame &in)

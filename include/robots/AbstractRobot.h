@@ -53,7 +53,7 @@ namespace robots
 		float computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, float rho);
 		float computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
 			const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile);
-		virtual bool checkSelfCollision(const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) = 0;
 
 	protected:
 		std::string type;
