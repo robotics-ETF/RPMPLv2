@@ -61,8 +61,11 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
         if (node["robot"]["table_included"].IsDefined())
             table_included = node["robot"]["table_included"].as<bool>();
-        else
-            throw std::domain_error("It is not defined whether the table is included! ");
+        else if (node["robot"]["type"].as<std::string>() == "xarm6")
+        {
+            table_included = false;
+            throw std::domain_error("It is not defined whether the table is included! It will be set that it is not included. ");
+        }
 
         if (node["robot"]["WS_center"].IsDefined())
         {
@@ -71,6 +74,8 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
             WS_radius = node["robot"]["WS_radius"].as<float>();
         }
+        else
+            throw std::domain_error("Workspace center point is not defined! ");
     }
     catch (std::exception &e)
     {

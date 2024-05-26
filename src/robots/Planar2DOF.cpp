@@ -52,11 +52,11 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 							   links_[i]->visual->origin.position.y,
 							   links_[i]->visual->origin.position.z);
 			
-			CollisionGeometryPtr fclBox(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
+			CollisionGeometryPtr fcl_box(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
 			// LOG(INFO) << "origin: " << origin << std::endl;
 			
 			init_poses.emplace_back(KDL::Frame(origin));
-			links.emplace_back(new fcl::CollisionObjectf(fclBox, fcl::Transform3f()));
+			links.emplace_back(new fcl::CollisionObjectf(fcl_box, fcl::Transform3f()));
 			capsules_radius.emplace_back(box->dim.y / 2);
 		}
 	}
@@ -73,7 +73,7 @@ void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk { computeForwardKinematics(q) };
 	KDL::Frame tf {};
-	for (size_t i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 	{
 		tf = frames_fk->at(i) * init_poses[i];
 		//LOG(INFO) << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";

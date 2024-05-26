@@ -329,7 +329,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 	float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
-		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks()))) };
+		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
 
