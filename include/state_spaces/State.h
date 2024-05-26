@@ -29,8 +29,10 @@ namespace base
 		bool is_real_d_c;												// Is real or underestimation of distance-to-obstacles used
 		float cost;                  									// Cost-to-come
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;	// Set of nearest points between each robot segment and each obstacle
-		std::shared_ptr<State> parent;
-		std::shared_ptr<std::vector<std::shared_ptr<State>>> children;
+		std::shared_ptr<State> parent;									// Parent configuration
+		std::shared_ptr<std::vector<std::shared_ptr<State>>> children;	// All children configurations
+		std::shared_ptr<Eigen::MatrixXf> skeleton;						// Skeleton points of the robot
+		std::shared_ptr<Eigen::MatrixXf> enclosing_radii; 				// Matrix containing all enclosing radii (row: from which skeleton point, column: to which skeleton point)
 		
 	public:
 		State() {}
@@ -50,6 +52,8 @@ namespace base
 		inline std::shared_ptr<std::vector<Eigen::MatrixXf>> getNearestPoints() const { return nearest_points; }
 		inline std::shared_ptr<State> getParent() const { return parent; }
 		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; };
+		inline std::shared_ptr<Eigen::MatrixXf> getSkeleton() const { return skeleton; }
+		inline std::shared_ptr<Eigen::MatrixXf> getEnclosingRadii() const { return enclosing_radii; }
 
 		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
 		inline void setNumDimensions(size_t num_dimensions_) { num_dimensions = num_dimensions_; }
@@ -64,6 +68,8 @@ namespace base
 		inline void setNearestPoints(const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points_) { nearest_points = nearest_points_; }
 		inline void setParent(const std::shared_ptr<State> parent_) { parent = parent_; }
 		inline void setChildren(const std::shared_ptr<std::vector<std::shared_ptr<State>>> children_) { children = children_; }
+		inline void setSkeleton(const std::shared_ptr<Eigen::MatrixXf> skeleton_) { skeleton = skeleton_; }
+		inline void setEnclosingRadii(const std::shared_ptr<Eigen::MatrixXf> enclosing_radii_) { enclosing_radii = enclosing_radii_; }
 
 		void addChild(const std::shared_ptr<State> child);
 		friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<base::State> state);

@@ -25,4 +25,6 @@ base::RealVectorSpaceState::RealVectorSpaceState(const std::shared_ptr<base::Sta
 	nearest_points = state->getNearestPoints();
 	parent = state->getParent();
 	children = state->getChildren();
+	skeleton = state->getSkeleton();
+	enclosing_radii = state->getEnclosingRadii();
 }
