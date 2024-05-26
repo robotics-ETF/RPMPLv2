@@ -89,7 +89,7 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 {
 	setConfiguration(q);
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::vector<KDL::Frame> frames_fk(num_DOFs);
+	std::vector<KDL::Frame> frames_fk(robot_tree.getNrOfSegments());
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	KDL::JntArray joint_pos { KDL::JntArray(num_DOFs) };
 
@@ -101,6 +101,8 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 		KDL::Frame cart_pos {};
 		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		frames_fk[i] = cart_pos;
+		// std::cout << "Frame R" << i << ": " << frames_fk[i].M << "\n";
+		// std::cout << "Frame p" << i << ": " << frames_fk[i].p << "\n";
 	}
 	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
 }
