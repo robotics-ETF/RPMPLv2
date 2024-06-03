@@ -88,6 +88,10 @@ void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(const std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
+	
+	if (q->getFrames() != nullptr)		// It has been already computed!
+		return q->getFrames();
+
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
 	std::vector<KDL::Frame> frames_fk(robot_tree.getNrOfSegments());
 	robot_tree.getChain("base_link", "tool", robot_chain);
@@ -104,7 +108,9 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 		// std::cout << "Frame R" << i << ": " << frames_fk[i].M << "\n";
 		// std::cout << "Frame p" << i << ": " << frames_fk[i].p << "\n";
 	}
-	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
+	
+	q->setFrames(std::make_shared<std::vector<KDL::Frame>>(frames_fk));
+	return q->getFrames();
 }
 
 std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[maybe_unused]] const KDL::Rotation &R, [[maybe_unused]] const KDL::Vector &p, 
@@ -148,7 +154,14 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const
 }
 
 // Planar2DOF robot cannot collide with itself.
-bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q1, [[maybe_unused]] std::shared_ptr<base::State> &q2)
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q1, 
+											[[maybe_unused]] std::shared_ptr<base::State> &q2)
+{
+	return false;
+}
+
+// Planar2DOF robot cannot collide with itself.
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q)
 {
 	return false;
 }
