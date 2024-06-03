@@ -5,6 +5,7 @@
 
 #include "xArm6.h"
 #include "RealVectorSpace.h"
+#include "RRTConnectConfig.h"
 
 #include <urdf/model.h>
 #include <glog/logging.h>
@@ -66,8 +67,8 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 				model->addTriangle(p[0], p[1], p[2]);
 			}
 			model->endModel();
-			CollisionGeometryPtr fclBox(model);
-			links.emplace_back(new fcl::CollisionObject(fclBox, fcl::Transform3f()));
+			CollisionGeometryPtr fcl_box(model);
+			links.emplace_back(new fcl::CollisionObject(fcl_box, fcl::Transform3f()));
 			init_poses.emplace_back(link_frame);
 		}
 	}
@@ -110,6 +111,10 @@ void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics(const std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
+
+	if (q->getFrames() != nullptr)		// It has been already computed!
+		return q->getFrames();
+
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
 	std::vector<KDL::Frame> frames_fk(num_DOFs);
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
@@ -128,7 +133,8 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	}
 	frames_fk.back().p += gripper_length * frames_fk.back().M.UnitZ();
 
-	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
+	q->setFrames(std::make_shared<std::vector<KDL::Frame>>(frames_fk));
+	return q->getFrames();
 }
 
 std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
@@ -210,23 +216,23 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::share
 		return q->getSkeleton();
 	
 	std::shared_ptr<std::vector<KDL::Frame>> frames { computeForwardKinematics(q) };
-	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1) };
+	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1) };	// num_DOFs == getNumLinks() 
 	skeleton->col(0) << 0, 0, 0;
-	skeleton->col(1) << frames->at(1).p(0), frames->at(1).p(1), frames->at(1).p(2);
-	skeleton->col(2) << frames->at(2).p(0), frames->at(2).p(1), frames->at(2).p(2);
+	skeleton->col(1) << frames->at(1).p.x(), frames->at(1).p.y(), frames->at(1).p.z();
+	skeleton->col(2) << frames->at(2).p.x(), frames->at(2).p.y(), frames->at(2).p.z();
 
 	// KDL::Vector p3 { frames->at(2).p + frames->at(2).M.UnitX() * 0.0775 };
 	KDL::Vector p3 { frames->at(3).p - frames->at(3).M.UnitZ() * 0.25 };
-	skeleton->col(3) << p3(0), p3(1), p3(2);
-	skeleton->col(4) << frames->at(4).p(0), frames->at(4).p(1), frames->at(4).p(2);
+	skeleton->col(3) << p3.x(), p3.y(), p3.z();
+	skeleton->col(4) << frames->at(4).p.x(), frames->at(4).p.y(), frames->at(4).p.z();
 
 	KDL::Vector p5 { frames->at(4).p + frames->at(4).M.UnitX() * 0.076 };
-	skeleton->col(5) << p5(0), p5(1), p5(2);
-	skeleton->col(6) << frames->at(5).p(0), frames->at(5).p(1), frames->at(5).p(2);
+	skeleton->col(5) << p5.x(), p5.y(), p5.z();
+	skeleton->col(6) << frames->at(5).p.x(), frames->at(5).p.y(), frames->at(5).p.z();
 
     // Correct the last skeleton point regarding the attached gripper.
 	KDL::Vector a { frames->back().M.UnitZ() };
-	skeleton->col(6) -= 0.3 * gripper_length * Eigen::Vector3f(a.x(), a.y(), a.z());
+	skeleton->col(6) -= 0.3 * gripper_length * Eigen::Vector3f(a.x(), a.y(), a.z());	// Line (*)
 	
 	q->setSkeleton(skeleton);
 	return skeleton;
@@ -248,7 +254,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 			{
 			case 0:	// Special case when all frame origins are projected on {x,y} plane
 				if (j >= 2)
-					R(i, j) = skeleton->col(j).head(2).norm() + capsules_radius[j-1];
+					R(i, j) = std::max(R(i, j-1), skeleton->col(j).head(2).norm() + capsules_radius[j-1]);
 				break;
 
 			case 3:	// Projection of 5. and 6. skeleton point to the link [3-4] is needed
@@ -257,12 +263,12 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 					Eigen::Vector3f AB { skeleton->col(4) - skeleton->col(3) };
 					float t { (skeleton->col(j) - skeleton->col(3)).dot(AB) / AB.squaredNorm() };
 					Eigen::Vector3f proj { skeleton->col(3) + t * AB };
-					R(i, j) = (skeleton->col(j) - proj).norm() + capsules_radius[j-1];
+					R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - proj).norm() + capsules_radius[j-1]);
 				}
 				break;
 			
 			default:	// No projection is needed
-				R(i, j) = (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1];
+				R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1]);
 				break;
 			}
 		}
@@ -272,11 +278,12 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 	return q->getEnclosingRadii();
 }
 
-/// @brief Check if there exists a self-collision when robot moves from 'q1' to 'q2' following a straight line in C-space.
+/// @brief Check if there exists a self-collision when the robot moves from 'q1' to 'q2' following a straight line in C-space.
 /// @param q1 Initial configuration
 /// @param q2 Final configuration
 /// @return True if there exists self-collision. Otherwise, return false.
-/// If there exists self-collision, 'q2' will be modified such that it is equal to a final reached configuration from [q1,q2]-line that is collision-free.
+/// If there exists self-collision, 'q2' will be modified such that it is equal to a final reached configuration 
+/// from [q1,q2]-line that is collision-free.
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
 bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2)
 {
@@ -375,10 +382,10 @@ KDL::Frame robots::xArm6::fcl2KDL(const fcl::Transform3f &in)
 
 void robots::xArm6::test()
 {
-	CollisionGeometryPtr fclBox(new fcl::Box<float>(0.5, 1.0, 3.0));
+	CollisionGeometryPtr fcl_box(new fcl::Box<float>(0.5, 1.0, 3.0));
 	fcl::Transform3f tf {}; 
 	tf.translation() = fcl::Vector3f(1, 1, 1.5);
-	std::unique_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fclBox, tf));
+	std::unique_ptr<fcl::CollisionObject<float>> ob(new fcl::CollisionObject<float>(fcl_box, tf));
 	for (size_t i = 0; i < links.size(); i++)
 	{
 		fcl::DistanceRequest<float> request {};
