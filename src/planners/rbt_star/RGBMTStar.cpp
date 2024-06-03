@@ -201,7 +201,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::getRandomState()
             if (status != base::State::Status::Trapped)
                 return q_rand;
         }
-        else if (ss->isValid(q_rand))    // If 'q_rand' is collision-free, it is accepted
+        else if (ss->isValid(q_rand) && !ss->robot->checkSelfCollision(q_rand))    // If 'q_rand' is collision-free, it is accepted
             return q_rand;
     }
     return nullptr;

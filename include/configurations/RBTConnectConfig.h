@@ -13,6 +13,6 @@ public:
     static float D_CRIT;                        // Critical distance in W-space in [m] when RBT uses RRT-mode
     static float DELTA;    	                    // Radius of hypersphere in [rad] from q to q_e
     static size_t NUM_SPINES;                   // Number of bur spines
-    static size_t NUM_ITER_SPINE;               // Number of iterations when computing a single spine (1 iteration is minimum, when accordingly function 'fi' is not computed)
+    static size_t NUM_ITER_SPINE;               // Number of iterations when computing a single spine (1 iteration is minimum, when accordingly cummulative workspace distance function 'phi' is not computed)
     static bool USE_EXPANDED_BUBBLE;            // Whether to use expanded bubble when generating a spine. If yes, distance profile function for each robot's link is used
 };

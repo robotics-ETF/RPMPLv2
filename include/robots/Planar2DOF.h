@@ -29,6 +29,7 @@ namespace robots
 		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> q) override;
 		std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> q) override;
 		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) override;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q) override;
 			
 	private:
 		fcl::Transform3f KDL2fcl(const KDL::Frame &in);

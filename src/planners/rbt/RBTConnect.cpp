@@ -99,22 +99,31 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 		ss->computeDistance(q);
 	
 	std::vector<float> rho_profile(ss->robot->getNumLinks(), 0);	// The path length in W-space for each robot's link
-	float rho { 0 }; 												// The path length in W-space for complete robot
+	float rho { 0 }, rho_k { 0 }, rho_k_prev { 0 }; 				// The path length in W-space for (complete) robot
 	float step { 0 };
 	size_t counter { 0 };
-	std::shared_ptr<base::State> q_temp { ss->getNewState(q->getCoord()) };
+	std::shared_ptr<base::State> q_temp { q };
 	std::shared_ptr<base::State> q_new { nullptr };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(q) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton_new { nullptr };
+	std::shared_ptr<Eigen::MatrixXf> R { nullptr };
+	Eigen::VectorXf delta_q {};
 	base::State::Status status { base::State::Status::Advanced };
 	bool self_collision { false };
 	
 	while (true)
 	{
+		R = ss->robot->computeEnclosingRadii(q_temp);
+		delta_q = (q_e->getCoord() - q_temp->getCoord()).cwiseAbs();
+		
 		if (RBTConnectConfig::USE_EXPANDED_BUBBLE)
-			step = ss->robot->computeStep2(q_temp, q_e, q->getDistanceProfile(), rho_profile);
+		{
+			step = INFINITY;
+			for (size_t i = 0; i < ss->num_dimensions; i++)
+				step = std::min(step, (q->getDistanceProfile(i) - rho_profile[i]) / R->col(i+1).dot(delta_q));
+		}
 		else
-			step = ss->robot->computeStep(q_temp, q_e, q->getDistance(), rho);
+			step = (q->getDistance() - rho) / R->col(ss->num_dimensions).dot(delta_q);	// 'q->getDistance() - rho' is the remaining path length in W-space
 
 		if (step > 1)
 		{
@@ -125,22 +134,22 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 			q_new = ss->getNewState(q_temp->getCoord() + step * (q_e->getCoord() - q_temp->getCoord()));
 
 		self_collision = ss->robot->checkSelfCollision(q_temp, q_new);
-		if (self_collision && status == base::State::Status::Reached)
-			status = base::State::Status::Advanced;
+		if (self_collision)
+			status = !ss->isEqual(q, q_new) ? base::State::Status::Advanced : base::State::Status::Trapped;
 		
-		if (++counter == RBTConnectConfig::NUM_ITER_SPINE || step > 1)
+		if (++counter == RBTConnectConfig::NUM_ITER_SPINE || status != base::State::Status::Advanced || self_collision)
 			return { status, q_new };
 
-		rho_profile = std::vector<float>(ss->robot->getNumLinks(), 0);
+		// -------------------------------------------------------- //
 		skeleton_new = ss->robot->computeSkeleton(q_new);
-		float rho_k { 0 };
-		float rho_k1 { 0 };
-
+		rho_profile = std::vector<float>(ss->robot->getNumLinks(), 0);
+		rho_k_prev = 0;
+		
 		for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
 		{
 			rho_k = (skeleton->col(k) - skeleton_new->col(k)).norm();
-			rho_profile[k-1] = std::max(rho_k1, rho_k);
-			rho_k1 = rho_k;
+			rho_profile[k-1] = std::max(rho_k_prev, rho_k);
+			rho_k_prev = rho_k;
 			rho = std::max(rho, rho_k);
 		}
 		q_temp = q_new;

@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <memory>
+#include <kdl/frames_io.hpp>
 
 #include "StateSpaceType.h"
 namespace base
@@ -31,6 +32,7 @@ namespace base
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;	// Set of nearest points between each robot segment and each obstacle
 		std::shared_ptr<State> parent;									// Parent configuration
 		std::shared_ptr<std::vector<std::shared_ptr<State>>> children;	// All children configurations
+		std::shared_ptr<std::vector<KDL::Frame>> frames;				// All frames of the robot
 		std::shared_ptr<Eigen::MatrixXf> skeleton;						// Skeleton points of the robot
 		std::shared_ptr<Eigen::MatrixXf> enclosing_radii; 				// Matrix containing all enclosing radii (row: from which skeleton point, column: to which skeleton point)
 		
@@ -46,12 +48,14 @@ namespace base
 		inline size_t getTreeIdx() const { return tree_idx; }
 		inline size_t getIdx() const { return idx; }
 		inline float getDistance() const { return d_c; }
-		inline const std::vector<float> &getDistanceProfile() const {return d_c_profile; }
+		inline const std::vector<float> &getDistanceProfile() const { return d_c_profile; }
+		inline float getDistanceProfile(size_t idx) { return d_c_profile[idx]; }
 		inline bool getIsRealDistance() const { return is_real_d_c; }
 		inline float getCost() const { return cost; }
 		inline std::shared_ptr<std::vector<Eigen::MatrixXf>> getNearestPoints() const { return nearest_points; }
 		inline std::shared_ptr<State> getParent() const { return parent; }
-		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; };
+		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; }
+		inline std::shared_ptr<std::vector<KDL::Frame>> getFrames() const { return frames; }
 		inline std::shared_ptr<Eigen::MatrixXf> getSkeleton() const { return skeleton; }
 		inline std::shared_ptr<Eigen::MatrixXf> getEnclosingRadii() const { return enclosing_radii; }
 
@@ -68,6 +72,7 @@ namespace base
 		inline void setNearestPoints(const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points_) { nearest_points = nearest_points_; }
 		inline void setParent(const std::shared_ptr<State> parent_) { parent = parent_; }
 		inline void setChildren(const std::shared_ptr<std::vector<std::shared_ptr<State>>> children_) { children = children_; }
+		inline void setFrames(const std::shared_ptr<std::vector<KDL::Frame>> frames_) { frames = frames_; }
 		inline void setSkeleton(const std::shared_ptr<Eigen::MatrixXf> skeleton_) { skeleton = skeleton_; }
 		inline void setEnclosingRadii(const std::shared_ptr<Eigen::MatrixXf> enclosing_radii_) { enclosing_radii = enclosing_radii_; }
 
