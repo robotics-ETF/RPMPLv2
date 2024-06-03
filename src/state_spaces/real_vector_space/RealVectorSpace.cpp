@@ -179,10 +179,8 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 	{
 		int sign { (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1 };
 		float limit { q1->getCoord(idx) + sign * max_edge_length };
-		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };
-		Eigen::VectorXf q_new_coord { q1->getCoord() + t * (q2->getCoord() - q1->getCoord()) };
-		
-		return getNewState(q_new_coord);
+		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };		
+		return getNewState(q1->getCoord() + t * (q2->getCoord() - q1->getCoord()));
 	}
 
 	return q2;

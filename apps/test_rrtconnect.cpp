@@ -95,7 +95,6 @@ int main(int argc, char **argv)
 		catch (std::exception &e)
 		{
 			LOG(ERROR) << e.what();
-			num_test--;
 		}
 	}
 	LOG(INFO) << "Success rate: " << (float) num_success / max_num_tests * 100 << " [%]";
