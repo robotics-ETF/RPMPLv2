@@ -64,6 +64,7 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
+	self_collision_checking = false;
 
 	LOG(INFO) << type << " robot created.";
 	// LOG(INFO) << "Constructor end ----------------------\n";

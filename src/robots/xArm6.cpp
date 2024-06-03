@@ -73,6 +73,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 		}
 	}
 	
+	self_collision_checking = true;
 	gripper_length = gripper_length_;
 	table_included = table_included_;
 	if (table_included)
@@ -287,7 +288,10 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
 bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2)
 {
-	auto time_start { std::chrono::steady_clock::now() };
+	if (!self_collision_checking)
+		return false;
+	
+	// auto time_start { std::chrono::steady_clock::now() };
 	std::shared_ptr<base::State> q1_temp { std::make_shared<base::RealVectorSpaceState>(q1) };
 	size_t num_iter { 0 };
 	size_t max_num_iter { 5 };
@@ -374,6 +378,9 @@ bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, st
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
 bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q)
 {
+	if (!self_collision_checking)
+		return false;
+		
 	std::vector<bool> skip_checking(4, false);
 	return checkSelfCollision(q, skip_checking);
 }

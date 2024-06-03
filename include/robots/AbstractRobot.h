@@ -43,6 +43,7 @@ namespace robots
 		inline void setMaxVel(const Eigen::VectorXf &max_vel_) { max_vel = max_vel_; }
 		inline void setMaxAcc(const Eigen::VectorXf &max_acc_) { max_acc = max_acc_; }
 		inline void setMaxJerk(const Eigen::VectorXf &max_jerk_) { max_jerk = max_jerk_; }
+		inline void setSelfCollisionChecking(bool self_collision_checking_) { self_collision_checking = self_collision_checking_; }
 
 		virtual void setState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
@@ -63,6 +64,7 @@ namespace robots
 		Eigen::VectorXf max_vel;
 		Eigen::VectorXf max_acc;
 		Eigen::VectorXf max_jerk;
+		bool self_collision_checking;
 	};
 }
 #endif //RPMPL_ABSTRACTROBOT_H
