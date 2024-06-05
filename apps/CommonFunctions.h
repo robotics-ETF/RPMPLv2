@@ -101,13 +101,13 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
 		env->addObject(object);
 
-		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()))
+		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()) ||
+			ss->robot->checkSelfCollision(scenario.getStart()) || ss->robot->checkSelfCollision(scenario.getGoal()))
 		{
 			env->removeObject(i);
 			i--;
 		}
-		else
-    		std::cout << "Added " << i << ". " << object;
+		// else std::cout << "Added " << i << ". " << object;
 	}
 }
 
@@ -192,7 +192,8 @@ void generateRandomStartAndGoal(scenario::Scenario &scenario, float min_dist_sta
 	{
 		q_start = ss->getRandomState();
 		q_goal = ss->getRandomState();
-		if (!ss->isValid(q_start) || !ss->isValid(q_goal))
+		if (!ss->isValid(q_start) || !ss->isValid(q_goal) ||
+			ss->robot->checkSelfCollision(q_start) || ss->robot->checkSelfCollision(q_goal))
 			continue;
 		
 		q_middle = ss->getNewState((q_start->getCoord() + q_goal->getCoord()) / 2);

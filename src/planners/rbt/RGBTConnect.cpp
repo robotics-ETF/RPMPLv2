@@ -92,7 +92,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
         tie(status, q_new) = extendSpine(q_new, q_e);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
 		// d_c = ss->computeDistance(q_new);	// If you want to use real distance
-        if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
+        if (d_c < RBTConnectConfig::D_CRIT || status != base::State::Status::Advanced)
             break;
     }
     return {status, q_new};

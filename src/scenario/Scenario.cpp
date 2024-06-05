@@ -83,6 +83,10 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
             robot->setMaxJerk(max_jerk);
         }
 
+        YAML::Node self_collision_checking_node { robot_node["self_collision_checking"] };
+        if (self_collision_checking_node.IsDefined())
+            robot->setSelfCollisionChecking(self_collision_checking_node.as<bool>());
+
         env = std::make_shared<env::Environment>(config_file_path, root_path);
         std::string state_space { robot_node["space"].as<std::string>() };
         if (state_space == "RealVectorSpace")

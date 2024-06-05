@@ -179,10 +179,8 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 	{
 		int sign { (q2->getCoord(idx) - q1->getCoord(idx) > 0) ? 1 : -1 };
 		float limit { q1->getCoord(idx) + sign * max_edge_length };
-		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };
-		Eigen::VectorXf q_new_coord { q1->getCoord() + t * (q2->getCoord() - q1->getCoord()) };
-		
-		return getNewState(q_new_coord);
+		float t { (limit - q1->getCoord(idx)) / (q2->getCoord(idx) - q1->getCoord(idx)) };		
+		return getNewState(q1->getCoord() + t * (q2->getCoord() - q1->getCoord()));
 	}
 
 	return q2;
@@ -329,7 +327,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 	float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
-		(std::vector<Eigen::MatrixXf>(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks()))) };
+		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
 

@@ -14,7 +14,9 @@ namespace robots
     public:
         Planar10DOF(const std::string &robot_desc);
         ~Planar10DOF();
-        
+
+		bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) override;
+		bool checkSelfCollision(const std::shared_ptr<base::State> q) override;
     };
 }
 #endif //RPMPL_ABSTRACTPLANNER_H

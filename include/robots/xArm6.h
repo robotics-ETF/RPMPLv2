@@ -29,15 +29,17 @@ namespace robots
 		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
 															  std::shared_ptr<base::State> q_init = nullptr) override;
 		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(std::shared_ptr<base::State> q) override;
-		float computeStep(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, float d_c, float rho, 
-						  std::shared_ptr<Eigen::MatrixXf> skeleton) override;
-		float computeStep2(std::shared_ptr<base::State> q1, std::shared_ptr<base::State> q2, const std::vector<float> &d_c_profile,
-						   const std::vector<float> &rho_profile, std::shared_ptr<Eigen::MatrixXf> skeleton) override;
+		std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> q) override;
+		bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) override;
+		bool checkSelfCollision(const std::shared_ptr<base::State> q) override;
 
 	private:
+		bool checkSelfCollision(const std::shared_ptr<base::State> q, std::vector<bool> &skip_checking);
+		float computeCapsulesDistance(const std::shared_ptr<base::State> q, size_t link1_idx, size_t link2_idx);
+		bool checkRealSelfCollision(const std::shared_ptr<base::State> q, size_t link1_idx, size_t link2_idx);
+		bool checkCollisionFCL(const std::unique_ptr<fcl::CollisionObjectf> &obj1, const std::unique_ptr<fcl::CollisionObjectf> &obj2);
 		fcl::Transform3f KDL2fcl(const KDL::Frame &in);
 		KDL::Frame fcl2KDL(const fcl::Transform3f &in);
-		float getEnclosingRadius(std::shared_ptr<Eigen::MatrixXf> skeleton, int j_start, int j_proj);
 		void test();
 	
 		std::vector<KDL::Frame> init_poses;

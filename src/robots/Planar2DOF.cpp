@@ -52,11 +52,11 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 							   links_[i]->visual->origin.position.y,
 							   links_[i]->visual->origin.position.z);
 			
-			CollisionGeometryPtr fclBox(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
+			CollisionGeometryPtr fcl_box(new fcl::Boxf(box->dim.x, box->dim.y, box->dim.z));
 			// LOG(INFO) << "origin: " << origin << std::endl;
 			
 			init_poses.emplace_back(KDL::Frame(origin));
-			links.emplace_back(new fcl::CollisionObjectf(fclBox, fcl::Transform3f()));
+			links.emplace_back(new fcl::CollisionObjectf(fcl_box, fcl::Transform3f()));
 			capsules_radius.emplace_back(box->dim.y / 2);
 		}
 	}
@@ -64,6 +64,7 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
+	self_collision_checking = false;
 
 	LOG(INFO) << type << " robot created.";
 	// LOG(INFO) << "Constructor end ----------------------\n";
@@ -73,7 +74,7 @@ void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<std::vector<KDL::Frame>> frames_fk { computeForwardKinematics(q) };
 	KDL::Frame tf {};
-	for (size_t i = 0; i < links.size(); i++)
+	for (size_t i = 0; i < num_DOFs; i++)
 	{
 		tf = frames_fk->at(i) * init_poses[i];
 		//LOG(INFO) << tf.p << "\n" << tf.M << "\n++++++++++++++++++++++++\n";
@@ -88,8 +89,12 @@ void robots::Planar2DOF::setState(const std::shared_ptr<base::State> q)
 std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinematics(const std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
+	
+	if (q->getFrames() != nullptr)		// It has been already computed!
+		return q->getFrames();
+
 	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::vector<KDL::Frame> frames_fk(num_DOFs);
+	std::vector<KDL::Frame> frames_fk(robot_tree.getNrOfSegments());
 	robot_tree.getChain("base_link", "tool", robot_chain);
 	KDL::JntArray joint_pos { KDL::JntArray(num_DOFs) };
 
@@ -101,8 +106,12 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 		KDL::Frame cart_pos {};
 		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
 		frames_fk[i] = cart_pos;
+		// std::cout << "Frame R" << i << ": " << frames_fk[i].M << "\n";
+		// std::cout << "Frame p" << i << ": " << frames_fk[i].p << "\n";
 	}
-	return std::make_shared<std::vector<KDL::Frame>>(frames_fk);
+	
+	q->setFrames(std::make_shared<std::vector<KDL::Frame>>(frames_fk));
+	return q->getFrames();
 }
 
 std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[maybe_unused]] const KDL::Rotation &R, [[maybe_unused]] const KDL::Vector &p, 
@@ -114,47 +123,48 @@ std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[mayb
 
 std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State> q)
 {
+	if (q->getSkeleton() != nullptr)	// It has been already computed!
+		return q->getSkeleton();
+		
 	std::shared_ptr<std::vector<KDL::Frame>> frames { computeForwardKinematics(q) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { std::make_shared<Eigen::MatrixXf>(3, num_DOFs + 1) };
+
 	for (size_t k = 0; k <= num_DOFs; k++)
 		skeleton->col(k) << frames->at(k).p(0), frames->at(k).p(1), frames->at(k).p(2);
 	
+	q->setSkeleton(skeleton);
 	return skeleton;
 }
 
-// Compute step for moving from 'q1' towards 'q2' using ordinary bubble
-float robots::Planar2DOF::computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
-	float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const std::shared_ptr<base::State> q)
 {
-	float d { 0 };
-	float r { 0 };
-	for (size_t i = 0; i < links.size(); i++)
+	if (q->getEnclosingRadii() != nullptr)	// It has been already computed!
+		return q->getEnclosingRadii();
+
+	std::shared_ptr<Eigen::MatrixXf> skeleton { computeSkeleton(q) };
+	Eigen::MatrixXf R { Eigen::MatrixXf::Zero(num_DOFs, num_DOFs+1) };
+
+	for (size_t i = 0; i < num_DOFs; i++) 			// Starting point on skeleton
 	{
-		r = 0;
-		for (size_t k = i+1; k <= links.size(); k++)
-			r = std::max(r, (skeleton->col(k) - skeleton->col(i)).norm());
-		
-		d += r * std::abs(q2->getCoord(i) - q1->getCoord(i));
+		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
+			R(i, j) = (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1];
 	}
-	return (d_c - rho) / d;
+
+	q->setEnclosingRadii(std::make_shared<Eigen::MatrixXf>(R));
+	return q->getEnclosingRadii();
 }
 
-// Compute step for moving from 'q1' towards 'q2' using expanded bubble
-float robots::Planar2DOF::computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
-	const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton)
+// Planar2DOF robot cannot collide with itself.
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q1, 
+											[[maybe_unused]] std::shared_ptr<base::State> &q2)
 {
-	Eigen::VectorXf r { Eigen::VectorXf::Zero(links.size()) };
-	for (size_t i = 0; i < links.size(); i++)
-	{
-		for (size_t k = i+1; k <= links.size(); k++)
-			r(i) = std::max(r(i), (skeleton->col(k) - skeleton->col(i)).norm());
-	}
+	return false;
+}
 
-	Eigen::VectorXf steps(links.size());
-	for (size_t k = 0; k < links.size(); k++)
-		steps(k) = (d_c_profile[k] - rho_profile[k]) / r.head(k+1).dot((q1->getCoord() - q2->getCoord()).head(k+1).cwiseAbs());
-
-	return steps.minCoeff();
+// Planar2DOF robot cannot collide with itself.
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q)
+{
+	return false;
 }
 
 fcl::Vector3f robots::Planar2DOF::transformPoint([[maybe_unused]] fcl::Vector3f& v, fcl::Transform3f t)

@@ -85,6 +85,7 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
 - ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' is added in ```environment```;
+- ```self_collision_checking```: Whether self-collision should be checked;
 - ```WS_center```: Workspace center point in [m];
 - ```WS_radius```: Workspace radius in [m] assuming spherical workspace shape;
 - ```max_vel```: Maximal velocity of each robot's joint in [rad/s] for revolute joints, or in [mm/s] for prismatic joints;
@@ -142,6 +143,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
 - ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_spline5.yaml```.
+
  
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 

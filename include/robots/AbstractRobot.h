@@ -43,16 +43,16 @@ namespace robots
 		inline void setMaxVel(const Eigen::VectorXf &max_vel_) { max_vel = max_vel_; }
 		inline void setMaxAcc(const Eigen::VectorXf &max_acc_) { max_acc = max_acc_; }
 		inline void setMaxJerk(const Eigen::VectorXf &max_jerk_) { max_jerk = max_jerk_; }
+		inline void setSelfCollisionChecking(bool self_collision_checking_) { self_collision_checking = self_collision_checking_; }
 
 		virtual void setState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p,
 																	  const std::shared_ptr<base::State> q_init = nullptr) = 0;
 		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> q) = 0;
-		virtual float computeStep(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float d_c, 
-			float rho, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
-		virtual float computeStep2(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, 
-			const std::vector<float> &d_c_profile, const std::vector<float> &rho_profile, const std::shared_ptr<Eigen::MatrixXf> skeleton) = 0;
+		virtual std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> q) = 0;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) = 0;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q) = 0;
 
 	protected:
 		std::string type;
@@ -64,6 +64,7 @@ namespace robots
 		Eigen::VectorXf max_vel;
 		Eigen::VectorXf max_acc;
 		Eigen::VectorXf max_jerk;
+		bool self_collision_checking;
 	};
 }
 #endif //RPMPL_ABSTRACTROBOT_H
