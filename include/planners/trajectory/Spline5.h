@@ -5,7 +5,6 @@
 #define RPMPL_SPLINE5_H
 
 #include "Spline.h"
-#include "Spline5Config.h"
 
 namespace planning
 {
@@ -19,6 +18,7 @@ namespace planning
                     const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot);
 		    ~Spline5() {}
 
+            bool compute() override { return false; }
             bool compute(const Eigen::VectorXf &q_final) override;
             bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot) override;
             bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) override;

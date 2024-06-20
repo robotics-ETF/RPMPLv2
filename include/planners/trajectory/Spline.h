@@ -19,6 +19,7 @@ namespace planning
             Spline(size_t order_, const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
 		    virtual ~Spline() = 0;
 
+            virtual bool compute() = 0;
             virtual bool compute(const Eigen::VectorXf &q_final) = 0;
             virtual bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot) = 0;
             virtual bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) = 0;
