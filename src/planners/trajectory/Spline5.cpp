@@ -109,7 +109,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         abc_right << a(idx), b(idx), c(idx);
 
         // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
-        if ((t_f_left == INFINITY) && (t_f_right == INFINITY || t_f_left == 0) && (t_f_right == 0))
+        if ((t_f_left == INFINITY && t_f_right == INFINITY) || (t_f_left == 0 && t_f_right == 0))
         {
             // std::cout << "No solution! 'q_final' must be changed! \n";
             return false;
