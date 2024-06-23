@@ -16,7 +16,7 @@ namespace planning
             Spline4(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
             Spline4(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current, 
                     const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot);
-            ~Spline4() {}
+            ~Spline4();
 
             bool compute() override;
             bool compute(const Eigen::VectorXf &q_final_dot) override;
@@ -27,6 +27,7 @@ namespace planning
 
             std::vector<float> getMaxVelocityTimes(size_t idx) override;
             std::vector<float> getMaxAccelerationTimes(size_t idx) override;
+            std::vector<float> getMaxJerkTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
 
             float getPosition(float t, size_t idx, float t_f) override;
             float getVelocity(float t, size_t idx, float t_f) override;
