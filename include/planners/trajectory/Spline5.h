@@ -5,7 +5,6 @@
 #define RPMPL_SPLINE5_H
 
 #include "Spline.h"
-#include "Spline5Config.h"
 
 namespace planning
 {
@@ -17,8 +16,9 @@ namespace planning
             Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current);
             Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current, 
                     const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot);
-		    ~Spline5() {}
+		    ~Spline5();
 
+            bool compute() override { return false; }
             bool compute(const Eigen::VectorXf &q_final) override;
             bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot) override;
             bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) override;
@@ -34,7 +34,7 @@ namespace planning
             float getJerk(float t, size_t idx, float t_f) override;
 
         private:
-            float computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot);
+            float computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot, bool check_all_sol = false);
             float compute_a(size_t idx, float t_f, float q_f_ddot);
             float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
             float compute_c(size_t idx, float t_f, float q_f, float q_f_dot, float q_f_ddot);
