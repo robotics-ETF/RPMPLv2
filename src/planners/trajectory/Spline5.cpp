@@ -20,6 +20,8 @@ planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRob
     f = q_current;
 }
 
+planning::trajectory::Spline5::~Spline5() {}
+
 /// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
 /// robot's maximal velocity, acceleration and jerk are satisfied.
 /// @param q_final Desired final configuration in which the spline is ending.
@@ -62,8 +64,8 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         is_zero_final_acc = false;
 
     int idx_corr { -1 };
-    float t_f_opt { -1 };
-    float t_f { 0 }, t_f_left { 0 }, t_f_right { 0 };
+    float t_f_opt { 0 };
+    float t_f_left { 0 }, t_f_right { 0 };
     Eigen::Vector3f abc_left {}, abc_right {};       // a, b and c coefficients, respectively
     const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / Spline5Config::FINAL_JERK_STEP));
 
@@ -75,7 +77,9 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         // std::cout << "Init. acc: " << 2*d(idx) << "\t Final acc: " << q_final_ddot(idx) << "\n";
         // std::cout << "t_f_opt:   " << t_f_opt << "\n";
 
-        if (f(idx) == q_final(idx) && e(idx) == 0 && d(idx) == 0)    // Special case
+        if (std::abs(f(idx) - q_final(idx)) < RealVectorSpaceConfig::EQUALITY_THRESHOLD && 
+            std::abs(d(idx)) < RealVectorSpaceConfig::EQUALITY_THRESHOLD && 
+            std::abs(e(idx)) < RealVectorSpaceConfig::EQUALITY_THRESHOLD)    // Special case
         {
             // std::cout << "Joint position does not change. Just continue! \n";
             continue;
@@ -83,14 +87,13 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 
         if (t_f_opt > 0)
         {
-            t_f = t_f_opt;
-            c(idx) = compute_c(idx, t_f, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
-            b(idx) = compute_b(idx, t_f, q_final_dot(idx), q_final_ddot(idx));
-            a(idx) = compute_a(idx, t_f, q_final_ddot(idx));
+            c(idx) = compute_c(idx, t_f_opt, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+            b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
+            a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
 
-            if (checkConstraints(idx, t_f))
+            if (checkConstraints(idx, t_f_opt))
             {
-                // std::cout << "All constraints are satisfied for t_f: " << t_f << " [s]. Just continue! \n";
+                // std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
                 continue;
             }
             else
@@ -101,11 +104,11 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         }
 
         c(idx) = -robot->getMaxJerk(idx) / 6;
-        t_f_left = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+        t_f_left = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx), true);
         abc_left << a(idx), b(idx), c(idx);
 
         c(idx) = robot->getMaxJerk(idx) / 6;
-        t_f_right = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+        t_f_right = computeFinalTime(idx, q_final(idx), q_final_dot(idx), q_final_ddot(idx), true);
         abc_right << a(idx), b(idx), c(idx);
 
         // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
@@ -146,6 +149,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 
         // Using bisection method to find t_f, when t_f_left = 0 and t_f_right = inf, or vice versa
         bool found { false };
+        float t_f {};
         for (size_t num = 0; num < max_num_iter; num++)
         {
             // std::cout << "Num. iter: " << num << " --------------------------\n";
@@ -188,13 +192,15 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
     }
 
     // Corrections
-    t_f = t_f_opt;
     for (int idx = 0; idx < idx_corr; idx++)
     {
-        // std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
-        c(idx) = compute_c(idx, t_f, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
-        b(idx) = compute_b(idx, t_f, q_final_dot(idx), q_final_ddot(idx));
-        a(idx) = compute_a(idx, t_f, q_final_ddot(idx));
+        std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
+        c(idx) = compute_c(idx, t_f_opt, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
+        b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
+        a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
+
+        if (!checkConstraints(idx, t_f_opt))
+            return false;
     }
 
     // Solution is found. Set the parameters for a new spline
@@ -213,6 +219,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 /// @param q_f Desired final 'idx'-th configuration
 /// @param q_f_dot Desired 'idx'-th velocity in a final configuration
 /// @param q_f_ddot Desired 'idx'-th acceleration in a final configuration
+/// @param check_all_sol Whether to check all solutions for t_f (default: false)
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
 /// If final time is infinite, it means there is no solution.
 float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot)
@@ -322,7 +329,7 @@ std::vector<float> planning::trajectory::Spline5::getMaxAccelerationTimes(size_t
 {
     std::vector<float> t_max {};
 
-    if (a(idx) != 0)
+    if (std::abs(a(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
     {
         float D { 576*b(idx)*b(idx) - 1440*a(idx)*c(idx) };
         if (D >= 0)
@@ -339,7 +346,7 @@ std::vector<float> planning::trajectory::Spline5::getMaxJerkTimes(size_t idx)
 {
     std::vector<float> t_max {};
 
-    if (a(idx) != 0)
+    if (std::abs(a(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         t_max.emplace_back(-b(idx) / (5*a(idx)));
 
     return t_max;
