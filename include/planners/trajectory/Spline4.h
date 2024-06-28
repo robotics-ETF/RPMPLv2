@@ -35,7 +35,7 @@ namespace planning
             float getJerk(float t, size_t idx, float t_f) override;
 
         private:
-            float computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot);
+            float computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol = false);
             float compute_a(size_t idx, float t_f, float q_f_ddot);
             float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
 

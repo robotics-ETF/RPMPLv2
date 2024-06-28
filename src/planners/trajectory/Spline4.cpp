@@ -61,7 +61,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 
     int idx_corr { -1 };
     float t_f_opt { 0 };
-    float t_f { 0 }, t_f_left { 0 }, t_f_right { 0 };
+    float t_f_left { 0 }, t_f_right { 0 };
     float b_left {}, b_right {};
     float a_left {}, a_right {};
     const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / Spline5Config::FINAL_JERK_STEP));
@@ -83,13 +83,12 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 
         if (t_f_opt > 0)
         {
-            t_f = t_f_opt;
-            b(idx) = compute_b(idx, t_f, q_final_dot(idx), q_final_ddot(idx));
-            a(idx) = compute_a(idx, t_f, q_final_ddot(idx));
+            b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
+            a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
 
-            if (checkConstraints(idx, t_f))
+            if (checkConstraints(idx, t_f_opt))
             {
-                std::cout << "All constraints are satisfied for t_f: " << t_f << " [s]. Just continue! \n";
+                std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
                 continue;
             }
             else
@@ -158,6 +157,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 
         // Using bisection method to find minimal t_f
         bool update_left { false };
+        float t_f {};
         for (size_t num = 0; num < max_num_iter; num++)
         {
             std::cout << "Num. iter: " << num << " --------------------------\n";
@@ -232,6 +232,9 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
         b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
         a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
+        
+        if (!checkConstraints(idx, t_f_opt))
+            return false;
     }
 
     // Solution is found. Set the parameters for a new spline
@@ -249,9 +252,10 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 /// @param idx Index of robot's joint
 /// @param q_f_dot Desired 'idx'-th velocity in a final configuration
 /// @param q_f_ddot Desired 'idx'-th acceleration in a final configuration
+/// @param check_all_sol Whether to check all solutions for t_f (default: false)
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
 /// If final time is infinite, it means there is no solution.
-float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot)
+float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol)
 {
     std::cout << "Inside computeFinalTime... \n";
     std::vector<float> t_sol {};
@@ -261,7 +265,7 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
         t_sol.emplace_back(3*(q_f_dot - d(idx)) / (4*c(idx) + q_f_ddot));
     else
     {
-        float D { std::sqrt((4*c(idx) + q_f_ddot)*(4*c(idx) + q_f_ddot) - 36*b(idx)*(d(idx) - q_f_dot)) };
+        float D = std::sqrt((4*c(idx) + q_f_ddot)*(4*c(idx) + q_f_ddot) - 36*b(idx)*(d(idx) - q_f_dot));
         if (std::abs(D) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
             t_sol.emplace_back((-4*c(idx) - q_f_ddot + D) / (6*b(idx)));
@@ -273,7 +277,7 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
 
     for (size_t i = 0; i < t_sol.size(); i++)
     {
-        std::cout << "t_sol: " << t_sol[i] << "\n";
+        std::cout << "t_sol: " << t_sol[i] << " [s] \n";
         if (t_sol[i] > 0)
             t_f.emplace_back(t_sol[i]);
     }
@@ -281,22 +285,19 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
     if (t_f.size() > 1)
         std::sort(t_f.begin(), t_f.end());
     else if (t_f.empty())
-    {
-        std::cout << "PROBLEM! t_f is empty! \n";
         return 0;
-    }
 
-    a(idx) = compute_a(idx, t_f.front(), q_f_ddot);
-    std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
-              << "d: " << d(idx) << ",\t e: " << e(idx) << "\n";
-    
-    for (size_t i = 0; i < t_f.size(); i++)
+    for (size_t i = 0; i <= (t_f.size()-1) * check_all_sol; i++)
     {
+        a(idx) = compute_a(idx, t_f[i], q_f_ddot);
+        std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
+                  << "d: " << d(idx) << ",\t e: " << e(idx) << "\n";
+
         if (checkConstraints(idx, t_f[i]))
             return t_f[i];
     }
 
-    return 0;    // Constraints are not satisfied!
+    return 0;   // Constraints are not satisfied!
 }
 
 float planning::trajectory::Spline4::compute_a(size_t idx, float t_f, float q_f_ddot)

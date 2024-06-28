@@ -222,30 +222,53 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 /// @param check_all_sol Whether to check all solutions for t_f (default: false)
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
 /// If final time is infinite, it means there is no solution.
-float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot)
+float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot, bool check_all_sol)
 {
-    float t_f { INFINITY };
-    std::vector<float> t_sol { solveQubicEquation(c(idx), 3*d(idx) - 0.5*q_f_ddot, 6*e(idx) + 4*q_f_dot, 10*(f(idx) - q_f)) };
+    std::vector<float> t_sol {};
+    std::vector<float> t_f {};
+
+    if (std::abs(c(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        t_sol = solveQubicEquation(c(idx), 3*d(idx) - 0.5*q_f_ddot, 6*e(idx) + 4*q_f_dot, 10*(f(idx) - q_f));
+    else
+    {
+        float D = std::sqrt((6*e(idx) + 4*q_f_dot)*(6*e(idx) + 4*q_f_dot) - 40*(3*d(idx) - 0.5*q_f_ddot)*(f(idx) - q_f));
+        if (std::abs(D) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        {
+            t_sol.emplace_back((-6*e(idx) - 4*q_f_dot + D) / (6*d(idx) - q_f_ddot));
+            t_sol.emplace_back((-6*e(idx) - 4*q_f_dot - D) / (6*d(idx) - q_f_ddot));
+        }
+        else if (std::abs(D) <= RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+            t_sol.emplace_back((-6*e(idx) - 4*q_f_dot) / (6*d(idx) - q_f_ddot));
+    }
 
     for (size_t i = 0; i < t_sol.size(); i++)
     {
+        std::cout << "t_sol: " << t_sol[i] << " [s] \n";
         if (t_sol[i] > 0)
-            t_f = std::min(t_f, t_sol[i]);
+            t_f.emplace_back(t_sol[i]);
     }
-    // std::cout << "For c: " << c(idx) << ", it follows t_f: " << t_f << "\n";
 
-    if (t_f == INFINITY)
+    if (t_f.size() > 1)
+        std::sort(t_f.begin(), t_f.end());
+    else if (t_f.empty())
+    {
+        std::cout << "For c: " << c(idx) << ", t_f: " << INFINITY << " [s]. \n";
         return INFINITY;
+    }
 
-    b(idx) = compute_b(idx, t_f, q_f_dot, q_f_ddot);
-    a(idx) = compute_a(idx, t_f, q_f_ddot);
-    // std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
-    //           << "d: " << d(idx) << ",\t e: " << e(idx) << ",\t f: " << f(idx) << "\n";
-    
-    if (!checkConstraints(idx, t_f))
-        return 0;
+    for (size_t i = 0; i <= (t_f.size()-1) * check_all_sol; i++)
+    {
+        b(idx) = compute_b(idx, t_f[i], q_f_dot, q_f_ddot);
+        a(idx) = compute_a(idx, t_f[i], q_f_ddot);
+        std::cout << "For c: " << c(idx) << ", t_f: " << t_f[i] << " [s]. \n";
+        // std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
+        //           << "d: " << d(idx) << ",\t e: " << e(idx) << ",\t f: " << f(idx) << "\n";
+        
+        if (checkConstraints(idx, t_f[i]))
+            return t_f[i];
+    }
 
-    return t_f;
+    return 0;
 }
 
 float planning::trajectory::Spline5::compute_a(size_t idx, float t_f, float q_f_ddot)
