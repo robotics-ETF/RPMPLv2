@@ -2,8 +2,9 @@
 
 /// @brief Update a current state of the robot using 'spline_current'.
 /// Compute a new spline 'spline_next', or remain 'spline_current'.
-/// Determine a new target state 'q_target' (a new desired current state) of the robot 
-/// by moving from 'q_current' towards 'q_next' while following 'spline_next'.
+/// Determine a new target state 'q_target' (a new desired current state) of the robot.
+/// Move 'q_current' towards 'q_target' while following 'spline_next'.
+/// 'q_current' will be updated to a robot position from the end of iteration.
 /// @param measure_time If true, elapsed time when computing a spline will be exactly measured. 
 /// If false, elapsed time will be computed (default: false).
 /// @return Remaining time in [s] after which the new spline 'spline_next' will become active.
@@ -28,6 +29,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     spline_current->setTimeBegin(spline_current->getTimeEnd());
     spline_current->setTimeCurrent(t_spline_current);
 
+    q_previous = q_current;
     q_current = ss->getNewState(spline_current->getPosition(t_spline_current));
 
     // std::cout << "Iter. time:        " << t_iter * 1000 << " [ms] \n";
@@ -47,86 +49,83 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     }
 
     bool found { false };
-    if (spline_current->isFinalConf(q_next->getCoordReached()))     // Coordinates of 'q_next->getStateReached()' did not change!
-    {
-        // std::cout << "Not computing a new spline! \n";
-        found = false;
-    }
-    else
-    {
-        std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
-        spline_next = std::make_shared<planning::trajectory::Spline5>
-        (
-            ss->robot, 
-            q_current->getCoord(),
-            spline_current->getVelocity(t_spline_current),
-            spline_current->getAcceleration(t_spline_current)
-        );
-        // std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
-        // std::cout << "Curr. vel: " << spline_current->getVelocity(t_spline_current).transpose() << "\n";
-        // std::cout << "Curr. acc: " << spline_current->getAcceleration(t_spline_current).transpose() << "\n";
+    std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
+    size_t num_iter {};
+    const size_t max_num_iter = all_velocities_same ? 
+        std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / Spline5Config::FINAL_VELOCITY_STEP)) :
+        std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / Spline5Config::FINAL_VELOCITY_STEP));
+    float delta_t_max {};
+    Eigen::VectorXf q_final_dot_max {};
+    Eigen::VectorXf q_final_dot_min {};
+    Eigen::VectorXf q_final_dot {};
+    std::shared_ptr<planning::trajectory::Spline> spline_new { nullptr };
+    spline_next = std::make_shared<planning::trajectory::Spline5>
+    (
+        ss->robot, 
+        q_current->getCoord(),
+        spline_current->getVelocity(t_spline_current),
+        spline_current->getAcceleration(t_spline_current)
+    );
 
-        do
+    std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
+    std::cout << "Curr. vel: " << spline_current->getVelocity(t_spline_current).transpose() << "\n";
+    std::cout << "Curr. acc: " << spline_current->getAcceleration(t_spline_current).transpose() << "\n";
+
+    do
+    {
+        computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1);
+        std::cout << "q_target: " << q_target->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";
+        
+        if (spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
+            break;
+
+        if (q_next->getIsReached() && q_next->getIndex() != -1 && !ss->isEqual(q_target, q_goal))
         {
-            // std::cout << "q_final: " << q_next->getCoordReached().transpose() << "\t idx: " << q_next->getIndex() << "\n";
+            num_iter = 0;
+            delta_t_max = ((q_target->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff();
+            q_final_dot_max = (q_target->getCoord() - q_current->getCoord()) / delta_t_max;
+            q_final_dot_min = Eigen::VectorXf::Zero(ss->num_dimensions);
+            spline_new = std::make_shared<planning::trajectory::Spline5>
+            (
+                ss->robot, 
+                q_current->getCoord(),
+                spline_current->getVelocity(t_spline_current),
+                spline_current->getAcceleration(t_spline_current)
+            );
             
-            if (spline_current->isFinalConf(q_next->getCoordReached()))     // Spline to such 'q_next->getStateReached()' already exists!
-                break;
-
-            if (q_next->getIsReached() && 
-                q_next->getIndex() != -1 && 
-                q_next->getStatus() != planning::drbt::HorizonState::Status::Goal)
+            do
             {
-                size_t num_iter { 0 };
-                size_t max_num_iter = std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / Spline5Config::FINAL_VELOCITY_STEP));
-                float delta_t_max { ((q_next->getCoordReached() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
-                Eigen::VectorXf q_final_dot_max { (q_next->getCoordReached() - q_current->getCoord()) / delta_t_max };
-                Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
-                Eigen::VectorXf q_final_dot {};
-                std::shared_ptr<planning::trajectory::Spline> spline_new { 
-                    std::make_shared<planning::trajectory::Spline5>
-                    (
-                        ss->robot, 
-                        q_current->getCoord(),
-                        spline_current->getVelocity(t_spline_current),
-                        spline_current->getAcceleration(t_spline_current)
-                    )
-                };
-                
-                do
+                q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
+                std::cout << "Num. iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+
+                if (spline_new->compute(q_target->getCoord(), q_final_dot)) 
                 {
-                    q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
-                    // std::cout << "num_iter: " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
-
-                    if (spline_new->compute(q_next->getCoordReached(), q_final_dot)) 
-                    {
-                        *spline_next = *spline_new;
-                        q_final_dot_min = q_final_dot;
-                        found = true;
-                        // std::cout << "found \n";
-                    }
-                    else
-                    {
-                        q_final_dot_max = q_final_dot;
-                        // std::cout << "not found \n";
-                    }
+                    *spline_next = *spline_new;
+                    q_final_dot_min = q_final_dot;
+                    found = true;
+                    // std::cout << "found \n";
                 }
-                while (++num_iter < max_num_iter && 
-                       getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
+                else
+                {
+                    q_final_dot_max = q_final_dot;
+                    // std::cout << "not found \n";
+                }
             }
-            
-            if (!found)
-            {
-                found = spline_next->compute(q_next->getCoordReached());
-                // if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
-            }
-            // else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
+            while (++num_iter < max_num_iter && 
+                    getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
         }
-        while (!found && 
-               changeNextState(visited_states) && 
-               getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
-        // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
+        
+        if (!found)
+        {
+            found = spline_next->compute(q_target->getCoord());
+            if (found) std::cout << "\t Spline computed with ZERO final velocity. \n";
+        }
+        else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
     }
+    while (!found && 
+            changeNextState(visited_states) && 
+            getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time);
+    // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
     if (found)
     {
@@ -207,9 +206,10 @@ bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning
 }
 
 /// @brief Update a current state 'q_current' to become 'q_target'.
-/// Determine a new target state 'q_target' (a new desired current state) of the robot 
-/// by moving from 'q_current' towards 'q_next' for an advancing step size determined as 
+/// Determine a new target state 'q_target' (a new desired current state) of the robot.
+/// Move 'q_current' towards 'q_next' for an advancing step size determined as 
 /// ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, i.d., using the maximal robot's velocity.
+/// 'q_current' will be updated to a robot position from the end of iteration.
 void planning::drbt::DRGBT::updateCurrentState()
 {
     q_previous = q_current;
@@ -219,30 +219,14 @@ void planning::drbt::DRGBT::updateCurrentState()
         return;
     }
 
-    q_current = q_target;   // Current position at the end of iteration
+    q_current = q_target;   // Current robot position at the end of iteration
     if (ss->isEqual(q_current, q_goal))
     {
         status = base::State::Status::Reached;
         return;
     }
 
-    q_target = ss->getNewState(q_next->getCoordReached());
-
-    // Option 1: If all velocities are the same, the following can be used:
-    // float max_edge_length_ = ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME;
-    // if (ss->getNorm(q_current, q_target) > max_edge_length_)    // Check whether 'q_target' can be reached considering robot max. velocity
-    //     q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
-
-    // Option 2: If all velocities are not the same, the following can be used:
-    std::vector<std::pair<float, float>> limits;
-    for (size_t i = 0; i < ss->num_dimensions; i++)
-    {
-        limits.emplace_back(std::pair<float, float>
-            (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, 
-            q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME));
-    }
-    q_target = ss->pruneEdge(q_current, q_target, limits);  // Check whether 'q_target' can be reached considering robot max. velocity
-    q_target->setParent(q_current);
+    computeTargetState();
 
     if (ss->isEqual(q_target, q_next->getState()))
         status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next->getStateReached()'
