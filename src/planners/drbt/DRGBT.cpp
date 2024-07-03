@@ -86,18 +86,15 @@ bool planning::drbt::DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Since the environment may change, a new distance is required!
         auto time_computeDistance { std::chrono::steady_clock::now() };
-        d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
-        // std::cout << "d_c: " << d_c << "\n";
-        if (d_c <= 0)   // The desired/target conf. is not safe, thus the robot is required to stop immediately, 
-        {               // and compute the horizon again from 'q_current'
-            q_target = q_current;
-            d_c = ss->computeDistance(q_target, true);     // ~ 1 [ms]
-            clearHorizon(base::State::Status::Trapped, true);
-            q_next = std::make_shared<planning::drbt::HorizonState>(q_target, -1);
-            q_next->setStateReached(q_target);
-            // std::cout << "Not updating the robot current state since d_c < 0. \n";
-        }
+        d_c = ss->computeDistance(q_current, true);     // ~ 1 [ms]
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
+        // std::cout << "d_c: " << d_c << "\n";
+
+        if (d_c <= 0)
+        {
+            std::cout << "d_c <= 0 for q_current! \n";
+            return false;
+        }
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -227,7 +224,7 @@ void planning::drbt::DRGBT::generateHorizon()
 // Update the horizon size, and add lateral spines.
 void planning::drbt::DRGBT::updateHorizon()
 {
-    // std::cout << "Robot target state: " << q_target->getCoord().transpose() << " with d_c: " << d_c << "\n";
+    // std::cout << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << d_c << "\n";
     auto time_updateHorizon { std::chrono::steady_clock::now() };
 
     if ((ss->num_dimensions-1) * d_c < DRGBTConfig::D_CRIT)
@@ -254,7 +251,7 @@ void planning::drbt::DRGBT::updateHorizon()
     planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, planning::TimeUnit::us), 4);
 }
 
-// Generate the generalized bur from 'q_target', i.e., compute the horizon spines.
+// Generate a generalized bur from 'q_current', i.e., compute horizon spines.
 // Bad and critical states will be replaced with "better" states, such that the horizon contains possibly better states.
 void planning::drbt::DRGBT::generateGBur()
 {
@@ -348,7 +345,7 @@ void planning::drbt::DRGBT::addRandomStates(size_t num)
     std::shared_ptr<base::State> q_rand { nullptr };
     for (size_t i = 0; i < num; i++)
     {
-        q_rand = getRandomState(q_target);
+        q_rand = getRandomState(q_current);
         horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_rand, -1));
         // std::cout << "Adding random state: " << horizon.back()->getCoord().transpose() << "\n";
     }
@@ -363,12 +360,12 @@ void planning::drbt::DRGBT::addLateralStates()
         Eigen::Vector2f new_vec;
         for (int coord = -1; coord <= 1; coord += 2)
         {
-            new_vec(0) = -coord; 
-            new_vec(1) = coord * (q_next->getCoord(0) - q_target->getCoord(0)) / (q_next->getCoord(1) - q_target->getCoord(1));
-            q_new = ss->getNewState(q_target->getCoord() + new_vec);
-            q_new = ss->interpolateEdge(q_target, q_new, RBTConnectConfig::DELTA);
-            q_new = ss->pruneEdge(q_target, q_new);
-            if (!ss->isEqual(q_target, q_new))
+            new_vec(0) = -coord;
+            new_vec(1) = coord * (q_next->getCoord(0) - q_current->getCoord(0)) / (q_next->getCoord(1) - q_current->getCoord(1));
+            q_new = ss->getNewState(q_current->getCoord() + new_vec);
+            q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
+            q_new = ss->pruneEdge(q_current, q_new);
+            if (!ss->isEqual(q_current, q_new))
             {
                 horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_new, -1));
                 num_added++;
@@ -380,8 +377,10 @@ void planning::drbt::DRGBT::addLateralStates()
     {
         size_t idx { 0 };
         for (idx = 0; idx < ss->num_dimensions; idx++)
-            if (std::abs(q_next->getCoord(idx) - q_target->getCoord(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        {
+            if (std::abs(q_next->getCoord(idx) - q_current->getCoord(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
                 break;
+        }
             
         if (idx < ss->num_dimensions)
         {
@@ -389,14 +388,15 @@ void planning::drbt::DRGBT::addLateralStates()
             float coord { 0 };
             for (size_t i = 0; i < num_lateral_states; i++)
             {
-                q_new = ss->getRandomState(q_target);
-                coord = q_target->getCoord(idx) + q_new->getCoord(idx) -
-                        (q_next->getCoord() - q_target->getCoord()).dot(q_new->getCoord()) /
-                        (q_next->getCoord(idx) - q_target->getCoord(idx));
+                q_new = ss->getRandomState(q_current);
+                coord = q_current->getCoord(idx) + q_new->getCoord(idx) -
+                        (q_next->getCoord() - q_current->getCoord()).dot(q_new->getCoord()) /
+                        (q_next->getCoord(idx) - q_current->getCoord(idx));
                 q_new->setCoord(coord, idx);
-                q_new = ss->interpolateEdge(q_target, q_new, RBTConnectConfig::DELTA);
-                q_new = ss->pruneEdge(q_target, q_new);
-                if (!ss->isEqual(q_target, q_new))
+                q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
+                q_new = ss->pruneEdge(q_current, q_new);
+                
+                if (!ss->isEqual(q_current, q_new))
                 {
                     horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_new, -1));
                     num_added++;
@@ -416,7 +416,7 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonS
     std::shared_ptr<planning::drbt::HorizonState> q_new_horizon_state { nullptr };
     std::shared_ptr<base::State> q_new { nullptr };
     std::shared_ptr<base::State> q_reached { q->getStateReached() };
-    float norm { ss->getNorm(q_target, q_reached) };
+    float norm { ss->getNorm(q_current, q_reached) };
     float coeff { 0 };
     
     for (size_t num = 0; num < max_num_attempts; num++)
@@ -428,12 +428,13 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonS
             q_new = ss->getNewState(q_reached->getCoord() + vec);
         else if (q->getStatus() == planning::drbt::HorizonState::Status::Critical)
         {
-            q_new = ss->getNewState(2 * q_target->getCoord() - q_reached->getCoord() + coeff * vec);
+            q_new = ss->getNewState(2 * q_current->getCoord() - q_reached->getCoord() + coeff * vec);
             coeff = 1;
         }
-        q_new = ss->interpolateEdge(q_target, q_new, RBTConnectConfig::DELTA);
-        q_new = ss->pruneEdge(q_target, q_new);
-        if (!ss->isEqual(q_target, q_new))
+        
+        q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
+        q_new = ss->pruneEdge(q_current, q_new);
+        if (!ss->isEqual(q_current, q_new))
         {
             q_new_horizon_state = std::make_shared<planning::drbt::HorizonState>(q_new, -1);
             computeReachedState(q_new_horizon_state);
@@ -453,23 +454,23 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonS
     return false;
 }
 
-// Compute reached state when generating a generalized spine from 'q_target' towards 'q'.
+// Compute a reached state when generating a generalized spine from 'q_current' towards 'q'.
 void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q)
 {
     base::State::Status status { base::State::Status::None };
     std::shared_ptr<base::State> q_reached { nullptr };
-    tie(status, q_reached) = extendGenSpine(q_target, q->getState());
+    tie(status, q_reached) = extendGenSpine(q_current, q->getState());
     q->setStateReached(q_reached);
     q->setIsReached(status == base::State::Status::Reached ? true : false);
 
     // TODO: If there is enough remaining time, compute real distance-to-obstacles 
-    float d_c = ss->computeDistanceUnderestimation(q_reached, q_target->getNearestPoints());
+    float d_c_underest { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };
     if (q->getDistance() != -1)
         q->setDistancePrevious(q->getDistance());
     else
-        q->setDistancePrevious(d_c);
+        q->setDistancePrevious(d_c_underest);
     
-    q->setDistance(d_c);
+    q->setDistance(d_c_underest);
     
     // Check whether the goal is reached
     if (q->getIndex() != -1 && ss->isEqual(q_reached, q_goal))
@@ -572,11 +573,8 @@ void planning::drbt::DRGBT::computeNextState()
     }
     else if (predefined_path.empty())   // All states are critical, and 'q_next' cannot be updated!
     {
-        // std::cout << "All states are critical, and q_next cannot be updated! \n";
-        q_target = q_current;
-        clearHorizon(base::State::Status::Trapped, true);
-        q_next = std::make_shared<planning::drbt::HorizonState>(q_target, -1);
-        q_next->setStateReached(q_target);
+        std::cout << "All states are critical, and q_next cannot be updated! \n";
+        emergencyStop();
     }
 
     q_next_previous = q_next;
