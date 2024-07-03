@@ -89,6 +89,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
             if (checkConstraints(idx, t_f_opt))
             {
                 std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
+                times_final[idx] = t_f_opt;
                 continue;
             }
             else
@@ -137,6 +138,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         {
             std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_left;
+            times_final[idx] = t_f_opt;
             a(idx) = a_left;
             b(idx) = b_left;
             continue;
@@ -145,6 +147,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         {
             std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_right;
+            times_final[idx] = t_f_opt;
             a(idx) = a_right;
             b(idx) = b_right;
             continue;
@@ -224,17 +227,27 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
             a(idx) = a_left;
             b(idx) = b_left;
         }
+
+        times_final[idx] = t_f_opt;
     }
 
     // Corrections
+    Eigen::Vector2f ab {};
     for (int idx = 0; idx < idx_corr; idx++)
     {
-        std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
+        std::cout << "Correcting joint: " << idx << "\n";
+        ab << a(idx), b(idx);
         b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
         a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
         
-        if (!checkConstraints(idx, t_f_opt))
+        if (checkConstraints(idx, t_f_opt))
+            times_final[idx] = t_f_opt;
+        else if (!is_zero_final_vel || !is_zero_final_acc)
             return false;
+        else
+        {
+            a(idx) = ab(0); b(idx) = ab(1);
+        }
     }
 
     // Solution is found. Set the parameters for a new spline

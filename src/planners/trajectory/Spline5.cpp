@@ -94,6 +94,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
             if (checkConstraints(idx, t_f_opt))
             {
                 // std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
+                times_final[idx] = t_f_opt;
                 continue;
             }
             else
@@ -130,12 +131,14 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
                 t_f_opt = t_f_right;
                 a(idx) = abc_right(0); b(idx) = abc_right(1); c(idx) = abc_right(2);
             }
+            times_final[idx] = t_f_opt;
             continue;
         }
         else if (t_f_left > 0 && t_f_left < INFINITY)
         {
             // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_left;
+            times_final[idx] = t_f_opt;
             a(idx) = abc_left(0); b(idx) = abc_left(1); c(idx) = abc_left(2);
             continue;
         }
@@ -143,6 +146,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         {
             // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_right;
+            times_final[idx] = t_f_opt;
             a(idx) = abc_right(0); b(idx) = abc_right(1); c(idx) = abc_right(2);
             continue;
         }
@@ -189,18 +193,28 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
         {
             a(idx) = abc_left(0); b(idx) = abc_left(1); c(idx) = abc_left(2);
         }
+
+        times_final[idx] = t_f_opt;
     }
 
     // Corrections
+    Eigen::Vector3f abc {};
     for (int idx = 0; idx < idx_corr; idx++)
     {
-        std::cout << "Correcting joint: " << idx << " ---------------------------------------------------\n";
+        // std::cout << "Correcting joint: " << idx << "\n";
+        abc << a(idx), b(idx), c(idx);
         c(idx) = compute_c(idx, t_f_opt, q_final(idx), q_final_dot(idx), q_final_ddot(idx));
         b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
         a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
 
-        if (!checkConstraints(idx, t_f_opt))
+        if (checkConstraints(idx, t_f_opt))
+            times_final[idx] = t_f_opt;
+        else if (!is_zero_final_vel || !is_zero_final_acc)
             return false;
+        else
+        {
+            a(idx) = abc(0); b(idx) = abc(1); c(idx) = abc(2);
+        }
     }
 
     // Solution is found. Set the parameters for a new spline
@@ -243,7 +257,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
 
     for (size_t i = 0; i < t_sol.size(); i++)
     {
-        std::cout << "t_sol: " << t_sol[i] << " [s] \n";
+        // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
         if (t_sol[i] > 0)
             t_f.emplace_back(t_sol[i]);
     }
@@ -252,7 +266,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
         std::sort(t_f.begin(), t_f.end());
     else if (t_f.empty())
     {
-        std::cout << "For c: " << c(idx) << ", t_f: " << INFINITY << " [s]. \n";
+        // std::cout << "For c: " << c(idx) << ", t_f: " << INFINITY << " [s]. \n";
         return INFINITY;
     }
 
@@ -260,7 +274,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
     {
         b(idx) = compute_b(idx, t_f[i], q_f_dot, q_f_ddot);
         a(idx) = compute_a(idx, t_f[i], q_f_ddot);
-        std::cout << "For c: " << c(idx) << ", t_f: " << t_f[i] << " [s]. \n";
+        // std::cout << "For c: " << c(idx) << ", t_f: " << t_f[i] << " [s]. \n";
         // std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
         //           << "d: " << d(idx) << ",\t e: " << e(idx) << ",\t f: " << f(idx) << "\n";
         
@@ -268,7 +282,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
             return t_f[i];
     }
 
-    return 0;
+    return 0;   // Constraints are not satisfied!
 }
 
 float planning::trajectory::Spline5::compute_a(size_t idx, float t_f, float q_f_ddot)
