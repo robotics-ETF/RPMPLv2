@@ -30,6 +30,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0);
     q_next_previous = q_next;
 
+    d_c = INFINITY;
     d_max_mean = 0;
     num_lateral_states = 2 * ss->num_dimensions - 2;
     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE + num_lateral_states;
@@ -56,7 +57,6 @@ bool planning::drbt::DRGBT::solve()
 {
     time_alg_start = std::chrono::steady_clock::now();     // Start the algorithm clock
     time_iter_start = time_alg_start;
-    float d_c { 0 };
 
     // Initial iteration: Obtaining an inital path using specified static planner
     // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
@@ -92,7 +92,7 @@ bool planning::drbt::DRGBT::solve()
         if (status != base::State::Status::Advanced)
             generateHorizon();          // ~ 2 [us]
             
-        updateHorizon(d_c);             // ~ 10 [us]
+        updateHorizon();                // ~ 10 [us]
         generateGBur();                 // ~ 10 [ms] Time consuming routine... 
         computeNextState();             // ~ 1 [us]
         
@@ -214,7 +214,7 @@ void planning::drbt::DRGBT::generateHorizon()
 }
 
 // Update the horizon size, and add lateral spines.
-void planning::drbt::DRGBT::updateHorizon(float d_c)
+void planning::drbt::DRGBT::updateHorizon()
 {
     // std::cout << "Robot target state: " << q_target->getCoord().transpose() << " with d_c: " << d_c << "\n";
     auto time_updateHorizon { std::chrono::steady_clock::now() };

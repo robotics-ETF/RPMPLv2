@@ -27,7 +27,7 @@ namespace planning
             
 		protected:
             void generateHorizon();
-            void updateHorizon(float d_c);
+            void updateHorizon();
             void generateGBur();
             void shortenHorizon(size_t num);
             void addRandomStates(size_t num);
@@ -51,6 +51,7 @@ namespace planning
             std::shared_ptr<base::State> q_target;                                  // Target robot configuration to which the robot is currently heading to
             std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
             std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
+            float d_c;                                                              // Distance-to-obstacles for 'q_target' in the current iteration
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
             size_t horizon_size;                                                    // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
