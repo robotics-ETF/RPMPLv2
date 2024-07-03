@@ -254,3 +254,32 @@ void planning::drbt::DRGBT::updateCurrentState()
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 }
+
+/// @brief Compute a target configuration 'q_target' from the edge [q_current - q_next_reached], 
+/// such that it can be reached within time 'time', while considering robot maximal velocity.
+/// @return Target configuration 'q_target'
+void planning::drbt::DRGBT::computeTargetState(float time)
+{
+    q_target = ss->getNewState(q_next->getCoordReached());
+
+    if (all_velocities_same)
+    {
+        float max_edge_length_ { ss->robot->getMaxVel(0) * time };
+        if (ss->getNorm(q_current, q_target) > max_edge_length_)
+            q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
+    }
+    else
+    {
+        std::vector<std::pair<float, float>> limits {};
+        for (size_t i = 0; i < ss->num_dimensions; i++)
+        {
+            limits.emplace_back(std::pair<float, float>
+               (q_current->getCoord(i) - ss->robot->getMaxVel(i) * time, 
+                q_current->getCoord(i) + ss->robot->getMaxVel(i) * time));
+        }
+        q_target = ss->pruneEdge(q_current, q_target, limits);
+    }
+
+    q_target->setParent(q_current);
+}
+

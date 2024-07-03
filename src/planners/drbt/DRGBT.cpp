@@ -43,6 +43,17 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
+
+    all_velocities_same = true;
+    for (size_t i = 1; i < ss->num_dimensions; i++)
+    {
+        if (std::abs(ss->robot->getMaxVel(i) - ss->robot->getMaxVel(i-1)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        {
+            all_velocities_same = false;
+            break;
+        }
+    }
+
 	// std::cout << "DRGBT planner initialized! \n";
 }
 

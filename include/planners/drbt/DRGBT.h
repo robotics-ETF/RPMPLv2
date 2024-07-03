@@ -38,6 +38,7 @@ namespace planning
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             float updateCurrentState(bool measure_time);
             void updateCurrentState();
+            void computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
@@ -61,6 +62,7 @@ namespace planning
             float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
+            bool all_velocities_same;                                               // Whether all joint velocities are the same
         };
     }
 }
