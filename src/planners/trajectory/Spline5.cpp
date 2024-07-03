@@ -393,13 +393,19 @@ float planning::trajectory::Spline5::getPosition(float t, size_t idx, float t_f)
 {
     float delta_t { 0 };
     float vel_final { 0 };
+    float acc_final { 0 };
 
     if (t > t_f)
     {
-        if (!is_zero_final_vel)
+        if (!is_zero_final_vel && is_zero_final_acc)
         {
             delta_t = t - t_f;
             vel_final = getVelocity(t, idx, t_f);
+        }
+        else if (!is_zero_final_acc)
+        {
+            delta_t = t - times_final[idx];
+            acc_final = getAcceleration(t, idx, t_f);
         }
         t = t_f;
     }
@@ -407,7 +413,7 @@ float planning::trajectory::Spline5::getPosition(float t, size_t idx, float t_f)
         t = 0;
     
     return f(idx) + e(idx)*t + d(idx)*t*t + c(idx)*t*t*t + b(idx)*t*t*t*t + a(idx)*t*t*t*t*t 
-           + delta_t * vel_final;
+           + vel_final * delta_t + acc_final * delta_t*delta_t * 0.5;
 }
 
 float planning::trajectory::Spline5::getVelocity(float t, size_t idx, float t_f)
@@ -428,7 +434,7 @@ float planning::trajectory::Spline5::getVelocity(float t, size_t idx, float t_f)
         t = 0;
 
     return e(idx) + 2*d(idx)*t + 3*c(idx)*t*t + 4*b(idx)*t*t*t + 5*a(idx)*t*t*t*t 
-           + delta_t * acc_final;
+           + acc_final * delta_t;
 }
 
 float planning::trajectory::Spline5::getAcceleration(float t, size_t idx, float t_f)
