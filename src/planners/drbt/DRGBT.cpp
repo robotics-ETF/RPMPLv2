@@ -596,13 +596,6 @@ int planning::drbt::DRGBT::getIndexInHorizon(const std::shared_ptr<planning::drb
     return -1;   
 }
 
-void planning::drbt::DRGBT::clearHorizon(base::State::Status status_, bool replanning_)
-{
-    horizon.clear();
-    status = status_;
-    replanning = replanning_;
-}
-
 bool planning::drbt::DRGBT::checkTerminatingCondition([[maybe_unused]] base::State::Status status)
 {
     float time_current { getElapsedTime(time_alg_start) };

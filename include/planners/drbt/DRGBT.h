@@ -40,7 +40,6 @@ namespace planning
             void updateCurrentState();
             void computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
-            void clearHorizon(base::State::Status status_, bool replanning_);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
             virtual void replan(float max_planning_time);
