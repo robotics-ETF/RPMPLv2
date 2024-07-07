@@ -16,3 +16,4 @@ planning::PlannerType DRGBTConfig::STATIC_PLANNER_TYPE                  = planni
 planning::RealTimeScheduling DRGBTConfig::REAL_TIME_SCHEDULING          = planning::RealTimeScheduling::FPS;
 float DRGBTConfig::MAX_TIME_TASK1                                       = 0.020;
 planning::TrajectoryInterpolation DRGBTConfig::TRAJECTORY_INTERPOLATION = planning::TrajectoryInterpolation::Spline;
+bool DRGBTConfig::GUARANTEED_SAFE_MOTION                                = true;

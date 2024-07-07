@@ -8,6 +8,7 @@
 #include "RGBMTStar.h"
 #include "HorizonState.h"
 #include "Spline5.h"
+#include "Spline4.h"
 
 namespace planning
 {
@@ -38,6 +39,8 @@ namespace planning
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             float updateCurrentState(bool measure_time);
             void updateCurrentState();
+            bool computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot);
+            bool computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
             void computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             bool whetherToReplan();
@@ -61,7 +64,9 @@ namespace planning
             float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
-            bool all_velocities_same;                                               // Whether all joint velocities are the same
+            bool all_robot_vel_same;                                                // Whether all joint velocities are the same
+            size_t max_num_iter_spline_next;                                        // Maximal number of iterations when computing spline_next
+            float max_obs_vel;                                                      // Maximal velocity considering all obstacles
         };
     }
 }

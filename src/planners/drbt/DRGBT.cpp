@@ -38,20 +38,33 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     status = base::State::Status::Reached;
     planner_info->setNumStates(1);
 	planner_info->setNumIterations(0);
-    path.emplace_back(q_start);                               // State 'q_start' is added to the realized path
+    path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
-    spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
-    spline_next = spline_current;
-
-    all_velocities_same = true;
+    all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
     {
         if (std::abs(ss->robot->getMaxVel(i) - ss->robot->getMaxVel(i-1)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
-            all_velocities_same = false;
+            all_robot_vel_same = false;
             break;
         }
+    }
+
+    max_obs_vel = 0;
+    for (size_t i = 0; i < ss->env->getNumObjects(); i++)
+    {
+        if (ss->env->getObject(i)->getMaxVel() > max_obs_vel)
+            max_obs_vel = ss->env->getObject(i)->getMaxVel();
+    }
+
+    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+    {
+        spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
+        spline_next = spline_current;
+        max_num_iter_spline_next = all_robot_vel_same ? 
+            std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / Spline5Config::FINAL_VELOCITY_STEP)) :
+            std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / Spline5Config::FINAL_VELOCITY_STEP));
     }
 
 	// std::cout << "DRGBT planner initialized! \n";
@@ -574,7 +587,11 @@ void planning::drbt::DRGBT::computeNextState()
     else if (predefined_path.empty())   // All states are critical, and 'q_next' cannot be updated!
     {
         std::cout << "All states are critical, and q_next cannot be updated! \n";
-        emergencyStop();
+        horizon.clear();
+        status = base::State::Status::Trapped;
+        replanning = true;
+        q_next = std::make_shared<planning::drbt::HorizonState>(q_current, -1);
+        q_next->setStateReached(q_current);
     }
 
     q_next_previous = q_next;

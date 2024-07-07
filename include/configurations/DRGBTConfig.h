@@ -22,4 +22,5 @@ public:
     static planning::RealTimeScheduling REAL_TIME_SCHEDULING;               // "FPS" - Fixed Priority Scheduling; "None" - Without real-time scheduling    
     static float MAX_TIME_TASK1;                                            // Maximal time which Task 1 can take from the processor
     static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None" or "Spline"
+    static bool GUARANTEED_SAFE_MOTION;                                     // Whether robot motion is surely safe for environment
 };

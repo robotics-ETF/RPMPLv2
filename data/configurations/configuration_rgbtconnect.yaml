@@ -1,4 +1,4 @@
 MAX_NUM_ITER: 1000000000	  # Maximal number of algorithm iterations
 MAX_NUM_STATES: 1000000000  # Maximal number of considered states
 MAX_PLANNING_TIME: 10   	  # Maximal algorithm runtime in [s]
-NUM_LAYERS: 6			          # Number of layers (extensions) for generating a generalized bur
+NUM_LAYERS: 5			          # Number of layers (extensions) for generating a generalized bur
