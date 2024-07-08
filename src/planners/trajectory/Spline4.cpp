@@ -68,16 +68,16 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 
     for (size_t idx = 0; idx < num_dimensions; idx++)
     {
-        std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
-        std::cout << "Init. pos: " << e(idx) << "\t Final pos: unknown \n";
-        std::cout << "Init. vel: " << d(idx) << "\t Final vel: " << q_final_dot(idx) << "\n";
-        std::cout << "Init. acc: " << 2*c(idx) << "\t Final acc: " << q_final_ddot(idx) << "\n";
-        std::cout << "t_f_opt:   " << t_f_opt << "\n";
+        // std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
+        // std::cout << "Init. pos: " << e(idx) << "\t Final pos: unknown \n";
+        // std::cout << "Init. vel: " << d(idx) << "\t Final vel: " << q_final_dot(idx) << "\n";
+        // std::cout << "Init. acc: " << 2*c(idx) << "\t Final acc: " << q_final_ddot(idx) << "\n";
+        // std::cout << "t_f_opt:   " << t_f_opt << "\n";
 
         if (std::abs(c(idx)) < RealVectorSpaceConfig::EQUALITY_THRESHOLD && 
             std::abs(d(idx)) < RealVectorSpaceConfig::EQUALITY_THRESHOLD)    // Special case
         {
-            std::cout << "Joint position does not change. Just continue! \n";
+            // std::cout << "Joint position does not change. Just continue! \n";
             continue;
         }
 
@@ -88,14 +88,14 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 
             if (checkConstraints(idx, t_f_opt))
             {
-                std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
+                // std::cout << "All constraints are satisfied for t_f: " << t_f_opt << " [s]. Just continue! \n";
                 times_final[idx] = t_f_opt;
                 continue;
             }
             else
             {
                 idx_corr = idx;
-                std::cout << "idx_corr: " << idx_corr << "\n";
+                // std::cout << "idx_corr: " << idx_corr << "\n";
             }
         }
 
@@ -132,11 +132,11 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         t_f_right = computeFinalTime(idx, q_final_dot(idx), q_final_ddot(idx));
         a_right = a(idx);
 
-        std::cout << "b_left:   " << b_left   << "\t b_right:   " << b_right << "\n";
-        std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
+        // std::cout << "b_left:   " << b_left   << "\t b_right:   " << b_right << "\n";
+        // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
         if (t_f_left > 0 && d(idx) - q_final_dot(idx) >= 0)
         {
-            std::cout << "Solution is found! Just continue! \n";
+            // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_left;
             times_final[idx] = t_f_opt;
             a(idx) = a_left;
@@ -145,7 +145,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         }
         else if (t_f_right > 0 && d(idx) - q_final_dot(idx) <= 0)
         {
-            std::cout << "Solution is found! Just continue! \n";
+            // std::cout << "Solution is found! Just continue! \n";
             t_f_opt = t_f_right;
             times_final[idx] = t_f_opt;
             a(idx) = a_right;
@@ -154,7 +154,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         }
         else if (t_f_left == 0 && t_f_right == 0 && b_left < 0 && b_right > 0)
         {
-            std::cout << "No solution! \n";
+            // std::cout << "No solution! \n";
             return false;
         }
 
@@ -163,9 +163,9 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         float t_f {};
         for (size_t num = 0; num < max_num_iter; num++)
         {
-            std::cout << "Num. iter: " << num << " --------------------------\n";
-            std::cout << "b_left:   " << b_left   << "\t b_right:   " << b_right << "\n";
-            std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
+            // std::cout << "Num. iter: " << num << " --------------------------\n";
+            // std::cout << "b_left:   " << b_left   << "\t b_right:   " << b_right << "\n";
+            // std::cout << "t_f_left: " << t_f_left << "\t t_f_right: " << t_f_right << "\n";
             b(idx) = (b_left + b_right) / 2;
             t_f = computeFinalTime(idx, q_final_dot(idx), q_final_ddot(idx));
 
@@ -235,7 +235,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
     Eigen::Vector2f ab {};
     for (int idx = 0; idx < idx_corr; idx++)
     {
-        std::cout << "Correcting joint: " << idx << "\n";
+        // std::cout << "Correcting joint: " << idx << "\n";
         ab << a(idx), b(idx);
         b(idx) = compute_b(idx, t_f_opt, q_final_dot(idx), q_final_ddot(idx));
         a(idx) = compute_a(idx, t_f_opt, q_final_ddot(idx));
@@ -255,8 +255,8 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
     for (size_t idx = 0; idx < num_dimensions; idx++)
         coeff.row(idx) << e(idx), d(idx), c(idx), b(idx), a(idx);
     
-    auto t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();
-    std::cout << "Elapsed time: " << t_elapsed << " [us] \n";
+    // auto t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();
+    // std::cout << "Elapsed time: " << t_elapsed << " [us] \n";
 
     return true;
 }
@@ -270,7 +270,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 /// If final time is infinite, it means there is no solution.
 float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol)
 {
-    std::cout << "Inside computeFinalTime... \n";
+    // std::cout << "Inside computeFinalTime... \n";
     std::vector<float> t_sol {};
     std::vector<float> t_f {};
 
@@ -290,7 +290,7 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
 
     for (size_t i = 0; i < t_sol.size(); i++)
     {
-        std::cout << "t_sol: " << t_sol[i] << " [s] \n";
+        // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
         if (t_sol[i] > 0)
             t_f.emplace_back(t_sol[i]);
     }
@@ -303,8 +303,8 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
     for (size_t i = 0; i <= (t_f.size()-1) * check_all_sol; i++)
     {
         a(idx) = compute_a(idx, t_f[i], q_f_ddot);
-        std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
-                  << "d: " << d(idx) << ",\t e: " << e(idx) << "\n";
+        // std::cout << "a: " << a(idx) << ",\t b: " << b(idx) << ",\t c: " << c(idx) << ",\t " 
+        //           << "d: " << d(idx) << ",\t e: " << e(idx) << "\n";
 
         if (checkConstraints(idx, t_f[i]))
             return t_f[i];
@@ -326,12 +326,12 @@ float planning::trajectory::Spline4::compute_b(size_t idx, float t_f, float q_f_
 bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
 {
     // Maximal jerk constraint
-    std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(b(idx)) << "\n";
-    std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    if (6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||
-        std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx))
+    // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(b(idx)) << "\n";
+    // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
+    // if (6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||   // satisfied
+    if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx))
     {
-        std::cout << "\t Maximal jerk constraint not satisfied! \n";
+        // std::cout << "\t Maximal jerk constraint not satisfied! \n";
         return false;
     }
 
@@ -340,10 +340,10 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     std::vector<float> t_max { getMaxAccelerationTimes(idx) };
     for (size_t i = 0; i < t_max.size(); i++)
     {
-        std::cout << "\t Max. acceleration.\t t_max: " << t_max[i] << "\t value: " << std::abs(getAcceleration(t_max[i], idx, t_f)) << "\n";
+        // std::cout << "\t Max. acceleration.\t t_max: " << t_max[i] << "\t value: " << std::abs(getAcceleration(t_max[i], idx, t_f)) << "\n";
         if (std::abs(getAcceleration(t_max[i], idx, t_f)) > robot->getMaxAcc(idx))
         {
-            std::cout << "\t Maximal acceleration constraint not satisfied! \n";
+            // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
             return false;
         }
     }
@@ -353,15 +353,15 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     t_max = getMaxVelocityTimes(idx);
     for (size_t i = 0; i < t_max.size(); i++)
     {
-        std::cout << "\t Max. velocity.\t t_max: " << t_max[i] << "\t value: " << std::abs(getVelocity(t_max[i], idx, t_f)) << "\n";
+        // std::cout << "\t Max. velocity.\t t_max: " << t_max[i] << "\t value: " << std::abs(getVelocity(t_max[i], idx, t_f)) << "\n";
         if (std::abs(getVelocity(t_max[i], idx, t_f)) > robot->getMaxVel(idx))
         {
-            std::cout << "\t Maximal velocity constraint not satisfied! \n";
+            // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
         }
     }
 
-    std::cout << "\t All constraints are satisfied! \n";
+    // std::cout << "\t All constraints are satisfied! \n";
     return true;
 }
 

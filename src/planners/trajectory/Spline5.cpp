@@ -318,8 +318,8 @@ bool planning::trajectory::Spline5::checkConstraints(size_t idx, float t_f)
     for (size_t i = 0; i < t_max.size(); i++)
     {
         // std::cout << "\t Max. jerk.\t t_max: " << t_max[i] << "\t value: " << std::abs(getJerk(t_max[i], idx, t_f)) << "\n";
-        if (6*std::abs(c(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||
-            std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
+        // if (6*std::abs(c(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||   // satisfied
+        if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
             (std::abs(getJerk(t_max[i], idx, t_f)) > robot->getMaxJerk(idx)))
         {
             // std::cout << "\t Maximal jerk constraint not satisfied! \n";
