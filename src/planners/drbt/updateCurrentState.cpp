@@ -63,9 +63,9 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         q_current_ddot
     );
 
-    std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
-    std::cout << "Curr. vel: " << q_current_dot.transpose() << "\n";
-    std::cout << "Curr. acc: " << q_current_ddot.transpose() << "\n";
+    // std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
+    // std::cout << "Curr. vel: " << q_current_dot.transpose() << "\n";
+    // std::cout << "Curr. acc: " << q_current_ddot.transpose() << "\n";
 
     computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1);
     if (status != base::State::Status::Trapped && 
@@ -79,7 +79,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     do
     {
-        std::cout << "q_target: " << q_target->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";        
+        // std::cout << "q_target: " << q_target->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";        
         if (spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
             break;
 
@@ -96,13 +96,13 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     if (found)
     {
-        std::cout << "New spline is computed! \n";
+        // std::cout << "New spline is computed! \n";
         spline_current->setTimeEnd(t_spline_current);
         spline_next->setTimeEnd(t_iter_remain);
     }
     else
     {
-        std::cout << "Continuing with the previous spline! \n";
+        // std::cout << "Continuing with the previous spline! \n";
         spline_next = spline_current;
         spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
@@ -115,7 +115,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
-    std::cout << "*********************************************************************************************************\n";
 
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
@@ -143,7 +142,7 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
         while (num_iter++ < max_num_iter_spline_next)
         {
             q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
-            std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+            // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
             if (spline_new->compute(q_target->getCoord(), q_final_dot)) 
             {
@@ -166,20 +165,18 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
         if (spline_computed)
         {
             spline_next = spline_new;
-            std::cout << "\t Spline computed with ZERO final velocity. \n";
+            // std::cout << "\t Spline computed with ZERO final velocity. \n";
         }
     }
-    else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
+    // else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
 
     return spline_computed;
 }
 
 bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain)
 {
-    std::cout << "................................. Inside computeSplineSafe ................................. \n";
-    std::cout << "d_c: " << d_c << " [m]\n";
-    float d_c_current { d_c - max_obs_vel * (DRGBTConfig::MAX_ITER_TIME - t_iter_remain) };
-    std::cout << "d_c_current: " << d_c_current << " [m]\n";
+    float d_c_current { d_c - max_obs_vel * (DRGBTConfig::MAX_ITER_TIME - t_iter_remain) }; // Reduced because obstacle will cover some distance
+    // std::cout << "d_c: " << d_c << " [m]\t" << "d_c_current: " << d_c_current << " [m]\n";
     if (d_c_current < 0)
         return false;
 
@@ -199,7 +196,6 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
     bool is_safe {};
     bool spline_computed { false };
     float t_next { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
-    // float t_next { DRGBTConfig::MAX_ITER_TIME };
     int num_iter { 0 };
     int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
                                            ss->getNorm(q_current, q_target) / RRTConnectConfig::EPS_STEP));
@@ -207,9 +203,6 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
     Eigen::VectorXf q_final_min { q_current->getCoord() };
     Eigen::VectorXf q_final_max { q_target->getCoord() };
     Eigen::VectorXf q_final { q_target->getCoord() };
-
-    std::cout << "max_num_iter: " << max_num_iter << "\n";
-    std::cout << "t_next: " << t_next*1e3 << " [ms]\n";
 
     auto computeRho = [&](Eigen::VectorXf q_coord) -> float
     {
@@ -224,17 +217,14 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
     while (num_iter++ < max_num_iter)
     {
         is_safe = false;
-        std::cout << "Num. iter. " << num_iter << " __________________________________\n";
-        std::cout << "q_final: " << q_final.transpose() << "\n";
+        // std::cout << "Num. iter. " << num_iter << "\n";
+        // std::cout << "q_final: " << q_final.transpose() << "\n";
 
         if (spline_new->compute(q_final))
         {
-            std::cout << "\tIzracunat spline_new sa t_f: " << spline_new->getTimeFinal()*1e3 << " [ms]\n";
-
             rho_obs = max_obs_vel * spline_new->getTimeFinal();
             if (rho_obs < d_c_current)
             {
-                std::cout << "\tPU ispunjeni! \n";
                 rho_robot = computeRho(q_final);
                 if (rho_obs + rho_robot < d_c_current)
                     is_safe = true;
@@ -250,7 +240,6 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
 
                     if (spline_emergency->compute())
                     {
-                        std::cout << "\t\tIzracunat spline_emergency sa t_f: " << spline_emergency->getTimeFinal()*1e3 << " [ms]\n";
                         rho_obs = max_obs_vel * (t_next + spline_emergency->getTimeFinal());
                         rho_robot_emergency = computeRho(spline_emergency->getPosition(INFINITY));
                         if (rho_obs + rho_robot + rho_robot_emergency < d_c_current)
@@ -260,10 +249,10 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
             }
         }
 
-        std::cout << "\trho_obs: " << rho_obs << " [m]\t";
-        std::cout << "\trho_robot: " << rho_robot << " [m]\t";
-        std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
-        std::cout << "\trho_sum: " << rho_obs + rho_robot + rho_robot_emergency << " [m]\n";
+        // std::cout << "\trho_obs: " << rho_obs << " [m]\t";
+        // std::cout << "\trho_robot: " << rho_robot << " [m]\t";
+        // std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
+        // std::cout << "\trho_sum: " << rho_obs + rho_robot + rho_robot_emergency << " [m]\n";
         rho_robot_emergency = 0; rho_robot = 0;     // Reset only for console output
         
         if (is_safe)
@@ -271,14 +260,14 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
             *spline_next = *spline_new;
             q_final_min = q_final;
             spline_computed = true;
-            std::cout << "\tRobot is safe! \n";
+            // std::cout << "\tRobot is safe! \n";
             if (num_iter == 1) 
                 break;
         }
         else
         {
             q_final_max = q_final;
-            std::cout << "\tRobot is NOT safe! \n";
+            // std::cout << "\tRobot is NOT safe! \n";
         }
         q_final = (q_final_min + q_final_max) / 2;
     }
@@ -295,21 +284,19 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
         
         if (spline_emergency->compute())
         {
-            std::cout << "\tEMERGENCY STOP! Nije izracunat spline_next, ali je izracunat spline_emergency sa t_f: " 
-                << spline_emergency->getTimeFinal()*1e3 << " [ms]\n";
             rho_obs = max_obs_vel * spline_emergency->getTimeFinal();
             rho_robot_emergency = computeRho(spline_emergency->getPosition(INFINITY));
 
-            std::cout << "\trho_obs: " << rho_obs << " [m]\t";
-            std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
-            std::cout << "\trho_sum: " << rho_obs + rho_robot_emergency << " [m]\n";
+            // std::cout << "\trho_obs: " << rho_obs << " [m]\t";
+            // std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
+            // std::cout << "\trho_sum: " << rho_obs + rho_robot_emergency << " [m]\n";
             if (rho_obs + rho_robot_emergency < d_c_current)
             {
                 spline_next = spline_emergency;
                 spline_computed = true;
-                std::cout << "\tRobot is safe! \n";
+                // std::cout << "\tRobot is safe! \n";
             }
-            else std::cout << "\tRobot is NOT safe! \n";
+            // else std::cout << "\tRobot is NOT safe! \n";
         }
     }
 
@@ -324,7 +311,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
 /// @return Success of a change.
 bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
 {
-    std::cout << "Change of q_next is required! \n";
+    // std::cout << "Change of q_next is required! \n";
     std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
     float weight_max { 0 };
     bool visited { false };
