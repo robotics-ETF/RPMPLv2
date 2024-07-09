@@ -143,8 +143,9 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
 - ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_spline5.yaml```.
+- ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to 'Spline'.
 
- 
+
 Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 
 ## 3.4 Test planners

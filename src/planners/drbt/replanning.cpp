@@ -49,7 +49,7 @@ std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBT::initStaticPlan
 }
 
 /// @brief Try to replan the predefined path from 'q_current' to 'q_goal' during a specified time limit 'max_planning_time'.
-/// @param max_planning_time Maximal planning time.
+/// @param max_planning_time Maximal (re)planning time in [s].
 void planning::drbt::DRGBT::replan(float max_planning_time)
 {
     std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
