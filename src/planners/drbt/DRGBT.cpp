@@ -103,12 +103,6 @@ bool planning::drbt::DRGBT::solve()
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << d_c << "\n";
 
-        if (d_c <= 0)
-        {
-            std::cout << "d_c <= 0 for q_current! \n";
-            return false;
-        }
-
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
             generateHorizon();          // ~ 2 [us]
