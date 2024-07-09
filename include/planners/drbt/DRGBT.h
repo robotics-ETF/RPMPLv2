@@ -41,7 +41,7 @@ namespace planning
             void updateCurrentState();
             bool computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot);
             bool computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
-            void computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
+            bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);

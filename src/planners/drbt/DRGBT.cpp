@@ -27,7 +27,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     q_current = q_start;
     q_previous = q_current;
     q_target = q_current;
-    q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0);
+    q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0, q_current);
     q_next_previous = q_next;
 
     d_c = INFINITY;
@@ -143,7 +143,7 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        // float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        // float time_iter_remain { DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms) };
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
         // if (time_iter_remain < 0)
         //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
@@ -152,7 +152,7 @@ bool planning::drbt::DRGBT::solve()
         // Update environment and check if the collision occurs
         if (!checkMotionValidity())
         {
-            std::cout << "Collision has been occurred!!! \n";
+            std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);
             planner_info->setPlanningTime(planner_info->getIterationTimes().back());
             return false;
@@ -590,8 +590,7 @@ void planning::drbt::DRGBT::computeNextState()
         horizon.clear();
         status = base::State::Status::Trapped;
         replanning = true;
-        q_next = std::make_shared<planning::drbt::HorizonState>(q_current, -1);
-        q_next->setStateReached(q_current);
+        q_next = std::make_shared<planning::drbt::HorizonState>(q_current, -1, q_current);
     }
 
     q_next_previous = q_next;

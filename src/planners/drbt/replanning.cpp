@@ -85,7 +85,7 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
             horizon.clear();
             status = base::State::Status::Reached;
             replanning = false;
-            q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0);
+            q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0, q_current);
             planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime() * 1e3, 0);  // replan
         }
         else    // New path is not found, and just continue with the previous motion. We can also impose the robot to stop.

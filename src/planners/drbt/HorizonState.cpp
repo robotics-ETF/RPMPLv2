@@ -12,6 +12,18 @@ planning::drbt::HorizonState::HorizonState(std::shared_ptr<base::State> state_, 
     is_reached = false;
 }
 
+planning::drbt::HorizonState::HorizonState(std::shared_ptr<base::State> state_, int index_, std::shared_ptr<base::State> state_reached_)
+{
+    state = state_;
+    index = index_;
+    state_reached = state_reached_;
+    status = planning::drbt::HorizonState::Status::Good;
+    d_c = state_reached->getDistance();
+    d_c_previous = state_reached->getDistance();
+    weight = -1;
+    is_reached = (state->getCoord() - state_reached->getCoord()).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD ? true : false;
+}
+
 void planning::drbt::HorizonState::setDistance(float d_c_)
 {
     d_c = d_c_;
