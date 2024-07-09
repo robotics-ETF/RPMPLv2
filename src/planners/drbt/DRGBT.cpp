@@ -580,7 +580,7 @@ void planning::drbt::DRGBT::computeNextState()
     }
     else if (predefined_path.empty())   // All states are critical, and 'q_next' cannot be updated!
     {
-        std::cout << "All states are critical, and q_next cannot be updated! \n";
+        // std::cout << "All states are critical, and q_next cannot be updated! \n";
         horizon.clear();
         status = base::State::Status::Trapped;
         replanning = true;

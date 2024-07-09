@@ -99,8 +99,6 @@ int main(int argc, char **argv)
 			{
 				scenario::Scenario scenario(scenario_file_path, project_path);
 				std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-				std::shared_ptr<base::State> q_start { scenario.getStart() };
-				std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 				std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 				std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 				
@@ -111,21 +109,21 @@ int main(int argc, char **argv)
 					generateRandomStartAndGoal(scenario, min_dist_start_goal);
 				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
 
-				LOG(INFO) << "Test number: " << num_test;
-				LOG(INFO) << "Using scenario: " << project_path + scenario_file_path;
+				LOG(INFO) << "Test number:       " << num_test;
+				LOG(INFO) << "Using scenario:    " << project_path + scenario_file_path;
 				LOG(INFO) << "Environment parts: " << env->getNumObjects();
-				LOG(INFO) << "Number of DOFs: " << ss->num_dimensions;
-				LOG(INFO) << "State space type: " << ss->getStateSpaceType();
-				LOG(INFO) << "Start: " << scenario.getStart();
-				LOG(INFO) << "Goal: " << scenario.getGoal();
+				LOG(INFO) << "Number of DOFs:    " << ss->num_dimensions;
+				LOG(INFO) << "State space type:  " << ss->getStateSpaceType();
+				LOG(INFO) << "Start:             " << scenario.getStart();
+				LOG(INFO) << "Goal:              " << scenario.getGoal();
 				
-				planner = std::make_unique<planning::drbt::DRGBT>(ss, q_start, q_goal);
+				planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
 				
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-				LOG(INFO) << "Algorithm time: " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-				LOG(INFO) << "Task 1 interrupted: " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
+				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
+				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
 				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
@@ -194,10 +192,10 @@ int main(int argc, char **argv)
 		init_num_success_test = 0;
 		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
 
-		LOG(INFO) << "Success rate: " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
+		LOG(INFO) << "Success rate:                     " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
 		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) * 1e3 << " +- " << getStd(iter_times) * 1e3 << " [ms]";
-		LOG(INFO) << "Average path length: " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
+		LOG(INFO) << "Average path length:              " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
 		LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 	}
 
