@@ -267,7 +267,6 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
 /// @param q_f_ddot Desired 'idx'-th acceleration in a final configuration
 /// @param check_all_sol Whether to check all solutions for t_f (default: false)
 /// @return Final time. If final time is zero, it means that constraints are not satisfied.
-/// If final time is infinite, it means there is no solution.
 float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol)
 {
     // std::cout << "Inside computeFinalTime... \n";
