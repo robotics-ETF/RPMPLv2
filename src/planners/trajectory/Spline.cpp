@@ -9,6 +9,7 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
     coeff.col(0) = q_current;   // All initial conditions are zero, except position
     time_start = std::chrono::steady_clock::now();
     time_start_offset = 0;
+    times_final = std::vector<float>(num_dimensions, 0);
     time_final = 0;
     time_current = 0;
     time_begin = 0;
@@ -42,15 +43,21 @@ float planning::trajectory::Spline::getPosition(float t, size_t idx)
     float q { 0 };
     float delta_t { 0 };
     float vel_final { 0 };
+    float acc_final { 0 };
 
-    if (t > time_final)
+    if (t > times_final[idx])
     {
-        if (!is_zero_final_vel)
+        if (!is_zero_final_vel && is_zero_final_acc)
         {
-            delta_t = t - time_final;
+            delta_t = t - times_final[idx];
             vel_final = getVelocity(t, idx);
         }
-        t = time_final;
+        else if (!is_zero_final_acc)
+        {
+            delta_t = t - times_final[idx];
+            acc_final = getAcceleration(t, idx);
+        }
+        t = times_final[idx];
     }
     else if (t < 0)
         t = 0;
@@ -58,7 +65,7 @@ float planning::trajectory::Spline::getPosition(float t, size_t idx)
     for (size_t i = 0; i <= order; i++)
         q += coeff(idx, i) * std::pow(t, i);
 
-    return q + delta_t * vel_final;
+    return q + vel_final * delta_t + acc_final * delta_t*delta_t * 0.5;
 }
 
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
@@ -77,14 +84,14 @@ float planning::trajectory::Spline::getVelocity(float t, size_t idx)
     float delta_t { 0 };
     float acc_final { 0 };
 
-    if (t > time_final)
+    if (t > times_final[idx])
     {
         if (!is_zero_final_acc)
         {
-            delta_t = t - time_final;
+            delta_t = t - times_final[idx];
             acc_final = getAcceleration(t, idx);
         }
-        t = time_final;
+        t = times_final[idx];
     }
     else if (t < 0)
         t = 0;
@@ -92,7 +99,7 @@ float planning::trajectory::Spline::getVelocity(float t, size_t idx)
     for (size_t i = 1; i <= order; i++)
         q += coeff(idx, i) * i * std::pow(t, i-1);
 
-    return q + delta_t * acc_final;
+    return q + acc_final * delta_t;
 }
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
@@ -107,8 +114,8 @@ Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
 
 float planning::trajectory::Spline::getAcceleration(float t, size_t idx)
 {
-    if (t > time_final)
-        t = time_final;
+    if (t > times_final[idx])
+        t = times_final[idx];
     else if (t < 0)
         t = 0;
 
@@ -131,8 +138,8 @@ Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 
 float planning::trajectory::Spline::getJerk(float t, size_t idx)
 {
-    if (t > time_final)
-        t = time_final;
+    if (t > times_final[idx])
+        t = times_final[idx];
     else if (t < 0)
         t = 0;
 
@@ -173,7 +180,7 @@ namespace planning::trajectory
             for (size_t j = 0; j <= spline->order; j++)
                 os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
             
-            os << "\t for t in [0, " << spline->time_final << "] [s] \n";
+            os << "\t for t in [0, " << spline->times_final[i] << "] [s] \n";
         }
 
         return os;

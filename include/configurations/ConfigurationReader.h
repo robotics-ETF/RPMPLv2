@@ -209,6 +209,11 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << DRGBTConfig::TRAJECTORY_INTERPOLATION;
         
+        if (DRGBTConfigRoot["GUARANTEED_SAFE_MOTION"].IsDefined())
+            DRGBTConfig::GUARANTEED_SAFE_MOTION = DRGBTConfigRoot["GUARANTEED_SAFE_MOTION"].as<bool>();
+        else
+            LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
+
         // Spline5ConfigRoot
         if (Spline5ConfigRoot["MAX_TIME_COMPUTE"].IsDefined())
             Spline5Config::MAX_TIME_COMPUTE = Spline5ConfigRoot["MAX_TIME_COMPUTE"].as<float>();
