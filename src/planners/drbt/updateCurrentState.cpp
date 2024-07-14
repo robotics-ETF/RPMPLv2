@@ -16,7 +16,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     spline_current = spline_next;
 
-    float t_spline_max { Spline5Config::MAX_TIME_COMPUTE };
+    float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE };
     float t_iter { getElapsedTime(time_iter_start) };
     if (DRGBTConfig::MAX_TIME_TASK1 - t_iter < t_spline_max)
         t_spline_max = DRGBTConfig::MAX_TIME_TASK1 - t_iter;
@@ -89,7 +89,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             spline_computed = computeSplineNext(q_current_dot, q_current_ddot, t_iter_remain);
     }
     while (!spline_computed && 
-            getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time && 
+            getElapsedTime(time_iter_start) - t_iter < t_spline_max - SplinesConfig::MAX_TIME_PUBLISH * measure_time && 
             changeNextState(visited_states) && 
             computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
@@ -125,7 +125,7 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
 {
     bool spline_computed { false };
 
-    if (Spline5Config::IS_FINAL_VELOCITY_ZERO)
+    if (SplinesConfig::IS_FINAL_VELOCITY_ZERO)
         spline_computed = spline_next->compute(q_target->getCoord());
     else
     {

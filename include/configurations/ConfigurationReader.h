@@ -18,7 +18,7 @@
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
 #include "DRGBTConfig.h"
-#include "Spline5Config.h"
+#include "SplinesConfig.h"
 
 class ConfigurationReader
 {
@@ -31,7 +31,7 @@ public:
         YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
         YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
         YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
-        YAML::Node Spline5ConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_spline5.yaml") };
+        YAML::Node SplinesConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_splines.yaml") };
 
         // RealVectorSpaceConfigRoot
         if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -214,36 +214,36 @@ public:
         else
             LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
 
-        // Spline5ConfigRoot
-        if (Spline5ConfigRoot["MAX_TIME_COMPUTE"].IsDefined())
-            Spline5Config::MAX_TIME_COMPUTE = Spline5ConfigRoot["MAX_TIME_COMPUTE"].as<float>();
+        // SplinesConfigRoot
+        if (SplinesConfigRoot["MAX_TIME_COMPUTE"].IsDefined())
+            SplinesConfig::MAX_TIME_COMPUTE = SplinesConfigRoot["MAX_TIME_COMPUTE"].as<float>();
         else
-            LOG(INFO) << "Spline5Config::MAX_TIME_COMPUTE is not defined! Using default value of " << Spline5Config::MAX_TIME_COMPUTE;
+            LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE;
 
-        if (Spline5ConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
-            Spline5Config::MAX_TIME_PUBLISH = Spline5ConfigRoot["MAX_TIME_PUBLISH"].as<float>();
+        if (SplinesConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
+            SplinesConfig::MAX_TIME_PUBLISH = SplinesConfigRoot["MAX_TIME_PUBLISH"].as<float>();
         else
-            LOG(INFO) << "Spline5Config::MAX_TIME_PUBLISH is not defined! Using default value of " << Spline5Config::MAX_TIME_PUBLISH;
+            LOG(INFO) << "SplinesConfig::MAX_TIME_PUBLISH is not defined! Using default value of " << SplinesConfig::MAX_TIME_PUBLISH;
 
-        if (Spline5ConfigRoot["MAX_TIME_FINAL"].IsDefined())
-            Spline5Config::MAX_TIME_FINAL = Spline5ConfigRoot["MAX_TIME_FINAL"].as<float>();
+        if (SplinesConfigRoot["MAX_TIME_FINAL"].IsDefined())
+            SplinesConfig::MAX_TIME_FINAL = SplinesConfigRoot["MAX_TIME_FINAL"].as<float>();
         else
-            LOG(INFO) << "Spline5Config::MAX_TIME_FINAL is not defined! Using default value of " << Spline5Config::MAX_TIME_FINAL;
+            LOG(INFO) << "SplinesConfig::MAX_TIME_FINAL is not defined! Using default value of " << SplinesConfig::MAX_TIME_FINAL;
 
-        if (Spline5ConfigRoot["FINAL_JERK_STEP"].IsDefined())
-            Spline5Config::FINAL_JERK_STEP = Spline5ConfigRoot["FINAL_JERK_STEP"].as<float>();
+        if (SplinesConfigRoot["FINAL_JERK_STEP"].IsDefined())
+            SplinesConfig::FINAL_JERK_STEP = SplinesConfigRoot["FINAL_JERK_STEP"].as<float>();
         else
-            LOG(INFO) << "Spline5Config::FINAL_JERK_STEP is not defined! Using default value of " << Spline5Config::FINAL_JERK_STEP;
+            LOG(INFO) << "SplinesConfig::FINAL_JERK_STEP is not defined! Using default value of " << SplinesConfig::FINAL_JERK_STEP;
         
-        if (Spline5ConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
-            Spline5Config::FINAL_VELOCITY_STEP = Spline5ConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
+        if (SplinesConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
+            SplinesConfig::FINAL_VELOCITY_STEP = SplinesConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
         else
-            LOG(INFO) << "Spline5Config::FINAL_VELOCITY_STEP is not defined! Using default value of " << Spline5Config::FINAL_VELOCITY_STEP;
+            LOG(INFO) << "SplinesConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << SplinesConfig::FINAL_VELOCITY_STEP;
         
-        if (Spline5ConfigRoot["IS_FINAL_VELOCITY_ZERO"].IsDefined())
-            Spline5Config::IS_FINAL_VELOCITY_ZERO = Spline5ConfigRoot["IS_FINAL_VELOCITY_ZERO"].as<bool>();
+        if (SplinesConfigRoot["IS_FINAL_VELOCITY_ZERO"].IsDefined())
+            SplinesConfig::IS_FINAL_VELOCITY_ZERO = SplinesConfigRoot["IS_FINAL_VELOCITY_ZERO"].as<bool>();
         else
-            LOG(INFO) << "Spline5Config::IS_FINAL_VELOCITY_ZERO is not defined! Using default value of " << Spline5Config::IS_FINAL_VELOCITY_ZERO;
+            LOG(INFO) << "SplinesConfig::IS_FINAL_VELOCITY_ZERO is not defined! Using default value of " << SplinesConfig::IS_FINAL_VELOCITY_ZERO;
         
         LOG(INFO) << "Configuration parameters read successfully!";
         

@@ -1,5 +1,5 @@
 #include "Spline4.h"
-#include "Spline5Config.h"
+#include "SplinesConfig.h"
 
 planning::trajectory::Spline4::Spline4(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current) :
     Spline(4, robot_, q_current) 
@@ -64,7 +64,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
     float t_f_left { 0 }, t_f_right { 0 };
     float b_left {}, b_right {};
     float a_left {}, a_right {};
-    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / Spline5Config::FINAL_JERK_STEP));
+    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / SplinesConfig::FINAL_JERK_STEP));
 
     for (size_t idx = 0; idx < num_dimensions; idx++)
     {
@@ -290,7 +290,7 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
     for (size_t i = 0; i < t_sol.size(); i++)
     {
         // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
-        if (t_sol[i] > 0 && t_sol[i] < Spline5Config::MAX_TIME_FINAL)
+        if (t_sol[i] > 0 && t_sol[i] < SplinesConfig::MAX_TIME_FINAL)
             t_f.emplace_back(t_sol[i]);
     }
     

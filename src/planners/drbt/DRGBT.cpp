@@ -63,8 +63,8 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
         spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
         spline_next = spline_current;
         max_num_iter_spline_next = all_robot_vel_same ? 
-            std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / Spline5Config::FINAL_VELOCITY_STEP)) :
-            std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / Spline5Config::FINAL_VELOCITY_STEP));
+            std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / SplinesConfig::FINAL_VELOCITY_STEP)) :
+            std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / SplinesConfig::FINAL_VELOCITY_STEP));
     }
 
 	// std::cout << "DRGBT planner initialized! \n";
@@ -267,7 +267,7 @@ void planning::drbt::DRGBT::generateGBur()
     size_t max_num_attempts {};
     float time_elapsed {};
     float max_time { DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline ? 
-                     DRGBTConfig::MAX_TIME_TASK1 - Spline5Config::MAX_TIME_COMPUTE : DRGBTConfig::MAX_TIME_TASK1 };
+                     DRGBTConfig::MAX_TIME_TASK1 - SplinesConfig::MAX_TIME_COMPUTE : DRGBTConfig::MAX_TIME_TASK1 };
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)

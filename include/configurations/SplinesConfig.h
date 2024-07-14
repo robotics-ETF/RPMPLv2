@@ -1,10 +1,10 @@
 //
 // Created by nermin on 23.05.24.
 //
-#ifndef RPMPL_SPLINE5CONFIG_H
-#define RPMPL_SPLINE5CONFIG_H
+#ifndef RPMPL_SPLINESCONFIG_H
+#define RPMPL_SPLINESCONFIG_H
 
-class Spline5Config
+class SplinesConfig
 {
 public:
     static float MAX_TIME_COMPUTE;      // Maximal time in [s] for computing a spline
@@ -15,4 +15,4 @@ public:
     static bool IS_FINAL_VELOCITY_ZERO; // Whether a final velocity is zero when computing splines. If true, robot motion is more safe, yet a little bit slower. Note that when 'GUARANTEED_SAFE_MOTION' is true, this parameter is always true.
 };
 
-#endif //RPMPL_SPLINE5CONFIG_H
+#endif //RPMPL_SPLINESCONFIG_H

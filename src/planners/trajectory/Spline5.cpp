@@ -1,5 +1,5 @@
 #include "Spline5.h"
-#include "Spline5Config.h"
+#include "SplinesConfig.h"
 
 // #include <unsupported/Eigen/Polynomials>
 
@@ -67,7 +67,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
     float t_f_opt { 0 };
     float t_f_left { 0 }, t_f_right { 0 };
     Eigen::Vector3f abc_left {}, abc_right {};       // a, b and c coefficients, respectively
-    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / Spline5Config::FINAL_JERK_STEP));
+    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / SplinesConfig::FINAL_JERK_STEP));
 
     for (size_t idx = 0; idx < num_dimensions; idx++)
     {
@@ -258,7 +258,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
     for (size_t i = 0; i < t_sol.size(); i++)
     {
         // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
-        if (t_sol[i] > 0 && t_sol[i] < Spline5Config::MAX_TIME_FINAL)
+        if (t_sol[i] > 0 && t_sol[i] < SplinesConfig::MAX_TIME_FINAL)
             t_f.emplace_back(t_sol[i]);
     }
 
