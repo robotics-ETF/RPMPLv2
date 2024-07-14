@@ -225,6 +225,11 @@ public:
         else
             LOG(INFO) << "Spline5Config::MAX_TIME_PUBLISH is not defined! Using default value of " << Spline5Config::MAX_TIME_PUBLISH;
 
+        if (Spline5ConfigRoot["MAX_TIME_FINAL"].IsDefined())
+            Spline5Config::MAX_TIME_FINAL = Spline5ConfigRoot["MAX_TIME_FINAL"].as<float>();
+        else
+            LOG(INFO) << "Spline5Config::MAX_TIME_FINAL is not defined! Using default value of " << Spline5Config::MAX_TIME_FINAL;
+
         if (Spline5ConfigRoot["FINAL_JERK_STEP"].IsDefined())
             Spline5Config::FINAL_JERK_STEP = Spline5ConfigRoot["FINAL_JERK_STEP"].as<float>();
         else

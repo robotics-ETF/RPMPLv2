@@ -258,7 +258,7 @@ float planning::trajectory::Spline5::computeFinalTime(size_t idx, float q_f, flo
     for (size_t i = 0; i < t_sol.size(); i++)
     {
         // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
-        if (t_sol[i] > 0)
+        if (t_sol[i] > 0 && t_sol[i] < Spline5Config::MAX_TIME_FINAL)
             t_f.emplace_back(t_sol[i]);
     }
 
