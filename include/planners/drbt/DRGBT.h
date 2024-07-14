@@ -67,6 +67,10 @@ namespace planning
             bool all_robot_vel_same;                                                // Whether all joint velocities are the same
             size_t max_num_iter_spline_next;                                        // Maximal number of iterations when computing spline_next
             float max_obs_vel;                                                      // Maximal velocity considering all obstacles
+        
+        private:
+            void recordTrajectory(bool spline_computed);
+
         };
     }
 }

@@ -51,7 +51,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     if (status != base::State::Status::Trapped)
         status = base::State::Status::Advanced;     // by default
     
-    bool found { false };
+    bool spline_computed { false };
     std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
     Eigen::VectorXf q_current_dot { spline_current->getVelocity(t_spline_current) };
     Eigen::VectorXf q_current_ddot { spline_current->getAcceleration(t_spline_current) };
@@ -84,17 +84,17 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             break;
 
         if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
-            found = computeSplineSafe(q_current_dot, q_current_ddot, t_iter_remain);
+            spline_computed = computeSplineSafe(q_current_dot, q_current_ddot, t_iter_remain);
         else
-            found = computeSplineNext(q_current_dot, q_current_ddot, t_iter_remain);
+            spline_computed = computeSplineNext(q_current_dot, q_current_ddot, t_iter_remain);
     }
-    while (!found && 
+    while (!spline_computed && 
             getElapsedTime(time_iter_start) - t_iter < t_spline_max - Spline5Config::MAX_TIME_PUBLISH * measure_time && 
             changeNextState(visited_states) && 
             computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
-    if (found)
+    if (spline_computed)
     {
         // std::cout << "New spline is computed! \n";
         spline_current->setTimeEnd(t_spline_current);
@@ -106,6 +106,8 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         spline_next = spline_current;
         spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
+    
+    // recordTrajectory(spline_computed);
 
     q_current = ss->getNewState(spline_next->getPosition(spline_next->getTimeEnd()));   // Current robot position at the end of iteration
 
@@ -119,7 +121,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
 
-bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, [[maybe_unused]] float t_iter_remain)
+bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain)
 {
     bool spline_computed { false };
 
@@ -154,13 +156,9 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
                     *spline_next = *spline_new;
                     q_final_dot_min = q_final_dot;
                     spline_computed = true;
-                    // std::cout << "found \n";
                 }
                 else
-                {
                     q_final_dot_max = q_final_dot;
-                    // std::cout << "not found \n";
-                }
             }
         }
 
@@ -417,4 +415,34 @@ void planning::drbt::DRGBT::updateCurrentState()
     // std::cout << "q_target:  " << q_target << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+}
+
+void planning::drbt::DRGBT::recordTrajectory(bool spline_computed)
+{
+    // This function is just for debugging. You can set a desired path for the file to be saved.
+    std::ofstream output_file {};
+    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_real_time/visualize_trajectory.log", 
+        std::ofstream::app);
+    
+    output_file << "q_current - q_target \n";
+    if (spline_computed)
+    {
+        output_file << q_current->getCoord().transpose() << "\n";
+        output_file << q_target->getCoord().transpose() << "\n";
+    }
+    else
+        output_file << INFINITY << "\n";
+
+    output_file << "q_spline: \n";
+    for (float t = spline_next->getTimeCurrent(); t < spline_next->getTimeFinal(); t += 0.001)
+        output_file << spline_next->getPosition(t).transpose() << "\n";
+    output_file << spline_next->getPosition(spline_next->getTimeFinal()).transpose() << "\n";
+
+    output_file << "q_spline (realized): \n";
+    for (float t = spline_current->getTimeBegin(); t < spline_current->getTimeCurrent(); t += 0.001)
+        output_file << spline_current->getPosition(t).transpose() << "\n";    
+    for (float t = spline_next->getTimeCurrent(); t < spline_next->getTimeEnd(); t += 0.001)
+        output_file << spline_next->getPosition(t).transpose() << "\n";
+    output_file << spline_next->getPosition(spline_next->getTimeEnd()).transpose() << "\n";
+    output_file << "--------------------------------------------------------------------\n";
 }
