@@ -235,6 +235,11 @@ public:
         else
             LOG(INFO) << "Spline5Config::FINAL_VELOCITY_STEP is not defined! Using default value of " << Spline5Config::FINAL_VELOCITY_STEP;
         
+        if (Spline5ConfigRoot["IS_FINAL_VELOCITY_ZERO"].IsDefined())
+            Spline5Config::IS_FINAL_VELOCITY_ZERO = Spline5ConfigRoot["IS_FINAL_VELOCITY_ZERO"].as<bool>();
+        else
+            LOG(INFO) << "Spline5Config::IS_FINAL_VELOCITY_ZERO is not defined! Using default value of " << Spline5Config::IS_FINAL_VELOCITY_ZERO;
+        
         LOG(INFO) << "Configuration parameters read successfully!";
         
     }

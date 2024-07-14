@@ -39,7 +39,7 @@ namespace planning
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             float updateCurrentState(bool measure_time);
             void updateCurrentState();
-            bool computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot);
+            bool computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
             bool computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
             bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
