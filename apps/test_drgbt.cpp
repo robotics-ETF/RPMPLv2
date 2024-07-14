@@ -9,6 +9,7 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
 		// "/data/planar_2dof/scenario1/scenario1.yaml"
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
+		// "/data/planar_2dof/scenario_real_time/scenario_real_time.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		// "/data/xarm6/scenario1/scenario1.yaml"
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
+				// LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
 				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
