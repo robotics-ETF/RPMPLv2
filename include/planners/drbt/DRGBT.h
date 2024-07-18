@@ -39,12 +39,10 @@ namespace planning
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             float updateCurrentState(bool measure_time);
             void updateCurrentState();
-            bool computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
-            bool computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain);
-            bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             bool computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain);
             bool computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain);
+            bool checkSplineCollision(std::shared_ptr<planning::trajectory::Spline> spline, float t_offset, float t_max, std::shared_ptr<base::State> &q_init);
             bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
@@ -72,6 +70,8 @@ namespace planning
             float max_obs_vel;                                                      // Maximal velocity considering all obstacles
         
         private:
+            float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
+	            const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
             void recordTrajectory(bool spline_computed);
 
         };
