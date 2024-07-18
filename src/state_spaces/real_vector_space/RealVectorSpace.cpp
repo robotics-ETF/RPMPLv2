@@ -73,6 +73,15 @@ bool base::RealVectorSpace::isEqual(const std::shared_ptr<base::State> q1, const
 	return false;
 }
 
+// Check if two vectors are equal
+bool base::RealVectorSpace::isEqual(const Eigen::VectorXf &q1_coord, const Eigen::VectorXf &q2_coord)
+{
+	if ((q1_coord - q2_coord).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+		return true;
+	
+	return false;
+}
+
 // Interpolate edge from 'q1' to 'q2' for step 'step'
 // 'dist' (optional parameter) is the distance between 'q1' and 'q2'
 // Return a new state
