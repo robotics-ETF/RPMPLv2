@@ -47,10 +47,13 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	return true;
 }
 
-// Return minimal distance from robot in configuration 'q' to obstacles
-// Compute minimal distance from each robot's link in configuration 'q' to obstacles, i.e., compute distance profile function
-// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'
-// If 'compute_again' is true, the new distance profile will be computed again!
+/// @brief Compute a minimal distance from the robot in configuration 'q' to obstacles using FCL library.
+/// In other words, compute a minimal distance from each robot's link in configuration 'q' to obstacles, 
+/// i.e., compute a distance profile function. 
+/// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'.
+/// @param q Configuration of the robot.
+/// @param compute_again If true, a new distance profile will be computed again! Default: false.
+/// @return Minimal distance from the robot in configuration 'q' to obstacles.
 float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())

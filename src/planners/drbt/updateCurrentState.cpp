@@ -121,6 +121,48 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
 
+/// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
+/// @param visited_states Set of visited states.
+/// @return Success of a change.
+bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
+{
+    // std::cout << "Change of q_next is required! \n";
+    std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
+    float weight_max { 0 };
+    bool visited { false };
+
+    for (std::shared_ptr<planning::drbt::HorizonState> q : horizon)
+    {
+        if (q->getWeight() < DRGBTConfig::TRESHOLD_WEIGHT)
+            continue;
+
+        visited = false;
+        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+        {
+            if (q == q_visited)
+            {
+                visited = true;
+                break;
+            }
+        }
+
+        if (!visited && q->getWeight() > weight_max)
+        {
+            q_new = q;
+            weight_max = q->getWeight();
+        }
+    }
+
+    if (q_new != nullptr)
+    {
+        visited_states.emplace_back(q_new);
+        q_next = q_new;
+        return true;
+    }
+
+    return false;
+}
+
 bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain)
 {
     bool spline_computed { false };
@@ -207,7 +249,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
     float rho_obs {};
     bool is_safe {};
     bool spline_computed { false };
-    float t_next { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
+    float t_max { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
     int num_iter { 0 };
     int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
                                            ss->getNorm(q_current, q_target) / RRTConnectConfig::EPS_STEP));
@@ -240,19 +282,19 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
                 rho_robot = computeRho(q_final);
                 if (rho_obs + rho_robot < d_c_current)
                     is_safe = true;
-                else if (spline_new->getTimeFinal() > t_next)
+                else if (spline_new->getTimeFinal() > t_max)
                 {
                     spline_emergency = std::make_shared<planning::trajectory::Spline4>
                     (
                         ss->robot,
-                        spline_new->getPosition(t_next),
-                        spline_new->getVelocity(t_next),
-                        spline_new->getAcceleration(t_next)
+                        spline_new->getPosition(t_max),
+                        spline_new->getVelocity(t_max),
+                        spline_new->getAcceleration(t_max)
                     );
 
                     if (spline_emergency->compute())
                     {
-                        rho_obs = max_obs_vel * (t_next + spline_emergency->getTimeFinal());
+                        rho_obs = max_obs_vel * (t_max + spline_emergency->getTimeFinal());
                         rho_robot_emergency = computeRho(spline_emergency->getPosition(INFINITY));
                         if (rho_obs + rho_robot + rho_robot_emergency < d_c_current)
                             is_safe = true;
@@ -269,17 +311,17 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
         
         if (is_safe)
         {
+            // std::cout << "\tRobot is safe! \n";
             *spline_next = *spline_new;
             q_final_min = q_final;
             spline_computed = true;
-            // std::cout << "\tRobot is safe! \n";
             if (num_iter == 1) 
                 break;
         }
         else
         {
-            q_final_max = q_final;
             // std::cout << "\tRobot is NOT safe! \n";
+            q_final_max = q_final;
         }
         q_final = (q_final_min + q_final_max) / 2;
     }
