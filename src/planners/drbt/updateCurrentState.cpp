@@ -15,6 +15,9 @@
 float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     spline_current = spline_next;
+    q_previous = q_current;
+    if (status != base::State::Status::Trapped)
+        status = base::State::Status::Advanced;     // by default
 
     float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE };
     float t_iter { getElapsedTime(time_iter_start) };
@@ -29,52 +32,32 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     spline_current->setTimeBegin(spline_current->getTimeEnd());
     spline_current->setTimeCurrent(t_spline_current);
 
-    q_previous = q_current;
-    q_current = ss->getNewState(spline_current->getPosition(t_spline_current));
-
     // std::cout << "Iter. time:        " << t_iter * 1000 << " [ms] \n";
     // std::cout << "Max. spline time:  " << t_spline_max * 1000 << " [ms] \n";
     // std::cout << "Remain. time:      " << t_iter_remain * 1000 << " [ms] \n";
     // std::cout << "Begin spline time: " << spline_current->getTimeBegin() * 1000 << " [ms] \n";
     // std::cout << "Curr. spline time: " << t_spline_current * 1000 << " [ms] \n";
-    // std::cout << "q_current: " << q_current << "\n";
-    // std::cout << "q_target:  " << q_target << "\n";
-    // std::cout << "q_next:    " << q_next << "\n";
-
-    if (ss->isEqual(q_current, q_goal))
-    {
-        spline_next->setTimeEnd(t_spline_current + t_iter_remain);
-        status = base::State::Status::Reached;
-        return t_spline_max;
-    }
-
-    if (status != base::State::Status::Trapped)
-        status = base::State::Status::Advanced;     // by default
+    // ----------------------------------------------------------------------------------------- //
     
     bool spline_computed { false };
+    Eigen::VectorXf current_pos { spline_current->getPosition(t_spline_current) };
+    Eigen::VectorXf current_vel { spline_current->getVelocity(t_spline_current) };
+    Eigen::VectorXf current_acc { spline_current->getAcceleration(t_spline_current) };
     std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
-    Eigen::VectorXf q_current_dot { spline_current->getVelocity(t_spline_current) };
-    Eigen::VectorXf q_current_ddot { spline_current->getAcceleration(t_spline_current) };
-    spline_next = std::make_shared<planning::trajectory::Spline5>
-    (
-        ss->robot, 
-        q_current->getCoord(), 
-        q_current_dot, 
-        q_current_ddot
-    );
+    spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
 
-    // std::cout << "Curr. pos: " << q_current->getCoord().transpose() << "\n";
-    // std::cout << "Curr. vel: " << q_current_dot.transpose() << "\n";
-    // std::cout << "Curr. acc: " << q_current_ddot.transpose() << "\n";
+    // std::cout << "Curr. pos: " << current_pos.transpose() << "\n";
+    // std::cout << "Curr. vel: " << current_vel.transpose() << "\n";
+    // std::cout << "Curr. acc: " << current_acc.transpose() << "\n";
 
-    computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1);
+    computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1);
     if (status != base::State::Status::Trapped && 
         q_next->getIsReached() && 
         ss->isEqual(q_target, q_next->getStateReached()))
     {
         status = base::State::Status::Reached;  // 'q_next->getState()' must be reached, and not only 'q_next->getStateReached()'
         if (q_next->getStatus() != planning::drbt::HorizonState::Status::Goal && changeNextState(visited_states))
-            computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1);
+            computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1);
     }
 
     do
@@ -84,14 +67,14 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             break;
 
         if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
-            spline_computed = computeSplineSafe(q_current_dot, q_current_ddot, t_iter_remain);
+            spline_computed = computeSplineSafe(current_pos, current_vel, current_acc, t_iter_remain);
         else
-            spline_computed = computeSplineNext(q_current_dot, q_current_ddot, t_iter_remain);
+            spline_computed = computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain);
     }
     while (!spline_computed && 
             getElapsedTime(time_iter_start) - t_iter < t_spline_max - SplinesConfig::MAX_TIME_PUBLISH * measure_time && 
             changeNextState(visited_states) && 
-            computeTargetState(t_iter_remain + DRGBTConfig::MAX_TIME_TASK1));
+            computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -163,7 +146,7 @@ bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning
     return false;
 }
 
-bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain)
+bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain)
 {
     bool spline_computed { false };
 
@@ -171,20 +154,14 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
         spline_computed = spline_next->compute(q_target->getCoord());
     else
     {
-        std::shared_ptr<planning::trajectory::Spline> spline_new {   
-            std::make_shared<planning::trajectory::Spline5>
-            (
-                ss->robot, 
-                q_current->getCoord(), 
-                q_current_dot, 
-                q_current_ddot
-            ) };
+        std::shared_ptr<planning::trajectory::Spline> spline_new 
+            { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
 
         if (q_next->getIsReached() && q_next->getIndex() != -1 && !ss->isEqual(q_target, q_goal))
         {
             float num_iter { 0 };
-            float delta_t_max { ((q_target->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
-            Eigen::VectorXf q_final_dot_max { (q_target->getCoord() - q_current->getCoord()) / delta_t_max };
+            float delta_t_max { ((q_target->getCoord() - current_pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+            Eigen::VectorXf q_final_dot_max { (q_target->getCoord() - current_pos) / delta_t_max };
             Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
             Eigen::VectorXf q_final_dot {};
             
@@ -204,15 +181,16 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
             }
         }
 
-        Eigen::VectorXf next_current_pos    // Possible current position at the end of iteration
+        Eigen::VectorXf new_current_pos    // Possible current position at the end of iteration
         {
             spline_computed ? 
             spline_next->getPosition(t_iter_remain) : 
             spline_current->getPosition(spline_current->getTimeCurrent() + t_iter_remain) 
         };
 
+        // If spline was not computed or robot is getting away from 'new_current_pos'
         if (!spline_computed || 
-            (next_current_pos - q_target->getCoord()).norm() > ss->getNorm(q_current, q_target)) // Robot is getting away from 'next_current_pos'
+            (new_current_pos - q_target->getCoord()).norm() > (current_pos - q_target->getCoord()).norm())
         {
             spline_computed = spline_new->compute(q_target->getCoord());
             if (spline_computed)
@@ -227,22 +205,10 @@ bool planning::drbt::DRGBT::computeSplineNext(Eigen::VectorXf &q_current_dot, Ei
     return spline_computed;
 }
 
-bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Eigen::VectorXf &q_current_ddot, float t_iter_remain)
+bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain)
 {
-    float d_c_current { d_c - max_obs_vel * (DRGBTConfig::MAX_ITER_TIME - t_iter_remain) }; // Reduced because obstacle will cover some distance
-    // std::cout << "d_c: " << d_c << " [m]\t" << "d_c_current: " << d_c_current << " [m]\n";
-    if (d_c_current < 0)
-        return false;
-
-    std::shared_ptr<Eigen::MatrixXf> skeleton_current { ss->robot->computeSkeleton(q_current) };
-    std::shared_ptr<planning::trajectory::Spline> spline_new {   
-        std::make_shared<planning::trajectory::Spline5>
-        (
-            ss->robot, 
-            q_current->getCoord(), 
-            q_current_dot, 
-            q_current_ddot
-        ) };
+    std::shared_ptr<planning::trajectory::Spline> spline_new 
+        { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
     std::shared_ptr<planning::trajectory::Spline> spline_emergency { nullptr };
     float rho_robot {};
     float rho_robot_emergency {};
@@ -252,9 +218,9 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
     float t_max { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
     int num_iter { 0 };
     int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
-                                           ss->getNorm(q_current, q_target) / RRTConnectConfig::EPS_STEP));
+                                           (current_pos - q_target->getCoord()).norm() / RRTConnectConfig::EPS_STEP));
     if (max_num_iter <= 0) max_num_iter = 1;
-    Eigen::VectorXf q_final_min { q_current->getCoord() };
+    Eigen::VectorXf q_final_min { current_pos };
     Eigen::VectorXf q_final_max { q_target->getCoord() };
     Eigen::VectorXf q_final { q_target->getCoord() };
 
@@ -263,7 +229,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
         float rho { 0 };
         std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(ss->getNewState(q_coord)) };
         for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
-            rho = std::max(rho, (skeleton_current->col(k) - skeleton->col(k)).norm());
+            rho = std::max(rho, (q_current->getSkeleton()->col(k) - skeleton->col(k)).norm());
 
         return rho;
     };
@@ -277,10 +243,10 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
         if (spline_new->compute(q_final))
         {
             rho_obs = max_obs_vel * spline_new->getTimeFinal();
-            if (rho_obs < d_c_current)
+            if (rho_obs < d_c)
             {
                 rho_robot = computeRho(q_final);
-                if (rho_obs + rho_robot < d_c_current)
+                if (rho_obs + rho_robot < d_c)
                     is_safe = true;
                 else if (spline_new->getTimeFinal() > t_max)
                 {
@@ -296,7 +262,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
                     {
                         rho_obs = max_obs_vel * (t_max + spline_emergency->getTimeFinal());
                         rho_robot_emergency = computeRho(spline_emergency->getPosition(INFINITY));
-                        if (rho_obs + rho_robot + rho_robot_emergency < d_c_current)
+                        if (rho_obs + rho_robot + rho_robot_emergency < d_c)
                             is_safe = true;
                     }
                 }
@@ -307,7 +273,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
         // std::cout << "\trho_robot: " << rho_robot << " [m]\t";
         // std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
         // std::cout << "\trho_sum: " << rho_obs + rho_robot + rho_robot_emergency << " [m]\n";
-        rho_robot_emergency = 0; rho_robot = 0;     // Reset only for console output
+        // rho_robot_emergency = 0; rho_robot = 0;     // Reset only for console output
         
         if (is_safe)
         {
@@ -328,14 +294,7 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
 
     if (!spline_computed)
     {
-        spline_emergency = std::make_shared<planning::trajectory::Spline4>
-        (
-            ss->robot, 
-            q_current->getCoord(), 
-            q_current_dot, 
-            q_current_ddot
-        );
-        
+        spline_emergency = std::make_shared<planning::trajectory::Spline4>(ss->robot, current_pos, current_vel, current_acc);        
         if (spline_emergency->compute())
         {
             rho_obs = max_obs_vel * spline_emergency->getTimeFinal();
@@ -344,8 +303,9 @@ bool planning::drbt::DRGBT::computeSplineSafe(Eigen::VectorXf &q_current_dot, Ei
             // std::cout << "\trho_obs: " << rho_obs << " [m]\t";
             // std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
             // std::cout << "\trho_sum: " << rho_obs + rho_robot_emergency << " [m]\n";
-            if (rho_obs + rho_robot_emergency < d_c_current)
+            if (rho_obs + rho_robot_emergency < d_c)
             {
+                // std::cout << "\tRobot is safe! \n";
                 spline_next = spline_emergency;
                 spline_computed = true;
                 // std::cout << "\tRobot is safe! \n";
@@ -448,7 +408,7 @@ void planning::drbt::DRGBT::updateCurrentState()
     computeTargetState();
     q_current = q_target;   // Current robot position at the end of iteration
 
-    if (ss->isEqual(q_target, q_next->getState()))
+    if (ss->isEqual(q_current, q_next->getState()))
         status = base::State::Status::Reached;      // 'q_next->getState()' must be reached, and not only 'q_next->getStateReached()'
     else
         status = base::State::Status::Advanced;
