@@ -6,6 +6,8 @@
 #define RPMPL_XARM6_H
 
 #include "AbstractRobot.h"
+#include "RealVectorSpace.h"
+#include "RRTConnectConfig.h"
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
@@ -13,6 +15,9 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainiksolverpos_nr.hpp>
+#include <urdf/model.h>
+#include <glog/logging.h>
+#include <stl_reader.h>
 
 namespace robots
 {

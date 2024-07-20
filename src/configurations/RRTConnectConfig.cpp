@@ -1,7 +1,3 @@
-//
-// Created by dinko on 17.02.22.
-//
-
 #include "RRTConnectConfig.h"
 
 size_t RRTConnectConfig::MAX_NUM_ITER           = 1e9;

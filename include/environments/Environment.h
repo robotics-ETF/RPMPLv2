@@ -6,6 +6,11 @@
 #ifndef RPMPL_ENVIRONMENT_H
 #define RPMPL_ENVIRONMENT_H
 
+#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/parser.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
+
 #include "Box.h"
 
 namespace env

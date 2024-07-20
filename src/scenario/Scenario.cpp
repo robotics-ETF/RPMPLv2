@@ -1,15 +1,4 @@
-//
-// Created by dinko on 17.02.22.
-// Modified by nermin on 09.02.24.
-//
-
 #include "Scenario.h"
-#include "RealVectorSpaceFCL.h"
-#include "RealVectorSpaceState.h"
-#include "Planar2DOF.h"
-#include "Planar10DOF.h"
-#include "xArm6.h"
-#include "ConfigurationReader.h"
 
 scenario::Scenario::Scenario(const std::string &config_file_path, const std::string &root_path)
 {

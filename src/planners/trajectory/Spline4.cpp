@@ -1,5 +1,4 @@
 #include "Spline4.h"
-#include "SplinesConfig.h"
 
 planning::trajectory::Spline4::Spline4(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current) :
     Spline(4, robot_, q_current) 

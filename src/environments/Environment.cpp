@@ -1,14 +1,4 @@
-//
-// Created by dinko on 14.02.22.
-// Modified by nermin on 09.02.24.
-//
-
 #include "Environment.h"
-
-#include <yaml-cpp/yaml.h>
-#include "yaml-cpp/parser.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
 
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {

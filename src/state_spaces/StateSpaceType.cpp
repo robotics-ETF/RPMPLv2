@@ -1,7 +1,3 @@
-//
-// Created by dinko on 21.5.21.
-//
-
 #include "StateSpaceType.h"
 
 namespace base

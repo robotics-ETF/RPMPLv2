@@ -1,5 +1,4 @@
 #include "Spline5.h"
-#include "SplinesConfig.h"
 
 // #include <unsupported/Eigen/Polynomials>
 

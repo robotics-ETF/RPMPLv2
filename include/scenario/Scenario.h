@@ -11,9 +11,13 @@
 #include <string>
 #include <fcl/fcl.h>
 
-#include "AbstractRobot.h"
 #include "Environment.h"
-#include "StateSpace.h"
+#include "RealVectorSpaceFCL.h"
+#include "RealVectorSpaceState.h"
+#include "Planar2DOF.h"
+#include "Planar10DOF.h"
+#include "xArm6.h"
+#include <yaml-cpp/yaml.h>
 
 namespace scenario
 {

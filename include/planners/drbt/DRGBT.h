@@ -4,11 +4,18 @@
 #ifndef RPMPL_DRGBT_H
 #define RPMPL_DRGBT_H
 
+#include "RRTConnect.h"
+#include "RBTConnect.h"
 #include "RGBTConnect.h"
 #include "RGBMTStar.h"
+#include "DRGBTConfig.h"
 #include "HorizonState.h"
-#include "Spline5.h"
-#include "Spline4.h"
+#include "Splines.h"
+
+// #include <glog/log_severity.h>
+// #include <glog/logging.h>
+// WARNING: You need to be very careful with using LOG(INFO) for console output, due to a possible "stack smashing detected" error.
+// If you get this error, just use std::cout for console output.
 
 namespace planning
 {

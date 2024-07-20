@@ -7,10 +7,13 @@
 
 #include "AbstractRobot.h"
 #include "Environment.h"
+#include "RealVectorSpaceState.h"
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
+#include <urdf/model.h>
+#include <glog/logging.h>
 
 namespace robots
 {

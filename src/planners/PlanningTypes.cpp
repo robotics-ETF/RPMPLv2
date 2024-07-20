@@ -1,7 +1,3 @@
-//
-// Created by nermin on 16.03.24.
-//
-
 #include "PlanningTypes.h"
 
 namespace planning

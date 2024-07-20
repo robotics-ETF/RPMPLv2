@@ -1,7 +1,3 @@
-//
-// Created by nermin on 23.05.24.
-//
-
 #include "SplinesConfig.h"
 
 float SplinesConfig::MAX_TIME_COMPUTE       = 0.003;

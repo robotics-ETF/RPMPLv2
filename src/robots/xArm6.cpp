@@ -1,15 +1,4 @@
-//
-// Created by dinko on 07.02.22.
-// Modified by nermin on 05.09.22.
-//
-
 #include "xArm6.h"
-#include "RealVectorSpace.h"
-#include "RRTConnectConfig.h"
-
-#include <urdf/model.h>
-#include <glog/logging.h>
-#include <stl_reader.h>
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 

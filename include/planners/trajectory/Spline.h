@@ -8,6 +8,7 @@
 
 #include "AbstractRobot.h"
 #include "RealVectorSpaceConfig.h"
+#include "SplinesConfig.h"
 
 namespace planning
 {

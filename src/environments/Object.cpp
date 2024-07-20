@@ -1,7 +1,3 @@
-//
-// Created by nermin on 09.02.24.
-//
-
 #include "Object.h"
 
 env::Object::~Object() {}

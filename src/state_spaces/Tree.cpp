@@ -1,7 +1,3 @@
-//
-// Created by nermin on 18.02.22.
-//
-
 #include "Tree.h"
 
 base::Tree::Tree(const std::string &tree_name_, size_t tree_idx_)

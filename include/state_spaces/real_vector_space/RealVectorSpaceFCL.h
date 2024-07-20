@@ -6,6 +6,8 @@
 #define RPMPL_REALVECTORSPACEFCL_H
 
 #include "RealVectorSpace.h"
+#include "RealVectorSpaceConfig.h"
+#include "xArm6.h"
 
 namespace base
 {

@@ -1,7 +1,3 @@
-//
-// Created by nermin on 09.02.24.
-//
-
 #include "Box.h"
 
 env::Box::Box(const fcl::Vector3f &dim, const fcl::Vector3f &pos, const fcl::Quaternionf &rot, const std::string &label_)

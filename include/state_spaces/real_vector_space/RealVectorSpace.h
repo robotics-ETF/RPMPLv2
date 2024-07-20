@@ -9,6 +9,8 @@
 #include "StateSpace.h"
 #include "RealVectorSpaceState.h"
 #include "CollisionAndDistance.h"
+#include "RealVectorSpaceConfig.h"
+#include "xArm6.h"
 
 namespace base
 {

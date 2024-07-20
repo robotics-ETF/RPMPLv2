@@ -1,7 +1,3 @@
-//
-// Created by nermin on 14.04.22.
-//
-
 #include "DRGBTConfig.h"
 
 size_t DRGBTConfig::MAX_NUM_ITER                                        = 1e9;

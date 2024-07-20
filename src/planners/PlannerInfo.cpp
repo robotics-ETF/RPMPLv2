@@ -1,7 +1,3 @@
-//
-// Created by dinko on 26.5.21..
-//
-
 #include "PlannerInfo.h"
 
 PlannerInfo::~PlannerInfo()

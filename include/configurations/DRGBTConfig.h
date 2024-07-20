@@ -1,6 +1,8 @@
 //
 // Created by nermin on 14.04.22.
 //
+#ifndef RPMPL_DRGBTCONFIG_H
+#define RPMPL_DRGBTCONFIG_H
 
 #include <string>
 #include <PlanningTypes.h>
@@ -24,3 +26,5 @@ public:
     static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None" or "Spline"
     static bool GUARANTEED_SAFE_MOTION;                                     // Whether robot motion is surely safe for environment
 };
+
+#endif //RPMPL_DRGBTCONFIG_H

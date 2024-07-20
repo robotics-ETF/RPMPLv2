@@ -1,11 +1,4 @@
-//
-// Created by dinko on 07.03.21.
-// Modified by nermin on 07.03.22.
-//
-
 #include "RealVectorSpace.h"
-#include "RealVectorSpaceConfig.h"
-#include "xArm6.h"
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_) : StateSpace(num_dimensions_)
 {

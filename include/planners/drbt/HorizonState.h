@@ -5,7 +5,8 @@
 #define RPMPL_HORIZONSTATE_H
 
 #include "State.h"
-#include "ConfigurationReader.h"
+#include "DRGBTConfig.h"
+#include "RealVectorSpaceConfig.h"
 
 namespace planning
 {

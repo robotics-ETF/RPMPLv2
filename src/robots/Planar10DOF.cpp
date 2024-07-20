@@ -1,7 +1,3 @@
-//
-// Created by nermin on 05.09.22.
-//
-
 #include "Planar10DOF.h"
 
 robots::Planar10DOF::~Planar10DOF() {}

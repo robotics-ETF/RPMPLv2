@@ -1,11 +1,4 @@
-//
-// Created by dinko on 7.3.21..
-//
 #include "RealVectorSpaceFCL.h"
-#include "RealVectorSpaceConfig.h"
-#include "xArm6.h"
-// #include <glog/log_severity.h>
-// #include <glog/logging.h>
 
 base::RealVectorSpaceFCL::~RealVectorSpaceFCL() {}
 
