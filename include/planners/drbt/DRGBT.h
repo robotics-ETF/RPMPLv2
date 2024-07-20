@@ -46,11 +46,8 @@ namespace planning
             int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
             float updateCurrentState(bool measure_time);
             void updateCurrentState();
-            bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
-            bool computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain);
-            bool computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, float t_iter_remain);
-            bool checkSplineCollision(std::shared_ptr<planning::trajectory::Spline> spline, float t_offset, float t_max, std::shared_ptr<base::State> &q_init);
             bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
+            bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
             bool whetherToReplan();
             std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
             virtual void replan(float max_planning_time);
@@ -62,7 +59,6 @@ namespace planning
             std::shared_ptr<base::State> q_target;                                  // Target robot configuration to which the robot is currently heading to
             std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
             std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
-            float d_c;                                                              // Distance-to-obstacles for 'q_current' in the current iteration
             float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
             size_t horizon_size;                                                    // Number of states that is required to be in the horizon
             bool replanning;                                                        // Whether path replanning is required
@@ -70,17 +66,8 @@ namespace planning
             std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
             size_t num_lateral_states;                                              // Number of lateral states
             float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
-            std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
-            std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline that 'q_current' will follow until the end of current iteration
             bool all_robot_vel_same;                                                // Whether all joint velocities are the same
-            size_t max_num_iter_spline_next;                                        // Maximal number of iterations when computing spline_next
-            float max_obs_vel;                                                      // Maximal velocity considering all obstacles
-        
-        private:
-            float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
-	            const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
-            void recordTrajectory(bool spline_computed);
-
+            std::shared_ptr<planning::drbt::Splines> splines;                       // Everything related to splines
         };
     }
 }

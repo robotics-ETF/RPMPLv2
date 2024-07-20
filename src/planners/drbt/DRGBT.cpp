@@ -21,7 +21,6 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0, q_current);
     q_next_previous = q_next;
 
-    d_c = INFINITY;
     d_max_mean = 0;
     num_lateral_states = 2 * ss->num_dimensions - 2;
     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE + num_lateral_states;
@@ -42,21 +41,8 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
         }
     }
 
-    max_obs_vel = 0;
-    for (size_t i = 0; i < ss->env->getNumObjects(); i++)
-    {
-        if (ss->env->getObject(i)->getMaxVel() > max_obs_vel)
-            max_obs_vel = ss->env->getObject(i)->getMaxVel();
-    }
-
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-    {
-        spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
-        spline_next = spline_current;
-        max_num_iter_spline_next = all_robot_vel_same ? 
-            std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / SplinesConfig::FINAL_VELOCITY_STEP)) :
-            std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / SplinesConfig::FINAL_VELOCITY_STEP));
-    }
+        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_target, all_robot_vel_same);
 
 	// std::cout << "DRGBT planner initialized! \n";
 }
@@ -90,9 +76,9 @@ bool planning::drbt::DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Since the environment may change, a new distance is required!
         auto time_computeDistance { std::chrono::steady_clock::now() };
-        d_c = ss->computeDistance(q_current, true);     // ~ 1 [ms]
+        ss->computeDistance(q_current, true);     // ~ 1 [ms]
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
-        // std::cout << "d_c: " << d_c << "\n";
+        // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -222,19 +208,19 @@ void planning::drbt::DRGBT::generateHorizon()
 // Update the horizon size, and add lateral spines.
 void planning::drbt::DRGBT::updateHorizon()
 {
-    // std::cout << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << d_c << "\n";
+    // std::cout << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << q_current->getDistance() << " [m] \n";
     auto time_updateHorizon { std::chrono::steady_clock::now() };
 
-    if ((ss->num_dimensions-1) * d_c < DRGBTConfig::D_CRIT)
+    if ((ss->num_dimensions-1) * q_current->getDistance() < DRGBTConfig::D_CRIT)
         horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * ss->num_dimensions;
     else
-        horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + DRGBTConfig::D_CRIT / d_c);
+        horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + DRGBTConfig::D_CRIT / q_current->getDistance());
     
     // Modified formula (does not show better performance):
-    // if (d_c < DRGBTConfig::D_CRIT)
+    // if (q_current->getDistance() < DRGBTConfig::D_CRIT)
     //     horizon_size = ss->num_dimensions * DRGBTConfig::INIT_HORIZON_SIZE;
     // else
-    //     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + (ss->num_dimensions-1) * DRGBTConfig::D_CRIT / d_c);
+    //     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * (1 + (ss->num_dimensions-1) * DRGBTConfig::D_CRIT / q_current->getDistance());
     
     // std::cout << "Modifying horizon size from " << horizon.size() << " to " << horizon_size << "\n";
     if (horizon_size < horizon.size())
