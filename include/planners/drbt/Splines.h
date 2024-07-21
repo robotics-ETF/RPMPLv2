@@ -7,6 +7,7 @@
 #include "StateSpace.h"
 #include "Spline4.h"
 #include "Spline5.h"
+#include "CompositeSpline.h"
 #include "DRGBTConfig.h"
 #include "RRTConnectConfig.h"
 
