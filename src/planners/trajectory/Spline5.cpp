@@ -5,7 +5,7 @@
 planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRobot> robot_, const Eigen::VectorXf &q_current) :
     Spline(5, robot_, q_current) 
 {
-    a = b = c = d = e = Eigen::VectorXf::Zero(num_dimensions);
+    a = b = c = d = e = Eigen::VectorXf::Zero(robot->getNumDOFs());
     f = q_current;
 }
 
@@ -13,7 +13,7 @@ planning::trajectory::Spline5::Spline5(const std::shared_ptr<robots::AbstractRob
     const Eigen::VectorXf &q_current_dot, const Eigen::VectorXf &q_current_ddot) :
     Spline(5, robot_, q_current)
 {
-    a = b = c = Eigen::VectorXf::Zero(num_dimensions);
+    a = b = c = Eigen::VectorXf::Zero(robot->getNumDOFs());
     d = q_current_ddot / 2;
     e = q_current_dot;
     f = q_current;
@@ -28,7 +28,7 @@ planning::trajectory::Spline5::~Spline5() {}
 /// @note After reaching a final configuration, velocity and acceleration will remain zero!
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 {
-    return compute(q_final, Eigen::VectorXf::Zero(num_dimensions), Eigen::VectorXf::Zero(num_dimensions));
+    return compute(q_final, Eigen::VectorXf::Zero(robot->getNumDOFs()), Eigen::VectorXf::Zero(robot->getNumDOFs()));
 }
 
 /// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
@@ -39,7 +39,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final)
 /// @note After reaching a final configuration, acceleration will remain zero, while velocity will remain constant!
 bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot)
 {
-    return compute(q_final, q_final_dot, Eigen::VectorXf::Zero(num_dimensions));
+    return compute(q_final, q_final_dot, Eigen::VectorXf::Zero(robot->getNumDOFs()));
 }
 
 /// @brief Compute a quintic spline from 'q_current' to 'q_final' such that robot stops at 'q_final', where all constraints on
@@ -68,7 +68,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
     Eigen::Vector3f abc_left {}, abc_right {};       // a, b and c coefficients, respectively
     const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / SplinesConfig::FINAL_JERK_STEP));
 
-    for (size_t idx = 0; idx < num_dimensions; idx++)
+    for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
     {
         // std::cout << "Joint: " << idx << " ---------------------------------------------------\n";
         // std::cout << "Init. pos: " << f(idx) << "\t Final pos: " << q_final(idx) <<  "\n";
@@ -218,7 +218,7 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
 
     // Solution is found. Set the parameters for a new spline
     time_final = t_f_opt;
-    for (size_t idx = 0; idx < num_dimensions; idx++)
+    for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
         coeff.row(idx) << f(idx), e(idx), d(idx), c(idx), b(idx), a(idx);
     
     // auto t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count();

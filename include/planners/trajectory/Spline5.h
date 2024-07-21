@@ -28,16 +28,15 @@ namespace planning
             std::vector<float> getMaxAccelerationTimes(size_t idx) override;
             std::vector<float> getMaxJerkTimes(size_t idx) override;
 
-            float getPosition(float t, size_t idx, float t_f) override;
-            float getVelocity(float t, size_t idx, float t_f) override;
-            float getAcceleration(float t, size_t idx, float t_f) override;
-            float getJerk(float t, size_t idx, float t_f) override;
-
         private:
             float computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot, bool check_all_sol = false);
             float compute_a(size_t idx, float t_f, float q_f_ddot);
             float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
             float compute_c(size_t idx, float t_f, float q_f, float q_f_dot, float q_f_ddot);
+            float getPosition(float t, size_t idx, float t_f);
+            float getVelocity(float t, size_t idx, float t_f);
+            float getAcceleration(float t, size_t idx, float t_f);
+            float getJerk(float t, size_t idx, float t_f);
             const std::vector<float> solveQubicEquation(float a, float b, float c, float d);
             
             Eigen::VectorXf a, b, c, d, e, f;   // Coefficients of a spline a*t⁵ + b*t⁴ + c*t³ + d*t² + e*t + f

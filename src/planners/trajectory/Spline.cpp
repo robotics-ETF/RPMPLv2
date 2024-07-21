@@ -4,12 +4,11 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
 {
     order = order_;
     robot = robot_;
-    num_dimensions = robot->getNumDOFs();
-    coeff = Eigen::MatrixXf::Zero(num_dimensions, order + 1);
+    coeff = Eigen::MatrixXf::Zero(robot->getNumDOFs(), order + 1);
     coeff.col(0) = q_current;   // All initial conditions are zero, except position
     time_start = std::chrono::steady_clock::now();
     time_start_offset = 0;
-    times_final = std::vector<float>(num_dimensions, 0);
+    times_final = std::vector<float>(robot->getNumDOFs(), 0);
     time_final = 0;
     time_current = 0;
     time_begin = 0;
@@ -30,8 +29,8 @@ bool planning::trajectory::Spline::isFinalConf(const Eigen::VectorXf &q)
 
 Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getPosition(t, i);
 
     // std::cout << "Robot position at time " << t << " [s] is " << q.transpose() << "\n";
@@ -70,8 +69,8 @@ float planning::trajectory::Spline::getPosition(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getVelocity(t, i);
 
     // std::cout << "Robot velocity at time " << t << " [s] is " << q.transpose() << "\n";
@@ -104,8 +103,8 @@ float planning::trajectory::Spline::getVelocity(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getAcceleration(t, i);
 
     // std::cout << "Robot acceleration at time " << t << " [s] is " << q.transpose() << "\n";
@@ -128,8 +127,8 @@ float planning::trajectory::Spline::getAcceleration(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getJerk(t, i);
 
     // std::cout << "Robot jerk at time " << t << " [s] is " << q.transpose() << "\n";
@@ -174,13 +173,13 @@ namespace planning::trajectory
 {
     std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
     {
-        for (size_t i = 0; i < spline->num_dimensions; i++)
+        for (size_t i = 0; i < spline->robot->getNumDOFs(); i++)
         {
             os << "q_" << i << "(t) = ";
             for (size_t j = 0; j <= spline->order; j++)
                 os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
             
-            os << "\t for t in [0, " << spline->times_final[i] << "] [s] \n";
+            os << "\t for t in [0, " << std::min(spline->time_final, spline->times_final[i]) << "] [s] \n";
         }
 
         return os;

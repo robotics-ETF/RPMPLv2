@@ -44,7 +44,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     Eigen::VectorXf current_vel { splines->spline_current->getVelocity(t_spline_current) };
     Eigen::VectorXf current_acc { splines->spline_current->getAcceleration(t_spline_current) };
     std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
-    splines->spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
 
     // std::cout << "Curr. pos: " << current_pos.transpose() << "\n";
     // std::cout << "Curr. vel: " << current_vel.transpose() << "\n";
@@ -71,7 +70,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
             spline_computed = splines->computeSplineSafe(current_pos, current_vel, current_acc, t_iter_remain);
         else if (SplinesConfig::IS_FINAL_VELOCITY_ZERO)
-            spline_computed = splines->spline_next->compute(q_target->getCoord());
+            spline_computed = splines->computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain);
         else
             spline_computed = splines->computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain,
                               q_next->getIsReached() && q_next->getIndex() != -1 && !ss->isEqual(q_target, q_goal));

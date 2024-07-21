@@ -21,7 +21,7 @@ namespace planning
                     const std::shared_ptr<base::State> q_target_, bool all_robot_vel_same_ = false);
 
             bool computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                   float t_iter_remain, bool non_zero_final_vel);
+                                   float t_iter_remain, bool non_zero_final_vel = false);
             bool computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
                                    float t_iter_remain);
             
@@ -30,11 +30,9 @@ namespace planning
             
             std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
             std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline generated from 'q_current' to 'q_target'
-            std::shared_ptr<planning::trajectory::Spline> spline_emergency;         // Emergency spline intented for emergency stopping of the robot
 
         private:
-            bool checkSplineCollision(std::shared_ptr<planning::trajectory::Spline> spline, float t_offset, float t_max, 
-                                      std::shared_ptr<base::State> &q_init);
+            bool checkSplineCollision(std::shared_ptr<base::State> q_init, float t_iter);
             float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 	                                             const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
             void recordTrajectory(bool spline_computed);

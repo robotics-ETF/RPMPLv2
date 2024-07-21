@@ -29,15 +29,14 @@ namespace planning
             std::vector<float> getMaxAccelerationTimes(size_t idx) override;
             std::vector<float> getMaxJerkTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
 
-            float getPosition(float t, size_t idx, float t_f) override;
-            float getVelocity(float t, size_t idx, float t_f) override;
-            float getAcceleration(float t, size_t idx, float t_f) override;
-            float getJerk(float t, size_t idx, float t_f) override;
-
         private:
             float computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol = false);
             float compute_a(size_t idx, float t_f, float q_f_ddot);
             float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
+            float getPosition(float t, size_t idx, float t_f);
+            float getVelocity(float t, size_t idx, float t_f);
+            float getAcceleration(float t, size_t idx, float t_f);
+            float getJerk(float t, size_t idx, float t_f);
 
             Eigen::VectorXf a, b, c, d, e;   // Coefficients of a spline a*t⁴ + b*t³ + c*t² + d*t + e
         };

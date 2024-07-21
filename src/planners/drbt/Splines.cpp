@@ -25,9 +25,10 @@ planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, co
 bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
     float t_iter_remain, bool non_zero_final_vel)
 {
-    bool spline_computed { false };
-    std::shared_ptr<planning::trajectory::Spline> spline_new 
+    spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
+    std::shared_ptr<planning::trajectory::Spline> spline_next_new 
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
+    bool spline_computed { false };
     Eigen::VectorXf new_current_pos {};    // Possible current position at the end of iteration
 
     if (non_zero_final_vel)
@@ -43,9 +44,9 @@ bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Ei
             q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
             // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
 
-            if (spline_new->compute(q_target->getCoord(), q_final_dot)) 
+            if (spline_next_new->compute(q_target->getCoord(), q_final_dot)) 
             {
-                *spline_next = *spline_new;
+                *spline_next = *spline_next_new;
                 q_final_dot_min = q_final_dot;
                 spline_computed = true;
             }
@@ -62,10 +63,10 @@ bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Ei
     if (!spline_computed || 
         (new_current_pos - q_target->getCoord()).norm() > (current_pos - q_target->getCoord()).norm())
     {
-        spline_computed = spline_new->compute(q_target->getCoord());
+        spline_computed = spline_next_new->compute(q_target->getCoord());
         if (spline_computed)
         {
-            spline_next = spline_new;
+            spline_next = spline_next_new;
             // std::cout << "\t Spline computed with ZERO final velocity. \n";
         }
     }
