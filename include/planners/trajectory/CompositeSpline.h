@@ -13,15 +13,15 @@ namespace planning
         class CompositeSpline : public Spline
         {
         public:
-            CompositeSpline(const std::vector<std::shared_ptr<planning::trajectory::Spline>> &splines_);
+            CompositeSpline(const std::vector<std::shared_ptr<planning::trajectory::Spline>> &subsplines_);
             ~CompositeSpline();
 
-            size_t findSplineIdx(float t);
+            size_t findSubsplineIdx(float t);
             Eigen::VectorXf getPosition(float t) override;
             Eigen::VectorXf getVelocity(float t) override;
             Eigen::VectorXf getAcceleration(float t) override;
             Eigen::VectorXf getJerk(float t) override;
-            float getCoeff(size_t i, size_t j, size_t idx) const { return splines[idx]->getCoeff(i, j); }
+            float getCoeff(size_t i, size_t j, size_t idx) const { return subsplines[idx]->getCoeff(i, j); }
 
             // Not used functions here:
             bool compute() override { return false; }
@@ -35,8 +35,6 @@ namespace planning
             std::vector<float> getMaxAccelerationTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
             std::vector<float> getMaxJerkTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
 
-        protected:
-            std::vector<std::shared_ptr<planning::trajectory::Spline>> splines;
         };
     }
 }

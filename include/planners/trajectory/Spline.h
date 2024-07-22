@@ -73,6 +73,7 @@ namespace planning
             float time_end;                                     // Time instance in [s] when a spline ends in the current iteration
             bool is_zero_final_vel;                             // Whether final velocity is zero. If not, robot will move at constant velocity (if 'is_zero_final_acc' is true) after 'times_final[idx]'.
             bool is_zero_final_acc;                             // Whether final acceleration is zero. If not, robot will move at constant acceleration after 'times_final[idx]'.
+            std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines;     // Contains a sequence of splines. Relevant only to 'CompositeSpline'.
         };
         
     }
