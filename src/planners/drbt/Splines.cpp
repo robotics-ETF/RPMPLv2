@@ -88,12 +88,12 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
     std::shared_ptr<planning::trajectory::Spline> spline_emergency_temp { nullptr };
     
     float rho_robot {};
-    float rho_robot_emergency {};
     float rho_obs {};
     bool is_safe {};
     bool spline_computed { false };
     bool spline_emergency_computed { false };
-    float t_max { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
+    float t_iter { DRGBTConfig::MAX_ITER_TIME - t_iter_remain };
+    float t_spline_max { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
     int num_iter { 0 };
     int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
                                            (current_pos - q_target->getCoord()).norm() / RRTConnectConfig::EPS_STEP));
@@ -120,9 +120,10 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
 
         if (spline_next_temp->compute(q_final))
         {
-            if (spline_next_temp->getTimeFinal() < t_max)
+            // std::cout << "Spline is computed! \n";
+            if (spline_next_temp->getTimeFinal() < t_spline_max)
             {
-                rho_obs = max_obs_vel * spline_next_temp->getTimeFinal();
+                rho_obs = max_obs_vel * (t_iter + spline_next_temp->getTimeFinal());
                 if (rho_obs < q_current->getDistance())
                 {
                     rho_robot = computeRho(q_final);
@@ -138,31 +139,35 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
                 spline_emergency_temp = std::make_shared<planning::trajectory::Spline4>
                 (
                     ss->robot,
-                    spline_next_temp->getPosition(t_max),
-                    spline_next_temp->getVelocity(t_max),
-                    spline_next_temp->getAcceleration(t_max)
+                    spline_next_temp->getPosition(t_spline_max),
+                    spline_next_temp->getVelocity(t_spline_max),
+                    spline_next_temp->getAcceleration(t_spline_max)
                 );
 
                 if (spline_emergency_temp->compute())
                 {
-                    rho_obs = max_obs_vel * (t_max + spline_emergency_temp->getTimeFinal());
-                    rho_robot_emergency = computeRho(spline_emergency_temp->getPosition(INFINITY));
-                    if (rho_obs + rho_robot + rho_robot_emergency < q_current->getDistance())
+                    // std::cout << "Emergency spline is computed! \n";
+                    rho_obs = max_obs_vel * (t_iter + t_spline_max + spline_emergency_temp->getTimeFinal());
+                    if (rho_obs < q_current->getDistance())
                     {
-                        *spline_emergency_new = *spline_emergency_temp;
-                        spline_emergency_computed = true;
-                        is_safe = true;
-                        spline_next_temp->setTimeFinal(t_max);
+                        rho_robot = computeRho(spline_emergency_temp->getPosition(INFINITY));
+                        if (rho_obs + rho_robot < q_current->getDistance())
+                        {
+                            *spline_emergency_new = *spline_emergency_temp;
+                            spline_emergency_computed = true;
+                            is_safe = true;
+                            spline_next_temp->setTimeFinal(t_spline_max);
+                        }
                     }
                 }
             }
         }
 
         // std::cout << "\trho_obs: " << rho_obs << " [m]\t";
-        // std::cout << "\trho_robot: " << rho_robot << " [m]\t";
-        // std::cout << "\trho_robot_emergency: " << rho_robot_emergency << " [m]\t";
-        // std::cout << "\trho_sum: " << rho_obs + rho_robot + rho_robot_emergency << " [m]\n";
-        // rho_robot_emergency = 0; rho_robot = 0;     // Reset only for console output
+        // std::cout << "rho_robot: " << rho_robot << " [m]\t";
+        // std::cout << "rho_sum: " << rho_obs + rho_robot << " [m]\t";
+        // std::cout << "d_c: " << q_current->getDistance() << " [m]\n";
+        // rho_obs = 0; rho_robot = 0;     // Reset only for console output
         
         if (is_safe)
         {
@@ -183,20 +188,13 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
 
     if (spline_computed)    // Check whether computed splines are collision-free
     {
-        if (spline_emergency_computed)
-        {
-            std::cout << "spline_next_new: \n" << spline_next_new << "\n";
-            std::cout << "spline_emergency_new: \n" << spline_emergency_new << "\n";
-            spline_next = std::make_shared<planning::trajectory::CompositeSpline>
-                (std::vector<std::shared_ptr<planning::trajectory::Spline>>({ spline_next_new, spline_emergency_new }));
-        }
-        else
-        {
-            std::cout << "spline_next_new: \n" << spline_next_new << "\n";
-            spline_next = spline_next_new;
-        }
+        spline_next = spline_emergency_computed ?
+                      std::make_shared<planning::trajectory::CompositeSpline>
+                          (std::vector<std::shared_ptr<planning::trajectory::Spline>>({ spline_next_new, spline_emergency_new })) :
+                      spline_next_new;
 
-        spline_computed = !checkSplineCollision(ss->getNewState(q_current), DRGBTConfig::MAX_ITER_TIME - t_iter_remain);
+        // std::cout << "spline_next: \n" << spline_next << "\n";
+        spline_computed = !checkSplineCollision(ss->getNewState(q_current), t_iter);
     }
 
     return spline_computed;
@@ -209,9 +207,7 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
 /// @note 'q_init' must have a distance-to-obstacles or its underestimation!
 bool planning::drbt::Splines::checkSplineCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
-    std::cout << "Inside checkSplineCollision ............................................ \n";
-    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
-    
+    // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
     float delta_t { SplinesConfig::TIME_STEP_COLLISION_CHECK };
     size_t num_iter = std::ceil(spline_next->getTimeFinal() / delta_t);
     delta_t = spline_next->getTimeFinal() / num_iter;
@@ -219,51 +215,38 @@ bool planning::drbt::Splines::checkSplineCollision(std::shared_ptr<base::State> 
     float rho_obs {};
     float t_init { 0 };
     Eigen::VectorXf q_final {};
-    
-    // std::cout << "spline_next: \n" << spline_next;
-    std::cout << "num_iter: " << num_iter << "\n";
-    std::cout << "delta_t:  " << delta_t << "\n";
-    std::cout << "t_iter: " << t_iter << "\n";
-    std::cout << "t_final:    " << spline_next->getTimeFinal() << "\n";
+	Eigen::VectorXf delta_q {};
 
     for (float t = delta_t; t <= spline_next->getTimeFinal() + RealVectorSpaceConfig::EQUALITY_THRESHOLD; t += delta_t)
     {
-        std::cout << "Considering t: " << t << " ------------------------ \n";
+        // std::cout << "Considering t: " << t << "\n";
         t_iter += delta_t;
         q_final = spline_next->getPosition(t);
         rho_obs = max_obs_vel * (t_iter - t_init);
         rho_robot = 0;
+        delta_q = (q_final - q_init->getCoord()).cwiseAbs();
         for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
-            rho_robot += q_init->getEnclosingRadii()->col(i+1).dot((q_final - q_init->getCoord()).cwiseAbs());
+            rho_robot += q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
         
-        std::cout << "\t q_init:  " << q_init->getCoord().transpose() << "\n";
-        std::cout << "\t q_final: " << q_final.transpose() << "\n";
-        std::cout << "\t t_iter: " << t_iter << "\n";
-        std::cout << "\t t_init:   " << t_init << "\n";
-        std::cout << "\t rho_robot: " << rho_robot << "\t";
-        std::cout << "\t rho_obs:   " << rho_obs << "\t";
-        std::cout << "\t rho_robot + rho_obs:   " << rho_robot + rho_obs << "\t";
-        std::cout << "\t q_init->getDistance(): " << q_init->getDistance() << "\n";
         if (rho_robot + rho_obs >= q_init->getDistance())    // Possible collision
         {
-            std::cout << "********** Possible collision ********** \n";
+            // std::cout << "********** Possible collision ********** \n";
             q_init = ss->getNewState(q_final);
             q_init->setDistance(computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter));
             ss->robot->computeEnclosingRadii(q_init);
             t_init = t_iter;
 
-            std::cout << "\t q_init->getDistance(): " << q_init->getDistance() << "\n";
             if (q_init->getDistance() <= 0)
             {
-                std::cout << "\t Spline is NOT guaranteed collision-free! \n";
+                // std::cout << "\t Spline is NOT guaranteed collision-free! \n";
                 return true;
             }
         }
-        else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
+        // else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
     }
     
-    auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };
-    std::cout << "Elapsed time for spline checking: " << t_elapsed << " [us] \n";
+    // auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };
+    // std::cout << "Elapsed time for spline checking: " << t_elapsed << " [us] \n";
     return false;
 }
 

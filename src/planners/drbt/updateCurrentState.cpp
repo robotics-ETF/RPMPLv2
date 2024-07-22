@@ -79,7 +79,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             getElapsedTime(time_iter_start) - t_iter < t_spline_max - SplinesConfig::MAX_TIME_PUBLISH * measure_time && 
             changeNextState(visited_states) && 
             computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1));
-    std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
+    // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
     {
@@ -99,7 +99,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     q_current = ss->getNewState(splines->spline_next->getPosition(splines->spline_next->getTimeEnd()));   // Current robot position at the end of iteration
 
     // std::cout << "q_current:     " << q_current << "\n";
-    // std::cout << "q_target:      " << q_target << "\n";
     // std::cout << "Spline next: \n" << splines->spline_next << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
@@ -172,7 +171,7 @@ bool planning::drbt::DRGBT::computeTargetState(float time)
 /// @return Success of a change.
 bool planning::drbt::DRGBT::changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
 {
-    std::cout << "Change of q_next is required! \n";
+    // std::cout << "Change of q_next is required! \n";
     std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
     float weight_max { 0 };
     bool visited { false };
