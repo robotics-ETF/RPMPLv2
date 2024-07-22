@@ -173,13 +173,27 @@ namespace planning::trajectory
 {
     std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
     {
-        for (size_t i = 0; i < spline->robot->getNumDOFs(); i++)
+        auto print = [&os](std::shared_ptr<planning::trajectory::Spline> s) -> void
         {
-            os << "q_" << i << "(t) = ";
-            for (size_t j = 0; j <= spline->order; j++)
-                os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
-            
-            os << "\t for t in [0, " << std::min(spline->time_final, spline->times_final[i]) << "] [s] \n";
+            for (size_t i = 0; i < s->robot->getNumDOFs(); i++)
+            {
+                os << "q_" << i << "(t) = ";
+                for (size_t j = 0; j <= s->order; j++)
+                    os << s->getCoeff(i, j) << " t^" << j << (j == s->order ? "" : " + ");
+                
+                os << "\t for t in [0, " << std::min(s->time_final, s->times_final[i]) << "] [s] \n";
+            }
+        };
+
+        if (spline->subsplines.empty())
+            print(spline);
+        else
+        {
+            for (size_t k = 0; k < spline->subsplines.size(); k++)
+            {
+                os << "Subspline " << k << ":\n";
+                print(spline->subsplines[k]);
+            }
         }
 
         return os;
