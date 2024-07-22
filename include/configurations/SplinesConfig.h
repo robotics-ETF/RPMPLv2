@@ -8,7 +8,7 @@ class SplinesConfig
 {
 public:
     static float MAX_TIME_COMPUTE;              // Maximal time in [s] for computing a spline
-    static float MAX_TIME_PUBLISH;              // Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic 
+    static float MAX_TIME_PUBLISH;              // Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic. Determined by time measurements.
     static float MAX_TIME_FINAL;                // Maximal final time in [s] for a spline to be considered as valid 
     static float TIME_STEP_COLLISION_CHECK;     // Time step when checking whether a spline is collision-free
     static float FINAL_JERK_STEP;               // Final jerk step when using bisection method for finding optimal value of coefficient 'c'

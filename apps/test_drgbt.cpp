@@ -178,13 +178,13 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						  << " = " << 100.0 * num_success_tests / num_test << " %";
 				LOG(INFO) << "--------------------------------------------------------------------\n\n";
-				num_test++;
 			}
 			catch (std::exception &e)
 			{
 				LOG(ERROR) << e.what();
 			}
 
+			num_test++;
 			if ((reach_successful_tests && num_success_tests == max_num_tests) || (!reach_successful_tests && num_test > max_num_tests))
 				break;
 		}

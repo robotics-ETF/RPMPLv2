@@ -1,6 +1,7 @@
 MAX_TIME_COMPUTE: 0.003             # Maximal time in [s] for computing a spline
-MAX_TIME_PUBLISH: 0.001             # Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic 
+MAX_TIME_PUBLISH: 0.0005            # Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic. Determined by time measurements.
 MAX_TIME_FINAL: 1.0                 # Maximal final time in [s] for a spline to be considered as valid 
+TIME_STEP_COLLISION_CHECK: 0.01     # Time step when checking whether a spline is collision-free
 FINAL_JERK_STEP: 1.0                # Final jerk step when using bisection method for finding optimal value of coefficient 'c'
 FINAL_VELOCITY_STEP: 0.1            # Final velocity step when using bisection method for finding optimal value of final velocity
 IS_FINAL_VELOCITY_ZERO: true        # Whether a final velocity is zero when computing splines. If true, robot motion is more safe, yet a little bit slower. Note that when 'GUARANTEED_SAFE_MOTION' is true, this parameter is always true.
