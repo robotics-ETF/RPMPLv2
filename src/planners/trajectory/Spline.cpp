@@ -15,6 +15,7 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
     time_end = 0;
     is_zero_final_vel = true;
     is_zero_final_acc = true;
+    subsplines = {};
 }
 
 planning::trajectory::Spline::~Spline() {}
