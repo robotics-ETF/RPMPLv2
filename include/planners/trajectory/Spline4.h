@@ -25,9 +25,10 @@ namespace planning
                 [[maybe_unused]] const Eigen::VectorXf &q_temp) override { return false; }
             bool checkConstraints(size_t idx, float t_f) override;
 
-            std::vector<float> getMaxVelocityTimes(size_t idx) override;
-            std::vector<float> getMaxAccelerationTimes(size_t idx) override;
-            std::vector<float> getMaxJerkTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
+            std::vector<float> getPositionExtremumTimes(size_t idx) override;
+            std::vector<float> getVelocityExtremumTimes(size_t idx) override;
+            std::vector<float> getAccelerationExtremumTimes(size_t idx) override;
+            std::vector<float> getJerkExtremumTimes([[maybe_unused]] size_t idx) override { return std::vector<float>(); }
 
         private:
             float computeFinalTime(size_t idx, float q_f_dot, float q_f_ddot, bool check_all_sol = false);

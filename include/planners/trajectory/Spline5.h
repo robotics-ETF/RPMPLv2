@@ -6,6 +6,8 @@
 
 #include "Spline.h"
 
+// #include <unsupported/Eigen/Polynomials>
+
 namespace planning
 {
     namespace trajectory
@@ -24,9 +26,10 @@ namespace planning
             bool compute(const Eigen::VectorXf &q_final, const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) override;
             bool checkConstraints(size_t idx, float t_f) override;
 
-            std::vector<float> getMaxVelocityTimes(size_t idx) override;
-            std::vector<float> getMaxAccelerationTimes(size_t idx) override;
-            std::vector<float> getMaxJerkTimes(size_t idx) override;
+            std::vector<float> getPositionExtremumTimes(size_t idx) override;
+            std::vector<float> getVelocityExtremumTimes(size_t idx) override;
+            std::vector<float> getAccelerationExtremumTimes(size_t idx) override;
+            std::vector<float> getJerkExtremumTimes(size_t idx) override;
 
         private:
             float computeFinalTime(size_t idx, float q_f, float q_f_dot, float q_f_ddot, bool check_all_sol = false);

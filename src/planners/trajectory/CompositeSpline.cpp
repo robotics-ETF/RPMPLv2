@@ -60,3 +60,79 @@ Eigen::VectorXf planning::trajectory::CompositeSpline::getJerk(float t)
     float t_offset { idx > 0 ? subsplines[idx-1]->getTimeFinal() : 0 };
     return subsplines[idx]->getJerk(t - t_offset);
 }
+
+std::vector<float> planning::trajectory::CompositeSpline::getPositionExtremumTimes(size_t idx)
+{
+    std::vector<float> t_extrema {};
+    for (size_t i = 0; i < subsplines.size(); i++)
+    {
+        for (float t : subsplines[i]->getPositionExtremumTimes(idx))
+        {
+            // This check is only because of possible overlapping of solutions from the previous and current subspline
+            if (!t_extrema.empty() && std::abs(t - t_extrema.back()) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+                t_extrema.emplace_back(t);
+        }
+    }
+
+    return t_extrema;
+}
+
+std::vector<float> planning::trajectory::CompositeSpline::getVelocityExtremumTimes(size_t idx)
+{
+    std::vector<float> t_extrema {};
+    for (size_t i = 0; i < subsplines.size(); i++)
+    {
+        for (float t : subsplines[i]->getVelocityExtremumTimes(idx))
+        {
+            // This check is only because of possible overlapping of solutions from the previous and current subspline
+            if (!t_extrema.empty() && std::abs(t - t_extrema.back()) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+                t_extrema.emplace_back(t);
+        }
+    }
+
+    return t_extrema;
+}
+
+std::vector<float> planning::trajectory::CompositeSpline::getAccelerationExtremumTimes(size_t idx)
+{
+    std::vector<float> t_extrema {};
+    for (size_t i = 0; i < subsplines.size(); i++)
+    {
+        for (float t : subsplines[i]->getAccelerationExtremumTimes(idx))
+        {
+            // This check is only because of possible overlapping of solutions from the previous and current subspline
+            if (!t_extrema.empty() && std::abs(t - t_extrema.back()) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+                t_extrema.emplace_back(t);
+        }
+    }
+
+    return t_extrema;
+}
+
+std::vector<float> planning::trajectory::CompositeSpline::getJerkExtremumTimes(size_t idx)
+{
+    std::vector<float> t_extrema {};
+    for (size_t i = 0; i < subsplines.size(); i++)
+    {
+        for (float t : subsplines[i]->getJerkExtremumTimes(idx))
+        {
+            // This check is only because of possible overlapping of solutions from the previous and current subspline
+            if (!t_extrema.empty() && std::abs(t - t_extrema.back()) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+                t_extrema.emplace_back(t);
+        }
+    }
+
+    return t_extrema;
+}
+
+int planning::trajectory::CompositeSpline::checkPositionMonotonicity(size_t idx)
+{
+    int monotonic { subsplines.front()->checkPositionMonotonicity(idx) };
+    for (size_t i = 1; i < subsplines.size(); i++)
+    {
+        if (subsplines[i]->checkPositionMonotonicity(idx) != monotonic)
+            return 0;
+    }
+
+    return monotonic;
+}

@@ -28,6 +28,41 @@ bool planning::trajectory::Spline::isFinalConf(const Eigen::VectorXf &q)
     return ((q - getPosition(time_final)).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD) ? true : false;
 }
 
+/// @brief Check whether position function is monotonic.
+/// @param idx Index of robot's joint.
+/// @return Return 1 if the function is monotonically increasing.
+/// @return Return -1 if the function is monotonically decreasing.
+/// @return Return 0 if the function is non monotonic.
+int planning::trajectory::Spline::checkPositionMonotonicity(size_t idx)
+{
+    float value { getVelocity(SplinesConfig::TIME_STEP_COLLISION_CHECK, idx) };
+    int monotonic { value > 0 ? 1 : -1 };
+
+    for (float t = 2*SplinesConfig::TIME_STEP_COLLISION_CHECK; t <= times_final[idx]; t += SplinesConfig::TIME_STEP_COLLISION_CHECK)
+    {
+        value = getVelocity(t, idx);
+        if ((value > 0 && monotonic == -1) || (value < 0 && monotonic == 1))
+            return 0;
+    }
+
+    return monotonic;
+}
+
+/// @brief Check whether position function is monotonic considering all spline functions.
+/// @return Return 1 if the function is monotonically increasing.
+/// @return Return -1 if the function is monotonically decreasing.
+/// @return Return 0 if the function is non monotonic.
+int planning::trajectory::Spline::checkPositionMonotonicity()
+{
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
+    {
+        if (checkPositionMonotonicity(i) == 0)
+            return false;
+    }
+
+    return true;
+}
+
 Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
     Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };

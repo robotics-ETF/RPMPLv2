@@ -28,9 +28,12 @@ namespace planning
             virtual bool checkConstraints(size_t idx, float t_f) = 0;
             bool isFinalConf(const Eigen::VectorXf &q);
             
-            virtual std::vector<float> getMaxVelocityTimes(size_t idx) = 0;
-            virtual std::vector<float> getMaxAccelerationTimes(size_t idx) = 0;
-            virtual std::vector<float> getMaxJerkTimes(size_t idx) = 0;
+            virtual std::vector<float> getPositionExtremumTimes(size_t idx) = 0;
+            virtual std::vector<float> getVelocityExtremumTimes(size_t idx) = 0;
+            virtual std::vector<float> getAccelerationExtremumTimes(size_t idx) = 0;
+            virtual std::vector<float> getJerkExtremumTimes(size_t idx) = 0;
+            virtual int checkPositionMonotonicity(size_t idx);
+            int checkPositionMonotonicity();
 
             virtual Eigen::VectorXf getPosition(float t);
             float getPosition(float t, size_t idx);
@@ -46,6 +49,7 @@ namespace planning
 
             float getCoeff(size_t i, size_t j) const { return coeff(i, j); }
             float getTimeFinal() const { return time_final; }
+            float getTimeFinal(size_t idx) const { return times_final[idx]; }
             float getTimeCurrent(bool measure_time = false);
             float getTimeBegin() const { return time_begin; }
             float getTimeEnd() const { return time_end; }

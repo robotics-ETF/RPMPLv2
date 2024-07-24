@@ -335,11 +335,11 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
 
     // Maximal acceleration constraint
     // Note: Initial and final acceleration are surely satisfied!
-    std::vector<float> t_max { getMaxAccelerationTimes(idx) };
-    for (size_t i = 0; i < t_max.size(); i++)
+    std::vector<float> t_extrema { getAccelerationExtremumTimes(idx) };
+    for (size_t i = 0; i < t_extrema.size(); i++)
     {
-        // std::cout << "\t Max. acceleration.\t t_max: " << t_max[i] << "\t value: " << std::abs(getAcceleration(t_max[i], idx, t_f)) << "\n";
-        if (std::abs(getAcceleration(t_max[i], idx, t_f)) > robot->getMaxAcc(idx))
+        // std::cout << "\t Max. acceleration.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getAcceleration(t_extrema[i], idx, t_f)) << "\n";
+        if (std::abs(getAcceleration(t_extrema[i], idx, t_f)) > robot->getMaxAcc(idx))
         {
             // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
             return false;
@@ -348,11 +348,11 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
 
     // Maximal velocity constraint
     // Note: Initial and final velocity are surely satisfied!
-    t_max = getMaxVelocityTimes(idx);
-    for (size_t i = 0; i < t_max.size(); i++)
+    t_extrema = getVelocityExtremumTimes(idx);
+    for (size_t i = 0; i < t_extrema.size(); i++)
     {
-        // std::cout << "\t Max. velocity.\t t_max: " << t_max[i] << "\t value: " << std::abs(getVelocity(t_max[i], idx, t_f)) << "\n";
-        if (std::abs(getVelocity(t_max[i], idx, t_f)) > robot->getMaxVel(idx))
+        // std::cout << "\t Max. velocity.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getVelocity(t_extrema[i], idx, t_f)) << "\n";
+        if (std::abs(getVelocity(t_extrema[i], idx, t_f)) > robot->getMaxVel(idx))
         {
             // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
@@ -363,9 +363,33 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     return true;
 }
 
-std::vector<float> planning::trajectory::Spline4::getMaxVelocityTimes(size_t idx)
+std::vector<float> planning::trajectory::Spline4::getPositionExtremumTimes(size_t idx)
 {
-    std::vector<float> t_max {};
+    // This can be implemented using <unsupported/Eigen/Polynomials> library and finding zeros of a velocity function,
+    // yet we provide here a classic approximate implementation.
+    
+    std::vector<float> t_extrema {};
+    float pos_curr {};
+    float pos_prev { getPosition(0, idx, times_final[idx]) };
+    bool rising { getVelocity(0, idx, times_final[idx]) > 0 ? true : false };
+
+    for (float t = SplinesConfig::TIME_STEP_COLLISION_CHECK; t <= times_final[idx]; t += SplinesConfig::TIME_STEP_COLLISION_CHECK)
+    {
+        pos_curr = getPosition(t, idx, times_final[idx]);
+        if ((pos_curr > pos_prev && !rising) || (pos_curr < pos_prev && rising))
+        {
+            t_extrema.emplace_back((2*t - SplinesConfig::TIME_STEP_COLLISION_CHECK) * 0.5);
+            rising = !rising;
+        }
+        pos_prev = pos_curr;
+    }
+
+    return t_extrema;
+}
+
+std::vector<float> planning::trajectory::Spline4::getVelocityExtremumTimes(size_t idx)
+{
+    std::vector<float> t_extrema {};
 
     if (std::abs(a(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
     {
@@ -373,21 +397,21 @@ std::vector<float> planning::trajectory::Spline4::getMaxVelocityTimes(size_t idx
         if (D >= 0)
         {
             for (int sign : {-1, 1})
-                t_max.emplace_back((-6*b(idx) + sign*std::sqrt(D)) / (24*a(idx)));
+                t_extrema.emplace_back((-6*b(idx) + sign*std::sqrt(D)) / (24*a(idx)));
         }
     }
 
-    return t_max;
+    return t_extrema;
 }
 
-std::vector<float> planning::trajectory::Spline4::getMaxAccelerationTimes(size_t idx)
+std::vector<float> planning::trajectory::Spline4::getAccelerationExtremumTimes(size_t idx)
 {
-    std::vector<float> t_max {};
+    std::vector<float> t_extrema {};
 
     if (std::abs(a(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-        t_max.emplace_back(-b(idx) / (4*a(idx)));
+        t_extrema.emplace_back(-b(idx) / (4*a(idx)));
 
-    return t_max;
+    return t_extrema;
 }
 
 float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
