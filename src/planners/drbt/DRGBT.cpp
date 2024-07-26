@@ -441,11 +441,11 @@ bool planning::drbt::DRGBT::modifyState(std::shared_ptr<planning::drbt::HorizonS
 // Compute a reached state when generating a generalized spine from 'q_current' towards 'q'.
 void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q)
 {
-    base::State::Status status { base::State::Status::None };
+    base::State::Status status_ { base::State::Status::None };
     std::shared_ptr<base::State> q_reached { nullptr };
-    tie(status, q_reached) = extendGenSpine(q_current, q->getState());
+    tie(status_, q_reached) = extendGenSpine(q_current, q->getState());
     q->setStateReached(q_reached);
-    q->setIsReached(status == base::State::Status::Reached ? true : false);
+    q->setIsReached(status_ == base::State::Status::Reached ? true : false);
 
     // TODO: If there is enough remaining time, compute real distance-to-obstacles 
     float d_c_underest { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };

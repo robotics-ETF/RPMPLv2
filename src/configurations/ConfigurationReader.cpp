@@ -207,10 +207,10 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "SplinesConfig::MAX_TIME_FINAL is not defined! Using default value of " << SplinesConfig::MAX_TIME_FINAL;
 
-    if (SplinesConfigRoot["TIME_STEP_COLLISION_CHECK"].IsDefined())
-        SplinesConfig::TIME_STEP_COLLISION_CHECK = SplinesConfigRoot["TIME_STEP_COLLISION_CHECK"].as<float>();
+    if (SplinesConfigRoot["TIME_STEP"].IsDefined())
+        SplinesConfig::TIME_STEP = SplinesConfigRoot["TIME_STEP"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::TIME_STEP_COLLISION_CHECK is not defined! Using default value of " << SplinesConfig::TIME_STEP_COLLISION_CHECK;
+        LOG(INFO) << "SplinesConfig::TIME_STEP is not defined! Using default value of " << SplinesConfig::TIME_STEP;
 
     if (SplinesConfigRoot["FINAL_JERK_STEP"].IsDefined())
         SplinesConfig::FINAL_JERK_STEP = SplinesConfigRoot["FINAL_JERK_STEP"].as<float>();

@@ -208,7 +208,7 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
 bool planning::drbt::Splines::checkSplineCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
-    float delta_t { SplinesConfig::TIME_STEP_COLLISION_CHECK };
+    float delta_t { SplinesConfig::TIME_STEP };
     size_t num_iter = std::ceil(spline_next->getTimeFinal() / delta_t);
     delta_t = spline_next->getTimeFinal() / num_iter;
     float rho_robot {};

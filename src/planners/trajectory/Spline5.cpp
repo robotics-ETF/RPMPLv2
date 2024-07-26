@@ -364,12 +364,12 @@ std::vector<float> planning::trajectory::Spline5::getPositionExtremumTimes(size_
     float pos_prev { getPosition(0, idx, times_final[idx]) };
     bool rising { getVelocity(0, idx, times_final[idx]) > 0 ? true : false };
 
-    for (float t = SplinesConfig::TIME_STEP_COLLISION_CHECK; t <= times_final[idx]; t += SplinesConfig::TIME_STEP_COLLISION_CHECK)
+    for (float t = SplinesConfig::TIME_STEP; t <= times_final[idx]; t += SplinesConfig::TIME_STEP)
     {
         pos_curr = getPosition(t, idx, times_final[idx]);
         if ((pos_curr > pos_prev && !rising) || (pos_curr < pos_prev && rising))
         {
-            t_extrema.emplace_back((2*t - SplinesConfig::TIME_STEP_COLLISION_CHECK) * 0.5);
+            t_extrema.emplace_back((2*t - SplinesConfig::TIME_STEP) * 0.5);
             rising = !rising;
         }
         pos_prev = pos_curr;
