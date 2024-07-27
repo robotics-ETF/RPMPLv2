@@ -1,5 +1,5 @@
 //
-// Created by dinko on 26.5.21..
+// Created by dinko on 26.5.21.
 //
 
 #ifndef RPMPL_PLANNERINFO_H

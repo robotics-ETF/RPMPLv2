@@ -68,4 +68,5 @@ namespace base
         };
     };
 }
+
 #endif //RPMPL_COLLISIONANDDISTANCE_H

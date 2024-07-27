@@ -1,6 +1,7 @@
 //
 // Created by nermin on 23.05.24.
 //
+
 #ifndef RPMPL_SPLINESCONFIG_H
 #define RPMPL_SPLINESCONFIG_H
 

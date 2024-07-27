@@ -1,6 +1,7 @@
 //
 // Created by dinko on 17.02.22.
 //
+
 #ifndef RPMPL_RRTCONNECTCONFIG_H
 #define RPMPL_RRTCONNECTCONFIG_H
 

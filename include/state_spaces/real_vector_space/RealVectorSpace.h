@@ -51,4 +51,5 @@ namespace base
 		
 	};
 }
+
 #endif //RPMPL_REALVECTORSPACE_H

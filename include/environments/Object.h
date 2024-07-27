@@ -50,4 +50,5 @@ namespace env
 		float min_dist_tol; 										// Minimal distance tolerance for a static obstacle to not be included into a dynamic scene	
 	};
 }
+
 #endif //RPMPL_OBJECT_H

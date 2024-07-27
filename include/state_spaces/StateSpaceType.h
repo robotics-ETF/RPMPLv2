@@ -1,5 +1,5 @@
 //
-// Created by dinko on 21.5.21..
+// Created by dinko on 21.5.21.
 //
 
 #ifndef RPMPL_STATESPACETYPE_H

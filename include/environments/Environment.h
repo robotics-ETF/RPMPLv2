@@ -50,4 +50,5 @@ namespace env
 		bool table_included;
 	};
 }
+
 #endif //RPMPL_ENVIRONMENT_H

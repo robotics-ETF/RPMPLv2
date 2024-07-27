@@ -49,4 +49,5 @@ namespace scenario
         size_t num_dimensions;         // Number of dimensions of the state-space (also 'num_DOFs' of the used robot)
 	};
 }
+
 #endif //RPMPL_SCENARIO_H

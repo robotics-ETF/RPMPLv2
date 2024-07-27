@@ -19,4 +19,5 @@ namespace robots
 		bool checkSelfCollision(const std::shared_ptr<base::State> q) override;
     };
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H

@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #ifndef RPMPL_ABSTRACTROBOT_H
@@ -67,4 +68,5 @@ namespace robots
 		bool self_collision_checking;
 	};
 }
+
 #endif //RPMPL_ABSTRACTROBOT_H

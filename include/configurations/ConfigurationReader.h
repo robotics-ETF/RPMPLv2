@@ -2,6 +2,7 @@
 // Created by dinko on 17.02.22.
 // Modified by nermin on 22.07.23.
 //
+
 #ifndef RPMPL_CONFIGURATIONREADER_H
 #define RPMPL_CONFIGURATIONREADER_H
 

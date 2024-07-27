@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #ifndef RPMPL_XARM6_H
@@ -53,6 +54,6 @@ namespace robots
 		float gripper_length;
 		bool table_included;
 	};
-
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H

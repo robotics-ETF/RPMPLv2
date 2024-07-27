@@ -1,6 +1,7 @@
 //
 // Created by nermin on 28.02.22.
 //
+
 #ifndef RPMPL_RGBMTSTARCONFIG_H
 #define RPMPL_RGBMTSTARCONFIG_H
 

@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #ifndef RPMPL_PLANAR2DOF_H
@@ -46,4 +47,5 @@ namespace robots
 	};
 
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H
