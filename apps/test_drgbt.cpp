@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 
 		init_num_test = 1;
 		init_num_success_test = 0;
-		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
+		init_num_obs += (init_num_obs > 0) ? std::pow(10, std::floor(std::log10(init_num_obs))) : 1;
 
 		LOG(INFO) << "Success rate:                     " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
