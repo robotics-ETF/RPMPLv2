@@ -289,8 +289,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 	{
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 				continue;
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
@@ -341,8 +340,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 		d_c_profile[i] = INFINITY;
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
 				d_c_temp = INFINITY;
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point

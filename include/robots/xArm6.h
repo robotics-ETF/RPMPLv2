@@ -25,7 +25,7 @@ namespace robots
 	class xArm6 : public AbstractRobot
 	{
 	public:
-		xArm6(const std::string &robot_desc, float gripper_length_ = 0, bool table_included_ = false);
+		xArm6(const std::string &robot_desc, float gripper_length_ = 0, size_t ground_included_ = 0);
 		~xArm6();
 
 		const KDL::Tree &getRobotTree() const { return robot_tree; }
@@ -51,8 +51,6 @@ namespace robots
 		std::vector<KDL::Frame> init_poses;
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
-		float gripper_length;
-		bool table_included;
 	};
 }
 

@@ -19,8 +19,7 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	{	
 		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 				continue;
 			else
 			{
@@ -65,8 +64,7 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 		d_c_profile[i] = INFINITY;
 		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
 				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point

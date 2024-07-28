@@ -12,7 +12,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         if (type == "xarm6")
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
                                                     robot_node["gripper_length"].as<float>(),
-                                                    robot_node["table_included"].as<bool>());
+                                                    robot_node["ground_included"].as<size_t>());
         else if (type == "planar_2DOF")
             robot = std::make_shared<robots::Planar2DOF>(root_path + robot_node["urdf"].as<std::string>());
         else if (type == "planar_10DOF")

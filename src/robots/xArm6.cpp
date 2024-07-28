@@ -4,7 +4,7 @@ typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
 robots::xArm6::~xArm6() {}
 
-robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool table_included_)
+robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, size_t ground_included_)
 {
     if (!kdl_parser::treeFromFile(robot_desc, robot_tree))
 		throw std::runtime_error("Failed to construct kdl tree");
@@ -64,10 +64,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, bool 
 	
 	self_collision_checking = true;
 	gripper_length = gripper_length_;
-	table_included = table_included_;
-	if (table_included)
-		type += "_with_table";
-
+	ground_included = ground_included_;
 	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	if (gripper_length > 0)
 		state << 0, 0, 0, M_PI, M_PI_2, 0; 	// Starting configuration in case the gripper is attached

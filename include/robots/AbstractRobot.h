@@ -38,6 +38,9 @@ namespace robots
 		inline const Eigen::VectorXf &getMaxVel() const { return max_vel; }
 		inline const Eigen::VectorXf &getMaxAcc() const { return max_acc; }
 		inline const Eigen::VectorXf &getMaxJerk() const { return max_jerk; }
+		inline bool getSelfCollisionChecking() const { return self_collision_checking; }
+		inline float getGripperLength() const { return gripper_length; }
+		inline size_t getGroundIncluded() const { return ground_included; }
 
 		inline void setConfiguration(const std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
 		inline void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
@@ -45,6 +48,8 @@ namespace robots
 		inline void setMaxAcc(const Eigen::VectorXf &max_acc_) { max_acc = max_acc_; }
 		inline void setMaxJerk(const Eigen::VectorXf &max_jerk_) { max_jerk = max_jerk_; }
 		inline void setSelfCollisionChecking(bool self_collision_checking_) { self_collision_checking = self_collision_checking_; }
+		inline void setGripperLength(float gripper_length_) { gripper_length = gripper_length_; }
+		inline void setGroundIncluded(size_t ground_included_) { ground_included = ground_included_; }
 
 		virtual void setState(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
@@ -66,6 +71,8 @@ namespace robots
 		Eigen::VectorXf max_acc;
 		Eigen::VectorXf max_jerk;
 		bool self_collision_checking;
+		float gripper_length;
+		size_t ground_included;
 	};
 }
 

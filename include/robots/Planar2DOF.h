@@ -45,7 +45,6 @@ namespace robots
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
 	};
-
 }
 
 #endif //RPMPL_ABSTRACTPLANNER_H

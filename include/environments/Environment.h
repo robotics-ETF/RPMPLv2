@@ -23,7 +23,7 @@ namespace env
 
 		inline void setBaseRadius(float base_radius_) { base_radius = base_radius_; }
 		inline void setRobotMaxVel(float robot_max_vel_) { robot_max_vel = robot_max_vel_; }
-		inline void setTableIncluded(bool table_included_) { table_included = table_included_; }
+		inline void setGroundIncluded(size_t ground_included_) { ground_included = ground_included_; }
 
 		inline const std::vector<std::shared_ptr<env::Object>> &getObjects() const { return objects; }
 		inline std::shared_ptr<env::Object> getObject(size_t idx) const { return objects[idx]; }
@@ -47,7 +47,7 @@ namespace env
         float WS_radius; 										// Workspace radius in [m]
 		float base_radius;
 		float robot_max_vel;
-		bool table_included;
+		size_t ground_included;
 	};
 }
 
