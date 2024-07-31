@@ -1,5 +1,15 @@
 #include "Environment.h"
 
+env::Environment::Environment(const std::shared_ptr<env::Environment> env)
+{
+    objects = env->getObjects();
+    WS_center = env->getWSCenter();
+    WS_radius = env->getWSRadius();
+    base_radius = env->getBaseRadius();
+    robot_max_vel = env->getRobotMaxVel();
+    ground_included = env->getGroundIncluded();
+}
+
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
     YAML::Node node { YAML::LoadFile(root_path + config_file_path) };

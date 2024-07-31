@@ -14,10 +14,11 @@
 #include "Box.h"
 
 namespace env
-{	
+{
 	class Environment
 	{
 	public:
+		Environment(const std::shared_ptr<env::Environment> env);
 		Environment(const std::string &config_file_path, const std::string &root_path = "");
 		~Environment();
 
@@ -31,6 +32,9 @@ namespace env
 		inline size_t getNumObjects() const { return objects.size(); }
 		inline const fcl::Vector3f &getWSCenter() const { return WS_center; }
 		inline float getWSRadius() const { return WS_radius; }
+		inline float getBaseRadius() const { return base_radius; }
+		inline float getRobotMaxVel() const { return robot_max_vel; }
+		inline size_t getGroundIncluded() const { return ground_included; }
 
 		void addObject(const std::shared_ptr<env::Object> object, const fcl::Vector3f &velocity = fcl::Vector3f::Zero(), 
 			const fcl::Vector3f &acceleration = fcl::Vector3f::Zero());
