@@ -20,7 +20,7 @@ namespace planning::rbt_star
     public:
         RGBMTStar(const std::shared_ptr<base::StateSpace> ss_);
         RGBMTStar(const std::shared_ptr<base::StateSpace> ss_, 
-                    const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
+                  const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
         
         bool solve() override;
         
@@ -36,7 +36,7 @@ namespace planning::rbt_star
             (const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
         float computeCostToCome(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2);
         std::shared_ptr<base::State> optimize(const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree, 
-                                                std::shared_ptr<base::State> q_reached);
+                                              std::shared_ptr<base::State> q_reached);
         void unifyTrees(const std::shared_ptr<base::Tree> tree0, const std::shared_ptr<base::State> q_con, 
                         const std::shared_ptr<base::State> q0_con);
         void deleteTrees(const std::vector<size_t> &trees_connected);
@@ -45,7 +45,7 @@ namespace planning::rbt_star
 
     private:
         void considerChildren(const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree0,
-                                const std::shared_ptr<base::State> q0_con, const std::shared_ptr<base::State> q_considered);
+                              const std::shared_ptr<base::State> q0_con, const std::shared_ptr<base::State> q_considered);
     };
 }
 

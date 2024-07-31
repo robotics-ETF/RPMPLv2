@@ -20,7 +20,7 @@ namespace planning::rbt
 	public:
 		RBTConnect(const std::shared_ptr<base::StateSpace> ss_);
 		RBTConnect(const std::shared_ptr<base::StateSpace> ss_, 
-					const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
+				   const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
 		
 		bool solve() override;
 		bool checkTerminatingCondition(base::State::Status status) override;
@@ -31,7 +31,7 @@ namespace planning::rbt
 		std::tuple<base::State::Status, std::shared_ptr<base::State>> extendSpine
 			(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
 		base::State::Status connectSpine(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, 
-											const std::shared_ptr<base::State> q_e);
+										 const std::shared_ptr<base::State> q_e);
 	};
 }
 

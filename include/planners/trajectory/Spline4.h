@@ -21,7 +21,7 @@ namespace planning::trajectory
         bool compute(const Eigen::VectorXf &q_final_dot) override;
         bool compute(const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot) override;
         bool compute([[maybe_unused]] const Eigen::VectorXf &q_final_dot, [[maybe_unused]] const Eigen::VectorXf &q_final_ddot, 
-            [[maybe_unused]] const Eigen::VectorXf &q_temp) override { return false; }
+                     [[maybe_unused]] const Eigen::VectorXf &q_temp) override { return false; }
         bool checkConstraints(size_t idx, float t_f) override;
 
         std::vector<float> getPositionExtremumTimes(size_t idx) override;

@@ -22,7 +22,7 @@ namespace planning::rrt
 	public:
 		RRTConnect(const std::shared_ptr<base::StateSpace> ss_);
 		RRTConnect(const std::shared_ptr<base::StateSpace> ss_, 
-					const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
+				   const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
 		~RRTConnect();
 		
 		bool solve() override;

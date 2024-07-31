@@ -37,7 +37,7 @@ namespace env
 		inline size_t getGroundIncluded() const { return ground_included; }
 
 		void addObject(const std::shared_ptr<env::Object> object, const fcl::Vector3f &velocity = fcl::Vector3f::Zero(), 
-			const fcl::Vector3f &acceleration = fcl::Vector3f::Zero());
+					   const fcl::Vector3f &acceleration = fcl::Vector3f::Zero());
 		void removeObject(size_t idx);
 		void removeObjects(int start_idx, int end_idx = -1);
 		void removeObjects(const std::string &label, bool with_label = true);

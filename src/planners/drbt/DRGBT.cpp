@@ -24,7 +24,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     d_max_mean = 0;
     num_lateral_states = 2 * ss->num_dimensions - 2;
     horizon_size = DRGBTConfig::INIT_HORIZON_SIZE + num_lateral_states;
-    replanning = false;
+    replanning_required = false;
     status = base::State::Status::Reached;
     planner_info->setNumStates(1);
 	planner_info->setNumIterations(0);
@@ -190,7 +190,7 @@ void planning::drbt::DRGBT::generateHorizon()
     }
     else    // status == base::State::Status::Trapped || predefined_path.empty()
     {
-        replanning = true;
+        replanning_required = true;
         addRandomStates(num_states);
     }
     
@@ -560,7 +560,7 @@ void planning::drbt::DRGBT::computeNextState()
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
         horizon.clear();
         status = base::State::Status::Trapped;
-        replanning = true;
+        replanning_required = true;
         q_next = std::make_shared<planning::drbt::HorizonState>(q_current, -1, q_current);
     }
 

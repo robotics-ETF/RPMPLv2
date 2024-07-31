@@ -4,7 +4,7 @@
 /// @return Decision whether the replanning is needed.
 bool planning::drbt::DRGBT::whetherToReplan()
 {
-    if (replanning)
+    if (replanning_required)
         return true;
     
     float weight_max { 0 };
@@ -84,7 +84,7 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
             ss->preprocessPath(planner->getPath(), predefined_path, max_edge_length);
             horizon.clear();
             status = base::State::Status::Reached;
-            replanning = false;
+            replanning_required = false;
             q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0, q_current);
             planner_info->addRoutineTime(planner->getPlannerInfo()->getPlanningTime() * 1e3, 0);  // replan
         }
@@ -94,6 +94,6 @@ void planning::drbt::DRGBT::replan(float max_planning_time)
     catch (std::exception &e)
     {
         // std::cout << "Replanning is required. " << e.what() << "\n";
-        replanning = true;
+        replanning_required = true;
     }
 }

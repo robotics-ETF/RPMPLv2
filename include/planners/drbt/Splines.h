@@ -21,9 +21,9 @@ namespace planning::drbt
                 const std::shared_ptr<base::State> q_target_, bool all_robot_vel_same_ = false);
 
         bool computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                float t_iter_remain, bool non_zero_final_vel = false);
+                               float t_iter_remain, bool non_zero_final_vel = false);
         bool computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                float t_iter_remain);
+                               float t_iter_remain);
         
         inline void setCurrentState(const std::shared_ptr<base::State> q_current_) { q_current = q_current_; }
         inline void setTargetState(const std::shared_ptr<base::State> q_target_) { q_target = q_target_; }
@@ -34,7 +34,7 @@ namespace planning::drbt
     private:
         bool checkSplineCollision(std::shared_ptr<base::State> q_init, float t_iter);
         float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
-                                                const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
+                                             const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
         void recordTrajectory(bool spline_computed);
 
         std::shared_ptr<base::StateSpace> ss;

@@ -8,6 +8,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         YAML::Node robot_node { node["robot"] };
         std::string type { robot_node["type"].as<std::string>() };
         size_t num_DOFs { robot_node["num_DOFs"].as<size_t>() };
+		std::shared_ptr<robots::AbstractRobot> robot;
 
         if (type == "xarm6")
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
@@ -76,7 +77,7 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         if (self_collision_checking_node.IsDefined())
             robot->setSelfCollisionChecking(self_collision_checking_node.as<bool>());
 
-        env = std::make_shared<env::Environment>(config_file_path, root_path);
+        std::shared_ptr<env::Environment> env {std::make_shared<env::Environment>(config_file_path, root_path) };
         std::string state_space { robot_node["space"].as<std::string>() };
         if (state_space == "RealVectorSpace")
             ss = std::make_shared<base::RealVectorSpace>(num_DOFs, robot, env);
@@ -109,8 +110,6 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
 scenario::Scenario::Scenario(std::shared_ptr<base::StateSpace> ss_, std::shared_ptr<base::State> q_start_, std::shared_ptr<base::State> q_goal_)
 {
     ss = ss_;
-    robot = ss->robot;
-    env = ss->env;
     q_start = q_start_;
     q_goal = q_goal_;
     state_space_type = ss->getStateSpaceType();

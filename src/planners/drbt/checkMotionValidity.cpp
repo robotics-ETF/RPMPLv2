@@ -75,7 +75,7 @@ bool planning::drbt::DRGBT::checkMotionValidity(size_t num_checks)
     }
     }
 
-    // std::cout << "Evironment objects: \n";
+    // std::cout << "Environment objects: \n";
     // for (size_t i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 

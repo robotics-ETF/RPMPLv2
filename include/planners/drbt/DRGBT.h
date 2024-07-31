@@ -25,7 +25,7 @@ namespace planning::drbt
     public:
         DRGBT(const std::shared_ptr<base::StateSpace> ss_);
         DRGBT(const std::shared_ptr<base::StateSpace> ss_, 
-                const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
+              const std::shared_ptr<base::State> q_start_, const std::shared_ptr<base::State> q_goal_);
         ~DRGBT();                         
         
         bool solve() override;
@@ -60,7 +60,7 @@ namespace planning::drbt
         std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
         float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
         size_t horizon_size;                                                    // Number of states that is required to be in the horizon
-        bool replanning;                                                        // Whether path replanning is required
+        bool replanning_required;                                               // Whether predefined path replanning is explicitly required
         base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
         std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
         size_t num_lateral_states;                                              // Number of lateral states
