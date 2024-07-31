@@ -88,6 +88,9 @@ bool planning::rbt_star::RGBMTStar::solve()
                 trees[tree_new_idx]->upgradeTree(q_new, q_rand);
                 trees_exist.emplace_back(idx);
             }
+
+            if (checkTerminatingCondition(status))
+                return planner_info->getSuccessState();
         }
 
         // Find the optimal edge towards each reached tree
@@ -107,6 +110,9 @@ bool planning::rbt_star::RGBMTStar::solve()
 
             // Considering all edges from the new tree
             q_rand = optimize(q_rand, trees[tree_idx], states_reached[tree_idx]);
+            if (checkTerminatingCondition(status))
+                return planner_info->getSuccessState();
+
             size_t k { 0 };     // Index of a state from the new tree 'tree_new_idx'
             for (size_t idx : trees_exist)
             {
@@ -115,7 +121,9 @@ bool planning::rbt_star::RGBMTStar::solve()
                     continue;
 
                 q_new = optimize(trees[tree_new_idx]->getState(k), trees[tree_idx], q_rand);   // From 'k'-th reached state to tree 'tree_idx'
-                
+                if (checkTerminatingCondition(status))
+                    return planner_info->getSuccessState();
+
                 // The connection of 'q_rand' with both main trees exists
                 if (idx < 2 && main_trees_reached)
                 {
@@ -390,6 +398,7 @@ bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] b
         else
 		    planner_info->setSuccessState(false);
         
+        planner_info->setOptimalCost(cost_opt);
         planner_info->setPlanningTime(getElapsedTime(time_alg_start));
         return true;
     }
@@ -414,7 +423,7 @@ void planning::rbt_star::RGBMTStar::outputPlannerData(const std::string &filenam
 		output_file << "\t Number of iterations: " << planner_info->getNumIterations() << std::endl;
 		output_file << "\t Number of states:     " << planner_info->getNumStates() << std::endl;
 		output_file << "\t Planning time [s]:    " << planner_info->getPlanningTime() << std::endl;
-		output_file << "\t Path cost [rad]:      " << planner_info->getCostConvergence().back() << std::endl;
+		output_file << "\t Path cost [rad]:      " << planner_info->getOptimalCost() << std::endl;
 		if (output_states_and_paths)
 		{
             // Just to check how many states have real or underestimation of distance-to-obstacles computed
