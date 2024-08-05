@@ -222,10 +222,5 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "SplinesConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << SplinesConfig::FINAL_VELOCITY_STEP;
     
-    if (SplinesConfigRoot["IS_FINAL_VELOCITY_ZERO"].IsDefined())
-        SplinesConfig::IS_FINAL_VELOCITY_ZERO = SplinesConfigRoot["IS_FINAL_VELOCITY_ZERO"].as<bool>();
-    else
-        LOG(INFO) << "SplinesConfig::IS_FINAL_VELOCITY_ZERO is not defined! Using default value of " << SplinesConfig::IS_FINAL_VELOCITY_ZERO;
-    
     LOG(INFO) << "Configuration parameters read successfully!";
 }
