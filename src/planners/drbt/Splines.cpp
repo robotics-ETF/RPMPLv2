@@ -17,14 +17,24 @@ planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, co
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
-    max_num_iter_spline_next = all_robot_vel_same ? 
+    max_num_iter_spline_regular = all_robot_vel_same ? 
         std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / SplinesConfig::FINAL_VELOCITY_STEP)) :
         std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / SplinesConfig::FINAL_VELOCITY_STEP));
 }
 
-bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-    float t_iter_remain, bool non_zero_final_vel)
+/// @brief Compute a regular spline that is not surely safe for environment, meaning that,
+/// if collision eventually occurs, it may be at robot's non-zero velocity.
+/// @param current_pos Current robot's position
+/// @param current_vel Current robot's velocity
+/// @param current_acc Current robot's acceleration
+/// @param t_iter_remain Remaining time in [s] in the current iteration
+/// @param t_max Maximal available time in [s] for a spline computing
+/// @param non_zero_final_vel Whether final spline velocity can be non-zero
+/// @return The success of a spline computation
+bool planning::drbt::Splines::computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+                                             float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
+    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
     std::shared_ptr<planning::trajectory::Spline> spline_next_new 
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
@@ -39,7 +49,8 @@ bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Ei
         Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
         Eigen::VectorXf q_final_dot {};
         
-        while (num_iter++ < max_num_iter_spline_next)
+        while (num_iter++ < max_num_iter_spline_regular &&
+               std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
         {
             q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
             // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
@@ -75,10 +86,18 @@ bool planning::drbt::Splines::computeSplineNext(Eigen::VectorXf &current_pos, Ei
     return spline_computed;
 }
 
-
-bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-    float t_iter_remain)
+/// @brief Compute a safe spline that will render a robot motion surely safe for environment. 
+/// If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. 
+/// @param current_pos Current robot's position
+/// @param current_vel Current robot's velocity
+/// @param current_acc Current robot's acceleration
+/// @param t_iter_remain Remaining time in [s] in the current iteration
+/// @param t_max Maximal available time in [s] for a spline computing
+/// @return The success of a spline computation
+bool planning::drbt::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+                                          float t_iter_remain, float t_max)
 {
+    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     std::shared_ptr<planning::trajectory::Spline> spline_next_new
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
     std::shared_ptr<planning::trajectory::Spline> spline_next_temp 
@@ -112,7 +131,8 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
         return rho;
     };
     
-    while (num_iter++ < max_num_iter)
+    while (num_iter++ < max_num_iter &&
+           std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
     {
         is_safe = false;
         // std::cout << "Num. iter. " << num_iter << "\n";
@@ -194,7 +214,7 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
                       spline_next_new;
 
         // std::cout << "spline_next: \n" << spline_next << "\n";
-        spline_computed = !checkSplineCollision(ss->getNewState(q_current), t_iter);
+        spline_computed = !checkCollision(ss->getNewState(q_current), t_iter);
     }
 
     return spline_computed;
@@ -205,7 +225,7 @@ bool planning::drbt::Splines::computeSplineSafe(Eigen::VectorXf &current_pos, Ei
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when 'spline' is starting.
 /// @return True if the collision occurs. False if not.
 /// @note 'q_init' must have a distance-to-obstacles or its underestimation!
-bool planning::drbt::Splines::checkSplineCollision(std::shared_ptr<base::State> q_init, float t_iter)
+bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
     float delta_t { SplinesConfig::TIME_STEP };

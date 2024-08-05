@@ -47,7 +47,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot)
 /// @note After reaching a final configuration, acceleration will remain constant, while velocity will increase linearly!
 bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, const Eigen::VectorXf &q_final_ddot)
 {
-    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     if (q_final_dot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         is_zero_final_vel = true;
     else

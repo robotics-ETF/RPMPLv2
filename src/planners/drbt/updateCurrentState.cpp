@@ -16,7 +16,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
 
-    float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE };
+    float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE - SplinesConfig::MAX_TIME_PUBLISH * measure_time };
     float t_iter { getElapsedTime(time_iter_start) };
     if (DRGBTConfig::MAX_TIME_TASK1 - t_iter < t_spline_max)
         t_spline_max = DRGBTConfig::MAX_TIME_TASK1 - t_iter;
@@ -37,6 +37,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     // ----------------------------------------------------------------------------------------- //
     
     bool spline_computed { false };
+    float t_spline_remain {};
     Eigen::VectorXf current_pos { splines->spline_current->getPosition(t_spline_current) };
     Eigen::VectorXf current_vel { splines->spline_current->getVelocity(t_spline_current) };
     Eigen::VectorXf current_acc { splines->spline_current->getAcceleration(t_spline_current) };
@@ -48,6 +49,11 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 
     do
     {
+        t_spline_remain = t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
+        // std::cout << "t_spline_remain: " << t_spline_remain * 1e3 << " [ms] \n";
+        if (t_spline_remain < 0)
+            break;
+
         splines->setCurrentState(q_current);
         splines->setTargetState(q_next->getStateReached());
         // std::cout << "q_next: " << q_next << "\n";
@@ -55,15 +61,13 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
             break;
 
         if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
-            spline_computed = splines->computeSplineSafe(current_pos, current_vel, current_acc, t_iter_remain);
+            spline_computed = splines->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
         else
-            spline_computed = splines->computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain,
-                                                         q_next->getIsReached() && q_next->getIndex() != -1 && 
-                                                         q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
+            spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, 
+                                                      q_next->getIsReached() && q_next->getIndex() != -1 && 
+                                                      q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
     }
-    while (!spline_computed && 
-            getElapsedTime(time_iter_start) - t_iter < t_spline_max - SplinesConfig::MAX_TIME_PUBLISH * measure_time && 
-            changeNextState(visited_states));
+    while (!spline_computed && changeNextState(visited_states));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -96,7 +100,7 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 
-    return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
+    return t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime(time_iter_start) - t_iter);
 }
 
 /// @brief Update a current state 'q_current' to a new desired state 'q_current_new' from the edge [q_current - q_next_reached], 
