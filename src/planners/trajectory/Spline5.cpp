@@ -53,12 +53,26 @@ bool planning::trajectory::Spline5::compute(const Eigen::VectorXf &q_final, cons
     if (q_final_dot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         is_zero_final_vel = true;
     else
+    {
         is_zero_final_vel = false;
+        for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
+        {
+            if (std::abs(q_final_dot(idx)) > robot->getMaxVel(idx))
+                return false;
+        }
+    }
 
     if (q_final_ddot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         is_zero_final_acc = true;
     else
+    {
         is_zero_final_acc = false;
+        for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
+        {
+            if (std::abs(q_final_ddot(idx)) > robot->getMaxAcc(idx))
+                return false;
+        }
+    }
 
     int idx_corr { -1 };
     float t_f_opt { 0 };
@@ -311,13 +325,17 @@ bool planning::trajectory::Spline5::checkConstraints(size_t idx, float t_f)
     // Maximal jerk constraint
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(c(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
+    // 6*std::abs(c(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD   // satisfied
+    if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+    {
+        // std::cout << "\t Maximal jerk constraint not satisfied! \n";
+        return false;
+    }
     std::vector<float> t_extrema { getJerkExtremumTimes(idx) };
     for (size_t i = 0; i < t_extrema.size(); i++)
     {
         // std::cout << "\t Max. jerk.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getJerk(t_extrema[i], idx, t_f)) << "\n";
-        // if (6*std::abs(c(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||   // satisfied
-        if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD || 
-            (std::abs(getJerk(t_extrema[i], idx, t_f)) > robot->getMaxJerk(idx)))
+        if (std::abs(getJerk(t_extrema[i], idx, t_f)) > robot->getMaxJerk(idx))
         {
             // std::cout << "\t Maximal jerk constraint not satisfied! \n";
             return false;

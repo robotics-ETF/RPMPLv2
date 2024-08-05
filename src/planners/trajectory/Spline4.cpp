@@ -51,12 +51,26 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
     if (q_final_dot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         is_zero_final_vel = true;
     else
+    {
         is_zero_final_vel = false;
+        for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
+        {
+            if (std::abs(q_final_dot(idx)) > robot->getMaxVel(idx))
+                return false;
+        }
+    }
 
     if (q_final_ddot.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         is_zero_final_acc = true;
     else
+    {
         is_zero_final_acc = false;
+        for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
+        {
+            if (std::abs(q_final_ddot(idx)) > robot->getMaxAcc(idx))
+                return false;
+        }
+    }
 
     int idx_corr { -1 };
     float t_f_opt { 0 };
@@ -326,7 +340,7 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     // Maximal jerk constraint
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(b(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    // if (6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||   // satisfied
+    // 6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD  // satisfied
     if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx))
     {
         // std::cout << "\t Maximal jerk constraint not satisfied! \n";
