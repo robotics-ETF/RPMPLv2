@@ -63,6 +63,7 @@ namespace planning::drbt
         std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
         size_t num_lateral_states;                                              // Number of lateral states
         float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
+        float max_time_generateGBur;                                            // Maximal computing time in [s] for generateGBur routine
         bool all_robot_vel_same;                                                // Whether all joint velocities are the same
         std::shared_ptr<planning::drbt::Splines> splines;                       // Everything related to splines
     };

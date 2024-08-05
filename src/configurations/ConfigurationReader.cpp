@@ -192,10 +192,15 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
 
     // SplinesConfigRoot
-    if (SplinesConfigRoot["MAX_TIME_COMPUTE"].IsDefined())
-        SplinesConfig::MAX_TIME_COMPUTE = SplinesConfigRoot["MAX_TIME_COMPUTE"].as<float>();
+    if (SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
+        SplinesConfig::MAX_TIME_COMPUTE_REGULAR = SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE;
+        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_REGULAR is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
+
+    if (SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].IsDefined())
+        SplinesConfig::MAX_TIME_COMPUTE_SAFE = SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
+    else
+        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_SAFE;
 
     if (SplinesConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
         SplinesConfig::MAX_TIME_PUBLISH = SplinesConfigRoot["MAX_TIME_PUBLISH"].as<float>();

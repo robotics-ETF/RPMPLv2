@@ -1,4 +1,5 @@
-MAX_TIME_COMPUTE: 0.003             # Maximal time in [s] for computing a spline
+MAX_TIME_COMPUTE_REGULAR: 0.001     # Maximal time in [s] for computing a regular spline
+MAX_TIME_COMPUTE_SAFE: 0.003        # Maximal time in [s] for computing a safe spline
 MAX_TIME_PUBLISH: 0.0005            # Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic. Determined by time measurements.
 MAX_TIME_FINAL: 10.0                # Maximal final time in [s] for a spline to be considered as valid 
 TIME_STEP: 0.01                     # Time step used for e.g. checking whether a spline is collision-free

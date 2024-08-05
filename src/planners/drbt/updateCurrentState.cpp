@@ -16,7 +16,8 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
 
-    float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE - SplinesConfig::MAX_TIME_PUBLISH * measure_time };
+    float t_spline_max { (DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
+                         SplinesConfig::MAX_TIME_PUBLISH * measure_time };
     float t_iter { getElapsedTime(time_iter_start) };
     if (DRGBTConfig::MAX_TIME_TASK1 - t_iter < t_spline_max)
         t_spline_max = DRGBTConfig::MAX_TIME_TASK1 - t_iter;
