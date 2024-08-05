@@ -45,7 +45,6 @@ namespace planning::drbt
         int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
         float updateCurrentState(bool measure_time);
         void updateCurrentState();
-        bool computeTargetState(float time = DRGBTConfig::MAX_ITER_TIME);
         bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
         bool whetherToReplan();
         std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
@@ -55,7 +54,6 @@ namespace planning::drbt
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
         std::shared_ptr<base::State> q_current;                                 // Current robot configuration
         std::shared_ptr<base::State> q_previous;                                // Previous robot configuration
-        std::shared_ptr<base::State> q_target;                                  // Target robot configuration to which the robot is currently heading to
         std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
         std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
         float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations

@@ -17,7 +17,6 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     
     q_current = q_start;
     q_previous = q_current;
-    q_target = q_current;
     q_next = std::make_shared<planning::drbt::HorizonState>(q_current, 0, q_current);
     q_next_previous = q_next;
 
@@ -42,7 +41,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     }
 
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_target, all_robot_vel_same);
+        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_next->getStateReached(), all_robot_vel_same);
 
 	// std::cout << "DRGBT planner initialized! \n";
 }

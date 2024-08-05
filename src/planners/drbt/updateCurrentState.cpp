@@ -2,8 +2,7 @@
 
 /// @brief Update a current state of the robot using 'splines->spline_current'.
 /// Compute a new spline 'splines->spline_next', or remain 'splines->spline_current'.
-/// Determine a new target state 'q_target' (a new desired current state) of the robot.
-/// Move 'q_current' towards 'q_target' while following 'splines->spline_next'.
+/// Move 'q_current' towards 'q_next' while following 'splines->spline_next'.
 /// 'q_current' will be updated to a robot position from the end of current iteration.
 /// @param measure_time If true, elapsed time when computing a spline will be exactly measured. 
 /// If false, elapsed time will be computed (default: false).
@@ -16,8 +15,6 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
 {
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
-    if (status != base::State::Status::Trapped)
-        status = base::State::Status::Advanced;     // by default
 
     float t_spline_max { SplinesConfig::MAX_TIME_COMPUTE };
     float t_iter { getElapsedTime(time_iter_start) };
@@ -49,36 +46,24 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     // std::cout << "Curr. vel: " << current_vel.transpose() << "\n";
     // std::cout << "Curr. acc: " << current_acc.transpose() << "\n";
 
-    computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1);
-    if (status != base::State::Status::Trapped && 
-        q_next->getIsReached() && 
-        ss->isEqual(q_target, q_next->getStateReached()))
-    {
-        status = base::State::Status::Reached;  // 'q_next->getState()' must be reached, and not only 'q_next->getStateReached()'
-        if (q_next->getStatus() != planning::drbt::HorizonState::Status::Goal && changeNextState(visited_states))
-            computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1);
-    }
-
     do
     {
         splines->setCurrentState(q_current);
-        splines->setTargetState(q_target);
-        // std::cout << "q_target: " << q_target->getCoord().transpose() << "\t idx: " << q_next->getIndex() << "\n";        
-        if (splines->spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
+        splines->setTargetState(q_next->getStateReached());
+        // std::cout << "q_next: " << q_next << "\n";
+        if (splines->spline_current->isFinalConf(q_next->getCoordReached()))  // Spline to such 'q_next->getCoordReached()' already exists!
             break;
 
         if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
             spline_computed = splines->computeSplineSafe(current_pos, current_vel, current_acc, t_iter_remain);
-        else if (SplinesConfig::IS_FINAL_VELOCITY_ZERO)
-            spline_computed = splines->computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain);
         else
             spline_computed = splines->computeSplineNext(current_pos, current_vel, current_acc, t_iter_remain,
-                              q_next->getIsReached() && q_next->getIndex() != -1 && !ss->isEqual(q_target, q_goal));
+                                                         q_next->getIsReached() && q_next->getIndex() != -1 && 
+                                                         q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
     }
     while (!spline_computed && 
             getElapsedTime(time_iter_start) - t_iter < t_spline_max - SplinesConfig::MAX_TIME_PUBLISH * measure_time && 
-            changeNextState(visited_states) && 
-            computeTargetState(DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1));
+            changeNextState(visited_states));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime(time_iter_start) - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -94,12 +79,19 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
         splines->spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
     
-    // recordTrajectory(spline_computed);
+    // splines->recordTrajectory(spline_computed);   // Only for debugging
 
     q_current = ss->getNewState(splines->spline_next->getPosition(splines->spline_next->getTimeEnd()));   // Current robot position at the end of iteration
+    if (status != base::State::Status::Trapped)
+    {
+        if (splines->spline_next->getTimeFinal() < splines->spline_next->getTimeEnd() + DRGBTConfig::MAX_ITER_TIME + DRGBTConfig::MAX_TIME_TASK1)
+            status = base::State::Status::Reached;  // 'q_next->getState()' must be reached, and not only 'q_next->getStateReached()'
+        else
+            status = base::State::Status::Advanced;
+    }
 
-    // std::cout << "q_current:     " << q_current << "\n";
     // std::cout << "Spline next: \n" << splines->spline_next << "\n";
+    // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
@@ -107,10 +99,10 @@ float planning::drbt::DRGBT::updateCurrentState(bool measure_time)
     return t_spline_max - (getElapsedTime(time_iter_start) - t_iter);
 }
 
-/// @brief Update a current state 'q_current' to become 'q_target'.
-/// Determine a new target state 'q_target' (a new desired current state) of the robot using an advancing step size 
-/// determined as ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, i.e., using maximal robot's velocity.
-/// Move 'q_current' to 'q_target' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
+/// @brief Update a current state 'q_current' to a new desired state 'q_current_new' from the edge [q_current - q_next_reached], 
+/// such that it can be reached within DRGBTConfig::MAX_ITER_TIME time, while considering robot maximal velocity.
+/// In other words, 'q_current_new' is determined using an advancing step size which depends on robot's maximal velocity.
+/// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
 void planning::drbt::DRGBT::updateCurrentState()
 {
     q_previous = q_current;
@@ -120,50 +112,37 @@ void planning::drbt::DRGBT::updateCurrentState()
         return;
     }
 
-    computeTargetState();
-    q_current = q_target;   // Current robot position at the end of iteration
+    std::shared_ptr<base::State> q_current_new { ss->getNewState(q_next->getCoordReached()) };
+    if (!ss->isEqual(q_current, q_current_new))
+    {
+        if (all_robot_vel_same)
+        {
+            float max_edge_length_ { ss->robot->getMaxVel(0) * DRGBTConfig::MAX_ITER_TIME };
+            if (ss->getNorm(q_current, q_current_new) > max_edge_length_)
+                q_current_new = ss->pruneEdge2(q_current, q_current_new, max_edge_length_);
+        }
+        else
+        {
+            std::vector<std::pair<float, float>> limits {};
+            for (size_t i = 0; i < ss->num_dimensions; i++)
+            {
+                limits.emplace_back(std::pair<float, float>
+                (q_current->getCoord(i) - ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME, 
+                    q_current->getCoord(i) + ss->robot->getMaxVel(i) * DRGBTConfig::MAX_ITER_TIME));
+            }
+            q_current_new = ss->pruneEdge(q_current, q_current_new, limits);
+        }
+    }
 
+    q_current = q_current_new;   // Current robot position at the end of iteration
     if (ss->isEqual(q_current, q_next->getState()))
         status = base::State::Status::Reached;      // 'q_next->getState()' must be reached, and not only 'q_next->getStateReached()'
     else
         status = base::State::Status::Advanced;
 
     // std::cout << "q_current: " << q_current << "\n";
-    // std::cout << "q_target:  " << q_target << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
-}
-
-/// @brief Compute a target configuration 'q_target' from the edge [q_current - q_next_reached], 
-/// such that it can be reached within time 'time', while considering robot maximal velocity.
-/// @return Success of computing 'q_target'. 
-/// If 'q_current' and 'q_next->getStateReached()' are equal, false is returned. Otherwise, true is returned.
-bool planning::drbt::DRGBT::computeTargetState(float time)
-{
-    q_target = ss->getNewState(q_next->getCoordReached());
-    if (ss->isEqual(q_current, q_next->getStateReached()))
-        return false;
-
-    if (all_robot_vel_same)
-    {
-        float max_edge_length_ { ss->robot->getMaxVel(0) * time };
-        if (ss->getNorm(q_current, q_target) > max_edge_length_)
-            q_target = ss->pruneEdge2(q_current, q_target, max_edge_length_);
-    }
-    else
-    {
-        std::vector<std::pair<float, float>> limits {};
-        for (size_t i = 0; i < ss->num_dimensions; i++)
-        {
-            limits.emplace_back(std::pair<float, float>
-               (q_current->getCoord(i) - ss->robot->getMaxVel(i) * time, 
-                q_current->getCoord(i) + ss->robot->getMaxVel(i) * time));
-        }
-        q_target = ss->pruneEdge(q_current, q_target, limits);
-    }
-
-    q_target->setParent(q_current);
-    return true;
 }
 
 /// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
