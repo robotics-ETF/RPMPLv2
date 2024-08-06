@@ -1,14 +1,14 @@
-//
-// Created by dinko on 14.02.22.
-// Modified by nermin on 09.02.24.
-//
-
 #include "Environment.h"
 
-#include <yaml-cpp/yaml.h>
-#include "yaml-cpp/parser.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
+env::Environment::Environment(const std::shared_ptr<env::Environment> env)
+{
+    objects = env->getObjects();
+    WS_center = env->getWSCenter();
+    WS_radius = env->getWSRadius();
+    base_radius = env->getBaseRadius();
+    robot_max_vel = env->getRobotMaxVel();
+    ground_included = env->getGroundIncluded();
+}
 
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
@@ -27,7 +27,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
                 if (obstacle["box"]["label"].IsDefined())
                     label = obstacle["box"]["label"].as<std::string>();
 
-                if (label == "table" && node["robot"]["table_included"].as<bool>() == false)
+                if (label == "ground" && node["robot"]["ground_included"].as<size_t>() == 0)
                     continue;
 
                 YAML::Node d = obstacle["box"]["dim"];
@@ -59,12 +59,12 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
             std::cout << "Added " << num_added++ << ". " << object;
         }
 
-        if (node["robot"]["table_included"].IsDefined())
-            table_included = node["robot"]["table_included"].as<bool>();
+        if (node["robot"]["ground_included"].IsDefined())
+            ground_included = node["robot"]["ground_included"].as<size_t>();
         else if (node["robot"]["type"].as<std::string>() == "xarm6")
         {
-            table_included = false;
-            throw std::domain_error("It is not defined whether the table is included! It will be set that it is not included. ");
+            ground_included = 0;
+            throw std::domain_error("It is not defined whether ground is included! Thus, it will not be included. ");
         }
 
         if (node["robot"]["WS_center"].IsDefined())
@@ -146,7 +146,7 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 {
     float tol_radius {std::max(vel / robot_max_vel, base_radius)};
 
-    if (table_included)
+    if (ground_included > 0)
     {
         if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||              // Out of workspace
             (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z()) ||     // Surrounding of robot base

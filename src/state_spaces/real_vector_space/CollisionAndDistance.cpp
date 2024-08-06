@@ -1,6 +1,4 @@
 #include "CollisionAndDistance.h"
-#include "RealVectorSpaceConfig.h"
-#include <tuple>
 
 // Check collision between capsule (determined with line segment AB and 'radius') and box (determined with 'obs = (x_min, y_min, z_min, x_max, y_max, z_max)')
 bool base::CollisionAndDistance::collisionCapsuleToBox(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs)

@@ -4,18 +4,18 @@ planning::trajectory::Spline::Spline(size_t order_, const std::shared_ptr<robots
 {
     order = order_;
     robot = robot_;
-    num_dimensions = robot->getNumDOFs();
-    coeff = Eigen::MatrixXf::Zero(num_dimensions, order + 1);
+    coeff = Eigen::MatrixXf::Zero(robot->getNumDOFs(), order + 1);
     coeff.col(0) = q_current;   // All initial conditions are zero, except position
     time_start = std::chrono::steady_clock::now();
     time_start_offset = 0;
-    times_final = std::vector<float>(num_dimensions, 0);
+    times_final = std::vector<float>(robot->getNumDOFs(), 0);
     time_final = 0;
     time_current = 0;
     time_begin = 0;
     time_end = 0;
     is_zero_final_vel = true;
     is_zero_final_acc = true;
+    subsplines = {};
 }
 
 planning::trajectory::Spline::~Spline() {}
@@ -28,10 +28,45 @@ bool planning::trajectory::Spline::isFinalConf(const Eigen::VectorXf &q)
     return ((q - getPosition(time_final)).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD) ? true : false;
 }
 
+/// @brief Check whether position function is monotonic.
+/// @param idx Index of robot's joint.
+/// @return Return 1 if the function is monotonically increasing.
+/// @return Return -1 if the function is monotonically decreasing.
+/// @return Return 0 if the function is non monotonic.
+int planning::trajectory::Spline::checkPositionMonotonicity(size_t idx)
+{
+    float value { getVelocity(SplinesConfig::TIME_STEP, idx) };
+    int monotonic { value > 0 ? 1 : -1 };
+
+    for (float t = 2*SplinesConfig::TIME_STEP; t <= times_final[idx]; t += SplinesConfig::TIME_STEP)
+    {
+        value = getVelocity(t, idx);
+        if ((value > 0 && monotonic == -1) || (value < 0 && monotonic == 1))
+            return 0;
+    }
+
+    return monotonic;
+}
+
+/// @brief Check whether position function is monotonic considering all spline functions.
+/// @return Return 1 if the function is monotonically increasing.
+/// @return Return -1 if the function is monotonically decreasing.
+/// @return Return 0 if the function is non monotonic.
+int planning::trajectory::Spline::checkPositionMonotonicity()
+{
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
+    {
+        if (checkPositionMonotonicity(i) == 0)
+            return false;
+    }
+
+    return true;
+}
+
 Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getPosition(t, i);
 
     // std::cout << "Robot position at time " << t << " [s] is " << q.transpose() << "\n";
@@ -70,8 +105,8 @@ float planning::trajectory::Spline::getPosition(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getVelocity(t, i);
 
     // std::cout << "Robot velocity at time " << t << " [s] is " << q.transpose() << "\n";
@@ -104,8 +139,8 @@ float planning::trajectory::Spline::getVelocity(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getAcceleration(t, i);
 
     // std::cout << "Robot acceleration at time " << t << " [s] is " << q.transpose() << "\n";
@@ -128,8 +163,8 @@ float planning::trajectory::Spline::getAcceleration(float t, size_t idx)
 
 Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 {
-    Eigen::VectorXf q { Eigen::VectorXf::Zero(num_dimensions) };
-    for (size_t i = 0; i < num_dimensions; i++)
+    Eigen::VectorXf q { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
+    for (size_t i = 0; i < robot->getNumDOFs(); i++)
         q(i) = getJerk(t, i);
 
     // std::cout << "Robot jerk at time " << t << " [s] is " << q.transpose() << "\n";
@@ -174,13 +209,27 @@ namespace planning::trajectory
 {
     std::ostream &operator<<(std::ostream &os, const std::shared_ptr<planning::trajectory::Spline> spline)
     {
-        for (size_t i = 0; i < spline->num_dimensions; i++)
+        auto print = [&os](std::shared_ptr<planning::trajectory::Spline> s) -> void
         {
-            os << "q_" << i << "(t) = ";
-            for (size_t j = 0; j <= spline->order; j++)
-                os << spline->getCoeff(i, j) << " t^" << j << (j == spline->order ? "" : " + ");
-            
-            os << "\t for t in [0, " << spline->times_final[i] << "] [s] \n";
+            for (size_t i = 0; i < s->robot->getNumDOFs(); i++)
+            {
+                os << "q_" << i << "(t) = ";
+                for (size_t j = 0; j <= s->order; j++)
+                    os << s->getCoeff(i, j) << " t^" << j << (j == s->order ? "" : " + ");
+                
+                os << "\t for t in [0, " << std::min(s->time_final, s->times_final[i]) << "] [s] \n";
+            }
+        };
+
+        if (spline->subsplines.empty())
+            print(spline);
+        else
+        {
+            for (size_t k = 0; k < spline->subsplines.size(); k++)
+            {
+                os << "Subspline " << k << ":\n";
+                print(spline->subsplines[k]);
+            }
         }
 
         return os;

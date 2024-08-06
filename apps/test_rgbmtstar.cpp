@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 			if (result)
 			{
 				num_success++;
-				LOG(INFO) << "Path cost: " << planner->getPlannerInfo()->getCostConvergence().back();
-				final_costs.emplace_back(planner->getPlannerInfo()->getCostConvergence().back());
+				LOG(INFO) << "Path cost: " << planner->getPlannerInfo()->getOptimalCost();
+				final_costs.emplace_back(planner->getPlannerInfo()->getOptimalCost());
 				final_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 				final_num_states.emplace_back(planner->getPlannerInfo()->getNumStates());
 				for (size_t i = 0; i < planner->getPlannerInfo()->getNumStates(); i++)

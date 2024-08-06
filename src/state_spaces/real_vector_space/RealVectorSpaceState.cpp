@@ -1,8 +1,3 @@
-//
-// Created by dinko on 7.3.21.
-// Modified by nermin on 18.02.22.
-//
-
 #include "RealVectorSpaceState.h"
 
 base::RealVectorSpaceState::RealVectorSpaceState(const Eigen::VectorXf &coord_) : State(coord_)

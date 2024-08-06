@@ -1,14 +1,4 @@
-//
-// Created by nermin on 18.02.22.
-//
-
 #include "RBTConnect.h"
-#include "ConfigurationReader.h"
-
-// #include <glog/log_severity.h>
-// #include <glog/logging.h>
-// WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
-// If you get this error, just use std::cout for console output.
 
 planning::rbt::RBTConnect::RBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) 
 {

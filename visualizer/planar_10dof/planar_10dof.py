@@ -158,8 +158,8 @@ class Planar10DOF(RealVectorSpace):
         self.visualize_configuration(scene, fk)
 
         # adding base box to the scene
-        # table = box([0.5, 0.5, 0.01])
-        # table.apply_translation([0, 0, -0.1])
+        # ground = box([0.5, 0.5, 0.01])
+        # ground.apply_translation([0, 0, -0.1])
 
         cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
         # nc = pyrender.Node(camera=cam, matrix=np.eye(4))
@@ -171,7 +171,7 @@ class Planar10DOF(RealVectorSpace):
         light = pyrender.DirectionalLight(color=np.ones(3), intensity=1.0)
         scene.add(light, pose=init_cam_pose)
 
-        # scene.add(pyrender.Mesh.from_trimesh(table))
+        # scene.add(pyrender.Mesh.from_trimesh(ground))
 
         # adding obstacles to the scene
         for ob in obstacles:

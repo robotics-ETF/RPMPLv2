@@ -146,11 +146,11 @@ class Xarm6(RealVectorSpace):
         self.visualize_configuration(scene, fk)
 
         # adding base box to the scene
-        table = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
-        table.apply_translation([0, 0, -0.015])
-        table.visual.vertex_colors = [205, 243, 8, 255]
+        ground = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
+        ground.apply_translation([0, 0, -0.015])
+        ground.visual.vertex_colors = [205, 243, 8, 255]
 
-        scene.add(pyrender.Mesh.from_trimesh(table))
+        scene.add(pyrender.Mesh.from_trimesh(ground))
         print("obstacles: ", len(obstacles))
         # adding obstacles to the scene
         for i, ob in enumerate(obstacles):
@@ -168,10 +168,10 @@ class Xarm6(RealVectorSpace):
         node_map, init_pose_map = self.visualize_configuration(scene, fk) 
 
         # adding base box to the scene
-        table = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
-        table.apply_translation([0, 0, -0.015])
-        table.visual.vertex_colors = [205, 243, 8, 255]
-        scene.add(pyrender.Mesh.from_trimesh(table))
+        ground = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
+        ground.apply_translation([0, 0, -0.015])
+        ground.visual.vertex_colors = [205, 243, 8, 255]
+        scene.add(pyrender.Mesh.from_trimesh(ground))
 
         # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
         # init_cam_pose = np.array([[ 0.86595061,  0.28855402, -0.81698498, -0.76317579],\
@@ -236,10 +236,10 @@ class Xarm6(RealVectorSpace):
         self.visualize_configuration(scene, fk_goal, [0,255,0,100])
 
         # adding base box to the scene
-        table = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
-        table.apply_translation([0, 0, -0.015])
-        table.visual.vertex_colors = [205, 243, 8, 255]
-        scene.add(pyrender.Mesh.from_trimesh(table))
+        ground = cylinder(radius=0.7, height=0.02) #([0.5, 0.5, 0.02])
+        ground.apply_translation([0, 0, -0.015])
+        ground.visual.vertex_colors = [205, 243, 8, 255]
+        scene.add(pyrender.Mesh.from_trimesh(ground))
 
         cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
         init_cam_pose = np.array([[1, 0, 0, 0],\

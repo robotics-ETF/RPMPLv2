@@ -1,14 +1,4 @@
-//
-// Created by nermin on 19.02.22.
-//
-
 #include "RGBTConnect.h"
-#include "ConfigurationReader.h"
-
-// #include <glog/log_severity.h>
-// #include <glog/logging.h>
-// WARNING: You need to be very careful with LOG(INFO) for console output, due to a possible "stack smashing detected" error.
-// If you get this error, just use std::cout for console output.
 
 planning::rbt::RGBTConnect::RGBTConnect(const std::shared_ptr<base::StateSpace> ss_) : RBTConnect(ss_) 
 {

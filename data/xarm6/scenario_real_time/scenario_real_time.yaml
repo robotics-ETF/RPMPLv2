@@ -1,12 +1,12 @@
 environment:
   - box:
-      label: "table"
+      label: "ground"
       dim: [1.5, 1.5, 0.1]
       pos: [0, 0, -0.05]
       min_dist_tol: 0.05          # Minimal distance tolerance for a static obstacle to not be included into a dynamic scene
 
 random_obstacles:
-  init_num: 1		                  # Number of random obstacles to start with the testing
+  init_num: 0		                  # Number of random obstacles to start with the testing
   max_num: 100		                # Maximal number of random obstacles to be added
   max_vel: 1.6 			              # Maximal velocity of each obstacle in [m/s]
   max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
@@ -22,7 +22,7 @@ robot:
   min_dist_start_goal: 5                                      # If greater than zero, 'q_start' and 'q_goal' will be generated randomly, where the workspace distance between them is minimally 'min_dist_start_goal'
   capsules_radius: [0.047, 0.12, 0.11, 0.09, 0.05, 0.1]       # When the gripper is attached
   gripper_length: 0.17                                        # In [m]
-  table_included: true                                        # Please check whether 'table' is added in 'environment'
+  ground_included: 2                                          # Please check whether 'ground' is added in 'environment'
   self_collision_checking: true                               # Whether self-collision should be checked
   WS_center: [0.0, 0.0, 0.267]                                # Workspace center point in [m]
   WS_radius: 1.5                                              # Workspace radius in [m] assuming spherical workspace shape

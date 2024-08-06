@@ -1,11 +1,14 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #ifndef RPMPL_XARM6_H
 #define RPMPL_XARM6_H
 
 #include "AbstractRobot.h"
+#include "RealVectorSpace.h"
+#include "RRTConnectConfig.h"
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
@@ -13,13 +16,16 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainiksolverpos_nr.hpp>
+#include <urdf/model.h>
+#include <glog/logging.h>
+#include <stl_reader.h>
 
 namespace robots
 {
 	class xArm6 : public AbstractRobot
 	{
 	public:
-		xArm6(const std::string &robot_desc, float gripper_length_ = 0, bool table_included_ = false);
+		xArm6(const std::string &robot_desc, float gripper_length_ = 0, size_t ground_included_ = 0);
 		~xArm6();
 
 		const KDL::Tree &getRobotTree() const { return robot_tree; }
@@ -45,9 +51,7 @@ namespace robots
 		std::vector<KDL::Frame> init_poses;
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
-		float gripper_length;
-		bool table_included;
 	};
-
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H

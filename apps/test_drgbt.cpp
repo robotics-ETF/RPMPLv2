@@ -9,6 +9,7 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
 		// "/data/planar_2dof/scenario1/scenario1.yaml"
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
+		// "/data/planar_2dof/scenario_real_time/scenario_real_time.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		// "/data/xarm6/scenario1/scenario1.yaml"
@@ -22,7 +23,8 @@ int main(int argc, char **argv)
 		"computeDistance [us]", 			// 1
 		"generateGBur [ms]", 				// 2
 		"generateHorizon [us]", 			// 3
-		"updateHorizon [us]"				// 4
+		"updateHorizon [us]",				// 4
+		"updateCurrentState [us]"			// 5
 	};
 
 	// -------------------------------------------------------------------------------------- //
@@ -123,7 +125,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
+				// LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
 				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
@@ -177,20 +179,20 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						  << " = " << 100.0 * num_success_tests / num_test << " %";
 				LOG(INFO) << "--------------------------------------------------------------------\n\n";
-				num_test++;
 			}
 			catch (std::exception &e)
 			{
 				LOG(ERROR) << e.what();
 			}
 
+			num_test++;
 			if ((reach_successful_tests && num_success_tests == max_num_tests) || (!reach_successful_tests && num_test > max_num_tests))
 				break;
 		}
 
 		init_num_test = 1;
 		init_num_success_test = 0;
-		init_num_obs += std::pow(10, std::floor(std::log10(init_num_obs)));
+		init_num_obs += (init_num_obs > 0) ? std::pow(10, std::floor(std::log10(init_num_obs))) : 1;
 
 		LOG(INFO) << "Success rate:                     " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";

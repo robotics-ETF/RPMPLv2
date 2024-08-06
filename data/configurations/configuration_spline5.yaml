@@ -1,4 +1,0 @@
-MAX_TIME_COMPUTE: 0.003             # Maximal time in [s] for computing a spline
-MAX_TIME_PUBLISH: 0.001             # Maximal time in [s] for publishing a spline when using 'trajectory_msgs::msg::JointTrajectory' ROS2 topic 
-FINAL_JERK_STEP: 1.0                # Final jerk step when using bisection method for finding optimal value of coefficient 'c'
-FINAL_VELOCITY_STEP: 0.1            # Final velocity step when using bisection method for finding optimal value of final velocity

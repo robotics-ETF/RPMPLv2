@@ -1,8 +1,20 @@
-//
-// Created by dinko on 26.5.21..
-//
-
 #include "PlannerInfo.h"
+
+PlannerInfo::PlannerInfo()
+{
+	iteration_times = {};
+	state_times = {};
+	cost_convergence = {};
+	routine_times = {};
+	optimal_cost = -1;
+	planning_time = 0;
+	num_collision_queries = 0;
+	num_distance_queries = 0;
+	num_states = 0;
+	num_iterations = 0;
+	success_state = false;
+	task1_interrupted = false;
+}
 
 PlannerInfo::~PlannerInfo()
 {

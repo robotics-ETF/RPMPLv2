@@ -6,6 +6,8 @@
 #define RPMPL_REALVECTORSPACEFCL_H
 
 #include "RealVectorSpace.h"
+#include "RealVectorSpaceConfig.h"
+#include "xArm6.h"
 
 namespace base
 {
@@ -26,4 +28,5 @@ namespace base
 		float computeDistance(const std::shared_ptr<base::State> q, bool compute_again) override;
 	};
 }
+
 #endif //RPMPL_REALVECTORSPACE_H

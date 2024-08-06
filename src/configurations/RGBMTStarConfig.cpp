@@ -1,7 +1,3 @@
-//
-// Created by nermin on 28.02.22.
-//
-
 #include "RGBMTStarConfig.h"
 
 size_t RGBMTStarConfig::MAX_NUM_ITER                = 1e9;

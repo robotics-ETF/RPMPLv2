@@ -1,11 +1,4 @@
-//
-// Created by dinko on 7.3.21..
-//
 #include "RealVectorSpaceFCL.h"
-#include "RealVectorSpaceConfig.h"
-#include "xArm6.h"
-// #include <glog/log_severity.h>
-// #include <glog/logging.h>
 
 base::RealVectorSpaceFCL::~RealVectorSpaceFCL() {}
 
@@ -26,8 +19,7 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	{	
 		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 				continue;
 			else
 			{
@@ -47,10 +39,13 @@ bool base::RealVectorSpaceFCL::isValid(const std::shared_ptr<base::State> q)
 	return true;
 }
 
-// Return minimal distance from robot in configuration 'q' to obstacles
-// Compute minimal distance from each robot's link in configuration 'q' to obstacles, i.e., compute distance profile function
-// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'
-// If 'compute_again' is true, the new distance profile will be computed again!
+/// @brief Compute a minimal distance from the robot in configuration 'q' to obstacles using FCL library.
+/// In other words, compute a minimal distance from each robot's link in configuration 'q' to obstacles, 
+/// i.e., compute a distance profile function. 
+/// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'.
+/// @param q Configuration of the robot.
+/// @param compute_again If true, a new distance profile will be computed again! Default: false.
+/// @return Minimal distance from the robot in configuration 'q' to obstacles.
 float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
@@ -69,8 +64,7 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 		d_c_profile[i] = INFINITY;
 		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
 				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point

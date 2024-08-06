@@ -68,7 +68,7 @@ MAX_PLANNING_TIME: 10
 Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario yaml files.
 
 For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many objects as you want in the ```environment``` node. You can set the following:
-- ```label```: Label to name the object (e.g., ```table```, ```dynamic_obstacle```, ```picking_object```, etc.). If not specified, it will be empty string;
+- ```label```: Label to name the object (e.g., ```ground```, ```dynamic_obstacle```, ```picking_object```, etc.). If not specified, it will be an empty string;
 - ```dim```: Dimensions of the object (x, y and z in [m]);
 - ```pos```: Position of the object (x, y and z in [m]);
 - ```rot```: Rotation of the object (x, y, z in [m], and w in [rad]), specified as quaternion. If not specified, the object will be AABB (axis-aligned bounding-box);
@@ -84,7 +84,7 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```q_goal```: Goal configuration;
 - ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
-- ```table_included```: Information whether to include the table on which the robot is mounted. Please check whether 'table' is added in ```environment```;
+- ```ground_included```: Information whether to include ground on which the robot is mounted. Please check whether 'ground' is added in ```environment```. When set to '0', ground is not included. Otherwise, when set to a number greater than zero, it determines the starting robot's link that may collide with ground;
 - ```self_collision_checking```: Whether self-collision should be checked;
 - ```WS_center```: Workspace center point in [m];
 - ```WS_radius```: Workspace radius in [m] assuming spherical workspace shape;
@@ -92,7 +92,7 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```max_acc```: Maximal acceleration of each robot's joint in [rad/s²] for revolute joints, or in [mm/s²] for prismatic joints;
 - ```max_jerk```: Maximal jerk of each robot's joint in [rad/s³] for revolute joints, or in [mm/s³] for prismatic joints.
 
-Note that ```gripper_length``` and ```table_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, if not relevant in the planning. 
+Note that ```gripper_length``` and ```ground_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, if not relevant in the planning. 
 
 Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be ommited.
 
@@ -142,7 +142,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
-- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_spline5.yaml```.
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: 'None' or 'Spline'. If 'None' is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if 'Spline' is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_splines.yaml```.
 - ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to 'Spline'.
 
 

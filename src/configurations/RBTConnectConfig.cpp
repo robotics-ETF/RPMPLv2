@@ -1,7 +1,3 @@
-//
-// Created by nermin on 28.02.22.
-//
-
 #include "RBTConnectConfig.h"
 
 size_t RBTConnectConfig::MAX_NUM_ITER       = 1e9;

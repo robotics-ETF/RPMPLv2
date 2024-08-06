@@ -8,8 +8,11 @@
 #include <vector>
 #include <memory>
 #include <Eigen/Dense>
+#include <tuple>
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
+
+#include "RealVectorSpaceConfig.h"
 
 namespace base
 {
@@ -65,4 +68,5 @@ namespace base
         };
     };
 }
+
 #endif //RPMPL_COLLISIONANDDISTANCE_H

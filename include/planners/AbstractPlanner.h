@@ -1,6 +1,7 @@
 //
-// Created by dinko on 16.3.21..
+// Created by dinko on 16.3.21.
 //
+
 #ifndef RPMPL_ABSTRACTPLANNER_H
 #define RPMPL_ABSTRACTPLANNER_H
 
@@ -44,4 +45,5 @@ namespace planning
 		std::chrono::steady_clock::time_point time_iter_start;   	// Start time point at each iteration
 	};
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H

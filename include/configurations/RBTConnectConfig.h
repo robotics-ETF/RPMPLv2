@@ -2,6 +2,9 @@
 // Created by nermin on 28.02.22.
 //
 
+#ifndef RPMPL_RBTCONNECTCONFIG_H
+#define RPMPL_RBTCONNECTCONFIG_H
+
 typedef unsigned long size_t;
 
 class RBTConnectConfig
@@ -16,3 +19,5 @@ public:
     static size_t NUM_ITER_SPINE;               // Number of iterations when computing a single spine (1 iteration is minimum, when accordingly cummulative workspace distance function 'phi' is not computed)
     static bool USE_EXPANDED_BUBBLE;            // Whether to use expanded bubble when generating a spine. If yes, distance profile function for each robot's link is used
 };
+
+#endif //RPMPL_RBTCONNECTCONFIG_H

@@ -1,11 +1,4 @@
-//
-// Created by dinko on 07.03.21.
-// Modified by nermin on 07.03.22.
-//
-
 #include "RealVectorSpace.h"
-#include "RealVectorSpaceConfig.h"
-#include "xArm6.h"
 
 base::RealVectorSpace::RealVectorSpace(size_t num_dimensions_) : StateSpace(num_dimensions_)
 {
@@ -68,6 +61,15 @@ inline float base::RealVectorSpace::getNorm(const std::shared_ptr<base::State> q
 bool base::RealVectorSpace::isEqual(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
 	if (getNorm(q1, q2) < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+		return true;
+	
+	return false;
+}
+
+// Check if two vectors are equal
+bool base::RealVectorSpace::isEqual(const Eigen::VectorXf &q1_coord, const Eigen::VectorXf &q2_coord)
+{
+	if ((q1_coord - q2_coord).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
 		return true;
 	
 	return false;
@@ -287,8 +289,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 	{
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 				continue;
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
@@ -314,16 +315,19 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
     return true;
 }
 
-// Return a minimal distance from the robot in configuration 'q' to obstacles
-// Compute a minimal distance from each robot's link in configuration 'q' to obstacles, i.e., compute a distance profile function
-// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'
-// If 'compute_again' is true, the new distance profile will be computed again!
+/// @brief Compute a minimal distance from the robot in configuration 'q' to obstacles using methods from 'CollisionAndDistance' class.
+/// In other words, compute a minimal distance from each robot's link in configuration 'q' to obstacles, 
+/// i.e., compute a distance profile function. 
+/// Moreover, set 'd_c', 'd_c_profile', and corresponding 'nearest_points' for the configuation 'q'.
+/// @param q Configuration of the robot.
+/// @param compute_again If true, a new distance profile will be computed again! Default: false.
+/// @return Minimal distance from the robot in configuration 'q' to obstacles.
 float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> q, bool compute_again)
 {
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
 
-	float d_c_temp { INFINITY };
+	float d_c_temp {};
 	float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
@@ -336,8 +340,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 		d_c_profile[i] = INFINITY;
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
-			if ((env->getObject(j)->getLabel() == "table" && (i == 0 || i == 1)) && 
-				robot->getType().find("with_table") != std::string::npos)
+			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
 				d_c_temp = INFINITY;
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
@@ -395,17 +398,21 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 	return d_c;
 }
 
-// Return an underestimation of distance-to-obstacles 'd_c', i.e. return a distance-to-planes, 
-// Compute an underestimation of distance-to-obstacles 'd_c' for each robot's link, 
-// i.e. compute the distance-to-planes profile function, when robot is in the configuration 'q', 
-// where planes approximate obstacles, and are generated according to 'nearest_points'
+/// @brief Compute an underestimation of distance-to-obstacles 'd_c', i.e., a distance-to-planes, for each robot's link,
+/// i.e., compute a distance-to-planes profile function, when the robot takes a configuration 'q'.
+/// Planes approximate obstacles, and are generated according to 'nearest_points'.
+/// @param q Configuration of the robot.
+/// @param nearest_points Nearest points between the robot and obstacles.
+/// @return Underestimation of distance-to-obstacles.
+/// Note that if 'd_c' is negative, it means that one or more robot's links are penetrating through the plane,
+/// or they are located on the other side of the plane.
 float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points)
 {
 	if (q->getDistance() > 0 && q->getIsRealDistance()) 	// Real distance was already computed
 		return q->getDistance();
 	
-	float d_c_temp { INFINITY };
+	float d_c_temp {};
     float d_c { INFINITY };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
     Eigen::Vector3f R {};		// Robot's nearest point
@@ -418,19 +425,22 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
         for (size_t j = 0; j < env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
-			if (O.norm() < INFINITY)
-			{
-				R = nearest_points->at(j).col(i).head(3);
-				d_c_temp = std::min(std::abs((R - O).dot(skeleton->col(i) - O)) / (R - O).norm(), 
-									std::abs((R - O).dot(skeleton->col(i+1) - O)) / (R - O).norm()) 
-									- robot->getCapsuleRadius(i);
-				d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
+			if (O.norm() == INFINITY)
+				continue;
+			
+			R = nearest_points->at(j).col(i).head(3);
+			d_c_temp = std::min((skeleton->col(i) - O).dot((R - O).normalized()), 
+								(skeleton->col(i+1) - O).dot((R - O).normalized())) 
+								- robot->getCapsuleRadius(i);
+			if (d_c_temp < 0)
+				return d_c_temp;
 
-				// std::cout << "(i, j) = " << "(" << i << ", " << j << "):" << std::endl;
-				// std::cout << "Robot nearest point:    " << R.transpose() << std::endl;
-				// std::cout << "Obstacle nearest point: " << O.transpose() << std::endl;
-				// std::cout << "d_c: " << d_c_profile[i] << std::endl;
-			}
+			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
+
+			// std::cout << "(i, j) = " << "(" << i << ", " << j << "):" << std::endl;
+			// std::cout << "Robot nearest point:    " << R.transpose() << std::endl;
+			// std::cout << "Obstacle nearest point: " << O.transpose() << std::endl;
+			// std::cout << "d_c: " << d_c_profile[i] << std::endl;
 		}
 		d_c = std::min(d_c, d_c_profile[i]);
     }

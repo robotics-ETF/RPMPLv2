@@ -1,5 +1,5 @@
 //
-// Created by dinko on 26.5.21..
+// Created by dinko on 26.5.21.
 //
 
 #ifndef RPMPL_PLANNERINFO_H
@@ -14,22 +14,24 @@ protected:
 	std::vector<float> state_times;
 	std::vector<float> cost_convergence;			// Cost vs state convergence rate (cost-state curve)
 	std::vector<std::vector<float>> routine_times; 	// Running times for the specified routine
+	float optimal_cost;
 	float planning_time;
 	size_t num_collision_queries;
 	size_t num_distance_queries;
 	size_t num_states;
 	size_t num_iterations;
-	bool success_state = false;						// Did the planner succeed to find a solution?
+	bool success_state;								// Did the planner succeed to find a solution?
 	bool task1_interrupted;							// Whether Task 1 is interrupted
 
 public:
-	PlannerInfo() {}
+	PlannerInfo();
 	~PlannerInfo();
 	
 	void addIterationTime(float time);
 	void addStateTimes(const std::vector<float> &state_times);
 	void addCostConvergence(const std::vector<float> &cost_convergence);
 	void addRoutineTime(float time, size_t idx);
+	inline void setOptimalCost(float optimal_cost_) { optimal_cost = optimal_cost_; }
 	inline void setPlanningTime(float planning_time_) { planning_time = planning_time_; }
 	inline void setNumCollisionQueries(size_t num_collision_queries_) { num_collision_queries = num_collision_queries_; }
 	inline void setNumDistanceQueries(size_t num_distance_queries_) { num_distance_queries = num_distance_queries_; }
@@ -42,6 +44,7 @@ public:
 	inline const std::vector<float> &getStateTimes() const { return state_times; }
 	inline const std::vector<float> &getCostConvergence() const { return cost_convergence; }
 	inline const std::vector<std::vector<float>> &getRoutineTimes() const {return routine_times; }
+	inline float getOptimalCost() const { return optimal_cost; }
 	inline float getPlanningTime() const { return planning_time; }
 	inline size_t getNumCollisionQueries() const { return num_collision_queries; }
 	inline size_t getNumDistanceQueries() const { return num_distance_queries; }

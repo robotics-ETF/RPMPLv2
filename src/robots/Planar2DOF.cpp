@@ -1,13 +1,4 @@
-//
-// Created by dinko on 07.02.22.
-// Modified by nermin on 05.09.22.
-//
-
 #include "Planar2DOF.h"
-#include "RealVectorSpaceState.h"
-
-#include <urdf/model.h>
-#include <glog/logging.h>
 
 typedef std::shared_ptr <fcl::CollisionGeometryf> CollisionGeometryPtr;
 
@@ -65,6 +56,8 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
 	self_collision_checking = false;
+	gripper_length = 0;
+	ground_included = 0;
 
 	LOG(INFO) << type << " robot created.";
 	// LOG(INFO) << "Constructor end ----------------------\n";

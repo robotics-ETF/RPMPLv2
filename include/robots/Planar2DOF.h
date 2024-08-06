@@ -1,5 +1,6 @@
 //
 // Created by dinko on 07.02.22.
+// Modified by nermin on 05.09.22.
 //
 
 #ifndef RPMPL_PLANAR2DOF_H
@@ -7,10 +8,13 @@
 
 #include "AbstractRobot.h"
 #include "Environment.h"
+#include "RealVectorSpaceState.h"
 
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
+#include <urdf/model.h>
+#include <glog/logging.h>
 
 namespace robots
 {
@@ -41,6 +45,6 @@ namespace robots
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
 	};
-
 }
+
 #endif //RPMPL_ABSTRACTPLANNER_H
