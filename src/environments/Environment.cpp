@@ -146,7 +146,7 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 {
     float tol_radius {std::max(vel / robot_max_vel, base_radius)};
 
-    if (ground_included)
+    if (ground_included > 0)
     {
         if ((pos - WS_center).norm() > WS_radius || pos.z() < 0 ||              // Out of workspace
             (pos.head(2).norm() < tol_radius && pos.z() < WS_center.z()) ||     // Surrounding of robot base
