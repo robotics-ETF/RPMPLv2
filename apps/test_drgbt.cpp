@@ -23,7 +23,8 @@ int main(int argc, char **argv)
 		"computeDistance [us]", 			// 1
 		"generateGBur [ms]", 				// 2
 		"generateHorizon [us]", 			// 3
-		"updateHorizon [us]"				// 4
+		"updateHorizon [us]",				// 4
+		"updateCurrentState [us]"			// 5
 	};
 
 	// -------------------------------------------------------------------------------------- //

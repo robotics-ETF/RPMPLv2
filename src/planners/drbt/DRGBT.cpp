@@ -90,6 +90,7 @@ bool planning::drbt::DRGBT::solve()
         generateGBur();                 // ~ 10 [ms] Time consuming routine... 
         computeNextState();             // ~ 1 [us]
         
+        auto time_updateCurrentState { std::chrono::steady_clock::now() };
         switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
         {
         case planning::TrajectoryInterpolation::Spline:
@@ -100,6 +101,7 @@ bool planning::drbt::DRGBT::solve()
             updateCurrentState();       // ~ 1 [us]
             break;
         }
+        planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
 
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
