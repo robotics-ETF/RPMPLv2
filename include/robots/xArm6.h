@@ -31,6 +31,7 @@ namespace robots
 		const KDL::Tree &getRobotTree() const { return robot_tree; }
 
 		void setState(std::shared_ptr<base::State> q) override;
+		void setCapsulesRadius(const std::vector<float> &capsules_radius_) override;
 		std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) override;
 		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
 															  std::shared_ptr<base::State> q_init = nullptr) override;
@@ -51,6 +52,7 @@ namespace robots
 		std::vector<KDL::Frame> init_poses;
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
+		std::vector<float> capsules_radius_new;
 	};
 }
 
