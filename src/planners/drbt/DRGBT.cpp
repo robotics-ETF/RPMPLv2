@@ -81,6 +81,13 @@ bool planning::drbt::DRGBT::solve()
         ss->computeDistance(q_current, true);     // ~ 1 [ms]
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
+        if (q_current->getDistance() <= 0)
+        {
+            std::cout << "*************** Collision has been occurred!!! *************** \n";
+            planner_info->setSuccessState(false);
+            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
+            return false;
+        }
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
