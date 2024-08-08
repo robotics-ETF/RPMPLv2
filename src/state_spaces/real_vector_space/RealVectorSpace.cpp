@@ -433,7 +433,7 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
 								(skeleton->col(i+1) - O).dot((R - O).normalized())) 
 								- robot->getCapsuleRadius(i);
 			if (d_c_temp < 0)
-				return d_c_temp;
+				return 0;
 
 			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
 
@@ -445,12 +445,9 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
 		d_c = std::min(d_c, d_c_profile[i]);
     }
 
-	if (d_c > q->getDistance())		// Also, if it was previously computed (q->getDistance() > 0), take "better" (greater) one
-	{
-		q->setDistance(d_c);
-		q->setDistanceProfile(d_c_profile);
-		q->setIsRealDistance(false);
-	}
+	q->setDistance(d_c);
+	q->setDistanceProfile(d_c_profile);
+	q->setIsRealDistance(false);
 
-	return q->getDistance();
+	return d_c;
 }
