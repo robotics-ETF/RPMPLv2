@@ -7,7 +7,7 @@ environment:
 
 random_obstacles:
   init_num: 0		                  # Number of random obstacles to start with the testing
-  max_num: 100		                # Maximal number of random obstacles to be added
+  max_num: 50		                  # Maximal number of random obstacles to be added
   max_vel: 1.6 			              # Maximal velocity of each obstacle in [m/s]
   max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
   dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
