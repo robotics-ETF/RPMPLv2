@@ -310,7 +310,7 @@ float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_
                                 (skeleton->col(i+1) - O).dot((R - O).normalized())) 
                                 - ss->robot->getCapsuleRadius(i);
             if (d_c_temp < 0)
-                return d_c_temp;
+                return 0;
 
             d_c = std::min(d_c, d_c_temp);
 

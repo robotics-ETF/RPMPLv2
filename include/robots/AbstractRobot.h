@@ -43,7 +43,7 @@ namespace robots
 		inline size_t getGroundIncluded() const { return ground_included; }
 
 		inline void setConfiguration(const std::shared_ptr<base::State> configuration_) { configuration = configuration_; }
-		inline void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
+		inline virtual void setCapsulesRadius(const std::vector<float> &capsules_radius_) { capsules_radius = capsules_radius_; }
 		inline void setMaxVel(const Eigen::VectorXf &max_vel_) { max_vel = max_vel_; }
 		inline void setMaxAcc(const Eigen::VectorXf &max_acc_) { max_acc = max_acc_; }
 		inline void setMaxJerk(const Eigen::VectorXf &max_jerk_) { max_jerk = max_jerk_; }
