@@ -29,9 +29,6 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
-    max_time_generateGBur = DRGBTConfig::MAX_TIME_TASK1;
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        max_time_generateGBur -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
     
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
@@ -81,6 +78,13 @@ bool planning::drbt::DRGBT::solve()
         ss->computeDistance(q_current, true);     // ~ 1 [ms]
         planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
+        if (q_current->getDistance() <= 0)
+        {
+            std::cout << "*************** Collision has been occurred!!! *************** \n";
+            planner_info->setSuccessState(false);
+            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
+            return false;
+        }
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -247,6 +251,9 @@ void planning::drbt::DRGBT::generateGBur()
     auto time_generateGBur { std::chrono::steady_clock::now() };
     size_t max_num_attempts {};
     float time_elapsed {};
+    float max_time { DRGBTConfig::MAX_TIME_TASK1 };
+    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+        max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)
@@ -258,7 +265,7 @@ void planning::drbt::DRGBT::generateGBur()
         {
             // Check whether the elapsed time for Task 1 is exceeded
             time_elapsed = getElapsedTime(time_iter_start);
-            if (time_elapsed >= max_time_generateGBur && idx < horizon.size() - 1)
+            if (time_elapsed >= max_time && idx < horizon.size() - 1)
             {
                 // Delete horizon states for which there is no enough remaining time to be processed
                 // This is OK since better states are usually located at the beginning of horizon
@@ -275,7 +282,7 @@ void planning::drbt::DRGBT::generateGBur()
                 planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
                 return;
             }
-            max_num_attempts = std::ceil((1 - time_elapsed / max_time_generateGBur) * DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS);
+            max_num_attempts = std::ceil((1 - time_elapsed / max_time) * DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS);
         }
         else
             max_num_attempts = DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS;

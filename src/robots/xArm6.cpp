@@ -95,6 +95,15 @@ void robots::xArm6::setState(const std::shared_ptr<base::State> q)
 	}
 }
 
+void robots::xArm6::setCapsulesRadius(const std::vector<float> &capsules_radius_)
+{
+	capsules_radius = capsules_radius_;
+	capsules_radius_new = std::vector<float>(num_DOFs);
+	for (size_t i = 0; i < num_DOFs-1; i++)
+		capsules_radius_new[i] = std::max(capsules_radius[i], capsules_radius[i+1]);
+	capsules_radius_new.back() = capsules_radius.back();
+}
+
 std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics(const std::shared_ptr<base::State> q)
 {
 	setConfiguration(q);
@@ -241,7 +250,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 			{
 			case 0:	// Special case when all frame origins are projected on {x,y} plane
 				if (j >= 2)
-					R(i, j) = std::max(R(i, j-1), skeleton->col(j).head(2).norm() + capsules_radius[j-1]);
+					R(i, j) = std::max(R(i, j-1), skeleton->col(j).head(2).norm() + capsules_radius_new[j-1]);
 				break;
 
 			case 3:	// Projection of 5. and 6. skeleton point to the link [3-4] is needed
@@ -250,12 +259,12 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 					Eigen::Vector3f AB { skeleton->col(4) - skeleton->col(3) };
 					float t { (skeleton->col(j) - skeleton->col(3)).dot(AB) / AB.squaredNorm() };
 					Eigen::Vector3f proj { skeleton->col(3) + t * AB };
-					R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - proj).norm() + capsules_radius[j-1]);
+					R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - proj).norm() + capsules_radius_new[j-1]);
 				}
 				break;
 			
 			default:	// No projection is needed
-				R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1]);
+				R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius_new[j-1]);
 				break;
 			}
 		}
