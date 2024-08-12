@@ -234,24 +234,27 @@ bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init
     float rho_robot {};
     float rho_obs {};
     float t_init { 0 };
-    Eigen::VectorXf q_final {};
+    std::shared_ptr<base::State> q_final { nullptr };
 	Eigen::VectorXf delta_q {};
 
     for (float t = delta_t; t <= spline_next->getTimeFinal() + RealVectorSpaceConfig::EQUALITY_THRESHOLD; t += delta_t)
     {
         // std::cout << "Considering t: " << t << "\n";
+        q_final = ss->getNewState(spline_next->getPosition(t));
+        if (ss->robot->checkSelfCollision(q_final))
+            return true;
+        
         t_iter += delta_t;
-        q_final = spline_next->getPosition(t);
         rho_obs = max_obs_vel * (t_iter - t_init);
         rho_robot = 0;
-        delta_q = (q_final - q_init->getCoord()).cwiseAbs();
+        delta_q = (q_final->getCoord() - q_init->getCoord()).cwiseAbs();
         for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
             rho_robot += q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
         
         if (rho_robot + rho_obs >= q_init->getDistance())    // Possible collision
         {
             // std::cout << "********** Possible collision ********** \n";
-            q_init = ss->getNewState(q_final);
+            q_init = q_final;
             q_init->setDistance(computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter));
             ss->robot->computeEnclosingRadii(q_init);
             t_init = t_iter;
