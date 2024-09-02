@@ -25,23 +25,25 @@ bool planning::drbt::DRGBT::whetherToReplan()
 std::unique_ptr<planning::AbstractPlanner> planning::drbt::DRGBT::initStaticPlanner(float max_planning_time)
 {
     // std::cout << "Static planner (for replanning): " << DRGBTConfig::STATIC_PLANNER_TYPE << "\n";
+    std::shared_ptr<base::State> q_goal_ { ss->getNewState(q_goal->getCoord()) };
+    
     switch (DRGBTConfig::STATIC_PLANNER_TYPE)
     {
     case planning::PlannerType::RGBMTStar:
         RGBMTStarConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_current, q_goal);
+        return std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_current, q_goal_);
 
     case planning::PlannerType::RGBTConnect:
         RGBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, q_goal);
+        return std::make_unique<planning::rbt::RGBTConnect>(ss, q_current, q_goal_);
     
     case planning::PlannerType::RBTConnect:
         RBTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rbt::RBTConnect>(ss, q_current, q_goal);
+        return std::make_unique<planning::rbt::RBTConnect>(ss, q_current, q_goal_);
 
     case planning::PlannerType::RRTConnect:
         RRTConnectConfig::MAX_PLANNING_TIME = max_planning_time;
-        return std::make_unique<planning::rrt::RRTConnect>(ss, q_current, q_goal);
+        return std::make_unique<planning::rrt::RRTConnect>(ss, q_current, q_goal_);
 
     default:
         throw std::domain_error("The requested static planner is not found! ");

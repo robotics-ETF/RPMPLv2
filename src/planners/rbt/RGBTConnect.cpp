@@ -101,7 +101,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
 
     for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
-        q_temp = ss->getNewState(q_new);
+        q_temp = q_new;
         tie(status, q_new) = extendSpine(q_temp, q_e);
 		q_new_list.emplace_back(q_new);
         d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
@@ -124,7 +124,7 @@ base::State::Status planning::rbt::RGBTConnect::connectGenSpine
 	
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		q_temp = ss->getNewState(q_new);
+		q_temp = q_new;
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new_list) = extendGenSpine2(q_temp, q_e);

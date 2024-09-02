@@ -287,7 +287,7 @@ bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, st
 		return false;
 	
 	// auto time_start { std::chrono::steady_clock::now() };
-	std::shared_ptr<base::State> q1_temp { std::make_shared<base::RealVectorSpaceState>(q1) };
+	std::shared_ptr<base::State> q1_temp { q1 };
 	size_t num_iter { 0 };
 	size_t max_num_iter { 5 };
 	float phi2 {}, phi4 {}, phi5 {}, phi6 {};

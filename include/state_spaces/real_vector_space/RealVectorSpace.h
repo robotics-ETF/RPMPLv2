@@ -24,7 +24,6 @@ namespace base
 		virtual ~RealVectorSpace();
 
 		std::shared_ptr<base::State> getRandomState(const std::shared_ptr<base::State> q_center) override;
-		std::shared_ptr<base::State> getNewState(const std::shared_ptr<base::State> q) override;
 		std::shared_ptr<base::State> getNewState(const Eigen::VectorXf &coord) override;
 		
 		float getNorm(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
