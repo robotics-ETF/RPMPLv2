@@ -157,7 +157,7 @@ base::State::Status planning::rbt::RBTConnect::connectSpine
 
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		q_temp = ss->getNewState(q_new);
+		q_temp = q_new;
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new) = extendSpine(q_temp, q_e);

@@ -109,12 +109,13 @@ base::State::Status planning::rrt::RRTConnect::connect
 {
 	// std::cout << "Inside connect. \n";
 	std::shared_ptr<base::State> q_new { q };
+	std::shared_ptr<base::State> q_temp { nullptr };
 	base::State::Status status { base::State::Status::Advanced };
 	size_t num_ext { 0 };
 
 	while (status == base::State::Status::Advanced && num_ext++ < RRTConnectConfig::MAX_EXTENSION_STEPS)
 	{
-		std::shared_ptr<base::State> q_temp { ss->getNewState(q_new) };
+		q_temp = q_new;
 		tie(status, q_new) = extend(q_temp, q_e);
 		if (status != base::State::Status::Trapped)
 			tree->upgradeTree(q_new, q_temp);

@@ -214,7 +214,7 @@ bool planning::drbt::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::V
                       spline_next_new;
 
         // std::cout << "spline_next: \n" << spline_next << "\n";
-        spline_computed = !checkCollision(ss->getNewState(q_current), t_iter);
+        spline_computed = !checkCollision(q_current, t_iter);
     }
 
     return spline_computed;

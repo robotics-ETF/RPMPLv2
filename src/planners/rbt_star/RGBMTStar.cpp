@@ -219,7 +219,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 
 	while (status == base::State::Status::Advanced)
 	{
-		q_temp = ss->getNewState(q_new);
+		q_temp = q_new;
 		if (d_c > RBTConnectConfig::D_CRIT)
 		{
 			tie(status, q_new) = extendGenSpine(q_temp, q_e);
@@ -266,27 +266,27 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     std::shared_ptr<base::State> q_opt { nullptr }; 
     if (q_reached->getParent() != nullptr)
     {
-        Eigen::VectorXf q_opt_ { q_reached->getCoord() };  // It is surely collision-free. It will become an optimal state later
-        Eigen::VectorXf q_parent_ { q_reached->getParent()->getCoord() };   // Needs to be collision-checked
+        Eigen::VectorXf q_opt_coord { q_reached->getCoord() };  // It is surely collision-free. It will become an optimal state later
+        Eigen::VectorXf q_parent_coord { q_reached->getParent()->getCoord() };   // Needs to be collision-checked
         std::shared_ptr<base::State> q_middle { ss->getRandomState() };
         size_t max_iter = std::ceil(std::log2(ss->getNorm(q_reached->getParent(), q_reached) / RRTConnectConfig::EPS_STEP));
         bool update { false };
 
         for (size_t i = 0; i < max_iter; i++)
         {
-            q_middle->setCoord((q_opt_ + q_parent_) / 2);
+            q_middle->setCoord((q_opt_coord + q_parent_coord) / 2);
             if (std::get<0>(connectGenSpine(q, q_middle)) == base::State::Status::Reached)
             {
-                q_opt_ = q_middle->getCoord();
+                q_opt_coord = q_middle->getCoord();
                 update = true;
             }
             else
-                q_parent_ = q_middle->getCoord();
+                q_parent_coord = q_middle->getCoord();
         }
 
         if (update)
         {
-            q_opt = ss->getNewState(q_opt_);
+            q_opt = ss->getNewState(q_opt_coord);
             q_opt->setCost(q_reached->getParent()->getCost() + computeCostToCome(q_reached->getParent(), q_opt));
             q_opt->addChild(q_reached);
             tree->upgradeTree(q_opt, q_reached->getParent());
@@ -321,8 +321,8 @@ void planning::rbt_star::RGBMTStar::unifyTrees(const std::shared_ptr<base::Tree>
                                                const std::shared_ptr<base::State> q0_con)
 {
     std::shared_ptr<base::State> q_considered { nullptr };
-    std::shared_ptr<base::State> q_con_new { ss->getNewState(q_con) };
-    std::shared_ptr<base::State> q0_con_new { ss->getNewState(q0_con) };
+    std::shared_ptr<base::State> q_con_new { q_con };
+    std::shared_ptr<base::State> q0_con_new { q0_con };
 
     while (true)
     {

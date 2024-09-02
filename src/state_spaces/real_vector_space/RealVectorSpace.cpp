@@ -26,23 +26,17 @@ namespace base
 // If 'q_center' is passed, it is added to the random state 
 std::shared_ptr<base::State> base::RealVectorSpace::getRandomState(const std::shared_ptr<base::State> q_center)
 {
-	Eigen::VectorXf q_rand { Eigen::VectorXf::Random(num_dimensions) };
+	Eigen::VectorXf q_rand_coord { Eigen::VectorXf::Random(num_dimensions) };
 	std::vector<std::pair<float, float>> limits { robot->getLimits() };
 
 	for (size_t i = 0; i < num_dimensions; i++)
-		q_rand(i) = ((limits[i].second - limits[i].first) * q_rand(i) + limits[i].first + limits[i].second) / 2;
+		q_rand_coord(i) = ((limits[i].second - limits[i].first) * q_rand_coord(i) + limits[i].first + limits[i].second) / 2;
 
 	if (q_center != nullptr)
-		q_rand += q_center->getCoord();
+		q_rand_coord += q_center->getCoord();
 
-	// std::cout << "Random state coord: " << q_rand.transpose();
-	return getNewState(q_rand);
-}
-
-// Get a copy of 'state'
-std::shared_ptr<base::State> base::RealVectorSpace::getNewState(const std::shared_ptr<base::State> state)
-{
-	return std::make_shared<base::RealVectorSpaceState>(state);
+	// std::cout << "Random state coord: " << q_rand_coord.transpose();
+	return getNewState(q_rand_coord);
 }
 
 // Get completely a new state with the same coordinates as 'state'
@@ -112,7 +106,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 	}
 	else
 	{
-		q_new = getNewState(q2);
+		q_new = getNewState(q2->getCoord());
 		status = base::State::Status::Reached;
 	}
 
