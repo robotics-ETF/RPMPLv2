@@ -246,26 +246,27 @@ bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init
         
         t_iter += delta_t;
         rho_obs = max_obs_vel * (t_iter - t_init);
-        rho_robot = 0;
         delta_q = (q_final->getCoord() - q_init->getCoord()).cwiseAbs();
         for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
-            rho_robot += q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
-        
-        if (rho_robot + rho_obs >= q_init->getDistance())    // Possible collision
         {
-            // std::cout << "********** Possible collision ********** \n";
-            q_init = q_final;
-            q_init->setDistance(computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter));
-            ss->robot->computeEnclosingRadii(q_init);
-            t_init = t_iter;
-
-            if (q_init->getDistance() <= 0)
+            rho_robot = q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
+            if (rho_robot + rho_obs >= q_init->getDistanceProfile(i))    // Possible collision
             {
-                // std::cout << "\t Spline is NOT guaranteed collision-free! \n";
-                return true;
+                // std::cout << "********** Possible collision ********** \n";
+                q_init = q_final;
+                computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter);
+                ss->robot->computeEnclosingRadii(q_init);
+                t_init = t_iter;
+
+                if (q_init->getDistance() <= 0)
+                {
+                    // std::cout << "\t Spline is NOT guaranteed collision-free! \n";
+                    return true;
+                }
+                break;
             }
+            // else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
         }
-        // else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
     }
     
     // auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };
