@@ -41,7 +41,7 @@ namespace planning::drbt
         std::shared_ptr<base::State> q_current;                                 // Current robot configuration
         std::shared_ptr<base::State> q_target;                                  // Target robot configuration to which the robot is currently heading to, as well as the configuration where the spline is ending
         bool all_robot_vel_same;                                                // Whether all joint velocities are the same
-        float max_obs_vel;                                                      // Maximal velocity considering all obstacles
+        float max_obs_vel;                                                      // Maximal velocity of dynamic obstacles used to generate dynamic bubbles
         size_t max_num_iter_spline_regular;                                     // Maximal number of iterations when computing regular spline
     };
 }

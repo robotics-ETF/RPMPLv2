@@ -246,26 +246,27 @@ bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init
         
         t_iter += delta_t;
         rho_obs = max_obs_vel * (t_iter - t_init);
-        rho_robot = 0;
         delta_q = (q_final->getCoord() - q_init->getCoord()).cwiseAbs();
         for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
-            rho_robot += q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
-        
-        if (rho_robot + rho_obs >= q_init->getDistance())    // Possible collision
         {
-            // std::cout << "********** Possible collision ********** \n";
-            q_init = q_final;
-            q_init->setDistance(computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter));
-            ss->robot->computeEnclosingRadii(q_init);
-            t_init = t_iter;
-
-            if (q_init->getDistance() <= 0)
+            rho_robot = q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
+            if (rho_robot + rho_obs >= q_init->getDistanceProfile(i))    // Possible collision
             {
-                // std::cout << "\t Spline is NOT guaranteed collision-free! \n";
-                return true;
+                // std::cout << "********** Possible collision ********** \n";
+                q_init = q_final;
+                computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter);
+                ss->robot->computeEnclosingRadii(q_init);
+                t_init = t_iter;
+
+                if (q_init->getDistance() <= 0)
+                {
+                    // std::cout << "\t Spline is NOT guaranteed collision-free! \n";
+                    return true;
+                }
+                break;
             }
+            // else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
         }
-        // else std::cout << "\t OK! rho_robot + rho_obs < q_init->getDistance() \n";
     }
     
     // auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };
@@ -274,7 +275,7 @@ bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init
 }
 
 /// @brief Compute an underestimation of distance-to-obstacles 'd_c', i.e., a distance-to-planes, for each robot's link,
-/// when the robot takes a configuration 'q'. 
+/// i.e., compute a distance-to-planes profile function, when the robot takes a configuration 'q'.
 /// Planes approximate obstacles, and are generated according to 'nearest_points'.
 /// Each plane is moved at the maximal obstacle velocity 'ss->env->getObject(j)->getMaxVel()' towards the robot 
 /// during the time interval 'delta_t'.
@@ -289,6 +290,7 @@ float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_
 {
 	float d_c_temp {};
     float d_c { INFINITY };
+	std::vector<float> d_c_profile(ss->robot->getNumLinks(), 0);
     Eigen::Vector3f R {};		// Robot's nearest point
 	Eigen::Vector3f O {};    	// Obstacle's nearest point
     Eigen::Vector3f delta_RO {};
@@ -296,6 +298,7 @@ float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_
     
     for (size_t i = 0; i < ss->robot->getNumLinks(); i++)
     {
+		d_c_profile[i] = INFINITY;
         for (size_t j = 0; j < ss->env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
@@ -315,14 +318,19 @@ float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_
             if (d_c_temp < 0)
                 return 0;
 
-            d_c = std::min(d_c, d_c_temp);
+			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
 
             // std::cout << "(i, j) = " << "(" << i << ", " << j << "):" << std::endl;
             // std::cout << "Robot nearest point:    " << R.transpose() << std::endl;
             // std::cout << "Obstacle nearest point: " << O.transpose() << std::endl;
             // std::cout << "d_c: " << d_c_profile[i] << std::endl;
 		}
+		d_c = std::min(d_c, d_c_profile[i]);
     }
+
+	q->setDistance(d_c);
+	q->setDistanceProfile(d_c_profile);
+	q->setIsRealDistance(false);
 
 	return d_c;
 }
