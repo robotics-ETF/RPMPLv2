@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		if (init_num_test == 1)
 		{
 			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-							"_routine_times" + std::to_string(init_num_obs) + ".log", std::ofstream::out);
+							 std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 				output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 				output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-				output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
+				// output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 				// if (result)
 				// {
