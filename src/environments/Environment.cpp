@@ -166,7 +166,7 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 
 // void env::Environment::updateEnvironment(float delta_time)
 // {
-//     fcl::Vector3f pos;
+//     fcl::Vector3f pos {};
 //     for (size_t i = 0; i < objects.size(); i++)
 //     {
 //         pos = objects[i]->getPosition();
@@ -176,10 +176,58 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 //     }
 // }
 
+// Reflect obstacles in random directions
+// void env::Environment::updateEnvironment(float delta_time)
+// {
+//     float vel_intensity {};
+//     fcl::Vector3f pos {}, vel {};
+
+//     for (size_t i = 0; i < objects.size(); i++)
+//     {
+//         // std::cout << objects[i];
+//         if (objects[i]->getLabel() != "dynamic_obstacle")
+//             continue;
+
+//         vel = objects[i]->getVelocity() + objects[i]->getAcceleration() * delta_time;
+//         pos = objects[i]->getPosition() + vel * delta_time;
+//         vel_intensity = vel.norm();
+//         // std::cout << i << ". position: " << pos.transpose() << "\n";
+//         // std::cout << i << ". vel_intensity: " << vel_intensity << "\n";
+
+//         if (vel_intensity > objects[i]->getMaxVel())
+//         {
+//             // std::cout << i << ". Invalid object velocity. Computing new acceleration.\n";
+//             fcl::Vector3f acc = fcl::Vector3f::Random(3);
+//             acc.normalize();
+//             objects[i]->setAcceleration(objects[i]->getAcceleration().norm() * acc);
+//             i--;
+//         }
+//         else if (!isValid(pos, vel_intensity))
+//         {
+//             // std::cout << i << ". position: " << pos.transpose() << "\n";
+//             // std::cout << i << ". Invalid object position. Computing new velocity.\n";
+//             vel = fcl::Vector3f::Random(3);
+//             vel.normalize();
+//             objects[i]->setVelocity(vel_intensity * vel);
+//             i--;
+//         }
+//         else
+//         {
+//             objects[i]->setVelocity(vel);
+//             objects[i]->setPosition(pos);
+//             // std::cout << i << ". position successfully computed: " << pos.transpose() << "\n";
+//             // std::cout << i << ". " << objects[i];
+//         }
+//     }
+//     // std::cout << "-------------------------------------------------" << std::endl;
+// }
+
+// Reflect obstacles according to the principle of light reflecting
 void env::Environment::updateEnvironment(float delta_time)
 {
-    float vel_intensity;
-    fcl::Vector3f pos, vel;
+    float tol_radius {}, t_param {};
+    fcl::Vector3f pos_next {}, vec_normal {};
+    bool change { true };
 
     for (size_t i = 0; i < objects.size(); i++)
     {
@@ -187,36 +235,33 @@ void env::Environment::updateEnvironment(float delta_time)
         if (objects[i]->getLabel() != "dynamic_obstacle")
             continue;
 
-        vel = objects[i]->getVelocity() + objects[i]->getAcceleration() * delta_time;
-        pos = objects[i]->getPosition() + vel * delta_time;
-        vel_intensity = vel.norm();
-        // std::cout << i << ". position: " << pos.transpose() << "\n";
-        // std::cout << i << ". vel_intensity: " << vel_intensity << "\n";
-
-        if (vel_intensity > objects[i]->getMaxVel())
-        {
-            // std::cout << i << ". Invalid object velocity. Computing new acceleration.\n";
-            fcl::Vector3f acc = fcl::Vector3f::Random(3);
-            acc.normalize();
-            objects[i]->setAcceleration(objects[i]->getAcceleration().norm() * acc);
-            i--;
-        }
-        else if (!isValid(pos, vel_intensity))
-        {
-            // std::cout << i << ". position: " << pos.transpose() << "\n";
-            // std::cout << i << ". Invalid object position. Computing new velocity.\n";
-            vel = fcl::Vector3f::Random(3);
-            vel.normalize();
-            objects[i]->setVelocity(vel_intensity * vel);
-            i--;
-        }
+        tol_radius = std::max(objects[i]->getVelocity().norm() / robot_max_vel, base_radius);
+        pos_next = objects[i]->getPosition() + objects[i]->getVelocity() * delta_time;
+        change = true;
+        
+        if (pos_next.z() < 0)
+            vec_normal << 0, 0, 1;
+        else if ((pos_next - WS_center).norm() > WS_radius)
+            vec_normal << -pos_next.x(), -pos_next.y(), -(pos_next.z() - WS_center.z());
+        else if (pos_next.head(2).norm() < tol_radius && pos_next.z() < WS_center.z())
+            vec_normal << pos_next.x(), pos_next.y(), 0;
+        else if ((pos_next - WS_center).norm() < tol_radius)
+            vec_normal << pos_next.x(), pos_next.y(), pos_next.z() - WS_center.z();
         else
         {
-            objects[i]->setVelocity(vel);
-            objects[i]->setPosition(pos);
-            // std::cout << i << ". position successfully computed: " << pos.transpose() << "\n";
-            // std::cout << i << ". " << objects[i];
+            objects[i]->setPosition(pos_next);
+            change = false;
         }
+
+        if (change)
+        {
+            t_param = (pos_next - objects[i]->getPosition()).dot(vec_normal) / vec_normal.squaredNorm();
+            objects[i]->setPosition(2*pos_next - objects[i]->getPosition() - 2*t_param * vec_normal);
+            objects[i]->setVelocity((objects[i]->getPosition() - pos_next) / delta_time);
+        }
+        // std::cout << i << ". position: " << objects[i]->getPosition().transpose() << "\n";
+        // std::cout << i << ". velocity: " << objects[i]->getVelocity().transpose() << "\n";
+        // std::cout << i << ". vel_intensity: " << objects[i]->getVelocity().norm() << "\n";
     }
     // std::cout << "-------------------------------------------------" << std::endl;
 }
