@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario2/scenario2.yaml"
 		"/data/xarm6/scenario_real_time/scenario_real_time.yaml"
 	};
+	std::string random_scenarios_path { "/data/xarm6/scenario_real_time/random_scenarios.yaml" };
 
 	std::vector<std::string> routines		// Routines of which the time executions are stored
 	{ 	
@@ -36,6 +37,7 @@ int main(int argc, char **argv)
 	const std::string project_path { getProjectPath() };
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
+    YAML::Node node2 { YAML::LoadFile(project_path + random_scenarios_path) };
 
 	size_t init_num_obs { node["random_obstacles"]["init_num"].as<size_t>() };
 	const size_t max_num_obs { node["random_obstacles"]["max_num"].as<size_t>() };
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 
-	float min_dist_start_goal { node["robot"]["min_dist_start_goal"].as<float>() };
+	[[maybe_unused]] float min_dist_start_goal { node["robot"]["min_dist_start_goal"].as<float>() };
 	size_t init_num_test { node["testing"]["init_num"].as<size_t>() };
 	size_t init_num_success_test { node["testing"]["init_num_success"].as<size_t>() };
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
@@ -109,9 +111,41 @@ int main(int argc, char **argv)
 				env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
 				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 
-				if (min_dist_start_goal > 0)
-					generateRandomStartAndGoal(scenario, min_dist_start_goal);
-				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				// First option (generating here in the code):
+				// if (min_dist_start_goal > 0)
+				// 	generateRandomStartAndGoal(scenario, min_dist_start_goal);
+				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				// ------------------------------------------------------------------------------- //
+
+				// Second option (reading from a yaml file):
+				Eigen::VectorXf start { Eigen::VectorXf::Zero(ss->num_dimensions) };
+				Eigen::VectorXf goal { Eigen::VectorXf::Zero(ss->num_dimensions) };
+				for (size_t i = 0; i < ss->num_dimensions; i++)
+				{
+					start(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]["start"][i].as<float>();
+					goal(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]["goal"][i].as<float>();
+				}
+				scenario.setStart(ss->getNewState(start));
+				scenario.setGoal(ss->getNewState(goal));
+
+				Eigen::Vector3f pos {}, vel {};
+				for (size_t j = 0; j < init_num_obs; j++)
+				{
+					for (size_t i = 0; i < 3; i++)
+					{
+						pos(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]
+								 ["object_" + std::to_string(j)]["pos"][i].as<float>();
+						vel(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]
+								 ["object_" + std::to_string(j)]["vel"][i].as<float>();
+					}
+					
+					std::shared_ptr<env::Object> object { nullptr };
+					object = std::make_shared<env::Box>(obs_dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
+					object->setMaxVel(max_vel_obs);
+					object->setMaxAcc(max_acc_obs);
+					env->addObject(object, vel);
+				}
+				// ------------------------------------------------------------------------------- //
 
 				LOG(INFO) << "Test number:       " << num_test;
 				LOG(INFO) << "Using scenario:    " << project_path + scenario_file_path;
