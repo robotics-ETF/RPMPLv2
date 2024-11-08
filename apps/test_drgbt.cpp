@@ -18,15 +18,15 @@ int main(int argc, char **argv)
 	};
 	std::string random_scenarios_path { "/data/xarm6/scenario_real_time/random_scenarios.yaml" };
 
-	std::vector<std::string> routines		// Routines of which the time executions are stored
-	{ 	
-		"replan [ms]",						// 0
-		"computeDistance [us]", 			// 1
-		"generateGBur [ms]", 				// 2
-		"generateHorizon [us]", 			// 3
-		"updateHorizon [us]",				// 4
-		"updateCurrentState [us]"			// 5
-	};
+	// std::vector<std::string> routines		// Routines of which the time executions are stored
+	// { 	
+	// 	"replan [ms]",						// 0
+	// 	"computeDistance [us]", 			// 1
+	// 	"generateGBur [ms]", 				// 2
+	// 	"generateHorizon [us]", 			// 3
+	// 	"updateHorizon [us]",				// 4
+	// 	"updateCurrentState [us]"			// 5
+	// };
 
 	// -------------------------------------------------------------------------------------- //
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 				}
 
 				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-								 "_routine_times" + std::to_string(init_num_obs) + ".log", std::ofstream::app);
+								 std::to_string(init_num_obs) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
@@ -194,21 +194,21 @@ int main(int argc, char **argv)
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
 				output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
-				if (result)
-				{
-					std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
-					for (size_t idx = 0; idx < routines.size(); idx++)
-					{
-						// LOG(INFO) << "Routine " << routines[idx];
-						// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
-						// LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
-						// LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
+				// if (result)
+				// {
+				// 	std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
+				// 	for (size_t idx = 0; idx < routines.size(); idx++)
+				// 	{
+				// 		// LOG(INFO) << "Routine " << routines[idx];
+				// 		// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
+				// 		// LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
+				// 		// LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
 						
-						output_file << "Routine " << routines[idx] << " times: " << std::endl;
-						for (float t : routine_times[idx])
-							output_file << t << std::endl;
-					}
-				}
+				// 		output_file << "Routine " << routines[idx] << " times: " << std::endl;
+				// 		for (float t : routine_times[idx])
+				// 			output_file << t << std::endl;
+				// 	}
+				// }
 
 				output_file << "--------------------------------------------------------------------\n";
 				output_file.close();

@@ -9,4 +9,4 @@ STATIC_PLANNER_TYPE: "RGBMT*"           # Name of a static planner (for obtainin
 REAL_TIME_SCHEDULING: "FPS"             # "FPS" - Fixed Priority Scheduling; "None" - Without real-time scheduling
 MAX_TIME_TASK1: 0.050                   # Maximal time in [s] which Task 1 can take from the processor
 TRAJECTORY_INTERPOLATION: "Spline"      # Method for interpolation of trajectory: 'None' or 'Spline'
-GUARANTEED_SAFE_MOTION: true            # Whether robot motion is surely safe for environment
+GUARANTEED_SAFE_MOTION: false           # Whether robot motion is surely safe for environment
