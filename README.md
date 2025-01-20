@@ -2,11 +2,11 @@
 This repository contains Rapid Prototyping Motion Planning Library v2 (RPMPLv2) implemented in C++.
 
 Available planners are:
-- Rapidly-exploring Random Trees (RRT-Connect)
-- Rapidly-exploring Bur Trees (RBT-Connect)
-- Rapidly-exploring Generalized Bur Trees (RGBT-Connect)
-- Rapidly-exploring Generalized Bur Multi-Tree star (RGBMT*)
-- Dynamic Rapidly-exploring Generalized Bur Trees (DRGBT)
+- Rapidly-exploring Random Trees ([RRT-Connect](https://ieeexplore.ieee.org/abstract/document/844730))
+- Rapidly-exploring Bur Trees ([RBT-Connect](https://ieeexplore.ieee.org/abstract/document/7487117))
+- Rapidly-exploring Generalized Bur Trees ([RGBT-Connect](https://ieeexplore.ieee.org/abstract/document/9196920))
+- Rapidly-exploring Generalized Bur Multi-Tree star ([RGBMT*](https://link.springer.com/article/10.1007/s10846-023-01893-4))
+- Dynamic Rapidly-exploring Generalized Bur Trees ([DRGBT](https://ieeexplore.ieee.org/abstract/document/9636730) & [Real-time DRGBT](https://arxiv.org/pdf/2501.00507))
 
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
 
