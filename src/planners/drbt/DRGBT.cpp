@@ -74,9 +74,9 @@ bool planning::drbt::DRGBT::solve()
         
         // ------------------------------------------------------------------------------- //
         // Since the environment may change, a new distance is required!
-        auto time_computeDistance { std::chrono::steady_clock::now() };
+        // auto time_computeDistance { std::chrono::steady_clock::now() };
         ss->computeDistance(q_current, true);     // ~ 1 [ms]
-        planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
+        // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
         if (q_current->getDistance() <= 0)
         {
@@ -94,7 +94,7 @@ bool planning::drbt::DRGBT::solve()
         generateGBur();                 // ~ 10 [ms] Time consuming routine... 
         computeNextState();             // ~ 1 [us]
         
-        auto time_updateCurrentState { std::chrono::steady_clock::now() };
+        // auto time_updateCurrentState { std::chrono::steady_clock::now() };
         switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
         {
         case planning::TrajectoryInterpolation::Spline:
@@ -105,7 +105,7 @@ bool planning::drbt::DRGBT::solve()
             updateCurrentState();       // ~ 1 [us]
             break;
         }
-        planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
+        // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
 
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
@@ -153,7 +153,7 @@ bool planning::drbt::DRGBT::solve()
 void planning::drbt::DRGBT::generateHorizon()
 {
     // std::cout << "Generating horizon... \n";
-    auto time_generateHorizon { std::chrono::steady_clock::now() };
+    // auto time_generateHorizon { std::chrono::steady_clock::now() };
 
     // Deleting states which are left behind 'q_next', and do not belong to the predefined path
     int q_next_idx { q_next->getIndex() };
@@ -210,14 +210,14 @@ void planning::drbt::DRGBT::generateHorizon()
     // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
     
-    planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
+    // planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
 }
 
 // Update the horizon size, and add lateral spines.
 void planning::drbt::DRGBT::updateHorizon()
 {
     // std::cout << "Robot current state: " << q_current->getCoord().transpose() << " with d_c: " << q_current->getDistance() << " [m] \n";
-    auto time_updateHorizon { std::chrono::steady_clock::now() };
+    // auto time_updateHorizon { std::chrono::steady_clock::now() };
 
     if ((ss->num_dimensions-1) * q_current->getDistance() < DRGBTConfig::D_CRIT)
         horizon_size = DRGBTConfig::INIT_HORIZON_SIZE * ss->num_dimensions;
@@ -240,7 +240,7 @@ void planning::drbt::DRGBT::updateHorizon()
     // std::cout << "Adding " << num_lateral_states << " lateral states... \n";
     addLateralStates();
     horizon_size = horizon.size();
-    planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, planning::TimeUnit::us), 4);
+    // planner_info->addRoutineTime(getElapsedTime(time_updateHorizon, planning::TimeUnit::us), 4);
 }
 
 // Generate a generalized bur from 'q_current', i.e., compute horizon spines.
@@ -248,7 +248,7 @@ void planning::drbt::DRGBT::updateHorizon()
 void planning::drbt::DRGBT::generateGBur()
 {
     // std::cout << "Generating gbur by computing reached states... \n";
-    auto time_generateGBur { std::chrono::steady_clock::now() };
+    // auto time_generateGBur { std::chrono::steady_clock::now() };
     size_t max_num_attempts {};
     float time_elapsed {};
     float max_time { DRGBTConfig::MAX_TIME_TASK1 };
@@ -279,7 +279,7 @@ void planning::drbt::DRGBT::generateGBur()
                 
                 // std::cout << "Deleting " << horizon_size - horizon.size() << " of " << horizon_size << " horizon states...\n";
                 planner_info->setTask1Interrupted(true);
-                planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
+                // planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
                 return;
             }
             max_num_attempts = std::ceil((1 - time_elapsed / max_time) * DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS);
@@ -292,7 +292,7 @@ void planning::drbt::DRGBT::generateGBur()
             horizon[idx]->getStatus() == planning::drbt::HorizonState::Status::Critical)
             modifyState(horizon[idx], max_num_attempts);
     }
-    planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
+    // planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
 }
 
 // Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
