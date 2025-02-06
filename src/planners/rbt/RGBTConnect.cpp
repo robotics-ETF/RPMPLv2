@@ -74,6 +74,9 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
     planning::rbt::RGBTConnect::extendGenSpine(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
 {
     float d_c { ss->computeDistance(q) };
+	if (d_c <= 0)
+		return { base::State::Status::Trapped, q };
+
 	std::shared_ptr<base::State> q_new { q };
 	base::State::Status status { base::State::Status::None };
 
