@@ -37,7 +37,6 @@ namespace base
 		std::shared_ptr<Eigen::MatrixXf> enclosing_radii; 				// Matrix containing all enclosing radii (row: from which skeleton point, column: to which skeleton point)
 		
 	public:
-		State() {}
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 

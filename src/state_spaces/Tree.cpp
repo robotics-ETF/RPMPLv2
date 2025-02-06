@@ -1,5 +1,13 @@
 #include "Tree.h"
 
+base::Tree::Tree()
+{
+	tree_name = "";
+	tree_idx = 0;
+	states = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
+	kd_tree = nullptr;
+}
+
 base::Tree::Tree(const std::string &tree_name_, size_t tree_idx_)
 {
 	tree_name = tree_name_;
