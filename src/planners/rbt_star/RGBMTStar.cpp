@@ -269,7 +269,8 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
         Eigen::VectorXf q_opt_coord { q_reached->getCoord() };  // It is surely collision-free. It will become an optimal state later
         Eigen::VectorXf q_parent_coord { q_reached->getParent()->getCoord() };   // Needs to be collision-checked
         std::shared_ptr<base::State> q_middle { ss->getRandomState() };
-        size_t max_iter = std::ceil(std::log2(ss->getNorm(q_reached->getParent(), q_reached) / RRTConnectConfig::EPS_STEP));
+        float norm { ss->getNorm(q_reached->getParent(), q_reached) };
+        size_t max_iter = (norm > RRTConnectConfig::EPS_STEP) ? std::ceil(std::log2(norm / RRTConnectConfig::EPS_STEP)) : 1;
         bool update { false };
 
         for (size_t i = 0; i < max_iter; i++)
