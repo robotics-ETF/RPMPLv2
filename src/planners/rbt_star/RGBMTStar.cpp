@@ -235,7 +235,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
             }
 		}            
 	}
-	return {status, q_new};
+	return { status, q_new };
 }
 
 // Return (weighted) cost-to-come from 'q1' to 'q2'

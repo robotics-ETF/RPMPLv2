@@ -110,7 +110,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> base::RealVectorSp
 		status = base::State::Status::Reached;
 	}
 
-	return {status, q_new};
+	return { status, q_new };
 }
 
 // Prune the edge from 'q1' to 'q2', if it comes out of C-space domain or specified 'limits_'.

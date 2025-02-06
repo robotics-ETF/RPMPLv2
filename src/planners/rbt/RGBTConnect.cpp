@@ -85,7 +85,7 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
         if (d_c < RBTConnectConfig::D_CRIT || status != base::State::Status::Advanced)
             break;
     }
-    return {status, q_new};
+    return { status, q_new };
 }
 
 // Generalized spine is generated from 'q' towards 'q_e'
@@ -109,7 +109,7 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
     }
-    return {status, std::make_shared<std::vector<std::shared_ptr<base::State>>>(q_new_list)};
+    return { status, std::make_shared<std::vector<std::shared_ptr<base::State>>>(q_new_list) };
 }
 
 base::State::Status planning::rbt::RGBTConnect::connectGenSpine

@@ -210,7 +210,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 {
 	CapsuleToBox capsule_box(A, B, radius, obs);
 	capsule_box.compute();
-	return {capsule_box.getDistance(), capsule_box.getNearestPoints()};
+	return { capsule_box.getDistance(), capsule_box.getNearestPoints() };
 }
 
 // Get distance (and nearest points) between two line segments, AB and CD
@@ -235,7 +235,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
         nearest_pts->col(1) = C + s * (D - C);
 		d_c = (nearest_pts->col(1) - nearest_pts->col(0)).norm();
         if (d_c < RealVectorSpaceConfig::EQUALITY_THRESHOLD) 	// The collision occurs
-            return {0, nullptr};
+            return { 0, nullptr };
     }
     else
 	{
@@ -316,7 +316,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 			}
         }
     }
-	return {d_c, nearest_pts};
+	return { d_c, nearest_pts };
 }
 
 // Get distance (and nearest points) between line segment AB and point C
@@ -336,9 +336,9 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 	
 	float d_c { (nearest_pts->col(1) - nearest_pts->col(0)).norm() };
 	if (d_c < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-		return {0, nullptr};
+		return { 0, nullptr };
 
-	return {d_c, nearest_pts};
+	return { d_c, nearest_pts };
 }
 
 // Get distance (and nearest points) between capsule (determined with line segment AB and 'radius') 
@@ -350,12 +350,12 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 	float AO { (A - obs.head(3)).norm() };
     float d_c { AO - obs(3) };
     if (d_c < radius)	// The collision occurs
-        return {0, nullptr};
+        return { 0, nullptr };
     
     float BO { (B - obs.head(3)).norm() };
     float d_c_temp { BO - obs(3) };
     if (d_c_temp < radius) 	// The collision occurs
-        return {0, nullptr};
+        return { 0, nullptr };
     
     if (d_c_temp < d_c)
         d_c = d_c_temp; 
@@ -372,7 +372,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 		{    
             d_c = d_c_temp;
             if (d_c_temp < radius)	// The collision occurs
-			    return {0, nullptr};    
+			    return { 0, nullptr };    
             
             nearest_pts->col(0) = A + AO * cos(alpha) / AB * (B - A);
             nearest_pts->col(1) = nearest_pts->col(0) + d_c / (obs.head(3) - nearest_pts->col(0)).norm() * (obs.head(3) - nearest_pts->col(0));
@@ -388,7 +388,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
         nearest_pts->col(1) = A + d_c / AO * (obs.head(3) - A);  
         nearest_pts->col(0) = A;
     }
-    return {d_c, nearest_pts};
+    return { d_c, nearest_pts };
 }
 
 // ------------------------------------------------ Class CapsuleToBox -------------------------------------------------------//
