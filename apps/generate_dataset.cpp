@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 						file_output << (j == ss->num_dimensions-1 ? "\n" : ",");
 					}
 				}
-				LOG(INFO) << "Data considering " << new_path.size()-1 << " pattern trees is successfully written! ";
+				LOG(INFO) << "Data considering " << std::min(num_init_nodes, new_path.size()-1) << " pattern trees is successfully written! ";
 			}
 			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 		}
