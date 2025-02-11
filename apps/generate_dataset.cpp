@@ -67,6 +67,7 @@ const std::vector<std::shared_ptr<base::State>> planning::rbt::PatternTree::gene
 					continue;
 			}
 
+			q_e = ss->pruneEdge(q_root, q_e);
 			tie(status, q_new) = extendGenSpine(q_root, q_e);
 			// tie(status, q_new) = extendSpine(q_root, q_e);
 			gbur.emplace_back(q_new);
