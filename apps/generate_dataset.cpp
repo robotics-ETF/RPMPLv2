@@ -146,6 +146,7 @@ int main(int argc, char **argv)
 	float max_edge_length { node["testing"]["max_edge_length"].as<float>() };
 	size_t num_layers { node["testing"]["num_layers"].as<size_t>() };
 	bool write_header { node["testing"]["write_header"].as<bool>() };
+	size_t num_init_nodes { node["testing"]["num_init_nodes"].as<size_t>() };
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
@@ -237,7 +238,7 @@ int main(int argc, char **argv)
 				std::vector<std::shared_ptr<base::State>> new_path {};
 				ss->preprocessPath(planner->getPath(), new_path, max_edge_length);
 				
-				for (size_t idx = 0; idx < new_path.size()-1; idx++)
+				for (size_t idx = 0; idx < std::min(num_init_nodes, new_path.size()-1); idx++)
 				{
 					tree = patern_tree->generateLocalTree(new_path[idx]);
 					// LOG(INFO) << "Path node: " << new_path[idx]->getCoord().transpose();

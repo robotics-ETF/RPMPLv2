@@ -29,7 +29,8 @@ robot:
 
 testing:
   max_num: 1000                                             # Maximal number of tests that should be carried out
-  max_edge_length: 0.1
-  num_layers: 3
-  write_header: true
+  max_edge_length: 0.1                                      # Maximal edge length for advancing over the obtained path
+  num_layers: 3                                             # Number of layers for creating a pattern tree
+  write_header: true                                        # Whether to write a header to the dataset table
+  num_init_nodes: 5                                         # How many number of the initial nodes from the obtained path will be added to the dataset
   
