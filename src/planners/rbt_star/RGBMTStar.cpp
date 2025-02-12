@@ -241,11 +241,13 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
 // Return (weighted) cost-to-come from 'q1' to 'q2'
 inline float planning::rbt_star::RGBMTStar::computeCostToCome(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
-    // float d_c { ss->computeDistance(q2) };
-    // if (d_c < 10 * DRGBTConfig::D_CRIT)
-    //     return (10 * DRGBTConfig::D_CRIT / d_c) * ss->getNorm(q1, q2);
+    float d_c1 { ss->computeDistance(q1) };
+    float d_c2 { ss->computeDistance(q2) };
+    float c1 { (d_c1 < 10 * RBTConnectConfig::D_CRIT) ? (10 * RBTConnectConfig::D_CRIT / d_c1) : 1 };
+    float c2 { (d_c2 < 10 * RBTConnectConfig::D_CRIT) ? (10 * RBTConnectConfig::D_CRIT / d_c2) : 1 };
 
-    return ss->getNorm(q1, q2);
+    return c1 * c2 * ss->getNorm(q1, q2);
+    // return ss->getNorm(q1, q2);
 }
 
 // State 'q' from another tree is optimally connected to 'tree'
