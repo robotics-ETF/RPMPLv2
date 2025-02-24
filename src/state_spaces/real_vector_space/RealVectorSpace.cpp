@@ -191,23 +191,28 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
     std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length)
 {
-    new_path.clear();
-    new_path.emplace_back(original_path.front());
-	std::vector<std::shared_ptr<base::State>> path { original_path.front() };
+	std::vector<std::shared_ptr<base::State>> init_path { original_path.front() };
+	for (size_t i = 1; i < original_path.size(); i++)
+	{
+		if (!isEqual(original_path[i], original_path[i-1]))
+			init_path.emplace_back(original_path[i]);
+	}
+	
+	std::vector<std::shared_ptr<base::State>> path { init_path.front() };
     std::shared_ptr<base::State> q0 { nullptr };
     std::shared_ptr<base::State> q1 { nullptr };
     std::shared_ptr<base::State> q2 { nullptr };
 
-	// std::cout << "Original path is: \n";
-    // for (size_t i = 0; i < original_path.size(); i++)
-    //     std::cout << original_path[i]->getCoord().transpose() << "\n";
+	// std::cout << "Initial path is: \n";
+    // for (size_t i = 0; i < init_path.size(); i++)
+    //     std::cout << init_path[i]->getCoord().transpose() << "\n";
     // std::cout << std::endl;
 
-	for (size_t i = 1; i < original_path.size() - 1; i++)
+	for (size_t i = 1; i < init_path.size() - 1; i++)
 	{
-        q0 = original_path[i-1];
-        q1 = original_path[i];
-		q2 = original_path[i+1];
+        q0 = init_path[i-1];
+        q1 = init_path[i];
+		q2 = init_path[i+1];
 
 		for (size_t k = 1; k < num_dimensions; k++)
 		{
@@ -220,13 +225,15 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 			}
 		}
 	}
-	path.emplace_back(original_path.back());
+	path.emplace_back(init_path.back());
 
 	// std::cout << "Modified path is: \n";
     // for (size_t i = 0; i < path.size(); i++)
     //     std::cout << path[i]->getCoord().transpose() << "\n";
     // std::cout << std::endl;
 
+    new_path.clear();
+    new_path.emplace_back(init_path.front());
     base::State::Status status { base::State::Status::None };
     float dist {};
 
