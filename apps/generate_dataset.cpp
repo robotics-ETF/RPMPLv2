@@ -157,37 +157,32 @@ int main(int argc, char **argv)
 	size_t num_nodes { patern_tree->getNumNodes() };
 	size_t num_nodes2 { patern_tree->getNumNodes(num_layers-1) };
 
-	std::ofstream file_input {};
-	std::ofstream file_output {};
-	file_input.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset_input.csv", std::ofstream::app);
-	file_output.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset_output.csv", std::ofstream::app);
+	std::ofstream output_file {};
+	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset.csv", std::ofstream::app);
 	
 	if (write_header)
 	{
 		for (size_t j = 0; j < ss->num_dimensions; j++)
-			file_input << "root_node(" << j+1 << "),";
+			output_file << "root_node(" << j+1 << "),";
 
 		for (size_t i = 1; i < num_nodes; i++)
-			file_input << "spine_length_" << i << ",";
+			output_file << "spine_length_" << i << ",";
 
 		for (size_t j = 0; j < ss->num_dimensions; j++)
-			file_input << "goal_node(" << j+1 << "),";
+			output_file << "goal_node(" << j+1 << "),";
 
 		for (size_t i = 0; i < num_nodes2; i++)
 		{
-			file_input << "dc_" << i << ",";
+			// file_input << "dc_" << i << ",";
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-			{
-				file_input << "dc_" << i << "(" << j+1 << ")";
-				file_input << ((i == num_nodes2-1 && j == ss->num_dimensions-1) ? "\n" : ",");
-			}
+				output_file << "dc_" << i << "(" << j+1 << "),";
 		}
 
 		for (size_t j = 0; j < ss->num_dimensions; j++)
 		{
-			file_output << "next_vector(" << j+1 << ")";
-			file_output << (j == ss->num_dimensions-1 ? "\n" : ",");
+			output_file << "next_vector(" << j+1 << ")";
+			output_file << (j == ss->num_dimensions-1 ? "\n" : ",");
 		}
 	}
 
@@ -200,7 +195,8 @@ int main(int argc, char **argv)
 
 			generateRandomStartAndGoal(scenario, min_dist_start_goal);
 			q_start = scenario.getStart();
-			scenario.setGoal(q_goal);
+			q_goal = scenario.getGoal();
+			// scenario.setGoal(q_goal);
 
 			bool result { false };
 			size_t num_obs { env->getNumObjects() };
@@ -237,40 +233,37 @@ int main(int argc, char **argv)
 				std::vector<std::shared_ptr<base::State>> new_path {};
 				ss->preprocessPath(planner->getPath(), new_path, max_edge_length);
 				
-				for (size_t idx = 0; idx < std::min(num_init_nodes, new_path.size()-1); idx++)
+				for (size_t idx = 0; idx < new_path.size()-1; idx++)
 				{
 					tree = patern_tree->generateLocalTree(new_path[idx]);
 					// LOG(INFO) << "Path node: " << new_path[idx]->getCoord().transpose();
 					// LOG(INFO) << *tree;
 					
 					for (size_t j = 0; j < ss->num_dimensions; j++)
-						file_input << tree->getState(0)->getCoord(j) << ",";
+						output_file << tree->getState(0)->getCoord(j) << ",";
 
 					for (size_t i = 1; i < num_nodes; i++)
-						file_input << (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm() << ",";
+						output_file << (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm() << ",";
 
 					for (size_t j = 0; j < ss->num_dimensions; j++)
-						file_input << q_goal->getCoord(j) << ",";
+						output_file << q_goal->getCoord(j) << ",";
 
 					for (size_t i = 0; i < num_nodes2; i++)
 					{
-						file_input << tree->getState(i)->getDistance() << ",";
+						// output_file << tree->getState(i)->getDistance() << ",";
 
 						std::vector<float> d_c_profile { tree->getState(i)->getDistanceProfile() };
 						for (size_t j = 0; j < ss->num_dimensions; j++)
-						{
-							file_input << d_c_profile[j]; 
-							file_input << (i == num_nodes2-1 && j == ss->num_dimensions-1 ? "\n" : ",");
-						}
+							output_file << d_c_profile[j] << ",";
 					}
 
 					for (size_t j = 0; j < ss->num_dimensions; j++)
 					{
-						file_output << new_path[idx+1]->getCoord(j) - new_path[idx]->getCoord(j);
-						file_output << (j == ss->num_dimensions-1 ? "\n" : ",");
+						output_file << new_path[idx+1]->getCoord(j) - new_path[idx]->getCoord(j);
+						output_file << (j == ss->num_dimensions-1 ? "\n" : ",");
 					}
 				}
-				LOG(INFO) << "Data considering " << std::min(num_init_nodes, new_path.size()-1) << " pattern trees is successfully written! ";
+				LOG(INFO) << "Data considering " << new_path.size()-1 << " pattern trees is successfully written! ";
 			}
 			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 		}
@@ -280,10 +273,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	LOG(INFO) << "Dataset input file is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset_input.csv";
-	LOG(INFO) << "Dataset output file is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset_output.csv";
-	file_input.close();
-	file_output.close();
+	LOG(INFO) << "Dataset file is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset.csv";
+	output_file.close();
 	
 	google::ShutDownCommandLineFlags();
 	return 0;
