@@ -11,7 +11,7 @@ namespace planning::rbt
     
 		const std::vector<std::shared_ptr<base::State>> generateGBur(const std::shared_ptr<base::State> q_root, float delta = RBTConnectConfig::DELTA);
 		const std::shared_ptr<base::Tree> generateLocalTree(const std::shared_ptr<base::State> q_root);
-		size_t getNumNodes(size_t num_layers_ = 0);
+		size_t getNumNodes(int num_layers_ = -1);
 	
 	private:
 		size_t num_layers;
@@ -24,13 +24,13 @@ planning::rbt::PatternTree::PatternTree(const std::shared_ptr<base::StateSpace> 
 	num_layers = num_layers_;
 }
 
-size_t planning::rbt::PatternTree::getNumNodes(size_t num_layers_)
+size_t planning::rbt::PatternTree::getNumNodes(int num_layers_)
 {
-	if (num_layers_ == 0)
+	if (num_layers_ == -1)
 		num_layers_ = num_layers;
 	
 	size_t num_nodes { 1 + 2*ss->num_dimensions };
-	for (size_t i = 1; i < num_layers_; i++)
+	for (size_t i = 1; i < size_t(num_layers_); i++)
 		num_nodes += 2*ss->num_dimensions * std::pow(2*ss->num_dimensions - 1, i);
 	
 	return num_nodes;
@@ -146,7 +146,6 @@ int main(int argc, char **argv)
 	float max_edge_length { node["testing"]["max_edge_length"].as<float>() };
 	size_t num_layers { node["testing"]["num_layers"].as<size_t>() };
 	bool write_header { node["testing"]["write_header"].as<bool>() };
-	size_t num_init_nodes { node["testing"]["num_init_nodes"].as<size_t>() };
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
