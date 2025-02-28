@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 			output_file << "root_node(" << j+1 << "),";
 
 		for (size_t i = 1; i < num_nodes; i++)
-			output_file << "spine_length_" << i << ",";
+			output_file << "spine_length" << i << ",";
 
 		for (size_t j = 0; j < ss->num_dimensions; j++)
 			output_file << "goal_node(" << j+1 << "),";
@@ -176,7 +176,16 @@ int main(int argc, char **argv)
 			// file_input << "dc_" << i << ",";
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-				output_file << "dc_" << i << "(" << j+1 << "),";
+				output_file << "dc" << i << "_link" << j+1 << ",";
+		}
+
+		for (size_t i = 0; i < num_nodes2; i++)
+		{
+			for (size_t j = 0; j < ss->num_dimensions; j++)
+			{
+				for (size_t k = 0; k < 2; k++)	// for planar robot
+					output_file << "OR_vector" << i << "_link" << j+1 << "(" << k+1 << "),";
+			}
 		}
 
 		for (size_t j = 0; j < ss->num_dimensions; j++)
@@ -255,6 +264,29 @@ int main(int argc, char **argv)
 						std::vector<float> d_c_profile { tree->getState(i)->getDistanceProfile() };
 						for (size_t j = 0; j < ss->num_dimensions; j++)
 							output_file << d_c_profile[j] << ",";
+					}
+
+					for (size_t i = 0; i < num_nodes2; i++)
+					{
+						std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { tree->getState(i)->getNearestPoints() };
+						Eigen::Vector3f R {}, R_min {}, O {}, O_min {};
+						for (size_t j = 0; j < ss->num_dimensions; j++)
+						{
+							float d_min { INFINITY };
+							for (size_t k = 0; k < env->getNumObjects(); k++)
+							{
+								R = nearest_points->at(k).col(j).head(3);
+								O = nearest_points->at(k).col(j).tail(3);
+								R += (O - R).normalized() * ss->robot->getCapsuleRadius(j);
+								if ((R - O).norm() < d_min)
+								{
+									R_min = R;
+									O_min = O;
+									d_min = (R_min - O_min).norm();
+								}
+							}
+							output_file << (R - O).x() << "," << (R - O).y() << ","; // << (R - O).z() << ",";	// Uncomment for spacial robot
+						}
 					}
 
 					for (size_t j = 0; j < ss->num_dimensions; j++)

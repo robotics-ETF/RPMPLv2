@@ -21,9 +21,9 @@ robot:
   urdf: "/data/planar_2dof/planar_2dof.urdf"
   space: "RealVectorSpace"
   num_DOFs: 2
-  q_start: [0, 0]
+  q_start: [-2, -2.5]
   q_goal:  [2, 2.5]
-  min_dist_start_goal: 2                                    # If greater than zero, 'q_start' and 'q_goal' will be generated randomly, where the workspace distance between them is minimally 'min_dist_start_goal'
+  min_dist_start_goal: 0.1                                    # If greater than zero, 'q_start' and 'q_goal' will be generated randomly, where the workspace distance between them is minimally 'min_dist_start_goal'
   WS_center: [0.0, 0.0, 0.0]                                # Workspace center point in [m]
   WS_radius: 2                                              # Workspace radius in [m] assuming spherical workspace shape
 
