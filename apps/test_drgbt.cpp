@@ -4,6 +4,7 @@
 
 int main(int argc, char **argv)
 {
+	// *** NOTE *** Please check which obstacles motion are uncommented within the file "Environment.cpp"
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
