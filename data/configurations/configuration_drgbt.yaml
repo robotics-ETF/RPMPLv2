@@ -2,7 +2,7 @@ MAX_NUM_ITER: 1000000		                # Maximal number of algorithm iterations
 MAX_ITER_TIME: 0.050 		                # Maximal runtime of a single iteration in [s]
 MAX_PLANNING_TIME: 10	                  # Maximal algorithm runtime in [s]
 INIT_HORIZON_SIZE: 10		                # Initial horizon size
-TRESHOLD_WEIGHT: 0.5			              # Treshold for the replanning assessment. Range: between 0 and 1
+TRESHOLD_WEIGHT: 0.1			              # Treshold for the replanning assessment. Range: between 0 and 1
 D_CRIT: 0.05			                      # Critical distance in W-space to compute critical nodes
 MAX_NUM_MODIFY_ATTEMPTS: 10             # Maximal number of attempts when modifying bad or critical states
 STATIC_PLANNER_TYPE: "RGBMT*"           # Name of a static planner (for obtaining the predefined path). Default: "RGBMT*" or "RGBT-Connect"
