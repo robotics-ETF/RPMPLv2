@@ -52,6 +52,8 @@ namespace env
 		float base_radius;
 		float robot_max_vel;
 		size_t ground_included;
+		float path_len { 0 };
+    	int sign { 1 };
 	};
 }
 
