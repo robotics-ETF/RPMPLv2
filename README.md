@@ -146,7 +146,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to 'Spline'.
 
 
-Finally, in the file ```/apps/test_drgbt.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
+Finally, in the file ```/apps/test_drgbt_random_obstacles.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
 
 ## 3.4 Test planners
 All test files are available within the folder ```/apps```. For example, open ```test_rgbmtstar.cpp```. You can set the file path of desired scenario via ```scenario_file_path```, and maximal number of tests in ```max_num_tests```. 
@@ -176,9 +176,14 @@ Test RGBMT*:
 ./test_rgbmtstar
 ```
 
-Test DRGBT:
+Test DRGBT with predefined obstacles:
 ```
 ./test_drgbt
+```
+
+Test DRGBT with random obstacles:
+```
+./test_drgbt_random_obstacles
 ```
 
 After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planner_data.log```).

@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		// "/data/xarm6/scenario1/scenario1.yaml"
-		"/data/xarm6/scenario2/scenario2.yaml"
+		"/data/xarm6/scenario1/scenario1.yaml"
+		// "/data/xarm6/scenario2/scenario2.yaml"
 	};
 
 	const float max_vel_obs { 0.5 };
