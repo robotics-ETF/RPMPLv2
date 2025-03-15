@@ -136,7 +136,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [s]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [m] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [s];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
-- ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.1;
+- ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
 - ```D_CRIT```: Critical distance in W-space to compute critical nodes;
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
 - ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
