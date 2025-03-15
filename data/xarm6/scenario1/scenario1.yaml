@@ -40,4 +40,5 @@ robot:
 
 testing:
   max_num: 1000                                               # Maximal number of tests that should be carried out
+  max_vel_obs: 0.3                                            # Maximal velocity for each obstacle from "environment"
   
