@@ -22,10 +22,10 @@ namespace planning::trajectory
         Eigen::VectorXf getJerk(float t) override;
         float getCoeff(size_t i, size_t j, size_t idx) const { return subsplines[idx]->getCoeff(i, j); }
         
-        std::vector<float> getPositionExtremumTimes(size_t idx);
-        std::vector<float> getVelocityExtremumTimes(size_t idx);
-        std::vector<float> getAccelerationExtremumTimes(size_t idx);
-        std::vector<float> getJerkExtremumTimes(size_t idx);
+        std::vector<float> getPositionExtremumTimes(size_t idx) override;
+        std::vector<float> getVelocityExtremumTimes(size_t idx) override;
+        std::vector<float> getAccelerationExtremumTimes(size_t idx) override;
+        std::vector<float> getJerkExtremumTimes(size_t idx) override;
         int checkPositionMonotonicity(size_t idx) override;
 
         // Not used functions here:
