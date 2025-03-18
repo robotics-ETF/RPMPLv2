@@ -1,6 +1,7 @@
 //
 // Created by dinko on 7.3.21.
 // Modified by nermin on 18.02.22.
+// Additional methods added on 18.03.25.
 //
 
 #ifndef RPMPL_STATE_H
@@ -10,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <kdl/frames_io.hpp>
+#include <algorithm>
 
 #include "StateSpaceType.h"
 namespace base
@@ -17,7 +19,7 @@ namespace base
 	class State
 	{
 	public:
-		enum class Status {None, Advanced, Trapped, Reached};
+		enum class Status {None, Advanced, Trapped, Reached, Orphan};
 		
 	protected:
 		base::StateSpaceType state_space_type;
@@ -32,12 +34,17 @@ namespace base
 		std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points;	// Set of nearest points between each robot segment and each obstacle
 		std::shared_ptr<State> parent;									// Parent configuration
 		std::shared_ptr<std::vector<std::shared_ptr<State>>> children;	// All children configurations
+		std::shared_ptr<std::vector<std::shared_ptr<State>>> neighbours;// Neighbouring states
 		std::shared_ptr<std::vector<KDL::Frame>> frames;				// All frames of the robot
 		std::shared_ptr<Eigen::MatrixXf> skeleton;						// Skeleton points of the robot
 		std::shared_ptr<Eigen::MatrixXf> enclosing_radii; 				// Matrix containing all enclosing radii (row: from which skeleton point, column: to which skeleton point)
+		Status status{Status::None};
 		
 	public:
-		State() {}
+		State() {
+			children = std::make_shared<std::vector<std::shared_ptr<State>>>();
+			neighbours = std::make_shared<std::vector<std::shared_ptr<State>>>();
+		}
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 
@@ -55,6 +62,7 @@ namespace base
 		inline std::shared_ptr<std::vector<Eigen::MatrixXf>> getNearestPoints() const { return nearest_points; }
 		inline std::shared_ptr<State> getParent() const { return parent; }
 		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getChildren() const { return children; }
+		inline std::shared_ptr<std::vector<std::shared_ptr<State>>> getNeighbours() const { return neighbours; }
 		inline std::shared_ptr<std::vector<KDL::Frame>> getFrames() const { return frames; }
 		inline std::shared_ptr<Eigen::MatrixXf> getSkeleton() const { return skeleton; }
 		inline std::shared_ptr<Eigen::MatrixXf> getEnclosingRadii() const { return enclosing_radii; }
@@ -72,11 +80,16 @@ namespace base
 		inline void setNearestPoints(const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points_) { nearest_points = nearest_points_; }
 		inline void setParent(const std::shared_ptr<State> parent_) { parent = parent_; }
 		inline void setChildren(const std::shared_ptr<std::vector<std::shared_ptr<State>>> children_) { children = children_; }
+		inline void setNeighbours(const std::shared_ptr<std::vector<std::shared_ptr<State>>> neighbours_) { neighbours = neighbours_; }
 		inline void setFrames(const std::shared_ptr<std::vector<KDL::Frame>> frames_) { frames = frames_; }
 		inline void setSkeleton(const std::shared_ptr<Eigen::MatrixXf> skeleton_) { skeleton = skeleton_; }
 		inline void setEnclosingRadii(const std::shared_ptr<Eigen::MatrixXf> enclosing_radii_) { enclosing_radii = enclosing_radii_; }
+		inline void setStatus(Status status_) { status = status_; }
 
 		void addChild(const std::shared_ptr<State> child);
+		void removeChild(const std::shared_ptr<State> child);
+		void addNeighbourState(const std::shared_ptr<State> neighbour);
+		void clearNeighbourStates();
 		friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<base::State> state);
 	};
 }

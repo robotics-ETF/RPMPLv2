@@ -29,6 +29,10 @@ namespace planning
 			case planning::PlannerType::DRGBT:
 				os << "DRGBT";
 				break;
+			
+			case planning::PlannerType::RRTx:
+				os << "RRTx";
+				break;
 		}
 
 		return os;

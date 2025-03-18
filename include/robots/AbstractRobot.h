@@ -55,10 +55,10 @@ namespace robots
 		virtual std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(const std::shared_ptr<base::State> q) = 0;
 		virtual std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p,
 																	  const std::shared_ptr<base::State> q_init = nullptr) = 0;
-		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> q) = 0;
-		virtual std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> q) = 0;
-		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2) = 0;
-		virtual bool checkSelfCollision(const std::shared_ptr<base::State> q) = 0;
+		virtual std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State>& q) = 0;
+		virtual std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State>& q) = 0;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State>& q1, std::shared_ptr<base::State> &q2) = 0;
+		virtual bool checkSelfCollision(const std::shared_ptr<base::State>& q) = 0;
 
 	protected:
 		std::string type;

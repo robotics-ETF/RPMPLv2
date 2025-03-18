@@ -25,6 +25,32 @@ void base::State::addChild(const std::shared_ptr<base::State> child)
 	children->emplace_back(child);
 }
 
+void base::State::addNeighbourState(const std::shared_ptr<State> neighbour)
+{
+	// Check if the neighbour already exists to avoid duplicates
+	auto it = std::find(neighbours->begin(), neighbours->end(), neighbour);
+	if (it == neighbours->end()) {
+		// Neighbour not found, add it
+		neighbours->push_back(neighbour);
+	}
+}
+
+void base::State::clearNeighbourStates()
+{
+	// Clear all neighbours
+	neighbours->clear();
+}
+
+void base::State::removeChild(const std::shared_ptr<State> child)
+{
+	// Find the child in the children vector
+	auto it = std::find(children->begin(), children->end(), child);
+	if (it != children->end()) {
+		// Child found, remove it
+		children->erase(it);
+	}
+}
+
 namespace base 
 {
 	std::ostream &operator<<(std::ostream &os, const std::shared_ptr<base::State> state)

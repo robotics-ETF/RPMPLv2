@@ -101,6 +101,44 @@ void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std
 	q_new->setNearestPoints(q_ref->getNearestPoints());
 }
 
+void base::Tree::removeState(size_t idx)
+{
+    if (idx < states->size())
+    {
+        // Remove the state from the states vector
+        states->erase(states->begin() + idx);
+        
+        // The KD-tree needs to be rebuilt if it exists since indices have changed
+        if (kd_tree)
+        {
+            // Clear and rebuild the KD-tree with the new state configuration
+            kd_tree->removePoint(idx);
+        }
+    }
+}
+
+void base::Tree::removeState(const std::shared_ptr<base::State> state)
+{
+    // Find the state in the vector
+    auto it = std::find(states->begin(), states->end(), state);
+    
+    if (it != states->end())
+    {
+        // Get the index of the state
+        size_t idx = std::distance(states->begin(), it);
+        
+        // Remove the state from the states vector
+        states->erase(it);
+        
+        // The KD-tree needs to be rebuilt if it exists since indices have changed
+        if (kd_tree)
+        {
+            // Remove the point from the KD-tree
+            kd_tree->removePoint(idx);
+        }
+    }
+}
+
 namespace base 
 {
 	std::ostream &operator<<(std::ostream &os, const Tree &tree)

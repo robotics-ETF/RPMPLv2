@@ -114,7 +114,7 @@ std::shared_ptr<base::State> robots::Planar2DOF::computeInverseKinematics([[mayb
 	return nullptr;
 }
 
-std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State> q)
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::shared_ptr<base::State>& q)
 {
 	if (q->getSkeleton() != nullptr)	// It has been already computed!
 		return q->getSkeleton();
@@ -129,7 +129,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeSkeleton(const std::
 	return skeleton;
 }
 
-std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const std::shared_ptr<base::State> q)
+std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const std::shared_ptr<base::State>& q)
 {
 	if (q->getEnclosingRadii() != nullptr)	// It has been already computed!
 		return q->getEnclosingRadii();
@@ -148,14 +148,14 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const
 }
 
 // Planar2DOF robot cannot collide with itself.
-bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q1, 
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State>& q1, 
 											[[maybe_unused]] std::shared_ptr<base::State> &q2)
 {
 	return false;
 }
 
 // Planar2DOF robot cannot collide with itself.
-bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State> q)
+bool robots::Planar2DOF::checkSelfCollision([[maybe_unused]] const std::shared_ptr<base::State>& q)
 {
 	return false;
 }

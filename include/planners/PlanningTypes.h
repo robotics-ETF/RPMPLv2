@@ -34,7 +34,8 @@ namespace planning
 		RBTConnect,
 		RGBTConnect,
 		RGBMTStar,
-		DRGBT
+		DRGBT,
+		RRTx
 	};
 
 	static std::unordered_map<std::string, planning::PlannerType> planner_type_map = 

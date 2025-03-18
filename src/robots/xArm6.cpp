@@ -206,7 +206,7 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 	return std::make_shared<base::RealVectorSpaceState>(q_result);
 }
 
-std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::shared_ptr<base::State> q)
+std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::shared_ptr<base::State>& q)
 {
 	if (q->getSkeleton() != nullptr)	// It has been already computed!
 		return q->getSkeleton();
@@ -234,7 +234,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeSkeleton(const std::share
 	return skeleton;
 }
 
-std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std::shared_ptr<base::State> q)
+std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std::shared_ptr<base::State>& q)
 {
 	if (q->getEnclosingRadii() != nullptr)	// It has been already computed!
 		return q->getEnclosingRadii();
@@ -281,7 +281,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::xArm6::computeEnclosingRadii(const std:
 /// If there exists self-collision, 'q2' will be modified such that it is equal to a final reached configuration 
 /// from [q1,q2]-line that is collision-free.
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
-bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, std::shared_ptr<base::State> &q2)
+bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State>& q1, std::shared_ptr<base::State> &q2)
 {
 	if (!self_collision_checking)
 		return false;
@@ -371,7 +371,7 @@ bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q1, st
 /// @param q A configuration to be considered.
 /// @return True if there exists self-collision. Otherwise, return false.
 /// @note Because of joint limits, only first two links can collide with the last two links for xArm6 robot.
-bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State> q)
+bool robots::xArm6::checkSelfCollision(const std::shared_ptr<base::State>& q)
 {
 	if (!self_collision_checking)
 		return false;

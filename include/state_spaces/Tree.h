@@ -49,6 +49,8 @@ namespace base
 		void upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent);
 		void upgradeTree(const std::shared_ptr<base::State> q_new, const std::shared_ptr<base::State> q_parent, 
 						 const std::shared_ptr<base::State> q_ref);
+		void removeState(size_t idx);
+		void removeState(const std::shared_ptr<base::State> state);
 
 		template <class BBOX> 
         bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }

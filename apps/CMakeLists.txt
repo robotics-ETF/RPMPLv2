@@ -59,6 +59,11 @@ target_compile_features(generate_random_scenarios PRIVATE cxx_std_17)
 target_link_libraries(generate_random_scenarios PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(generate_random_scenarios PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(test_rrtx test_rrtx.cpp)
+target_compile_features(test_rrtx PRIVATE cxx_std_17)
+target_link_libraries(test_rrtx PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rrtx PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 install(TARGETS
   test_nanoflann
   test_kdl_parser
@@ -72,5 +77,6 @@ install(TARGETS
   test_rgbtconnect
   test_drgbt
   test_rgbmtstar
+  test_rrtx
   generate_random_scenarios
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
