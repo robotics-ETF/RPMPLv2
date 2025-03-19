@@ -1,11 +1,13 @@
 #include "Splines.h"
 
-planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
-                                 const std::shared_ptr<base::State> q_target_)
+planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
+                                       const std::shared_ptr<base::State> q_target_, float max_iter_time_)
 {
     ss = ss_;
     q_current = q_current_;
     q_target = q_target_;
+    max_iter_time = max_iter_time_;
+    max_remaining_iter_time = 0;
 
     max_obs_vel = 0;
     for (size_t i = 0; i < ss->env->getNumObjects(); i++)
@@ -41,8 +43,8 @@ planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, co
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @param non_zero_final_vel Whether final spline velocity can be non-zero
 /// @return The success of a spline computation
-bool planning::drbt::Splines::computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                             float t_iter_remain, float t_max, bool non_zero_final_vel)
+bool planning::trajectory::Splines::computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+                                                   float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
@@ -104,8 +106,8 @@ bool planning::drbt::Splines::computeRegular(Eigen::VectorXf &current_pos, Eigen
 /// @param t_iter_remain Remaining time in [s] in the current iteration
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @return The success of a spline computation
-bool planning::drbt::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                          float t_iter_remain, float t_max)
+bool planning::trajectory::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+                                                float t_iter_remain, float t_max)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     std::shared_ptr<planning::trajectory::Spline> spline_next_new
@@ -121,8 +123,8 @@ bool planning::drbt::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::V
     bool is_safe {};
     bool spline_computed { false };
     bool spline_emergency_computed { false };
-    float t_iter { DRGBTConfig::MAX_ITER_TIME - t_iter_remain };
-    float t_spline_max { t_iter_remain + DRGBTConfig::MAX_TIME_TASK1 };
+    float t_iter { max_iter_time - t_iter_remain };
+    float t_spline_max { t_iter_remain + (max_iter_time - max_remaining_iter_time) };
     int num_iter { 0 };
     int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
                                            (current_pos - q_target->getCoord()).norm() / RRTConnectConfig::EPS_STEP));
@@ -235,7 +237,7 @@ bool planning::drbt::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::V
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when 'spline' is starting.
 /// @return True if the collision occurs. False if not.
 /// @note 'q_init' must have a distance-to-obstacles or its underestimation!
-bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
+bool planning::trajectory::Splines::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
     float delta_t { SplinesConfig::TIME_STEP };
@@ -295,7 +297,7 @@ bool planning::drbt::Splines::checkCollision(std::shared_ptr<base::State> q_init
 /// @return Underestimation of distance-to-obstacles.
 /// Note that if 'd_c' is negative, it means that one or more robot's links are penetrating through the plane,
 /// or they are located on the other side of the plane.
-float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
+float planning::trajectory::Splines::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t)
 {
 	float d_c_temp {};
@@ -345,7 +347,7 @@ float planning::drbt::Splines::computeDistanceUnderestimation(const std::shared_
 	return d_c;
 }
 
-void planning::drbt::Splines::recordTrajectory(bool spline_computed)
+void planning::trajectory::Splines::recordTrajectory(bool spline_computed)
 {
     // This function is just for debugging. You can set a desired path for the file to be saved.
     std::ofstream output_file {};
