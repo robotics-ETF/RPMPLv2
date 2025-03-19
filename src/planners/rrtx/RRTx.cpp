@@ -122,6 +122,8 @@ bool planning::rrtx::RRTx::solve()
     planner_info->setSuccessState(true);
     while (true)
     {
+        r_rewire = shrinkingBallRadius(tree->getNumStates());
+
         // Sample a random state
         q_rand = ss->getRandomState();
         
@@ -593,6 +595,15 @@ double planning::rrtx::RRTx::generateRandomNumber(double min, double max)
     static std::random_device rd;
     static std::mt19937 generator(rd());
     return distribution(generator);
+}
+
+double planning::rrtx::RRTx::shrinkingBallRadius(size_t num_states) 
+{
+    double eta = std::sqrt(ss->num_dimensions);
+    double mi = std::pow(2 * M_PI, ss->num_dimensions);
+    double zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
+    double gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
+    return std::min(gamma_rrt * double(std::pow(std::log(num_states) / num_states, 1.0f / ss->num_dimensions)), eta);
 }
 
 void planning::rrtx::RRTx::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const

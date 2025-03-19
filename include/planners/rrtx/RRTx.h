@@ -102,6 +102,9 @@ namespace planning::rrtx
         
         // Generate random number in range [min, max]
         double generateRandomNumber(double min, double max);
+
+        // Compute the shrinking ball radius
+        double shrinkingBallRadius(size_t num_states);
         
         // Check if planning should terminate
         bool checkTerminatingCondition(base::State::Status status) override;
