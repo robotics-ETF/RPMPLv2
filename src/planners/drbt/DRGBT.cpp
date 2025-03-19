@@ -29,19 +29,9 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
-    
-    all_robot_vel_same = true;
-    for (size_t i = 1; i < ss->num_dimensions; i++)
-    {
-        if (std::abs(ss->robot->getMaxVel(i) - ss->robot->getMaxVel(i-1)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-        {
-            all_robot_vel_same = false;
-            break;
-        }
-    }
 
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_next->getStateReached(), all_robot_vel_same);
+        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_next->getStateReached());
 
 	// std::cout << "DRGBT planner initialized! \n";
 }

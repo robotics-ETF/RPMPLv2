@@ -18,7 +18,7 @@ namespace planning::drbt
     {
     public:
         Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
-                const std::shared_ptr<base::State> q_target_, bool all_robot_vel_same_ = false);
+                const std::shared_ptr<base::State> q_target_);
 
         bool computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
                             float t_iter_remain, float t_max, bool non_zero_final_vel);

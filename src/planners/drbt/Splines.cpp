@@ -1,12 +1,11 @@
 #include "Splines.h"
 
 planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
-                                 const std::shared_ptr<base::State> q_target_, bool all_robot_vel_same_)
+                                 const std::shared_ptr<base::State> q_target_)
 {
     ss = ss_;
     q_current = q_current_;
     q_target = q_target_;
-    all_robot_vel_same = all_robot_vel_same_;
 
     max_obs_vel = 0;
     for (size_t i = 0; i < ss->env->getNumObjects(); i++)
@@ -17,6 +16,17 @@ planning::drbt::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, co
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
+
+    all_robot_vel_same = true;
+    for (size_t i = 1; i < ss->num_dimensions; i++)
+    {
+        if (std::abs(ss->robot->getMaxVel(i) - ss->robot->getMaxVel(i-1)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+        {
+            all_robot_vel_same = false;
+            break;
+        }
+    }
+
     max_num_iter_spline_regular = all_robot_vel_same ? 
         std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / SplinesConfig::FINAL_VELOCITY_STEP)) :
         std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / SplinesConfig::FINAL_VELOCITY_STEP));
