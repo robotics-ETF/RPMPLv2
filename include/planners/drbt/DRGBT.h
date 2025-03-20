@@ -12,6 +12,7 @@
 #include "DRGBTConfig.h"
 #include "HorizonState.h"
 #include "UpdatingState.h"
+#include "MotionValidity.h"
 #include "Splines.h"
 
 // #include <glog/log_severity.h>
@@ -48,7 +49,6 @@ namespace planning::drbt
         bool whetherToReplan();
         std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
         virtual void replan(float max_planning_time);
-        bool checkMotionValidity(size_t num_checks = DRGBTConfig::MAX_NUM_VALIDITY_CHECKS);
 
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
         std::shared_ptr<base::State> q_current;                                 // Current robot configuration
@@ -62,8 +62,9 @@ namespace planning::drbt
         std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
         size_t num_lateral_states;                                              // Number of lateral states
         float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
-        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
         std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
+        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
+        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;
     };
 }

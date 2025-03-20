@@ -19,7 +19,7 @@ public:
     static size_t INIT_HORIZON_SIZE;                                        // Initial horizon size
     static float TRESHOLD_WEIGHT;                                           // Treshold for the replanning assessment. Range: between 0 and 1
     static float D_CRIT;                                                    // Critical distance in W-space to compute critical nodes
-    static size_t MAX_NUM_VALIDITY_CHECKS;                                  // Maximal number of validity checks when robot moves from previous to current configuration, while the obstacles are moving simultaneously
+    static float RESOLUTION_COLL_CHECK;                                     // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
     static size_t MAX_NUM_MODIFY_ATTEMPTS;                                  // Maximal number of attempts when modifying bad or critical states
     static planning::PlannerType STATIC_PLANNER_TYPE;                       // Name of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect" 
     static planning::RealTimeScheduling REAL_TIME_SCHEDULING;               // "FPS" - Fixed Priority Scheduling; "None" - Without real-time scheduling    
