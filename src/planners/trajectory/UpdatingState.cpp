@@ -1,4 +1,5 @@
 #include "UpdatingState.h"
+#include "DRGBT.h"
 
 planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_previous_,
     const std::shared_ptr<base::State> &q_current_, const std::shared_ptr<base::State> &q_next_, 
@@ -8,14 +9,13 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
     q_previous = q_previous_;
     q_current = q_current_;
     q_next = q_next_;
-    q_next_reached = nullptr;
     status = status_;
-    traj_interpolation = planning::TrajectoryInterpolation::None;
     max_iter_time = max_iter_time_;
     time_iter_start = time_iter_start_;
-    measure_time = false;
-    remaining_time = 0;
 
+    q_next_reached = nullptr;
+    traj_interpolation = planning::TrajectoryInterpolation::None;
+    splines = nullptr;
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
     {
@@ -25,9 +25,15 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
             break;
         }
     }
+    guaranteed_safe_motion = false;
+    non_zero_final_vel = true;
+    max_remaining_iter_time = 0;
+    measure_time = false;
+    remaining_time = 0;
+    drgbt_instance = nullptr;
 }
 
-float planning::trajectory::getElapsedTime()
+float planning::trajectory::UpdatingState::getElapsedTime()
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_iter_start).count() * 1e-9;
 }
@@ -106,7 +112,7 @@ void planning::trajectory::UpdatingState::update_v2()
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
 
-    float t_spline_max { (DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
+    float t_spline_max { (guaranteed_safe_motion ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
                         SplinesConfig::MAX_TIME_PUBLISH * measure_time };
     float t_iter { getElapsedTime() };
     if (max_iter_time - max_remaining_iter_time - t_iter < t_spline_max)
@@ -132,7 +138,6 @@ void planning::trajectory::UpdatingState::update_v2()
     Eigen::VectorXf current_pos { splines->spline_current->getPosition(t_spline_current) };
     Eigen::VectorXf current_vel { splines->spline_current->getVelocity(t_spline_current) };
     Eigen::VectorXf current_acc { splines->spline_current->getAcceleration(t_spline_current) };
-    std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states { q_next };
 
     // std::cout << "Curr. pos: " << current_pos.transpose() << "\n";
     // std::cout << "Curr. vel: " << current_vel.transpose() << "\n";
@@ -148,17 +153,15 @@ void planning::trajectory::UpdatingState::update_v2()
         splines->setCurrentState(q_current);
         splines->setTargetState(q_next_reached);
         // std::cout << "q_next: " << q_next << "\n";
-        if (splines->spline_current->isFinalConf(q_next->getCoordReached()))  // Spline to such 'q_next->getCoordReached()' already exists!
+        if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached->getCoord()' already exists!
             break;
 
-        if (DRGBTConfig::GUARANTEED_SAFE_MOTION)
+        if (guaranteed_safe_motion)
             spline_computed = splines->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
         else
-            spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, 
-                                                    q_next->getIsReached() && q_next->getIndex() != -1 && 
-                                                    q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
+            spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
     }
-    while (!spline_computed && changeNextState(visited_states));
+    while (!spline_computed && invokeChangeNextState());
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -191,47 +194,13 @@ void planning::trajectory::UpdatingState::update_v2()
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 
-    return t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
+    remaining_time = t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
 }
 
-/// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
-/// @param visited_states Set of visited states.
-/// @return Success of a change.
-bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states)
+bool planning::trajectory::UpdatingState::invokeChangeNextState() 
 {
-    // std::cout << "Change of q_next is required! \n";
-    std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
-    float weight_max { 0 };
-    bool visited { false };
-
-    for (std::shared_ptr<planning::drbt::HorizonState> q : horizon)
-    {
-        if (q->getWeight() < DRGBTConfig::TRESHOLD_WEIGHT)
-            continue;
-
-        visited = false;
-        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
-        {
-            if (q == q_visited)
-            {
-                visited = true;
-                break;
-            }
-        }
-
-        if (!visited && q->getWeight() > weight_max)
-        {
-            q_new = q;
-            weight_max = q->getWeight();
-        }
-    }
-
-    if (q_new != nullptr)
-    {
-        visited_states.emplace_back(q_new);
-        q_next = q_new;
-        return true;
-    }
-
+    if (drgbt_instance != nullptr) 
+        return drgbt_instance->changeNextState();
+    
     return false;
 }

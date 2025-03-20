@@ -32,7 +32,8 @@ namespace planning::drbt
         bool solve() override;
         bool checkTerminatingCondition(base::State::Status status) override;
         void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
-        
+        bool changeNextState();
+
     protected:
         void generateHorizon();
         void updateHorizon();
@@ -44,9 +45,6 @@ namespace planning::drbt
         void computeReachedState(const std::shared_ptr<planning::drbt::HorizonState> q);
         void computeNextState();
         int getIndexInHorizon(const std::shared_ptr<planning::drbt::HorizonState> q);
-        float updateCurrentState(bool measure_time);
-        void updateCurrentState();
-        bool changeNextState(std::vector<std::shared_ptr<planning::drbt::HorizonState>> &visited_states);
         bool whetherToReplan();
         std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
         virtual void replan(float max_planning_time);
@@ -66,6 +64,7 @@ namespace planning::drbt
         float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
         std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
+        std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;
     };
 }
 

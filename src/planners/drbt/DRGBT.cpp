@@ -30,11 +30,14 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
-    updating_state = std::make_shared<planning::trajectory::UpdatingState>(ss, q_previous, q_current, q_next->getState(), status, DRGBTConfig::MAX_ITER_TIME);
+    updating_state = std::make_shared<planning::trajectory::UpdatingState>
+        (ss, q_previous, q_current, q_next->getState(), status, DRGBTConfig::MAX_ITER_TIME, time_iter_start);
     updating_state->setTrajectoryInterpolation(DRGBTConfig::TRAJECTORY_INTERPOLATION);
     updating_state->setNextStateReached(q_next->getStateReached());
     updating_state->setMeasureTime(false);
     updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+    updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
+    updating_state->setDRGBTinstance(this);
 
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
     {
@@ -94,18 +97,10 @@ bool planning::drbt::DRGBT::solve()
         computeNextState();             // ~ 1 [us]
         
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
-        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
-        {
-        case planning::TrajectoryInterpolation::Spline:
-            updateCurrentState(false);  // ~ 1 [ms]
-            break;
-        
-        case planning::TrajectoryInterpolation::None:
-            updateCurrentState();       // ~ 1 [us]
-            break;
-        }
+        updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
+                                           q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
+        updating_state->update();       // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
-
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
         // ------------------------------------------------------------------------------- //
@@ -578,6 +573,47 @@ void planning::drbt::DRGBT::computeNextState()
     // std::cout << "Horizon consists of " << horizon.size() << " states: \n";
     // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
+}
+
+/// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
+/// @return Success of a change.
+bool planning::drbt::DRGBT::changeNextState()
+{
+    // std::cout << "Change of q_next is required! \n";
+    std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
+    float weight_max { 0 };
+    bool visited { false };
+
+    for (std::shared_ptr<planning::drbt::HorizonState> q : horizon)
+    {
+        if (q->getWeight() < DRGBTConfig::TRESHOLD_WEIGHT)
+            continue;
+
+        visited = false;
+        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+        {
+            if (q == q_visited)
+            {
+                visited = true;
+                break;
+            }
+        }
+
+        if (!visited && q->getWeight() > weight_max)
+        {
+            q_new = q;
+            weight_max = q->getWeight();
+        }
+    }
+
+    if (q_new != nullptr)
+    {
+        visited_states.emplace_back(q_new);
+        q_next = q_new;
+        return true;
+    }
+
+    return false;
 }
 
 // Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
