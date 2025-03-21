@@ -16,7 +16,7 @@ namespace planning::trajectory
     public:
         MotionValidity(const std::shared_ptr<base::StateSpace> &ss_, planning::TrajectoryInterpolation traj_interpolation_, 
             float resolution_coll_check_, const std::shared_ptr<base::State> &q_goal_, 
-            const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> &path_, float max_iter_time_);
+            std::vector<std::shared_ptr<base::State>>* path_, float max_iter_time_);
         ~MotionValidity() {}
 
         bool check(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current);
@@ -30,7 +30,7 @@ namespace planning::trajectory
         planning::TrajectoryInterpolation traj_interpolation;
         float resolution_coll_check;
         std::shared_ptr<base::State> q_goal;
-        std::shared_ptr<std::vector<std::shared_ptr<base::State>>> path;
+        std::vector<std::shared_ptr<base::State>>* path;
         float max_iter_time;
         std::shared_ptr<planning::trajectory::Splines> splines;
         size_t num_checks;          // Maximal number of validity checks when robot moves from previous to current configuration, 

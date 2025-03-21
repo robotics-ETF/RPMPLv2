@@ -47,8 +47,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     updating_state->setDRGBTinstance(this);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, q_goal, 
-        std::make_shared<std::vector<std::shared_ptr<base::State>>>(path), DRGBTConfig::MAX_ITER_TIME);
+        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, q_goal, &path, DRGBTConfig::MAX_ITER_TIME);
     motion_validity->setSplines(splines);
 
 	// std::cout << "DRGBT planner initialized! \n";

@@ -2,7 +2,7 @@
 
 planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base::StateSpace> &ss_, 
     planning::TrajectoryInterpolation traj_interpolation_, float resolution_coll_check_, const std::shared_ptr<base::State> &q_goal_, 
-    const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> &path_, float max_iter_time_)
+    std::vector<std::shared_ptr<base::State>>* path_, float max_iter_time_)
 {
     ss = ss_;
     traj_interpolation = traj_interpolation_;
