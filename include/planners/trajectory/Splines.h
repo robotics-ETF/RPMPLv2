@@ -16,8 +16,7 @@ namespace planning::trajectory
     class Splines
     {
     public:
-        Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
-                const std::shared_ptr<base::State> q_target_, float max_iter_time_);
+        Splines(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_current_, float max_iter_time_);
 
         bool computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
                             float t_iter_remain, float t_max, bool non_zero_final_vel);

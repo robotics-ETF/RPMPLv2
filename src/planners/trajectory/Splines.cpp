@@ -1,11 +1,10 @@
 #include "Splines.h"
 
-planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_current_, 
-                                       const std::shared_ptr<base::State> q_target_, float max_iter_time_)
+planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &ss_, 
+    const std::shared_ptr<base::State> &q_current_, float max_iter_time_)
 {
     ss = ss_;
     q_current = q_current_;
-    q_target = q_target_;
     max_iter_time = max_iter_time_;
     max_remaining_iter_time = 0;
 
