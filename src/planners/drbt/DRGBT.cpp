@@ -30,17 +30,8 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
-    splines = nullptr;
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-    {
-        splines = std::make_shared<planning::trajectory::Splines>
-            (ss, q_current, q_next->getStateReached(), DRGBTConfig::MAX_ITER_TIME);
-        splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
-    }
-
     updating_state = std::make_shared<planning::trajectory::UpdatingState>
         (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
-    updating_state->setSplines(splines);
     updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
     updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
     updating_state->setMeasureTime(false);
@@ -48,7 +39,15 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
         (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, q_goal, &path, DRGBTConfig::MAX_ITER_TIME);
-    motion_validity->setSplines(splines);
+
+    splines = nullptr;
+    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+    {
+        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
+        splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+        updating_state->setSplines(splines);
+        motion_validity->setSplines(splines);
+    }
 
 	// std::cout << "DRGBT planner initialized! \n";
 }

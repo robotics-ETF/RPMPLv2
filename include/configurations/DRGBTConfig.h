@@ -6,7 +6,7 @@
 #define RPMPL_DRGBTCONFIG_H
 
 #include <string>
-#include <PlanningTypes.h>
+#include "PlanningTypes.h"
 
 typedef unsigned long size_t;
 
