@@ -1,21 +1,13 @@
 #include "UpdatingState.h"
 #include "DRGBT.h"
 
-planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_previous_,
-    const std::shared_ptr<base::State> &q_current_, const std::shared_ptr<base::State> &q_next_, 
-    base::State::Status &status_, float max_iter_time_, const std::chrono::steady_clock::time_point &time_iter_start_)
+planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::StateSpace> &ss_, 
+    planning::TrajectoryInterpolation traj_interpolation_, float max_iter_time_)
 {
     ss = ss_;
-    q_previous = q_previous_;
-    q_current = q_current_;
-    q_next = q_next_;
-    status = status_;
+    traj_interpolation = traj_interpolation_;
     max_iter_time = max_iter_time_;
-    time_iter_start = time_iter_start_;
 
-    q_next_reached = nullptr;
-    traj_interpolation = planning::TrajectoryInterpolation::None;
-    splines = nullptr;
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
     {
@@ -25,29 +17,29 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
             break;
         }
     }
+
+    splines = nullptr;
     guaranteed_safe_motion = false;
     non_zero_final_vel = true;
     max_remaining_iter_time = 0;
+    time_iter_start = std::chrono::steady_clock::now();
     measure_time = false;
     remaining_time = 0;
+    q_next = nullptr;
     drgbt_instance = nullptr;
 }
 
-float planning::trajectory::UpdatingState::getElapsedTime()
-{
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_iter_start).count() * 1e-9;
-}
-
-void planning::trajectory::UpdatingState::update()
+void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     switch (traj_interpolation)
     {
     case planning::TrajectoryInterpolation::None:
-        update_v1();
+        update_v1(q_previous, q_current, q_next_reached, status);
         break;
     
     case planning::TrajectoryInterpolation::Spline:
-        update_v2();
+        update_v2(q_previous, q_current, q_next_reached, status);
         break;
 
     default:
@@ -59,14 +51,17 @@ void planning::trajectory::UpdatingState::update()
 /// such that it can be reached within max_iter_time time, while considering robot maximal velocity.
 /// In other words, 'q_current_new' is determined using an advancing step size which depends on robot's maximal velocity.
 /// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
-void planning::trajectory::UpdatingState::update_v1()
+void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     q_previous = q_current;
-    if (status == base::State::Status::Trapped)     // Current robot position will not be updated! 
+    if (status == base::State::Status::Trapped)    // Current robot position will not be updated! 
     {                                               // We must wait for successful replanning to change 'status' to 'Reached'
         // std::cout << "Status: Trapped! \n";
         return;
     }
+    if (q_next == nullptr)
+        q_next = q_next_reached;
 
     std::shared_ptr<base::State> q_current_new { ss->getNewState(q_next_reached->getCoord()) };
     if (!ss->isEqual(q_current, q_current_new))
@@ -103,11 +98,12 @@ void planning::trajectory::UpdatingState::update_v1()
 
 /// @brief Update a current state of the robot using 'splines->spline_current'.
 /// Compute a new spline 'splines->spline_next', or remain 'splines->spline_current'.
-/// Move 'q_current' towards 'q_next' while following 'splines->spline_next'.
+/// Move 'q_current' towards 'q_next_reached' while following 'splines->spline_next'.
 /// 'q_current' will be updated to a robot position from the end of current iteration.
 /// @note The new spline will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
-void planning::trajectory::UpdatingState::update_v2()
+void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
@@ -153,7 +149,7 @@ void planning::trajectory::UpdatingState::update_v2()
         splines->setCurrentState(q_current);
         splines->setTargetState(q_next_reached);
         // std::cout << "q_next: " << q_next << "\n";
-        if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached->getCoord()' already exists!
+        if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached' already exists!
             break;
 
         if (guaranteed_safe_motion)
@@ -183,7 +179,7 @@ void planning::trajectory::UpdatingState::update_v2()
     if (status != base::State::Status::Trapped)
     {
         if (splines->spline_next->getTimeFinal() < splines->spline_next->getTimeEnd() + 2*max_iter_time - max_remaining_iter_time)
-            status = base::State::Status::Reached;  // 'q_next->getState()' must be reached, and not only 'q_next_reached'
+            status = base::State::Status::Reached;  // 'q_next' must be reached, and not only 'q_next_reached'
         else
             status = base::State::Status::Advanced;
     }
@@ -203,4 +199,11 @@ bool planning::trajectory::UpdatingState::invokeChangeNextState()
         return drgbt_instance->changeNextState();
     
     return false;
+}
+
+float planning::trajectory::UpdatingState::getElapsedTime()
+{
+    float t = std::chrono::duration_cast<std::chrono::nanoseconds>
+              (std::chrono::steady_clock::now() - time_iter_start).count() * 1e-9;
+    return t;
 }

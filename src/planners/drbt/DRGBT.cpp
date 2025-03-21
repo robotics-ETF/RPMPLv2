@@ -33,25 +33,25 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     splines = nullptr;
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
     {
-        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, q_next->getStateReached(), DRGBTConfig::MAX_ITER_TIME);
+        splines = std::make_shared<planning::trajectory::Splines>
+            (ss, q_current, q_next->getStateReached(), DRGBTConfig::MAX_ITER_TIME);
         splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
     }
-	std::cout << "Splines initialized! \n";
 
-    updating_state = std::make_shared<planning::trajectory::UpdatingState>(ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, 
-        q_previous, q_current, q_next->getState(), status, DRGBTConfig::MAX_ITER_TIME, time_iter_start);
-    updating_state->setNextStateReached(q_next->getStateReached());
-    updating_state->setMeasureTime(false);
-    updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+    updating_state = std::make_shared<planning::trajectory::UpdatingState>
+        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
+    updating_state->setSplines(splines);
     updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
+    updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+    updating_state->setMeasureTime(false);
     updating_state->setDRGBTinstance(this);
-	std::cout << "UpdatingState initialized! \n";
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, splines, q_previous,
-        q_current, q_goal, path, DRGBTConfig::MAX_ITER_TIME);
+        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, q_goal, 
+        std::make_shared<std::vector<std::shared_ptr<base::State>>>(path), DRGBTConfig::MAX_ITER_TIME);
+    motion_validity->setSplines(splines);
 
-	std::cout << "DRGBT planner initialized! \n";
+	// std::cout << "DRGBT planner initialized! \n";
 }
 
 planning::drbt::DRGBT::~DRGBT()
@@ -86,13 +86,6 @@ bool planning::drbt::DRGBT::solve()
         ss->computeDistance(q_current, true);     // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
-        if (q_current->getDistance() <= 0)
-        {
-            std::cout << "*************** Collision has been occurred!!! *************** \n";
-            planner_info->setSuccessState(false);
-            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
-            return false;
-        }
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -105,7 +98,9 @@ bool planning::drbt::DRGBT::solve()
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
         updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
-        updating_state->update();       // ~ 1 [ms]
+        updating_state->setTimeIterStart(time_iter_start);
+        updating_state->setNextState(q_next->getState());
+        updating_state->update(q_previous, q_current, q_next->getStateReached(), status);   // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
@@ -129,7 +124,7 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if (!motion_validity->check())
+        if (!motion_validity->check(q_previous, q_current))
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);

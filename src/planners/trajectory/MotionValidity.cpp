@@ -1,19 +1,16 @@
 #include "MotionValidity.h"
 
-planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base::StateSpace> &ss_, planning::TrajectoryInterpolation traj_interpolation_, 
-    float resolution_coll_check_, const std::shared_ptr<planning::trajectory::Splines> &splines_, const std::shared_ptr<base::State> &q_previous_,
-    const std::shared_ptr<base::State> &q_current_, const std::shared_ptr<base::State> &q_goal_, 
-    std::vector<std::shared_ptr<base::State>> &path_, float max_iter_time_)
+planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base::StateSpace> &ss_, 
+    planning::TrajectoryInterpolation traj_interpolation_, float resolution_coll_check_, const std::shared_ptr<base::State> &q_goal_, 
+    const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> &path_, float max_iter_time_)
 {
     ss = ss_;
     traj_interpolation = traj_interpolation_;
     resolution_coll_check = resolution_coll_check_;
-    splines = splines_;
-    q_previous = q_previous_;
-    q_current = q_current_;
     q_goal = q_goal_;
     path = path_;
     max_iter_time = max_iter_time_;
+    splines = nullptr;
 
     float max_vel_obs { 0 };
     for (size_t i = 0; i < ss->env->getNumObjects(); i++)
@@ -21,7 +18,6 @@ planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base:
         if (ss->env->getObject(i)->getMaxVel() > max_vel_obs)
             max_vel_obs = ss->env->getObject(i)->getMaxVel();
     }
-    std::cout << "Found max_vel_obs: " << max_vel_obs << "\n";
     num_checks = std::ceil((max_vel_obs * max_iter_time) / resolution_coll_check); // In order to obtain check when obstacle moves at most 1 [cm]
 	
 }
@@ -30,12 +26,12 @@ planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base:
 /// Finally, environment is updated within this function.
 /// @return Validity of motion.
 /// @note In reality, this motion would happen continuously during the execution of the current algorithm iteration.
-bool planning::trajectory::MotionValidity::check()
+bool planning::trajectory::MotionValidity::check(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current)
 {
     switch (traj_interpolation)
     {
     case planning::TrajectoryInterpolation::None:
-        return check_v1();
+        return check_v1(q_previous, q_current);
     
     case planning::TrajectoryInterpolation::Spline:
         return check_v2();
@@ -47,7 +43,7 @@ bool planning::trajectory::MotionValidity::check()
 
 // In case traj_interpolation == "None", discretely check the validity of motion 
 // when the robot moves from 'q_previous' to 'q_current'. 
-bool planning::trajectory::MotionValidity::check_v1()
+bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current)
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
     bool is_valid { true };
@@ -59,7 +55,7 @@ bool planning::trajectory::MotionValidity::check_v1()
     {
         ss->env->updateEnvironment(delta_time);
         q_temp = ss->interpolateEdge(q_previous, q_current, dist * num_check / num_checks, dist);
-        path.emplace_back(q_temp);
+        path->emplace_back(q_temp);
         is_valid = ss->isValid(q_temp) && !ss->robot->checkSelfCollision(q_temp);
         if (!is_valid)
             break;
@@ -109,7 +105,7 @@ bool planning::trajectory::MotionValidity::check_v2()
             ss->env->updateEnvironment(delta_time2);
         }
 
-        path.emplace_back(q_temp);
+        path->emplace_back(q_temp);
         is_valid = ss->isValid(q_temp) && !ss->robot->checkSelfCollision(q_temp);
         if (!is_valid || ss->isEqual(q_temp, q_goal))
             break;
