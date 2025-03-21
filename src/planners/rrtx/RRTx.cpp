@@ -26,6 +26,11 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     
     // Add goal as target
     goal_state = q_goal;
+
+    // Set current, previous, and next state to start
+    q_current = q_start;
+    q_previous = q_current;
+    q_next = q_current;
     
     // Initialize rewire sets and queues
     orphan_set.clear();
@@ -34,6 +39,21 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     
     planner_info->setNumIterations(0);
     planner_info->setNumStates(1);
+
+    updating_state = std::make_shared<planning::trajectory::UpdatingState>
+        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
+
+    motion_validity = std::make_shared<planning::trajectory::MotionValidity>
+        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::RESOLUTION_COLL_CHECK, q_goal, &path, RRTxConfig::MAX_ITER_TIME);
+    
+    splines = nullptr;
+    if (RRTxConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+    {
+        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
+        updating_state->setSplines(splines);
+        motion_validity->setSplines(splines);
+    }
+
 }
 
 planning::rrtx::RRTx::~RRTx()
@@ -67,6 +87,7 @@ double planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, con
 bool planning::rrtx::RRTx::solve()
 {
     time_alg_start = std::chrono::steady_clock::now();
+    time_iter_start = time_alg_start;
     
     std::shared_ptr<base::State> q_rand = nullptr;
     std::shared_ptr<base::State> q_near = nullptr;
@@ -122,6 +143,10 @@ bool planning::rrtx::RRTx::solve()
     planner_info->setSuccessState(true);
     while (true)
     {
+        // Start the iteration clock
+        time_iter_start = std::chrono::steady_clock::now();
+
+        // Compute the shrinking ball radius
         r_rewire = shrinkingBallRadius(tree->getNumStates());
 
         // Sample a random state
@@ -156,17 +181,41 @@ bool planning::rrtx::RRTx::solve()
                 computePath();
             }
         }
-        
-        planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-        planner_info->addIterationTime(getElapsedTime(time_alg_start));
-        planner_info->setNumStates(tree->getNumStates());
+
+        // Updating current state
+        q_current = q_start;
+        std::cout << "q_current: " << q_current << "\n";
+        q_next = q_start->getParent();
+        std::cout << "q_next: " << q_next << "\n";
+        q_start = q_next;
+        markAsOrphan(q_start);
+        updating_state->setTimeIterStart(time_iter_start);
+        updating_state->update(q_previous, q_current, q_next, status);
+
+        // Checking the real-time execution
+        float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
+        if (time_iter_remain < 0)
+            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
+
+        // Update environment and check if the collision occurs
+        if (!motion_validity->check(q_previous, q_current))
+        {
+            std::cout << "*************** Collision has been occurred!!! *************** \n";
+            planner_info->setSuccessState(false);
+            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
+            return false;
+        }
         
         // Process any invalidated nodes if obstacles have moved
         if (planner_info->getNumIterations() % replanning_throttle == 0) {
             handleDynamicObstacles();
         }
         
-        // Check termination
+        // Planner info and terminating condition
+        planner_info->setNumIterations(planner_info->getNumIterations() + 1);
+        planner_info->addIterationTime(getElapsedTime(time_alg_start));
+        planner_info->setNumStates(tree->getNumStates());
         if (checkTerminatingCondition(status)) {
             return planner_info->getSuccessState();
         }

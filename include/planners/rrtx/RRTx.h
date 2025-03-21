@@ -8,6 +8,9 @@
 #include "AbstractPlanner.h"
 #include "Tree.h"
 #include "RRTxConfig.h"
+#include "UpdatingState.h"
+#include "MotionValidity.h"
+#include "Splines.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
@@ -32,6 +35,11 @@ namespace planning::rrtx
         // Store goal state separately
         std::shared_ptr<base::State> goal_state;
         
+        // Store current, previous, and next state separately
+        std::shared_ptr<base::State> q_current;
+        std::shared_ptr<base::State> q_previous;
+        std::shared_ptr<base::State> q_next;
+
         // RRTx specific parameters
         double r_rewire;          // Radius for rewiring
         double r_collision;       // Radius to check for collisions
@@ -50,6 +58,10 @@ namespace planning::rrtx
         
         // Path from start to goal
         std::vector<std::shared_ptr<base::State>> path;
+
+        std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
+        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
+        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         
         // Initialize parameters
         void initializeParameters();
