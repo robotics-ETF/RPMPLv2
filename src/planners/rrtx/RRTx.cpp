@@ -177,21 +177,50 @@ bool planning::rrtx::RRTx::solve()
             }
 
             // Updating current state
-            // markAsOrphan(q_start);
             q_next = q_start->getParent();
-            // std::cout << "q_current: " << q_current << "\n";
-            // std::cout << "q_next:    " << q_next << "\n";
+            std::cout << "q_current: " << q_current << "\n";
+            std::cout << "q_next:    " << q_next << "\n";
             
-            std::shared_ptr<base::State> q_current_temp = ss->getNewState(q_current->getCoord());
+            std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
             updating_state->setTimeIterStart(time_iter_start);
-            updating_state->update(q_previous, q_current_temp, q_next, status);
+            updating_state->update(q_previous, q_current_new, q_next, status);
 
             if (status == base::State::Status::Advanced)
-                q_current->setCoord(q_current_temp->getCoord());
+            {
+                // ---------------------------------------------------------------------------------- //
+                // Prvi način: OVAKO BI TREBALO ALI JAVI NEKAD GRESKU:
+                // Update cost
+                q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
+                
+                // Find neighbors within r_rewire
+                std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
+                
+                // Choose parent that minimizes cost
+                chooseParent(q_current_new, neighbors);
+                
+                // Add to tree
+                tree->upgradeTree(q_current_new, q_current_new->getParent());
+                
+                // Rewire the tree
+                rewireNeighbors(q_current_new, neighbors);
+                
+                // Update the path if needed
+                if (updatePath()) {
+                    computePath();
+                }
+
+                q_current = q_current_new;
+
+                // ---------------------------------------------------------------------------------- //
+                // Drugi način: OVAKO RADI BEZ GRESKE:
+                // q_current->setCoord(q_current_new->getCoord());
+                // ---------------------------------------------------------------------------------- //
+            }
             else if (status == base::State::Status::Reached)
                 q_current = q_next;
             
-            // std::cout << "q_current_new: " << q_current << "\n";
+            // markAsOrphan(q_start);
+            std::cout << "q_current_new: " << q_current << "\n";
         }
 
         // Checking the real-time execution
