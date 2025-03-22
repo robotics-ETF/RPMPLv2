@@ -1,13 +1,12 @@
 #include "MotionValidity.h"
 
 planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base::StateSpace> &ss_, 
-    planning::TrajectoryInterpolation traj_interpolation_, float resolution_coll_check_, const std::shared_ptr<base::State> &q_goal_, 
+    planning::TrajectoryInterpolation traj_interpolation_, float resolution_coll_check_, 
     std::vector<std::shared_ptr<base::State>>* path_, float max_iter_time_)
 {
     ss = ss_;
     traj_interpolation = traj_interpolation_;
     resolution_coll_check = resolution_coll_check_;
-    q_goal = q_goal_;
     path = path_;
     max_iter_time = max_iter_time_;
     splines = nullptr;
@@ -107,7 +106,7 @@ bool planning::trajectory::MotionValidity::check_v2()
 
         path->emplace_back(q_temp);
         is_valid = ss->isValid(q_temp) && !ss->robot->checkSelfCollision(q_temp);
-        if (!is_valid || ss->isEqual(q_temp, q_goal))
+        if (!is_valid)
             break;
     }
     
