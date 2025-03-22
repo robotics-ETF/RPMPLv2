@@ -55,7 +55,7 @@ namespace planning::rrtx
         // Custom comparator for priority queue based on cost
         struct CostComparator 
         {
-            bool operator()(const std::shared_ptr<base::State>& a, const std::shared_ptr<base::State>& b) const {
+            bool operator()(const std::shared_ptr<base::State> &a, const std::shared_ptr<base::State> &b) const {
                 return a->getCost() > b->getCost();
             }
         };

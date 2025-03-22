@@ -35,10 +35,10 @@ namespace robots
 		std::shared_ptr<std::vector<KDL::Frame>> computeForwardKinematics(std::shared_ptr<base::State> q) override;
 		std::shared_ptr<base::State> computeInverseKinematics(const KDL::Rotation &R, const KDL::Vector &p, 
 															  std::shared_ptr<base::State> q_init = nullptr) override;
-		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State>& q) override;
-		std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State>& q) override;
-		bool checkSelfCollision(const std::shared_ptr<base::State>& q1, std::shared_ptr<base::State> &q2) override;
-		bool checkSelfCollision(const std::shared_ptr<base::State>& q) override;
+		std::shared_ptr<Eigen::MatrixXf> computeSkeleton(const std::shared_ptr<base::State> &q) override;
+		std::shared_ptr<Eigen::MatrixXf> computeEnclosingRadii(const std::shared_ptr<base::State> &q) override;
+		bool checkSelfCollision(const std::shared_ptr<base::State> &q1, std::shared_ptr<base::State> &q2) override;
+		bool checkSelfCollision(const std::shared_ptr<base::State> &q) override;
 
 	private:
 		using AbstractRobot::checkSelfCollision;
