@@ -51,11 +51,12 @@ void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q
 /// such that it can be reached within max_iter_time time, while considering robot maximal velocity.
 /// In other words, 'q_current_new' is determined using an advancing step size which depends on robot's maximal velocity.
 /// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
+/// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
 void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     q_previous = q_current;
-    if (status == base::State::Status::Trapped)    // Current robot position will not be updated! 
+    if (status == base::State::Status::Trapped)     // Current robot position will not be updated! 
     {                                               // We must wait for successful replanning to change 'status' to 'Reached'
         // std::cout << "Status: Trapped! \n";
         return;
@@ -90,6 +91,8 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
         status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next_reached'
     else
         status = base::State::Status::Advanced;
+    
+    q_next = nullptr;
 
     // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
@@ -102,6 +105,7 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
 /// 'q_current' will be updated to a robot position from the end of current iteration.
 /// @note The new spline will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
+/// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
 void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {

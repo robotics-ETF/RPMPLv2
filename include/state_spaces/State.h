@@ -38,13 +38,9 @@ namespace base
 		std::shared_ptr<std::vector<KDL::Frame>> frames;				// All frames of the robot
 		std::shared_ptr<Eigen::MatrixXf> skeleton;						// Skeleton points of the robot
 		std::shared_ptr<Eigen::MatrixXf> enclosing_radii; 				// Matrix containing all enclosing radii (row: from which skeleton point, column: to which skeleton point)
-		Status status{Status::None};
+		Status status;
 		
 	public:
-		State() {
-			children = std::make_shared<std::vector<std::shared_ptr<State>>>();
-			neighbours = std::make_shared<std::vector<std::shared_ptr<State>>>();
-		}
 		State(const Eigen::VectorXf &coord_);
 		virtual ~State() = 0;
 
@@ -66,6 +62,7 @@ namespace base
 		inline std::shared_ptr<std::vector<KDL::Frame>> getFrames() const { return frames; }
 		inline std::shared_ptr<Eigen::MatrixXf> getSkeleton() const { return skeleton; }
 		inline std::shared_ptr<Eigen::MatrixXf> getEnclosingRadii() const { return enclosing_radii; }
+		inline Status getStatus() const { return status; }
 
 		inline void setStateSpaceType(base::StateSpaceType state_space_type_) { state_space_type = state_space_type_; }
 		inline void setNumDimensions(size_t num_dimensions_) { num_dimensions = num_dimensions_; }

@@ -14,7 +14,6 @@ class RRTxConfig {
     static constexpr size_t MAX_NUM_ITER = 10000;                 // Maximal number of iterations
     static constexpr float MAX_ITER_TIME = 0.050;                 // Maximal runtime of a single iteration
     static constexpr float MAX_PLANNING_TIME = 10.0f;             // Maximal planning time in seconds
-    static constexpr size_t MAX_NUM_STATES = 10000;               // Maximal number of states
     static constexpr double EPS_STEP = 0.1;                       // Step size for extending
     static constexpr double R_REWIRE = 1.0;                       // Radius for rewiring
     static constexpr double R_COLLISION = 0.2;                    // Radius to check for collisions

@@ -13,9 +13,11 @@ base::State::State(const Eigen::VectorXf &coord_)
 	nearest_points = nullptr;
 	parent = nullptr;
 	children = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
+	neighbours = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
 	frames = nullptr;
 	skeleton = nullptr;
 	enclosing_radii = nullptr;
+	status = Status::None;
 }
 
 base::State::~State() {}
