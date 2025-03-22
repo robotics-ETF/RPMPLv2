@@ -9,23 +9,22 @@
 
 typedef unsigned long size_t;
 
-class RRTxConfig {
+class RRTxConfig 
+{
   public:
-    static constexpr size_t MAX_NUM_ITER = 10000;                 // Maximal number of iterations
-    static constexpr float MAX_ITER_TIME = 0.050;                 // Maximal runtime of a single iteration
-    static constexpr float MAX_PLANNING_TIME = 10.0f;             // Maximal planning time in seconds
-    static constexpr double EPS_STEP = 0.1;                       // Step size for extending
-    static constexpr double R_REWIRE = 1.0;                       // Radius for rewiring
-    static constexpr double R_COLLISION = 0.2;                    // Radius to check for collisions
-    static constexpr double R_NEAREST = 0.5;                      // Radius for nearest neighbors
-    static constexpr size_t MAX_NEIGHBORS = 30;                   // Maximal number of neighbors to consider
-    static constexpr size_t REPLANNING_THROTTLE = 1;              // Process obstacles every N iterations
-    static constexpr double REWIRE_FACTOR = 1.1;                  // Factor for rewire radius
-    static constexpr double START_BIAS = 0.05;                    // Probability of sampling start directly
-    static constexpr float RESOLUTION_COLL_CHECK = 0.01;          // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
-    static constexpr planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION = 
-        planning::TrajectoryInterpolation::None;                // Method for interpolation of trajectory: "None" or "Spline"
-    
+    static size_t MAX_NUM_ITER;                                         // Maximal number of iterations
+    static float MAX_ITER_TIME;                                         // Maximal runtime of a single iteration
+    static float MAX_PLANNING_TIME;                                     // Maximal planning time in seconds
+    static float EPS_STEP;                                              // Step size for extending
+    static float R_REWIRE;                                              // Radius for rewiring
+    static float R_COLLISION;                                           // Radius to check for collisions
+    static float R_NEAREST;                                             // Radius for nearest neighbors
+    static size_t MAX_NEIGHBORS;                                        // Maximal number of neighbors to consider
+    static size_t REPLANNING_THROTTLE;                                  // Process obstacles every N iterations
+    static float REWIRE_FACTOR;                                         // Factor for rewire radius
+    static float START_BIAS;                                            // Probability of sampling start directly
+    static float RESOLUTION_COLL_CHECK;                                 // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
+    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;  // Method for interpolation of trajectory: "None" or "Spline"
 };
 
 #endif // RPMPL_RRTXCONFIG_H

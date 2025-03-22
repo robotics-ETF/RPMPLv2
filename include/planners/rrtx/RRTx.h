@@ -72,7 +72,7 @@ namespace planning::rrtx
         std::shared_ptr<base::State> q_next;
 
         // Radius for rewiring
-        double r_rewire;
+        float r_rewire;
         
         // Sets and queues for dynamic replanning
         std::unordered_set<std::shared_ptr<base::State>> orphan_set;
@@ -89,10 +89,10 @@ namespace planning::rrtx
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         
         // Helper method to calculate distance between states (using getNorm)
-        double distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const;
+        float distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const;
             
         // Find neighbors within a radius
-        std::vector<std::shared_ptr<base::State>> findNeighbors(const std::shared_ptr<base::State> q, double radius);
+        std::vector<std::shared_ptr<base::State>> findNeighbors(const std::shared_ptr<base::State> q, float radius);
             
         // Choose best parent for a node
         bool chooseParent(std::shared_ptr<base::State> q_new, const std::vector<std::shared_ptr<base::State>> &neighbors);
@@ -128,10 +128,10 @@ namespace planning::rrtx
         void removeOrphanNodes();
         
         // Generate random number in range [min, max]
-        double generateRandomNumber(double min, double max);
+        float generateRandomNumber(float min, float max);
 
         // Compute the shrinking ball radius
-        double shrinkingBallRadius(size_t num_states);
+        float shrinkingBallRadius(size_t num_states);
         
         // Check if planning should terminate
         bool checkTerminatingCondition(base::State::Status status) override;

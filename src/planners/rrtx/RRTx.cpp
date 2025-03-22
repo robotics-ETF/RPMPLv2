@@ -65,9 +65,9 @@ planning::rrtx::RRTx::~RRTx()
     path.clear();
 }
 
-double planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const
+float planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const
 {
-    return static_cast<double>(ss->getNorm(q1, q2));
+    return ss->getNorm(q1, q2);
 }
 
 bool planning::rrtx::RRTx::solve()
@@ -156,7 +156,7 @@ bool planning::rrtx::RRTx::solve()
         if (status != base::State::Status::Trapped)
         {
             // Compute initial cost
-            double cost = q_near->getCost() + distance(q_near, q_new);
+            float cost = q_near->getCost() + distance(q_near, q_new);
             q_new->setCost(cost);
             
             // Find neighbors within r_rewire
@@ -431,7 +431,7 @@ void planning::rrtx::RRTx::removeOrphanNodes()
 }
 
 std::vector<std::shared_ptr<base::State>> planning::rrtx::RRTx::findNeighbors(
-    const std::shared_ptr<base::State> q, double radius)
+    const std::shared_ptr<base::State> q, float radius)
 {
     std::vector<std::shared_ptr<base::State>> neighbors;
     const auto all_states = tree->getStates();
@@ -464,13 +464,13 @@ bool planning::rrtx::RRTx::chooseParent(
     std::shared_ptr<base::State> q_new, const std::vector<std::shared_ptr<base::State>> &neighbors)
 {
     std::shared_ptr<base::State> min_parent = q_new->getParent();
-    double min_cost = min_parent ? min_parent->getCost() + distance(min_parent, q_new) : std::numeric_limits<double>::infinity();
+    float min_cost = min_parent ? min_parent->getCost() + distance(min_parent, q_new) : std::numeric_limits<float>::infinity();
     
     for (const auto &neighbor : neighbors)
     {
         if (neighbor == q_new) continue;
         
-        double potential_cost = neighbor->getCost() + distance(neighbor, q_new);
+        float potential_cost = neighbor->getCost() + distance(neighbor, q_new);
         
         if (potential_cost < min_cost && 
             ss->isValid(neighbor, q_new) && 
@@ -510,7 +510,7 @@ void planning::rrtx::RRTx::rewireNeighbors(
     {
         if (neighbor == q_new || neighbor == q_new->getParent()) continue;
         
-        double potential_cost = q_new->getCost() + distance(q_new, neighbor);
+        float potential_cost = q_new->getCost() + distance(q_new, neighbor);
         
         if (potential_cost < neighbor->getCost() && 
             ss->isValid(q_new, neighbor) && 
@@ -544,7 +544,7 @@ void planning::rrtx::RRTx::propagateCostChanges(std::shared_ptr<base::State> nod
         
         for (const auto &child : *current->getChildren())
         {
-            double new_cost = current->getCost() + distance(current, child);
+            float new_cost = current->getCost() + distance(current, child);
             if (new_cost < child->getCost()) {
                 child->setCost(new_cost);
                 cost_queue.push(child);
@@ -634,21 +634,21 @@ bool planning::rrtx::RRTx::checkTerminatingCondition([[maybe_unused]] base::Stat
 	return false;
 }
 
-double planning::rrtx::RRTx::generateRandomNumber(double min, double max)
+float planning::rrtx::RRTx::generateRandomNumber(float min, float max)
 {
-    std::uniform_real_distribution<double> distribution(min, max);
+    std::uniform_real_distribution<float> distribution(min, max);
     static std::random_device rd;
     static std::mt19937 generator(rd());
     return distribution(generator);
 }
 
-double planning::rrtx::RRTx::shrinkingBallRadius(size_t num_states) 
+float planning::rrtx::RRTx::shrinkingBallRadius(size_t num_states) 
 {
-    double eta = std::sqrt(ss->num_dimensions);
-    double mi = std::pow(2 * M_PI, ss->num_dimensions);
-    double zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
-    double gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
-    return std::min(gamma_rrt * double(std::pow(std::log(num_states) / num_states, 1.0f / ss->num_dimensions)), eta);
+    float eta = std::sqrt(ss->num_dimensions);
+    float mi = std::pow(2 * M_PI, ss->num_dimensions);
+    float zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
+    float gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
+    return std::min(gamma_rrt * float(std::pow(std::log(num_states) / num_states, 1.0f / ss->num_dimensions)), eta);
 }
 
 void planning::rrtx::RRTx::outputPlannerData(const std::string &filename, bool output_states_and_paths, bool append_output) const

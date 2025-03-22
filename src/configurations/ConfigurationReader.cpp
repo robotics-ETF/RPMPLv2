@@ -8,6 +8,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
     YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
+    YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
     YAML::Node SplinesConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_splines.yaml") };
 
     // RealVectorSpaceConfigRoot
@@ -191,6 +192,72 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
 
+    // RRTxConfigRoot
+    if (RRTxConfigRoot["MAX_NUM_ITER"].IsDefined())
+        RRTxConfig::MAX_NUM_ITER = RRTxConfigRoot["MAX_NUM_ITER"].as<size_t>();
+    else
+        LOG(INFO) << "RRTxConfig::MAX_NUM_ITER is not defined! Using default value of " << RRTxConfig::MAX_NUM_ITER;
+
+    if (RRTxConfigRoot["MAX_ITER_TIME"].IsDefined())
+        RRTxConfig::MAX_ITER_TIME = RRTxConfigRoot["MAX_ITER_TIME"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::MAX_ITER_TIME is not defined! Using default value of " << RRTxConfig::MAX_ITER_TIME;
+
+    if (RRTxConfigRoot["MAX_PLANNING_TIME"].IsDefined())
+        RRTxConfig::MAX_PLANNING_TIME = RRTxConfigRoot["MAX_PLANNING_TIME"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RRTxConfig::MAX_PLANNING_TIME;
+
+    if (RRTxConfigRoot["EPS_STEP"].IsDefined())
+        RRTxConfig::EPS_STEP = RRTxConfigRoot["EPS_STEP"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::EPS_STEP is not defined! Using default value of " << RRTxConfig::EPS_STEP;
+
+    if (RRTxConfigRoot["R_REWIRE"].IsDefined())
+        RRTxConfig::R_REWIRE = RRTxConfigRoot["R_REWIRE"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::R_REWIRE is not defined! Using default value of " << RRTxConfig::R_REWIRE;
+
+    if (RRTxConfigRoot["R_COLLISION"].IsDefined())
+        RRTxConfig::R_COLLISION = RRTxConfigRoot["R_COLLISION"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::R_COLLISION is not defined! Using default value of " << RRTxConfig::R_COLLISION;
+
+    if (RRTxConfigRoot["R_NEAREST"].IsDefined())
+        RRTxConfig::R_NEAREST = RRTxConfigRoot["R_NEAREST"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::R_NEAREST is not defined! Using default value of " << RRTxConfig::R_NEAREST;
+
+    if (RRTxConfigRoot["MAX_NEIGHBORS"].IsDefined())
+        RRTxConfig::MAX_NEIGHBORS = RRTxConfigRoot["MAX_NEIGHBORS"].as<size_t>();
+    else
+        LOG(INFO) << "RRTxConfig::MAX_NEIGHBORS is not defined! Using default value of " << RRTxConfig::MAX_NEIGHBORS;
+
+    if (RRTxConfigRoot["REPLANNING_THROTTLE"].IsDefined())
+        RRTxConfig::REPLANNING_THROTTLE = RRTxConfigRoot["REPLANNING_THROTTLE"].as<size_t>();
+    else
+        LOG(INFO) << "RRTxConfig::REPLANNING_THROTTLE is not defined! Using default value of " << RRTxConfig::REPLANNING_THROTTLE;
+
+    if (RRTxConfigRoot["REWIRE_FACTOR"].IsDefined())
+        RRTxConfig::REWIRE_FACTOR = RRTxConfigRoot["REWIRE_FACTOR"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::REWIRE_FACTOR is not defined! Using default value of " << RRTxConfig::REWIRE_FACTOR;
+
+    if (RRTxConfigRoot["START_BIAS"].IsDefined())
+        RRTxConfig::START_BIAS = RRTxConfigRoot["START_BIAS"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::START_BIAS is not defined! Using default value of " << RRTxConfig::START_BIAS;
+
+    if (RRTxConfigRoot["RESOLUTION_COLL_CHECK"].IsDefined())
+        RRTxConfig::RESOLUTION_COLL_CHECK = RRTxConfigRoot["RESOLUTION_COLL_CHECK"].as<float>();
+    else
+        LOG(INFO) << "RRTxConfig::RESOLUTION_COLL_CHECK is not defined! Using default value of " << RRTxConfig::RESOLUTION_COLL_CHECK;
+
+    if (RRTxConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
+        RRTxConfig::TRAJECTORY_INTERPOLATION = planning::trajectory_interpolation_map[RRTxConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>()];
+    else
+        LOG(INFO) << "RRTxConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << RRTxConfig::TRAJECTORY_INTERPOLATION;
+    
     // SplinesConfigRoot
     if (SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
         SplinesConfig::MAX_TIME_COMPUTE_REGULAR = SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();

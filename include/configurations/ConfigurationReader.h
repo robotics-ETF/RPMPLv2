@@ -19,6 +19,7 @@
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
 #include "DRGBTConfig.h"
+#include "RRTxConfig.h"
 #include "SplinesConfig.h"
 
 class ConfigurationReader
