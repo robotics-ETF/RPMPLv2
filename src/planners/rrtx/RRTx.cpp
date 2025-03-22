@@ -190,13 +190,20 @@ bool planning::rrtx::RRTx::solve()
             }
 
             // Updating current state
-            markAsOrphan(q_start);
+            // markAsOrphan(q_start);
             q_next = q_start->getParent();
             std::cout << "q_current: " << q_current << "\n";
             std::cout << "q_next:    " << q_next << "\n";
             
+            std::shared_ptr<base::State> q_current_temp = ss->getNewState(q_current->getCoord());
             updating_state->setTimeIterStart(time_iter_start);
-            updating_state->update(q_previous, q_current, q_next, status);
+            updating_state->update(q_previous, q_current_temp, q_next, status);
+
+            if (status == base::State::Status::Advanced)
+                q_current->setCoord(q_current_temp->getCoord());
+            else if (status == base::State::Status::Reached)
+                q_current = q_next;     // It is already added to tree
+            
             std::cout << "q_current_new: " << q_current << "\n";
         }
 
@@ -214,7 +221,7 @@ bool planning::rrtx::RRTx::solve()
             planner_info->setPlanningTime(planner_info->getIterationTimes().back());
             return false;
         }
-        
+
         // Process any invalidated nodes if obstacles have moved
         if (planner_info->getNumIterations() % replanning_throttle == 0) {
             handleDynamicObstacles();
@@ -634,15 +641,31 @@ bool planning::rrtx::RRTx::checkTerminatingCondition([[maybe_unused]] base::Stat
 {
     float time_current = getElapsedTime(time_alg_start);
     
-    if (time_current >= RRTxConfig::MAX_PLANNING_TIME ||
-        planner_info->getNumStates() >= RRTxConfig::MAX_NUM_STATES || 
-        planner_info->getNumIterations() >= RRTxConfig::MAX_NUM_ITER)
+    if (ss->isEqual(q_current, q_goal))
     {
+        std::cout << "Goal configuration has been successfully reached! \n";
+		planner_info->setSuccessState(true);
         planner_info->setPlanningTime(time_current);
         return true;
     }
+	
+    if (time_current >= RRTxConfig::MAX_PLANNING_TIME)
+	{
+        std::cout << "Maximal planning time has been reached! \n";
+		planner_info->setSuccessState(false);
+        planner_info->setPlanningTime(time_current);
+		return true;
+	}
     
-    return false;
+    if (planner_info->getNumIterations() >= RRTxConfig::MAX_NUM_ITER)
+	{
+        std::cout << "Maximal number of iterations has been reached! \n";
+		planner_info->setSuccessState(false);
+        planner_info->setPlanningTime(time_current);
+		return true;
+	}
+
+	return false;
 }
 
 double planning::rrtx::RRTx::generateRandomNumber(double min, double max)
