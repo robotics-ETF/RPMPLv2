@@ -32,8 +32,8 @@ namespace planning::rrtx
         // Single tree for RRTx (unlike RRTConnect which uses two trees)
         std::shared_ptr<base::Tree> tree;
         
-        // Store goal state separately
-        std::shared_ptr<base::State> goal_state;
+        // Store start state separately
+        std::shared_ptr<base::State> start_state;
         
         // Store current, previous, and next state separately
         std::shared_ptr<base::State> q_current;

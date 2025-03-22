@@ -21,11 +21,11 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     tree = std::make_shared<base::Tree>("rrtx_tree", 0);
     tree->setKdTree(std::make_shared<base::KdTree>(ss->num_dimensions, *tree, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
     
-    // Initialize the start state
-    tree->upgradeTree(q_start, nullptr);
+    // Initialize the goal state
+    tree->upgradeTree(q_goal, nullptr);
     
-    // Add goal as target
-    goal_state = q_goal;
+    // Add start as target
+    start_state = q_start;
 
     // Set current, previous, and next state to start
     q_current = q_start;
@@ -44,7 +44,7 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
         (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::RESOLUTION_COLL_CHECK, q_goal, &path, RRTxConfig::MAX_ITER_TIME);
+        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::RESOLUTION_COLL_CHECK, &path, RRTxConfig::MAX_ITER_TIME);
     
     splines = nullptr;
     if (RRTxConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
@@ -97,12 +97,14 @@ bool planning::rrtx::RRTx::solve()
     bool first_path_found = false;
     
     // Phase 1: Find an initial path (similar to RRT)
+    std::cout << "Finding an initial path... \n";
     while (!first_path_found)
     {
+        // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
         q_rand = ss->getRandomState();
         
-        if (generateRandomNumber(0, 1) < RRTxConfig::GOAL_BIAS) {
-            q_rand = goal_state;
+        if (generateRandomNumber(0, 1) < RRTxConfig::START_BIAS) {
+            q_rand = start_state;
         }
         
         q_near = tree->getNearestState(q_rand);
@@ -116,14 +118,14 @@ bool planning::rrtx::RRTx::solve()
             
             rewireNeighbors(q_new);
             
-            if (distance(q_new, goal_state) < r_rewire && 
-                ss->isValid(q_new, goal_state) && 
-                !ss->robot->checkSelfCollision(q_new, goal_state))
+            if (distance(q_new, start_state) < r_rewire && 
+                ss->isValid(q_new, start_state) && 
+                !ss->robot->checkSelfCollision(q_new, start_state))
             {
-                goal_state->setParent(q_new);
-                goal_state->setCost(q_new->getCost() + distance(q_new, goal_state));
-                //tree->addState(goal_state);
-                tree->upgradeTree(goal_state, q_new);
+                start_state->setParent(q_new);
+                start_state->setCost(q_new->getCost() + distance(q_new, start_state));
+                //tree->addState(start_state);
+                tree->upgradeTree(start_state, q_new);
                 first_path_found = true;
                 computePath();
             }
@@ -141,10 +143,16 @@ bool planning::rrtx::RRTx::solve()
     
     // Phase 2: Continue improving the solution
     planner_info->setSuccessState(true);
+    std::cout << "Dynamic planner is starting... \n";
     while (true)
     {
+        std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+
         // Start the iteration clock
         time_iter_start = std::chrono::steady_clock::now();
+
+        // Change start to the current state
+        q_start = q_current;
 
         // Compute the shrinking ball radius
         r_rewire = shrinkingBallRadius(tree->getNumStates());
@@ -180,17 +188,17 @@ bool planning::rrtx::RRTx::solve()
             if (updatePath()) {
                 computePath();
             }
-        }
 
-        // Updating current state
-        q_current = q_start;
-        std::cout << "q_current: " << q_current << "\n";
-        q_next = q_start->getParent();
-        std::cout << "q_next: " << q_next << "\n";
-        q_start = q_next;
-        markAsOrphan(q_start);
-        updating_state->setTimeIterStart(time_iter_start);
-        updating_state->update(q_previous, q_current, q_next, status);
+            // Updating current state
+            markAsOrphan(q_start);
+            q_next = q_start->getParent();
+            std::cout << "q_current: " << q_current << "\n";
+            std::cout << "q_next:    " << q_next << "\n";
+            
+            updating_state->setTimeIterStart(time_iter_start);
+            updating_state->update(q_previous, q_current, q_next, status);
+            std::cout << "q_current_new: " << q_current << "\n";
+        }
 
         // Checking the real-time execution
         float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
@@ -219,6 +227,8 @@ bool planning::rrtx::RRTx::solve()
         if (checkTerminatingCondition(status)) {
             return planner_info->getSuccessState();
         }
+
+        std::cout << "----------------------------------------------------------------------------------------\n";
     }
     
     return false;
@@ -568,13 +578,13 @@ bool planning::rrtx::RRTx::updatePath()
         return false;
     }
     
-    // Check if the goal node's parent is valid
-    if (!goal_state->getParent() || orphan_set.find(goal_state->getParent()) != orphan_set.end()) {
+    // Check if the start node's parent is valid
+    if (!start_state->getParent() || orphan_set.find(start_state->getParent()) != orphan_set.end()) {
         return true;  // Need to recompute path
     }
     
     // Traverse the path from goal to start to check validity
-    std::shared_ptr<base::State> current = goal_state;
+    std::shared_ptr<base::State> current = start_state;
     while (current->getParent() != nullptr)
     {
         std::shared_ptr<base::State> parent = current->getParent();
@@ -593,22 +603,19 @@ void planning::rrtx::RRTx::computePath()
 {
     path.clear();
     
-    if (!goal_state->getParent()) {
-        // No path to goal
+    if (!start_state->getParent()) {
+        // No path to start
         planner_info->setSuccessState(false);
         return;
     }
     
-    // Start from goal and trace back to start
-    std::shared_ptr<base::State> current = goal_state;
+    // Begin from start and trace forward to goal
+    std::shared_ptr<base::State> current = start_state;
     while (current != nullptr)
     {
         path.push_back(current);
         current = current->getParent();
     }
-    
-    // Reverse to get path from start to goal
-    std::reverse(path.begin(), path.end());
     
     planner_info->setSuccessState(true);
 }
