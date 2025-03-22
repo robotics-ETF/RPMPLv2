@@ -142,7 +142,6 @@ bool planning::rrtx::RRTx::solve()
     }
     
     // Phase 2: Continue improving the solution
-    planner_info->setSuccessState(true);
     std::cout << "Dynamic planner is starting... \n";
     while (true)
     {
@@ -581,7 +580,7 @@ void planning::rrtx::RRTx::propagateCostChanges(std::shared_ptr<base::State> nod
 
 bool planning::rrtx::RRTx::updatePath()
 {
-    if (!planner_info->getSuccessState()) {
+    if (path.empty()) {
         return false;
     }
     
@@ -612,7 +611,6 @@ void planning::rrtx::RRTx::computePath()
     
     if (!start_state->getParent()) {
         // No path to start
-        planner_info->setSuccessState(false);
         return;
     }
     
@@ -623,8 +621,6 @@ void planning::rrtx::RRTx::computePath()
         path.push_back(current);
         current = current->getParent();
     }
-    
-    planner_info->setSuccessState(true);
 }
 
 const std::vector<std::shared_ptr<base::State>> &planning::rrtx::RRTx::getPath() const
