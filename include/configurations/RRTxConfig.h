@@ -5,13 +5,14 @@
 #ifndef RPMPL_RRTXCONFIG_H
 #define RPMPL_RRTXCONFIG_H
 
+#include <string>
 #include "PlanningTypes.h"
 
 typedef unsigned long size_t;
 
 class RRTxConfig 
 {
-  public:
+public:
     static size_t MAX_NUM_ITER;                                         // Maximal number of iterations
     static float MAX_ITER_TIME;                                         // Maximal runtime of a single iteration
     static float MAX_PLANNING_TIME;                                     // Maximal planning time in seconds
