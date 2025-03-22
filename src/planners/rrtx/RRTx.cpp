@@ -133,7 +133,7 @@ bool planning::rrtx::RRTx::solve()
     std::cout << "Dynamic planner is starting... \n";
     while (true)
     {
-        std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+        // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
 
         // Start the iteration clock
         time_iter_start = std::chrono::steady_clock::now();
@@ -179,8 +179,8 @@ bool planning::rrtx::RRTx::solve()
             // Updating current state
             // markAsOrphan(q_start);
             q_next = q_start->getParent();
-            std::cout << "q_current: " << q_current << "\n";
-            std::cout << "q_next:    " << q_next << "\n";
+            // std::cout << "q_current: " << q_current << "\n";
+            // std::cout << "q_next:    " << q_next << "\n";
             
             std::shared_ptr<base::State> q_current_temp = ss->getNewState(q_current->getCoord());
             updating_state->setTimeIterStart(time_iter_start);
@@ -189,16 +189,16 @@ bool planning::rrtx::RRTx::solve()
             if (status == base::State::Status::Advanced)
                 q_current->setCoord(q_current_temp->getCoord());
             else if (status == base::State::Status::Reached)
-                q_current = q_next;     // It is already added to tree
+                q_current = q_next;
             
-            std::cout << "q_current_new: " << q_current << "\n";
+            // std::cout << "q_current_new: " << q_current << "\n";
         }
 
         // Checking the real-time execution
-        float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
-        std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
-        if (time_iter_remain < 0)
-            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
+        // float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
+        // if (time_iter_remain < 0)
+        //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // Update environment and check if the collision occurs
         if (!motion_validity->check(q_previous, q_current))
@@ -222,7 +222,7 @@ bool planning::rrtx::RRTx::solve()
             return planner_info->getSuccessState();
         }
 
-        std::cout << "----------------------------------------------------------------------------------------\n";
+        // std::cout << "----------------------------------------------------------------------------------------\n";
     }
     
     return false;

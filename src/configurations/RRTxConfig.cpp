@@ -12,4 +12,4 @@ size_t RRTxConfig::REPLANNING_THROTTLE                                  = 1;
 float RRTxConfig::REWIRE_FACTOR                                         = 1.1;
 float RRTxConfig::START_BIAS                                            = 0.05;
 float RRTxConfig::RESOLUTION_COLL_CHECK                                 = 0.01;
-planning::TrajectoryInterpolation RRTxConfig::TRAJECTORY_INTERPOLATION  = planning::TrajectoryInterpolation::None;
+planning::TrajectoryInterpolation RRTxConfig::TRAJECTORY_INTERPOLATION  = planning::TrajectoryInterpolation::Spline;
