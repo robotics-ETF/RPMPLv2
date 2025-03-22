@@ -1,16 +1,14 @@
 #include "RRTx.h"
 
-planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_) : AbstractPlanner(ss_) 
+planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_) : RRTConnect(ss_) 
 {
     planner_type = planning::PlannerType::RRTx;
-    initializeParameters();
 }
 
 planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
-                           const std::shared_ptr<base::State> q_goal_) : AbstractPlanner(ss_, q_start_, q_goal_)
+                           const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_)
 {
     planner_type = planning::PlannerType::RRTx;
-    initializeParameters();
     
     if (!ss->isValid(q_start) || ss->robot->checkSelfCollision(q_start))
         throw std::domain_error("Start position is invalid!");
@@ -67,18 +65,6 @@ planning::rrtx::RRTx::~RRTx()
     path.clear();
 }
 
-void planning::rrtx::RRTx::initializeParameters()
-{
-    // RRTx specific parameters
-    r_rewire = RRTxConfig::R_REWIRE;
-    r_collision = RRTxConfig::R_COLLISION;
-    r_nearest = RRTxConfig::R_NEAREST;
-    eps_step = RRTxConfig::EPS_STEP;
-    max_neighbors = RRTxConfig::MAX_NEIGHBORS;
-    replanning_throttle = RRTxConfig::REPLANNING_THROTTLE;
-    rewire_factor = RRTxConfig::REWIRE_FACTOR;
-}
-
 double planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const
 {
     return static_cast<double>(ss->getNorm(q1, q2));
@@ -93,8 +79,10 @@ bool planning::rrtx::RRTx::solve()
     std::shared_ptr<base::State> q_near = nullptr;
     std::shared_ptr<base::State> q_new = nullptr;
     base::State::Status status = base::State::Status::None;
-    
     bool first_path_found = false;
+
+    // Initially, radius for rewiring is set to a constant value
+    r_rewire = RRTxConfig::R_REWIRE;
     
     // Phase 1: Find an initial path (similar to RRT)
     std::cout << "Finding an initial path... \n";
@@ -222,7 +210,7 @@ bool planning::rrtx::RRTx::solve()
         }
 
         // Process any invalidated nodes if obstacles have moved
-        if (planner_info->getNumIterations() % replanning_throttle == 0) {
+        if (planner_info->getNumIterations() % RRTxConfig::REPLANNING_THROTTLE == 0) {
             handleDynamicObstacles();
         }
         
@@ -442,19 +430,6 @@ void planning::rrtx::RRTx::removeOrphanNodes()
     rewire_set.clear();
 }
 
-std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rrtx::RRTx::extend(
-    const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
-{
-    base::State::Status status { base::State::Status::None };
-    std::shared_ptr<base::State> q_new { nullptr };
-    std::tie(status, q_new) = ss->interpolateEdge2(q, q_e, static_cast<float>(eps_step));
-
-    if (ss->isValid(q, q_new) && !ss->robot->checkSelfCollision(q, q_new))
-        return {status, q_new};
-    else
-        return {base::State::Status::Trapped, q};
-}
-
 std::vector<std::shared_ptr<base::State>> planning::rrtx::RRTx::findNeighbors(
     const std::shared_ptr<base::State> q, double radius)
 {
@@ -472,14 +447,14 @@ std::vector<std::shared_ptr<base::State>> planning::rrtx::RRTx::findNeighbors(
         }
     }
     
-    // Limit number of neighbors to max_neighbors if necessary
-    if (neighbors.size() > max_neighbors) {
+    // Limit number of neighbors to RRTxConfig::MAX_NEIGHBORS if necessary
+    if (neighbors.size() > RRTxConfig::MAX_NEIGHBORS) {
         // Sort by distance
         std::sort(neighbors.begin(), neighbors.end(), 
                  [this, &q](const std::shared_ptr<base::State> &a, const std::shared_ptr<base::State> &b) {
                      return distance(q, a) < distance(q, b);
                  });
-        neighbors.resize(max_neighbors);
+        neighbors.resize(RRTxConfig::MAX_NEIGHBORS);
     }
     
     return neighbors;
@@ -623,11 +598,6 @@ void planning::rrtx::RRTx::computePath()
     }
 }
 
-const std::vector<std::shared_ptr<base::State>> &planning::rrtx::RRTx::getPath() const
-{
-    return path;
-}
-
 base::Tree planning::rrtx::RRTx::getTree() const
 {
     return *tree;
@@ -700,7 +670,7 @@ void planning::rrtx::RRTx::outputPlannerData(const std::string &filename, bool o
         output_file << "\t Number of states:      " << planner_info->getNumStates() << std::endl;
         output_file << "\t Planning time [s]:     " << planner_info->getPlanningTime() << std::endl;
         output_file << "\t Rewire radius:         " << r_rewire << std::endl;
-        output_file << "\t Collision radius:      " << r_collision << std::endl;
+        output_file << "\t Collision radius:      " << RRTxConfig::R_COLLISION << std::endl;
         
         if (output_states_and_paths)
         {

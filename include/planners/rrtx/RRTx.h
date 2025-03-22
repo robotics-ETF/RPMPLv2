@@ -5,8 +5,7 @@
 #ifndef RPMPL_RRTX_H
 #define RPMPL_RRTX_H
 
-#include "AbstractPlanner.h"
-#include "Tree.h"
+#include "RRTConnect.h"
 #include "RRTxConfig.h"
 #include "UpdatingState.h"
 #include "MotionValidity.h"
@@ -19,11 +18,43 @@
 
 namespace planning::rrtx
 {
-    class RRTx : public AbstractPlanner
+    class RRTx : public planning::rrt::RRTConnect
     {
+    public:
+        // Constructor with state space only
+        RRTx(const std::shared_ptr<base::StateSpace> ss_);
+        
+        // Constructor with state space, start and goal
+        RRTx(const std::shared_ptr<base::StateSpace> ss_, 
+             const std::shared_ptr<base::State> q_start_,
+             const std::shared_ptr<base::State> q_goal_);
+            
+        // Destructor
+        ~RRTx();
+        
+        // Main planning function
+        bool solve() override;
+        
+        // Update obstacles and mark affected nodes
+        bool updateObstacles(const std::vector<std::tuple<std::shared_ptr<base::State>, 
+                             std::shared_ptr<base::State>>> &changed_regions);
+        
+        // Overload for updating obstacles with a single region
+        bool updateObstacles(const std::shared_ptr<base::State> region_min, 
+                             const std::shared_ptr<base::State> region_max);
+        
+        // Get the tree
+        base::Tree getTree() const;
+        
+        // Output planner data to file
+        void outputPlannerData(const std::string &filename, 
+                               bool output_states_and_paths = true, 
+                               bool append_output = false) const override;
+                               
     private:
         // Custom comparator for priority queue based on cost
-        struct CostComparator {
+        struct CostComparator 
+        {
             bool operator()(const std::shared_ptr<base::State>& a, const std::shared_ptr<base::State>& b) const {
                 return a->getCost() > b->getCost();
             }
@@ -40,14 +71,8 @@ namespace planning::rrtx
         std::shared_ptr<base::State> q_previous;
         std::shared_ptr<base::State> q_next;
 
-        // RRTx specific parameters
-        double r_rewire;          // Radius for rewiring
-        double r_collision;       // Radius to check for collisions
-        double r_nearest;         // Radius for nearest neighbors
-        double eps_step;          // Step size for extending
-        size_t max_neighbors;     // Maximum number of neighbors to consider
-        size_t replanning_throttle; // Process obstacles every N iterations
-        double rewire_factor;     // Factor for rewire radius
+        // Radius for rewiring
+        double r_rewire;
         
         // Sets and queues for dynamic replanning
         std::unordered_set<std::shared_ptr<base::State>> orphan_set;
@@ -63,27 +88,17 @@ namespace planning::rrtx
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         
-        // Initialize parameters
-        void initializeParameters();
-        
         // Helper method to calculate distance between states (using getNorm)
         double distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const;
-        
-        // Extend a node in the direction of another
-        std::tuple<base::State::Status, std::shared_ptr<base::State>> extend(
-            const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
             
         // Find neighbors within a radius
-        std::vector<std::shared_ptr<base::State>> findNeighbors(
-            const std::shared_ptr<base::State> q, double radius);
+        std::vector<std::shared_ptr<base::State>> findNeighbors(const std::shared_ptr<base::State> q, double radius);
             
         // Choose best parent for a node
-        bool chooseParent(std::shared_ptr<base::State> q_new, 
-                            const std::vector<std::shared_ptr<base::State>> &neighbors);
+        bool chooseParent(std::shared_ptr<base::State> q_new, const std::vector<std::shared_ptr<base::State>> &neighbors);
                             
         // Rewire neighbors to improve path costs
-        void rewireNeighbors(std::shared_ptr<base::State> q_new,
-                            const std::vector<std::shared_ptr<base::State>> &neighbors = {});
+        void rewireNeighbors(std::shared_ptr<base::State> q_new, const std::vector<std::shared_ptr<base::State>> &neighbors = {});
                             
         // Propagate cost changes through the tree
         void propagateCostChanges(std::shared_ptr<base::State> node);
@@ -120,40 +135,6 @@ namespace planning::rrtx
         
         // Check if planning should terminate
         bool checkTerminatingCondition(base::State::Status status) override;
-
-    public:
-        // Constructor with state space only
-        RRTx(const std::shared_ptr<base::StateSpace> ss_);
-        
-        // Constructor with state space, start and goal
-        RRTx(const std::shared_ptr<base::StateSpace> ss_, 
-            const std::shared_ptr<base::State> q_start_,
-            const std::shared_ptr<base::State> q_goal_);
-            
-        // Destructor
-        ~RRTx();
-        
-        // Main planning function
-        bool solve() override;
-        
-        // Update obstacles and mark affected nodes
-        bool updateObstacles(const std::vector<std::tuple<std::shared_ptr<base::State>, 
-                                                        std::shared_ptr<base::State>>> &changed_regions);
-        
-        // Overload for updating obstacles with a single region
-        bool updateObstacles(const std::shared_ptr<base::State> region_min, 
-                            const std::shared_ptr<base::State> region_max);
-        
-        // Get the tree
-        base::Tree getTree() const;
-        
-        // Get the path
-        const std::vector<std::shared_ptr<base::State>> &getPath() const override;
-        
-        // Output planner data to file
-        void outputPlannerData(const std::string &filename, 
-                                bool output_states_and_paths = true, 
-                                bool append_output = false) const override;
     };
 }
 
