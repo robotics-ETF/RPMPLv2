@@ -26,7 +26,7 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     start_state = q_start;
 
     // Set current, previous, and next state to start
-    q_current = q_start;
+    q_current = start_state;
     q_previous = q_current;
     q_next = q_current;
     
@@ -138,9 +138,6 @@ bool planning::rrtx::RRTx::solve()
         // Start the iteration clock
         time_iter_start = std::chrono::steady_clock::now();
 
-        // Change start to the current state
-        q_start = q_current;
-
         // Compute the shrinking ball radius
         r_rewire = shrinkingBallRadius(tree->getNumStates());
 
@@ -177,9 +174,9 @@ bool planning::rrtx::RRTx::solve()
             }
 
             // Updating current state
-            q_next = q_start->getParent();
-            std::cout << "q_current: " << q_current << "\n";
-            std::cout << "q_next:    " << q_next << "\n";
+            q_next = start_state->getParent();
+            // std::cout << "q_current: " << q_current << "\n";
+            // std::cout << "q_next:    " << q_next << "\n";
             
             std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
             updating_state->setTimeIterStart(time_iter_start);
@@ -187,40 +184,34 @@ bool planning::rrtx::RRTx::solve()
 
             if (status == base::State::Status::Advanced)
             {
-                // ---------------------------------------------------------------------------------- //
-                // Prvi način: OVAKO BI TREBALO ALI JAVI NEKAD GRESKU:
                 // Update cost
                 q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
                 
                 // Find neighbors within r_rewire
                 std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
                 
-                // Choose parent that minimizes cost
-                chooseParent(q_current_new, neighbors);
-                
-                // Add to tree
-                tree->upgradeTree(q_current_new, q_current_new->getParent());
+                // If possible, choose parent that minimizes cost. Otherwise, remain the old parent.
+                if (chooseParent(q_current_new, neighbors))
+                    tree->upgradeTree(q_current_new, q_current_new->getParent());
+                else
+                    tree->upgradeTree(q_current_new, q_next);
                 
                 // Rewire the tree
                 rewireNeighbors(q_current_new, neighbors);
-                
-                // Update the path if needed
-                if (updatePath()) {
-                    computePath();
-                }
 
                 q_current = q_current_new;
-
-                // ---------------------------------------------------------------------------------- //
-                // Drugi način: OVAKO RADI BEZ GRESKE:
-                // q_current->setCoord(q_current_new->getCoord());
-                // ---------------------------------------------------------------------------------- //
             }
             else if (status == base::State::Status::Reached)
                 q_current = q_next;
-            
-            // markAsOrphan(q_start);
-            std::cout << "q_current_new: " << q_current << "\n";
+
+            // Change start to the current state
+            start_state = q_current;
+
+            // Update the path if needed
+            if (updatePath()) {
+                computePath();
+            }
+            // std::cout << "q_current_new: " << q_current << "\n";
         }
 
         // Checking the real-time execution
