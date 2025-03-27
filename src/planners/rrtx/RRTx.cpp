@@ -6,12 +6,16 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_) : RRTCon
 }
 
 planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const std::shared_ptr<base::State> q_start_,
-                           const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_, q_start_, q_goal_)
+                           const std::shared_ptr<base::State> q_goal_) : RRTConnect(ss_) 
 {
     planner_type = planning::PlannerType::RRTx;
+    q_start = q_start_;
+    q_goal = q_goal_;
+
+	if (!ss->isValid(q_start) || ss->robot->checkSelfCollision(q_start))
+		throw std::domain_error("Start position is invalid!");
     
     // Single tree for RRTx (unlike RRTConnect which uses two trees)
-    trees.clear();
     tree = std::make_shared<base::Tree>("rrtx_tree", 0);
     tree->setKdTree(std::make_shared<base::KdTree>(ss->num_dimensions, *tree, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
     

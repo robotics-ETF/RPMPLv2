@@ -55,7 +55,8 @@ int main(int argc, char **argv)
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::RRTx << std::endl;
 			output_file << "Maximal algorithm time [s]:                             " << RRTxConfig::MAX_PLANNING_TIME << std::endl;
-			// output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
+			output_file	<< "Maximal iteration time [s]:                             " << RRTxConfig::MAX_ITER_TIME << std::endl;
+			output_file << "Trajectory interpolation:                               " << RRTxConfig::TRAJECTORY_INTERPOLATION << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;
 			output_file << "Obstacles motion:                                       " << "random" << std::endl;
