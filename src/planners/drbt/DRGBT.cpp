@@ -94,6 +94,7 @@ bool planning::drbt::DRGBT::solve()
         computeNextState();             // ~ 1 [us]
         
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
+        visited_states = { q_next };
         updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
