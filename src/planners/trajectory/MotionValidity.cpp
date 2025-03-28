@@ -17,8 +17,11 @@ planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base:
         if (ss->env->getObject(i)->getMaxVel() > max_vel_obs)
             max_vel_obs = ss->env->getObject(i)->getMaxVel();
     }
-    num_checks = std::ceil((max_vel_obs * max_iter_time) / resolution_coll_check); // In order to obtain check when obstacle moves at most 1 [cm]
-	
+
+    if (max_vel_obs > 0)
+        num_checks = std::ceil((max_vel_obs * max_iter_time) / resolution_coll_check);  // In order to obtain check when obstacle moves at most 'resolution_coll_check' [m]
+    else
+        num_checks = 10;   // Default value in case 'max_vel_obs' = 0
 }
 
 /// @brief Discretely check the validity of motion. During this checking obstacles are moving simultaneously. 
