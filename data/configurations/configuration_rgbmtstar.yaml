@@ -2,3 +2,4 @@ MAX_NUM_ITER: 1000000000		          # Maximal number of algorithm iterations
 MAX_NUM_STATES: 1000000000		        # Maximal number of considered states
 MAX_PLANNING_TIME: 10   		          # Maximal algorithm runtime in [s]
 TERMINATE_WHEN_PATH_IS_FOUND: false	  # Whether to terminate when path is found (default: false)
+SAFETY_FACTOR: 0                      # Safety factor between 0 and 1 for computing final path. FIRAS safety criteria is included if 'SAFETY_FACTOR' > 0.
