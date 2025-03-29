@@ -138,7 +138,7 @@ bool planning::rbt_star::RGBMTStar::solve()
                     {
                         q_con_opt = q_new;
                         cost_opt = q_new->getCost();
-                        // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
+                        std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
                         // planner_info->setSuccessState(true);
                         // computePath(q_con_opt);
                         // outputPlannerData("/home/nermin/RPMPLv2/data/planar_2dof/scenario1_tests/plannerData" + 
@@ -235,15 +235,40 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt_star
             }
 		}            
 	}
-	return {status, q_new};
+	return { status, q_new };
 }
 
-// Return (weighted) cost-to-come from 'q1' to 'q2'
+// Return (weighted) cost-to-come from 'q1' to 'q2'.
+// FIRAS safety criteria is included if 'RGBMTStarConfig::SAFETY_FACTOR' > 0.
 inline float planning::rbt_star::RGBMTStar::computeCostToCome(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2)
 {
-    // float d_c { ss->computeDistance(q2) };
-    // if (d_c < 10 * DRGBTConfig::D_CRIT)
-    //     return (10 * DRGBTConfig::D_CRIT / d_c) * ss->getNorm(q1, q2);
+    if (RGBMTStarConfig::SAFETY_FACTOR > 0)
+    {
+        std::shared_ptr<base::State> q_new { q1 };
+        base::State::Status status { base::State::Status::Advanced };
+        float d_c { ss->computeDistance(q_new) };
+        float weight { 0 };
+        size_t num { 0 };
+        
+        while (status == base::State::Status::Advanced)
+        {        
+            tie(status, q_new) = ss->interpolateEdge2(q_new, q2, RRTConnectConfig::EPS_STEP);
+            d_c = ss->computeDistance(q_new);
+            
+            if (d_c < 10 * RBTConnectConfig::D_CRIT)
+                weight += 1/d_c - 1/(10 * RBTConnectConfig::D_CRIT);
+
+            // if (d_c < RBTConnectConfig::D_CRIT)  // Optionally
+            // {
+            //     weight = INFINITY;
+            //     break;
+            // }
+
+            num++;
+        }
+
+        return (1 - RGBMTStarConfig::SAFETY_FACTOR) * ss->getNorm(q1, q_new) + RGBMTStarConfig::SAFETY_FACTOR * weight/num;
+    }
 
     return ss->getNorm(q1, q2);
 }
@@ -255,30 +280,50 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
     (const std::shared_ptr<base::State> q, const std::shared_ptr<base::Tree> tree, std::shared_ptr<base::State> q_reached)
 {
     // Finding the optimal connection to the predecessors of 'q_reached'
+    float cost_new {};
+    float cost { computeCostToCome(q, q_reached) };
     std::shared_ptr<base::State> q_parent { q_reached->getParent() };
     while (q_parent != nullptr)
     {
         if (std::get<0>(connectGenSpine(q, q_parent)) == base::State::Status::Reached)
-            q_reached = q_parent;
+        {
+            cost_new = computeCostToCome(q, q_parent);
+            if (cost_new <= cost + (q_reached->getCost() - q_parent->getCost()))
+            {
+                q_reached = q_parent;
+                cost = cost_new;
+            }
+        }
         q_parent = q_parent->getParent();
     }
 
-    std::shared_ptr<base::State> q_opt { nullptr }; 
-    if (q_reached->getParent() != nullptr)
+    std::shared_ptr<base::State> q_opt { q_reached }; 
+    q_parent = q_reached->getParent();
+    if (q_parent != nullptr)
     {
-        Eigen::VectorXf q_opt_coord { q_reached->getCoord() };  // It is surely collision-free. It will become an optimal state later
-        Eigen::VectorXf q_parent_coord { q_reached->getParent()->getCoord() };   // Needs to be collision-checked
         std::shared_ptr<base::State> q_middle { ss->getRandomState() };
-        size_t max_iter = std::ceil(std::log2(ss->getNorm(q_reached->getParent(), q_reached) / RRTConnectConfig::EPS_STEP));
+        std::shared_ptr<base::State> q_opt_temp { ss->getNewState(q_reached->getCoord()) }; // It is surely collision-free. It will become an optimal state later
+        q_opt_temp->setCost(q_reached->getCost());
+        Eigen::VectorXf q_parent_coord { q_parent->getCoord() };   // Needs to be collision-checked
+        float norm { ss->getNorm(q_parent, q_reached) };
+        size_t max_iter = (norm > RRTConnectConfig::EPS_STEP) ? std::ceil(std::log2(norm / RRTConnectConfig::EPS_STEP)) : 1;
         bool update { false };
 
         for (size_t i = 0; i < max_iter; i++)
         {
-            q_middle->setCoord((q_opt_coord + q_parent_coord) / 2);
+            q_middle->setCoord((q_opt_temp->getCoord() + q_parent_coord) / 2);
+            q_middle->setCost(q_parent->getCost() + computeCostToCome(q_parent, q_middle));
             if (std::get<0>(connectGenSpine(q, q_middle)) == base::State::Status::Reached)
+                cost_new = computeCostToCome(q, q_middle);
+            else
+                cost_new = INFINITY;
+
+            if (cost_new <= cost + (q_opt_temp->getCost() - q_middle->getCost()))
             {
-                q_opt_coord = q_middle->getCoord();
+                q_opt_temp->setCoord(q_middle->getCoord());
+                q_opt_temp->setCost(q_middle->getCost());
                 update = true;
+                cost = cost_new;
             }
             else
                 q_parent_coord = q_middle->getCoord();
@@ -286,11 +331,10 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
 
         if (update)
         {
-            q_opt = ss->getNewState(q_opt_coord);
-            q_opt->setCost(q_reached->getParent()->getCost() + computeCostToCome(q_reached->getParent(), q_opt));
+            q_opt = q_opt_temp;
             q_opt->addChild(q_reached);
-            tree->upgradeTree(q_opt, q_reached->getParent());
-            std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { q_reached->getParent()->getChildren() };
+            tree->upgradeTree(q_opt, q_parent);
+            std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { q_parent->getChildren() };
 
             for (size_t i = 0; i < children->size(); i++)
             {
@@ -302,11 +346,7 @@ std::shared_ptr<base::State> planning::rbt_star::RGBMTStar::optimize
             }
             q_reached->setParent(q_opt);
         }
-        else
-            q_opt = q_reached;
     }
-    else
-        q_opt = q_reached;
 
     std::shared_ptr<base::State> q_new { ss->getNewState(q->getCoord()) };
     q_new->setCost(q_opt->getCost() + computeCostToCome(q_opt, q_new));

@@ -1,5 +1,13 @@
 #include "Tree.h"
 
+base::Tree::Tree()
+{
+	tree_name = "";
+	tree_idx = 0;
+	states = std::make_shared<std::vector<std::shared_ptr<base::State>>>();
+	kd_tree = nullptr;
+}
+
 base::Tree::Tree(const std::string &tree_name_, size_t tree_idx_)
 {
 	tree_name = tree_name_;
@@ -80,12 +88,15 @@ void base::Tree::upgradeTree(const std::shared_ptr<base::State> q_new, const std
 {
 	size_t N { states->size() };
 	states->emplace_back(q_new);
-	kd_tree->addPoints(N, N); 	// Comment this line if you are not using Kd-Trees
 	q_new->setTreeIdx(getTreeIdx());
 	q_new->setIdx(N);
 	q_new->setParent(q_parent);
+	
 	if (q_parent != nullptr)
 		q_parent->addChild(q_new);
+
+	if (kd_tree != nullptr)
+		kd_tree->addPoints(N, N);
 }
 
 // 'q_new' - new state added to tree
