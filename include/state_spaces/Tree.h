@@ -25,7 +25,7 @@ namespace base
         std::shared_ptr<base::KdTree> kd_tree;
 
 	public:
-		Tree() {}
+		Tree();
 		Tree(const std::string &tree_name_, size_t tree_idx_);
 		Tree(const std::shared_ptr<std::vector<std::shared_ptr<base::State>>> states_);
 		~Tree();

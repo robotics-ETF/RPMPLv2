@@ -192,6 +192,10 @@ void generateRandomStartAndGoal(scenario::Scenario &scenario, float min_dist_sta
 	{
 		q_start = ss->getRandomState();
 		q_goal = ss->getRandomState();
+		// if (ss->computeDistance(q_start, true) <= 0 || ss->computeDistance(q_start, true) > DRGBTConfig::D_CRIT || 
+		// 	ss->computeDistance(q_goal, true) < DRGBTConfig::D_CRIT ||
+		// 	ss->robot->checkSelfCollision(q_start) || ss->robot->checkSelfCollision(q_goal))
+		// 	continue;
 		if (ss->computeDistance(q_start, true) < DRGBTConfig::D_CRIT || ss->computeDistance(q_goal, true) < DRGBTConfig::D_CRIT ||
 			ss->robot->checkSelfCollision(q_start) || ss->robot->checkSelfCollision(q_goal))
 			continue;

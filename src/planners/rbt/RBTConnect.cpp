@@ -87,6 +87,9 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RBT
 {
 	if (q->getDistance() < 0) 	// Just in case. Regularly, 'q' should have a distance!
 		ss->computeDistance(q);
+
+	if (q->getDistance() <= 0)
+		return { base::State::Status::Trapped, q };
 	
 	std::vector<float> rho_profile(ss->robot->getNumLinks(), 0);	// The path length in W-space for each robot's link
 	float rho { 0 }, rho_k { 0 }, rho_k_prev { 0 }; 				// The path length in W-space for (complete) robot

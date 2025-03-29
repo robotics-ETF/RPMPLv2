@@ -49,6 +49,11 @@ target_compile_features(test_drgbt PRIVATE cxx_std_17)
 target_link_libraries(test_drgbt PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(test_drgbt PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(test_drgbt_random_obstacles test_drgbt_random_obstacles.cpp)
+target_compile_features(test_drgbt_random_obstacles PRIVATE cxx_std_17)
+target_link_libraries(test_drgbt_random_obstacles PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_drgbt_random_obstacles PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 add_executable(test_rgbmtstar test_rgbmtstar.cpp)
 target_compile_features(test_rgbmtstar PRIVATE cxx_std_17)
 target_link_libraries(test_rgbmtstar PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
@@ -82,8 +87,10 @@ install(TARGETS
   test_rbtconnect
   test_rgbtconnect
   test_drgbt
+  test_drgbt_random_obstacles
   test_rgbmtstar
   test_rrtx
   test_rrtx_dynamic
   generate_random_scenarios
+  generate_dataset
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)

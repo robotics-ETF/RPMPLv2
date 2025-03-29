@@ -164,19 +164,77 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
     return true;
 }
 
+// ------------------------------------- Set the law for obstacles motion here ------------------------------------- //
+
+// Straight-line motion
 // void env::Environment::updateEnvironment(float delta_time)
 // {
 //     fcl::Vector3f pos {};
 //     for (size_t i = 0; i < objects.size(); i++)
 //     {
+//         if (objects[i]->getLabel() != "dynamic_obstacle")
+//             continue;
+
 //         pos = objects[i]->getPosition();
-//         pos(0) -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
+//         pos.x() -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
 //         objects[i]->setPosition(pos);
 //         std::cout << i << ". " << objects[i];
 //     }
 // }
 
-// Reflect obstacles in random directions
+// Circular motion 
+// Intented for "/data/xarm6/scenario1/scenario1.yaml"
+// void env::Environment::updateEnvironment(float delta_time)
+// {
+//     fcl::Vector3f pos {};
+//     float phi {};
+//     for (size_t i = 0; i < objects.size(); i++)
+//     {
+//         if (objects[i]->getLabel() != "dynamic_obstacle")
+//             continue;
+
+//         pos = objects[i]->getPosition();
+//         phi = std::atan2(pos.y(), pos.x());
+//         objects[i]->setVelocity(Eigen::Vector3f(-std::sin(phi), std::cos(phi), 0.0) * objects[i]->getMaxVel());
+//         pos += objects[i]->getVelocity() * delta_time;
+//         objects[i]->setPosition(pos);
+//         // std::cout << i << ". " << objects[i];
+//     }
+// }
+
+// Specific motion 
+// Intented for "/data/xarm6/scenario1/scenario2.yaml"
+// void env::Environment::updateEnvironment(float delta_time)
+// {
+//     fcl::Vector3f pos {};
+//     const float path_len_max { 1 };
+
+//     for (size_t i = 0; i < objects.size(); i++)
+//     {
+//         if (objects[i]->getLabel() != "dynamic_obstacle")
+//             continue;
+
+//         if (path_len > path_len_max)
+//         {
+//             sign *= -1;
+//             path_len = -path_len_max;
+//         }
+        
+//         pos = objects[i]->getPosition();
+//         if (pos.y() > 0)
+//             objects[i]->setVelocity(Eigen::Vector3f::UnitX() * sign * objects[i]->getMaxVel());     // Move along x-axis
+//         else
+//             objects[i]->setVelocity(Eigen::Vector3f::UnitY() * sign * objects[i]->getMaxVel());     // Move along y-axis
+
+//         path_len += objects[i]->getVelocity().norm() * delta_time;
+//         pos += objects[i]->getVelocity() * delta_time;
+//         objects[i]->setPosition(pos);
+//         // std::cout << i << ". " << objects[i];
+//     }
+// }
+
+// Reflect obstacles in random directions 
+// Intented for "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 // void env::Environment::updateEnvironment(float delta_time)
 // {
 //     float vel_intensity {};
@@ -222,6 +280,7 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
 //     // std::cout << "-------------------------------------------------" << std::endl;
 // }
 
+// Intented for "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 // Reflect obstacles according to the principle of light reflecting
 void env::Environment::updateEnvironment(float delta_time)
 {
