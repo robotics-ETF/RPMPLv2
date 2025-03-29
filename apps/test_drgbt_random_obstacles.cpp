@@ -37,7 +37,6 @@ int main(int argc, char **argv)
 	const size_t max_num_obs { node["random_obstacles"]["max_num"].as<size_t>() };
 	const float max_vel_obs { node["random_obstacles"]["max_vel"].as<float>() };
 	const float max_acc_obs { node["random_obstacles"]["max_acc"].as<float>() };
-	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
 	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();

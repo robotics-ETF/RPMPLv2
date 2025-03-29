@@ -64,11 +64,15 @@ target_compile_features(generate_random_scenarios PRIVATE cxx_std_17)
 target_link_libraries(generate_random_scenarios PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(generate_random_scenarios PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(generate_dataset generate_dataset.cpp)
+target_compile_features(generate_dataset PRIVATE cxx_std_17)
+target_link_libraries(generate_dataset PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(generate_dataset PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 add_executable(test_rrtx test_rrtx.cpp)
 target_compile_features(test_rrtx PRIVATE cxx_std_17)
 target_link_libraries(test_rrtx PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(test_rrtx PUBLIC ${PROJECT_SOURCE_DIR}/apps)
-
 
 add_executable(test_rrtx_dynamic test_rrtx_dynamic.cpp)
 target_compile_features(test_rrtx_dynamic PRIVATE cxx_std_17)
@@ -89,8 +93,8 @@ install(TARGETS
   test_drgbt
   test_drgbt_random_obstacles
   test_rgbmtstar
-  test_rrtx
-  test_rrtx_dynamic
   generate_random_scenarios
   generate_dataset
+  test_rrtx
+  test_rrtx_dynamic
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)

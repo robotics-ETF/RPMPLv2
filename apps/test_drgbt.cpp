@@ -25,7 +25,6 @@ int main(int argc, char **argv)
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 	const float max_vel_obs { node["testing"]["max_vel_obs"].as<float>() };
-	DRGBTConfig::MAX_NUM_VALIDITY_CHECKS = std::ceil((max_vel_obs * DRGBTConfig::MAX_ITER_TIME) / 0.01); // In order to obtain check when obstacle moves at most 1 [cm]
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
     if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
