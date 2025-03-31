@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 			output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
 			output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
 			output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
-			output_file << "Resolution for collision checking:                      " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
+			output_file << "Resolution for collision checking [m]:                  " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
 			output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
 			output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
 			output_file << "--------------------------------------------------------------------\n";

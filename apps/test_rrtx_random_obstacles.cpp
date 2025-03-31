@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 			output_file << "Process obstacles every N iterations:                   " << RRTxConfig::REPLANNING_THROTTLE << std::endl;
 			output_file << "Factor for rewire radius:                               " << RRTxConfig::REWIRE_FACTOR << std::endl;
 			output_file << "Probability of sampling start directly:                 " << RRTxConfig::START_BIAS << std::endl;
-			output_file << "Resolution for collision checking:                      " << RRTxConfig::RESOLUTION_COLL_CHECK << std::endl;
+			output_file << "Resolution for collision checking [m]:                  " << RRTxConfig::RESOLUTION_COLL_CHECK << std::endl;
 			output_file << "Trajectory interpolation:                               " << RRTxConfig::TRAJECTORY_INTERPOLATION << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;

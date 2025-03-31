@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		// "/data/xarm6/scenario1/scenario1.yaml"
-		"/data/xarm6/scenario2/scenario2.yaml"
+		"/data/xarm6/scenario1/scenario1.yaml"
+		// "/data/xarm6/scenario2/scenario2.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
 	output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
 	output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
-	output_file << "Resolution for collision checking:                      " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
+	output_file << "Resolution for collision checking [m]:                  " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
 	output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
 	output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 			output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 			output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 			output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-			// output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
+			output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();
