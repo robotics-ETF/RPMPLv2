@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		"/data/xarm6/scenario1/scenario1.yaml"
-		// "/data/xarm6/scenario2/scenario2.yaml"
+		// "/data/xarm6/scenario1/scenario1.yaml"
+		"/data/xarm6/scenario2/scenario2.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 
@@ -43,6 +43,7 @@ int main(int argc, char **argv)
 	output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
 	output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
 	output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
+	output_file << "Resolution for collision checking:                      " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
 	output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
 	output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
 	output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == planning::RealTimeScheduling::None ? 
 																					"None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
-	output_file << "Obstacles motion:                                       " << "random" << std::endl;
+	output_file << "Obstacles motion:                                       " << "predefined" << std::endl;
 	output_file << "Maximal velocity of each obstacle [m/s]:                " << max_vel_obs << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
 	output_file.close();

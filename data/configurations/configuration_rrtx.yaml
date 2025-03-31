@@ -4,7 +4,7 @@ MAX_PLANNING_TIME: 10                 # Maximal planning time in seconds
 EPS_STEP: 0.1                         # Step size for extending
 R_REWIRE: 1.0                         # Radius for rewiring
 R_COLLISION: 0.2                      # Radius to check for collisions
-R_NEAREST: 0.5                        # Radius for nearest neighbors
+R_NEAREST: 0.5                        # Initial radius for nearest neighbors
 MAX_NEIGHBORS: 30                     # Maximal number of neighbors to consider
 REPLANNING_THROTTLE: 1                # Process obstacles every N iterations
 REWIRE_FACTOR: 1.1                    # Factor for rewire radius

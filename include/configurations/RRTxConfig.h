@@ -19,7 +19,7 @@ public:
     static float EPS_STEP;                                              // Step size for extending
     static float R_REWIRE;                                              // Radius for rewiring
     static float R_COLLISION;                                           // Radius to check for collisions
-    static float R_NEAREST;                                             // Radius for nearest neighbors
+    static float R_NEAREST;                                             // Initial radius for nearest neighbors
     static size_t MAX_NEIGHBORS;                                        // Maximal number of neighbors to consider
     static size_t REPLANNING_THROTTLE;                                  // Process obstacles every N iterations
     static float REWIRE_FACTOR;                                         // Factor for rewire radius
