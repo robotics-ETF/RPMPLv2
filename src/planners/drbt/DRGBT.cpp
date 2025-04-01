@@ -450,14 +450,14 @@ void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::
     q->setStateReached(q_reached);
     q->setIsReached(status_ == base::State::Status::Reached ? true : false);
 
-    // TODO: If there is enough remaining time, compute real distance-to-obstacles 
-    float d_c_underest { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };
+    float d_c_temp { ss->computeDistance(q_reached, true) };
+    // float d_c_temp { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };
     if (q->getDistance() != -1)
         q->setDistancePrevious(q->getDistance());
     else
-        q->setDistancePrevious(d_c_underest);
+        q->setDistancePrevious(d_c_temp);
     
-    q->setDistance(d_c_underest);
+    q->setDistance(d_c_temp);
     
     // Check whether the goal is reached
     if (q->getIndex() != -1 && ss->isEqual(q_reached, q_goal))
