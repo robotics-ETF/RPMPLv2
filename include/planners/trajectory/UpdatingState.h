@@ -24,7 +24,7 @@ namespace planning::trajectory
         ~UpdatingState() {}
 
         void update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-            const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
+            std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
         inline void setSplines(const std::shared_ptr<planning::trajectory::Splines> &splines_) { splines = splines_; }
         inline void setGuaranteedSafeMotion(bool guaranteed_safe_motion_) { guaranteed_safe_motion = guaranteed_safe_motion_; }
         inline void setNonZeroFinalVel(bool non_zero_final_vel_) { non_zero_final_vel = non_zero_final_vel_; }
@@ -37,10 +37,10 @@ namespace planning::trajectory
 
     private:
         void update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-            const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
+            std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
         void update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-            const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
-        bool invokeChangeNextState();
+            std::shared_ptr<base::State> &q_next_reached, base::State::Status &status);
+        bool invokeChangeNextState(std::shared_ptr<base::State> &q_next_reached);
         float getElapsedTime();
 
         std::shared_ptr<base::StateSpace> ss;

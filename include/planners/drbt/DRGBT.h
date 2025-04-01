@@ -33,7 +33,7 @@ namespace planning::drbt
         bool solve() override;
         bool checkTerminatingCondition(base::State::Status status) override;
         void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
-        bool changeNextState();
+        bool changeNextState(std::shared_ptr<base::State> &q_next_reached);
 
     protected:
         void generateHorizon();

@@ -30,7 +30,7 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
 }
 
 void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     switch (traj_interpolation)
     {
@@ -53,7 +53,7 @@ void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q
 /// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
 /// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
 void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     q_previous = q_current;
     if (status == base::State::Status::Trapped)     // Current robot position will not be updated! 
@@ -107,7 +107,7 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
 /// acceleration and jerk are surely always satisfied.
 /// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
 void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    const std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
 {
     splines->spline_current = splines->spline_next;
     q_previous = q_current;
@@ -152,16 +152,18 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
 
         splines->setCurrentState(q_current);
         splines->setTargetState(q_next_reached);
-        // std::cout << "q_next: " << q_next << "\n";
-        if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached' already exists!
-            break;
+        // std::cout << "q_next_reached: " << q_next_reached << "\n";
 
         if (guaranteed_safe_motion)
             spline_computed = splines->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
         else
+        {
+            if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached' already exists!
+                break;
             spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
+        }
     }
-    while (!spline_computed && invokeChangeNextState());
+    while (!spline_computed && invokeChangeNextState(q_next_reached));
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -197,10 +199,10 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     remaining_time = t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
 }
 
-bool planning::trajectory::UpdatingState::invokeChangeNextState() 
+bool planning::trajectory::UpdatingState::invokeChangeNextState(std::shared_ptr<base::State> &q_next_reached) 
 {
     if (drgbt_instance != nullptr) 
-        return drgbt_instance->changeNextState();
+        return drgbt_instance->changeNextState(q_next_reached);
     
     return false;
 }
