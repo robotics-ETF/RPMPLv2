@@ -89,6 +89,7 @@ int main(int argc, char **argv)
 		
 		std::vector<float> alg_times {};
 		std::vector<float> iter_times {};
+		std::vector<float> num_iters {};
 		std::vector<float> path_lengths {};
 		size_t num_test { init_num_test };
 		size_t num_success_tests { init_num_success_test };
@@ -174,6 +175,7 @@ int main(int argc, char **argv)
 					path_lengths.emplace_back(path_length);
 					alg_times.emplace_back(planner->getPlannerInfo()->getPlanningTime());
 					iter_times.emplace_back(planner->getPlannerInfo()->getPlanningTime() / planner->getPlannerInfo()->getNumIterations());
+					num_iters.emplace_back(planner->getPlannerInfo()->getNumIterations());
 					num_success_tests++;
 				}
 
@@ -227,6 +229,7 @@ int main(int argc, char **argv)
 		LOG(INFO) << "Success rate:                     " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
 		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) * 1e3 << " +- " << getStd(iter_times) * 1e3 << " [ms]";
+		LOG(INFO) << "Average number of iterations:     " << getMean(num_iters) << " +- " << getStd(num_iters);
 		LOG(INFO) << "Average path length:              " << getMean(path_lengths) << " +- " << getStd(path_lengths) << " [rad]";
 		LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 	}
