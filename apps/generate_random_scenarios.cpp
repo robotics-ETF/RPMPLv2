@@ -8,12 +8,12 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
 		// "/data/planar_2dof/scenario1/scenario1.yaml"
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
-		// "/data/planar_2dof/scenario_real_time/scenario_real_time.yaml"
+		// "/data/planar_2dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		// "/data/xarm6/scenario1/scenario1.yaml"
 		// "/data/xarm6/scenario2/scenario2.yaml"
-		"/data/xarm6/scenario_real_time/scenario_real_time.yaml"
+		"/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 	};
 	std::string output_file_name { "random_scenarios.yaml" };
 
