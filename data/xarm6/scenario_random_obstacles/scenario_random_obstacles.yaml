@@ -6,7 +6,7 @@ environment:
       min_dist_tol: 0.05          # Minimal distance tolerance for a static obstacle to not be included into a dynamic scene
 
 random_obstacles:
-  init_num: 10		                  # Number of random obstacles to start with the testing
+  init_num: 0		                  # Number of random obstacles to start with the testing
   max_num: 50		                  # Maximal number of random obstacles to be added
   max_vel: 1.6 			              # Maximal velocity of each obstacle in [m/s]
   max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]

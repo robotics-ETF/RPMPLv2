@@ -44,7 +44,7 @@ namespace planning::trajectory
         float getAcceleration(float t, size_t idx);
 
         virtual Eigen::VectorXf getJerk(float t);
-        float getJerk(float t, size_t idx);
+        virtual float getJerk(float t, size_t idx);
 
         float getCoeff(size_t i, size_t j) const { return coeff(i, j); }
         float getTimeFinal() const { return time_final; }

@@ -1,4 +1,4 @@
-#include "DRGBT.h"
+#include "RRTx.h"
 #include "ConfigurationReader.h"
 #include "CommonFunctions.h"
 
@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		"/data/xarm6/scenario1/scenario1.yaml"
-		// "/data/xarm6/scenario2/scenario2.yaml"
+		// "/data/xarm6/scenario1/scenario1.yaml"
+		"/data/xarm6/scenario2/scenario2.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 
@@ -26,31 +26,23 @@ int main(int argc, char **argv)
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 	const float max_vel_obs { node["testing"]["max_vel_obs"].as<float>() };
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
-    if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
-        RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
-	}
 
 	std::ofstream output_file {};
 	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + ".log", std::ofstream::out);
 	output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
-	output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
-	output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
-	output_file << "Maximal algorithm time [s]:                             " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
-	output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
-	output_file << "Treshold for the replanning assessment:                 " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
-	output_file << "Critical distance in W-space [m]:                       " << DRGBTConfig::D_CRIT << std::endl;
-	output_file << "Maximal number of attempts when modifying states:       " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS << std::endl;
-	output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
-	output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
-	output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
-	output_file << "Resolution for collision checking [m]:                  " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
-	output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
-	output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
-	output_file << "--------------------------------------------------------------------\n";
-	output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
-	output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
-	output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == planning::RealTimeScheduling::None ? 
-																					"None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+	output_file << "Dynamic planner:                                        " << planning::PlannerType::RRTx << std::endl;
+	output_file << "Maximal algorithm time [s]:                             " << RRTxConfig::MAX_PLANNING_TIME << std::endl;
+	output_file	<< "Maximal iteration time [s]:                             " << RRTxConfig::MAX_ITER_TIME << std::endl;
+	output_file << "Step size for extending [rad]:                          " << RRTxConfig::EPS_STEP << std::endl;
+	output_file << "Radius for rewiring [rad]:                              " << RRTxConfig::R_REWIRE << std::endl;
+	output_file << "Radius to check for collisions [rad]:                   " << RRTxConfig::R_COLLISION << std::endl;
+	output_file << "Initial radius for nearest neighbors [rad]:             " << RRTxConfig::R_NEAREST << std::endl;
+	output_file << "Maximal number of neighbors to consider:                " << RRTxConfig::MAX_NEIGHBORS << std::endl;
+	output_file << "Process obstacles every N iterations:                   " << RRTxConfig::REPLANNING_THROTTLE << std::endl;
+	output_file << "Factor for rewire radius:                               " << RRTxConfig::REWIRE_FACTOR << std::endl;
+	output_file << "Probability of sampling start directly:                 " << RRTxConfig::START_BIAS << std::endl;
+	output_file << "Resolution for collision checking [m]:                  " << RRTxConfig::RESOLUTION_COLL_CHECK << std::endl;
+	output_file << "Trajectory interpolation:                               " << RRTxConfig::TRAJECTORY_INTERPOLATION << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
 	output_file << "Obstacles motion:                                       " << "predefined" << std::endl;
 	output_file << "Maximal velocity of each obstacle [m/s]:                " << max_vel_obs << std::endl;
@@ -91,16 +83,16 @@ int main(int argc, char **argv)
 			LOG(INFO) << "Start:             " << scenario.getStart();
 			LOG(INFO) << "Goal:              " << scenario.getGoal();
 			
-			planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
+			planner = std::make_unique<planning::rrtx::RRTx>(ss, scenario.getStart(), scenario.getGoal());
 			bool result { planner->solve() };
 			
 			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 			LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
+			// 		  	 + "_rrtx_test" + std::to_string(num_test) + ".log";
 			// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 						   + "_drgbt_test" + std::to_string(num_test) + ".log");
+			// 						   + "_rrtx_test" + std::to_string(num_test) + ".log");
 
 			float path_length { 0 };
 			if (result)
@@ -127,7 +119,6 @@ int main(int argc, char **argv)
 			output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 			output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 			output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-			output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();

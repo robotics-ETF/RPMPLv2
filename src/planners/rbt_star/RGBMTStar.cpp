@@ -138,7 +138,7 @@ bool planning::rbt_star::RGBMTStar::solve()
                     {
                         q_con_opt = q_new;
                         cost_opt = q_new->getCost();
-                        std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
+                        // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
                         // planner_info->setSuccessState(true);
                         // computePath(q_con_opt);
                         // outputPlannerData("/home/nermin/RPMPLv2/data/planar_2dof/scenario1_tests/plannerData" + 

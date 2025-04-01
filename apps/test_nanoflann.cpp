@@ -16,12 +16,12 @@
 
 // TODO: NOT working with smart pointer changes
 
-void generateRandomStates([[maybe_unused]] base::StateSpace* ss, [[maybe_unused]] std::vector<base::State*>& states, [[maybe_unused]] int N = 20)
+void generateRandomStates([[maybe_unused]] base::StateSpace* ss, [[maybe_unused]] std::vector<base::State*> &states, [[maybe_unused]] int N = 20)
 {
 	return;
 }
 
-void buildKDTree([[maybe_unused]] std::vector<base::State*>& states)
+void buildKDTree([[maybe_unused]] std::vector<base::State*> &states)
 {
 	return; 
 }

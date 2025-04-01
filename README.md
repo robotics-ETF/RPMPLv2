@@ -7,6 +7,7 @@ Available planners are:
 - Rapidly-exploring Generalized Bur Trees ([RGBT-Connect](https://ieeexplore.ieee.org/abstract/document/9196920))
 - Rapidly-exploring Generalized Bur Multi-Tree star ([RGBMT*](https://link.springer.com/article/10.1007/s10846-023-01893-4))
 - Dynamic Rapidly-exploring Generalized Bur Trees ([DRGBT](https://ieeexplore.ieee.org/abstract/document/9636730) & [Real-time DRGBT](https://arxiv.org/pdf/2501.00507))
+- Dynamic Rapidly-exploring Random Trees ([RRTx](http://ottelab.com/html_stuff/pdf_files/Otte.Frazzoli.IJRR15.pdf))
 
 The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
 
@@ -110,7 +111,7 @@ space: "RealVectorSpaceFCL"
 ```
 
 ## 3.3 Set scenario parameters for dynamic real-time planning
-In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_real_time/scenario_real_time.yaml```. You can set the following in the ```random_obstacles``` node:
+In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml```. You can set the following in the ```random_obstacles``` node:
 - ```init_num```: Number of random obstacles to start with the testing;
 - ```max_num```: Maximal number of random obstacles to be added;
 - ```max_vel```: Maximal velocity of each obstacle in [m/s];
@@ -146,7 +147,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to 'Spline'.
 
 
-Finally, in the file ```/apps/test_drgbt_random_obstacles.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_real_time/scenario_real_time_routine_times<number>.log``` will contain all logged execution times.
+Finally, in the file ```/apps/test_drgbt_random_obstacles.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_random_obstacles/scenario_random_obstacles_routine_times<number>.log``` will contain all logged execution times.
 
 ## 3.4 Test planners
 All test files are available within the folder ```/apps```. For example, open ```test_rgbmtstar.cpp```. You can set the file path of desired scenario via ```scenario_file_path```, and maximal number of tests in ```max_num_tests```. 

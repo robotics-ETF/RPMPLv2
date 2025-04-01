@@ -29,19 +29,25 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
 	planner_info->setNumIterations(0);
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
-    
-    all_robot_vel_same = true;
-    for (size_t i = 1; i < ss->num_dimensions; i++)
-    {
-        if (std::abs(ss->robot->getMaxVel(i) - ss->robot->getMaxVel(i-1)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-        {
-            all_robot_vel_same = false;
-            break;
-        }
-    }
 
+    updating_state = std::make_shared<planning::trajectory::UpdatingState>
+        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
+    updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
+    updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+    updating_state->setMeasureTime(false);
+    updating_state->setDRGBTinstance(this);
+
+    motion_validity = std::make_shared<planning::trajectory::MotionValidity>
+        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, &path, DRGBTConfig::MAX_ITER_TIME);
+
+    splines = nullptr;
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        splines = std::make_shared<planning::drbt::Splines>(ss, q_current, q_next->getStateReached(), all_robot_vel_same);
+    {
+        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
+        splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+        updating_state->setSplines(splines);
+        motion_validity->setSplines(splines);
+    }
 
 	// std::cout << "DRGBT planner initialized! \n";
 }
@@ -78,13 +84,6 @@ bool planning::drbt::DRGBT::solve()
         ss->computeDistance(q_current, true);     // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
-        if (q_current->getDistance() <= 0)
-        {
-            std::cout << "*************** Collision has been occurred!!! *************** \n";
-            planner_info->setSuccessState(false);
-            planner_info->setPlanningTime(planner_info->getIterationTimes().back());
-            return false;
-        }
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
@@ -95,18 +94,14 @@ bool planning::drbt::DRGBT::solve()
         computeNextState();             // ~ 1 [us]
         
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
-        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
-        {
-        case planning::TrajectoryInterpolation::Spline:
-            updateCurrentState(false);  // ~ 1 [ms]
-            break;
-        
-        case planning::TrajectoryInterpolation::None:
-            updateCurrentState();       // ~ 1 [us]
-            break;
-        }
+        visited_states = { q_next };
+        updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
+                                           q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
+        updating_state->setTimeIterStart(time_iter_start);
+        updating_state->setNextState(q_next->getState());
+        std::shared_ptr<base::State> q_next_reached { q_next->getStateReached() };
+        updating_state->update(q_previous, q_current, q_next_reached, status);   // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
-
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
         // ------------------------------------------------------------------------------- //
@@ -122,14 +117,14 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        // float time_iter_remain { DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms) };
+        // float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
         // if (time_iter_remain < 0)
         //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if (!checkMotionValidity())
+        if (!motion_validity->check(q_previous, q_current))
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);
@@ -456,14 +451,14 @@ void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::
     q->setStateReached(q_reached);
     q->setIsReached(status_ == base::State::Status::Reached ? true : false);
 
-    // TODO: If there is enough remaining time, compute real distance-to-obstacles 
-    float d_c_underest { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };
+    float d_c_temp { ss->computeDistance(q_reached, true) };
+    // float d_c_temp { ss->computeDistanceUnderestimation(q_reached, q_current->getNearestPoints()) };
     if (q->getDistance() != -1)
         q->setDistancePrevious(q->getDistance());
     else
-        q->setDistancePrevious(d_c_underest);
+        q->setDistancePrevious(d_c_temp);
     
-    q->setDistance(d_c_underest);
+    q->setDistance(d_c_temp);
     
     // Check whether the goal is reached
     if (q->getIndex() != -1 && ss->isEqual(q_reached, q_goal))
@@ -579,6 +574,49 @@ void planning::drbt::DRGBT::computeNextState()
     // std::cout << "Horizon consists of " << horizon.size() << " states: \n";
     // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
+}
+
+/// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
+/// @param q_next_reached New reached state which is updated.
+/// @return Success of a change.
+bool planning::drbt::DRGBT::changeNextState(std::shared_ptr<base::State> &q_next_reached)
+{
+    // std::cout << "Change of q_next is required! \n";
+    std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
+    float weight_max { 0 };
+    bool visited { false };
+
+    for (std::shared_ptr<planning::drbt::HorizonState> q : horizon)
+    {
+        if (q->getWeight() < DRGBTConfig::TRESHOLD_WEIGHT)
+            continue;
+
+        visited = false;
+        for (std::shared_ptr<planning::drbt::HorizonState> q_visited : visited_states)
+        {
+            if (q == q_visited)
+            {
+                visited = true;
+                break;
+            }
+        }
+
+        if (!visited && q->getWeight() > weight_max)
+        {
+            q_new = q;
+            weight_max = q->getWeight();
+        }
+    }
+
+    if (q_new != nullptr)
+    {
+        visited_states.emplace_back(q_new);
+        q_next = q_new;
+        q_next_reached = q_next->getStateReached();
+        return true;
+    }
+
+    return false;
 }
 
 // Return index in the horizon of state 'q'. If 'q' does not belong to the horizon, -1 is returned.
