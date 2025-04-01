@@ -99,7 +99,8 @@ bool planning::drbt::DRGBT::solve()
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
         updating_state->setNextState(q_next->getState());
-        updating_state->update(q_previous, q_current, q_next->getStateReached(), status);   // ~ 1 [ms]
+        std::shared_ptr<base::State> q_next_reached { q_next->getStateReached() };
+        updating_state->update(q_previous, q_current, q_next_reached, status);   // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
