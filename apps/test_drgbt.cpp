@@ -4,7 +4,6 @@
 
 int main(int argc, char **argv)
 {
-	// *** NOTE *** Please check which obstacles motion are uncommented within the file "Environment.cpp"
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
@@ -31,7 +30,7 @@ int main(int argc, char **argv)
 	}
 
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + ".log", std::ofstream::out);
+	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test.log", std::ofstream::out);
 	output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 	output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
 	output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
@@ -50,7 +49,7 @@ int main(int argc, char **argv)
 	output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
 	output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
 	output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == planning::RealTimeScheduling::None ? 
-																					"None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+																				"None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
 	output_file << "--------------------------------------------------------------------\n";
 	output_file << "Obstacles motion:                                       " << "predefined" << std::endl;
 	output_file << "Maximal velocity of each obstacle [m/s]:                " << max_vel_obs << std::endl;
@@ -98,9 +97,9 @@ int main(int argc, char **argv)
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 			LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
+			// 		  	 + "_DRGBT_data/test" + std::to_string(num_test) + ".log";
 			// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 						   + "_drgbt_test" + std::to_string(num_test) + ".log");
+			// 						   + "_DRGBT_data/test" + std::to_string(num_test) + ".log");
 
 			float path_length { 0 };
 			if (result)
@@ -119,7 +118,7 @@ int main(int argc, char **argv)
 				num_success_tests++;
 			}
 
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + ".log", std::ofstream::app);
+			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test.log", std::ofstream::app);
 			output_file << "Test number: " << num_test << std::endl;
 			output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;

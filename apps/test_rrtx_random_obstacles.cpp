@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 		std::ofstream output_file {};
 		if (init_num_test == 1)
 		{
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
+			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_RRTx_data/test" +
 							 std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::RRTx << std::endl;
@@ -138,9 +138,9 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 		  	 + "_rrtx_test" + std::to_string(num_test) + ".log";
+				// 		  	 + "_RRTx_data/test" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 						   + "_rrtx_test" + std::to_string(num_test) + ".log");
+				// 						   + "_RRTx_data/test" + std::to_string(num_test) + ".log");
 
 				float path_length { 0 };
 				if (result)
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 					num_success_tests++;
 				}
 
-				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
+				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_RRTx_data/test" +
 								 std::to_string(init_num_obs) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 

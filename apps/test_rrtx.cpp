@@ -4,7 +4,6 @@
 
 int main(int argc, char **argv)
 {
-	// *** NOTE *** Please check which obstacles motion are uncommented within the file "Environment.cpp"
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
@@ -12,8 +11,8 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		// "/data/xarm6/scenario1/scenario1.yaml"
-		"/data/xarm6/scenario2/scenario2.yaml"
+		"/data/xarm6/scenario1/scenario1.yaml"
+		// "/data/xarm6/scenario2/scenario2.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 
@@ -28,7 +27,7 @@ int main(int argc, char **argv)
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
 
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + ".log", std::ofstream::out);
+	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_RRTx_data/test.log", std::ofstream::out);
 	output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 	output_file << "Dynamic planner:                                        " << planning::PlannerType::RRTx << std::endl;
 	output_file << "Maximal algorithm time [s]:                             " << RRTxConfig::MAX_PLANNING_TIME << std::endl;
@@ -90,9 +89,9 @@ int main(int argc, char **argv)
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 			LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 		  	 + "_rrtx_test" + std::to_string(num_test) + ".log";
+			// 		  	 + "_RRTx_data/test" + std::to_string(num_test) + ".log";
 			// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 						   + "_rrtx_test" + std::to_string(num_test) + ".log");
+			// 						   + "_RRTx_data/test" + std::to_string(num_test) + ".log");
 
 			float path_length { 0 };
 			if (result)
@@ -111,7 +110,7 @@ int main(int argc, char **argv)
 				num_success_tests++;
 			}
 
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + ".log", std::ofstream::app);
+			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_RRTx_data/test.log", std::ofstream::app);
 			output_file << "Test number: " << num_test << std::endl;
 			output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;

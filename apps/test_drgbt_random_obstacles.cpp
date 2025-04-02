@@ -4,7 +4,6 @@
 
 int main(int argc, char **argv)
 {
-	// *** NOTE *** Please check which obstacles motion are uncommented within the file "Environment.cpp"
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
@@ -57,7 +56,7 @@ int main(int argc, char **argv)
 		std::ofstream output_file {};
 		if (init_num_test == 1)
 		{
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
+			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test" +
 							 std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
@@ -158,9 +157,9 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
+				// 		  	 + "_DRGBT_data/test" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 						   + "_drgbt_test" + std::to_string(num_test) + ".log");
+				// 						   + "_DRGBT_data/test" + std::to_string(num_test) + ".log");
 
 				float path_length { 0 };
 				if (result)
@@ -179,7 +178,7 @@ int main(int argc, char **argv)
 					num_success_tests++;
 				}
 
-				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
+				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test" +
 								 std::to_string(init_num_obs) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 

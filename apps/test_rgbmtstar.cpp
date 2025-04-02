@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 	std::vector<float> initial_num_states {};
 	std::vector<float> final_num_states {};
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_rgbmtstar.log", std::ofstream::out);
+	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_RGBMTstar_data/test.log", std::ofstream::out);
 	
 	size_t num_test { 0 };
 	size_t num_success { 0 };
@@ -106,9 +106,9 @@ int main(int argc, char **argv)
 			}
 
 			LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-						 + "_rgbmtstar_test" + std::to_string(num_test) + ".log";
+						 + "_RGBMTStar_data/test" + std::to_string(num_test) + ".log";
 			planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-									   + "_rgbmtstar_test" + std::to_string(num_test) + ".log");
+									   + "_RGBMTStar_data/test" + std::to_string(num_test) + ".log");
 
 			// output_file << "Cost convergence: \n" 
             //             << "Cost [rad]\t\tNum. states\t\tTime [s]" << std::endl;

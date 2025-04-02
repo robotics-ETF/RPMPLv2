@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 	size_t num_nodes2 { patern_tree->getNumNodes(num_layers-1) };
 
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_dataset.csv", std::ofstream::app);
+	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_datasets/dataset.csv", std::ofstream::app);
 	
 	if (write_header)
 	{
