@@ -39,6 +39,6 @@ robot:
   max_jerk: [500, 500, 500, 500, 500, 500]                    # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
-  max_num: 1000                                               # Maximal number of tests that should be carried out
-  max_vel_obs: 0.3                                            # Maximal velocity for each obstacle from "environment"
-  
+  max_num: 1000             # Maximal number of tests that should be carried out
+  max_vel_obs: 0.3          # Maximal velocity for each obstacle from "environment"
+  motion_type: "circular"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.
