@@ -26,6 +26,8 @@ int main(int argc, char **argv)
 	if (clp != 0) return clp;
 
 	const std::string project_path { getProjectPath() };
+	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/RRTConnect_data" };
+	std::filesystem::create_directory(directory_path);
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 
@@ -86,10 +88,8 @@ int main(int argc, char **argv)
 				// 	std::cout << i << ": " << path.at(i)->getCoord().transpose() << std::endl;
 			}
 
-			LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-						 + "_RRTConnect_data/test" + std::to_string(num_test) + ".log";
-			planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-									   + "_RRTConnect_data/test" + std::to_string(num_test) + ".log");
+			LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(num_test) + ".log";
+			planner->outputPlannerData(directory_path + "/test" + std::to_string(num_test) + ".log");
 			LOG(INFO) << "\n--------------------------------------------------------------------\n\n";
 		}
 		catch (std::exception &e)

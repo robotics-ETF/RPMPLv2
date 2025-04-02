@@ -21,6 +21,8 @@ int main(int argc, char **argv)
 	if (clp != 0) return clp;
 
 	const std::string project_path { getProjectPath() };
+	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/DRGBT_data" };
+	std::filesystem::create_directory(directory_path);
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 	const float max_vel_obs { node["testing"]["max_vel_obs"].as<float>() };
@@ -30,7 +32,7 @@ int main(int argc, char **argv)
 	}
 
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test.log", std::ofstream::out);
+	output_file.open(directory_path + "/results.log", std::ofstream::out);
 	output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 	output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
 	output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
@@ -96,10 +98,8 @@ int main(int argc, char **argv)
 			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 			LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-			// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 		  	 + "_DRGBT_data/test" + std::to_string(num_test) + ".log";
-			// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-			// 						   + "_DRGBT_data/test" + std::to_string(num_test) + ".log");
+			// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(num_test) + ".log";
+			// planner->outputPlannerData(directory_path + "/test" + std::to_string(num_test) + ".log");
 
 			float path_length { 0 };
 			if (result)
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 				num_success_tests++;
 			}
 
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + "_DRGBT_data/test.log", std::ofstream::app);
+			output_file.open(directory_path + "/results.log", std::ofstream::app);
 			output_file << "Test number: " << num_test << std::endl;
 			output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 						<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;

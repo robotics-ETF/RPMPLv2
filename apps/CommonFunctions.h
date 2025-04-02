@@ -3,6 +3,7 @@
 #include <memory>
 #include <ostream>
 #include <numeric>
+#include <filesystem>
 #include <glog/logging.h>
 
 #include "Scenario.h"
