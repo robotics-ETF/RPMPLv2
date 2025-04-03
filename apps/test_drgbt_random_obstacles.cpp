@@ -4,13 +4,12 @@
 
 int main(int argc, char **argv)
 {
-	// *** NOTE *** Please check which obstacles motion are uncommented within the file "Environment.cpp"
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
 		"/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 	};
-	std::string random_scenarios_path { "/data/xarm6/scenario_random_obstacles/random_scenarios.yaml" };
+	const std::string random_scenarios_path { "/data/xarm6/scenario_random_obstacles/random_scenarios.yaml" };
 
 	// std::vector<std::string> routines		// Routines of which the time executions are stored
 	// { 	
@@ -29,6 +28,8 @@ int main(int argc, char **argv)
 	if (clp != 0) return clp;
 
 	const std::string project_path { getProjectPath() };
+	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/DRGBT_data" };
+	std::filesystem::create_directory(directory_path);
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
     YAML::Node node2 { YAML::LoadFile(project_path + random_scenarios_path) };
@@ -57,8 +58,7 @@ int main(int argc, char **argv)
 		std::ofstream output_file {};
 		if (init_num_test == 1)
 		{
-			output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-							 std::to_string(init_num_obs) + ".log", std::ofstream::out);
+			output_file.open(directory_path + "/results" + std::to_string(init_num_obs) + ".log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
@@ -157,10 +157,8 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
-				// LOG(INFO) << "Planner data is saved at: " << project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 		  	 + "_drgbt_test" + std::to_string(num_test) + ".log";
-				// planner->outputPlannerData(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) 
-				// 						   + "_drgbt_test" + std::to_string(num_test) + ".log");
+				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
+				// planner->outputPlannerData(directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log");
 
 				float path_length { 0 };
 				if (result)
@@ -179,8 +177,7 @@ int main(int argc, char **argv)
 					num_success_tests++;
 				}
 
-				output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.size()-5) + 
-								 std::to_string(init_num_obs) + ".log", std::ofstream::app);
+				output_file.open(directory_path + "/results" + std::to_string(init_num_obs) + ".log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;

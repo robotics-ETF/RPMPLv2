@@ -76,6 +76,25 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
         }
         else
             throw std::domain_error("Workspace center point is not defined! ");
+
+        sign = Eigen::VectorXi::Ones(node["environment"].size());
+        path_len = Eigen::VectorXf::Zero(node["environment"].size());
+
+        if (node["testing"]["motion_type"].as<std::string>() == "straight")
+            motion_type = MotionType::straight;
+        else if (node["testing"]["motion_type"].as<std::string>() == "circular")
+            motion_type = MotionType::circular;
+        else if (node["testing"]["motion_type"].as<std::string>() == "two_tunnels")
+            motion_type = MotionType::two_tunnels;
+        else if (node["testing"]["motion_type"].as<std::string>() == "random_directions")
+            motion_type = MotionType::random_directions;
+        else if (node["testing"]["motion_type"].as<std::string>() == "light_directions")
+            motion_type = MotionType::light_directions;
+        else
+        {
+            motion_type = MotionType::light_directions;
+            throw std::domain_error("Motion type is not specified! Using 'light_directions'.");
+        }
     }
     catch (std::exception &e)
     {
@@ -164,125 +183,151 @@ bool env::Environment::isValid(const Eigen::Vector3f &pos, float vel)
     return true;
 }
 
-// ------------------------------------- Set the law for obstacles motion here ------------------------------------- //
+// ------------------------------------- Add the law for obstacles motion here ------------------------------------- //
 
-// Straight-line motion
-// void env::Environment::updateEnvironment(float delta_time)
-// {
-//     fcl::Vector3f pos {};
-//     for (size_t i = 0; i < objects.size(); i++)
-//     {
-//         if (objects[i]->getLabel() != "dynamic_obstacle")
-//             continue;
+void env::Environment::updateEnvironment(float delta_time)
+{
+    switch (motion_type)
+    {
+    case MotionType::straight:
+        moveStraight(delta_time);
+        break;
 
-//         pos = objects[i]->getPosition();
-//         pos.x() -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
-//         objects[i]->setPosition(pos);
-//         std::cout << i << ". " << objects[i];
-//     }
-// }
+    case MotionType::circular:
+        moveCircular(delta_time);
+        break;
+    
+    case MotionType::two_tunnels:
+        moveTwoTunnels(delta_time);
+        break;
 
-// Circular motion 
+    case MotionType::random_directions:
+        moveRandomDirections(delta_time);
+        break;
+
+    case MotionType::light_directions:
+        moveLightDirections(delta_time);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void env::Environment::moveStraight(float delta_time)
+{
+    fcl::Vector3f pos {};
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        if (objects[i]->getLabel() != "dynamic_obstacle")
+            continue;
+
+        pos = objects[i]->getPosition();
+        pos.x() -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
+        objects[i]->setPosition(pos);
+        // std::cout << i << ". " << objects[i];
+    }
+}
+
 // Intented for "/data/xarm6/scenario1/scenario1.yaml"
-// void env::Environment::updateEnvironment(float delta_time)
-// {
-//     fcl::Vector3f pos {};
-//     float phi {};
-//     for (size_t i = 0; i < objects.size(); i++)
-//     {
-//         if (objects[i]->getLabel() != "dynamic_obstacle")
-//             continue;
+void env::Environment::moveCircular(float delta_time)
+{
+    fcl::Vector3f pos {};
+    float phi {};
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        if (objects[i]->getLabel() != "dynamic_obstacle")
+            continue;
 
-//         pos = objects[i]->getPosition();
-//         phi = std::atan2(pos.y(), pos.x());
-//         objects[i]->setVelocity(Eigen::Vector3f(-std::sin(phi), std::cos(phi), 0.0) * objects[i]->getMaxVel());
-//         pos += objects[i]->getVelocity() * delta_time;
-//         objects[i]->setPosition(pos);
-//         // std::cout << i << ". " << objects[i];
-//     }
-// }
+        pos = objects[i]->getPosition();
+        phi = std::atan2(pos.y(), pos.x());
+        objects[i]->setVelocity(Eigen::Vector3f(-std::sin(phi), std::cos(phi), 0.0) * objects[i]->getMaxVel());
+        pos += objects[i]->getVelocity() * delta_time;
+        objects[i]->setPosition(pos);
+        // std::cout << i << ". " << objects[i];
+    }
+}
 
-// Specific motion 
 // Intented for "/data/xarm6/scenario1/scenario2.yaml"
-// void env::Environment::updateEnvironment(float delta_time)
-// {
-//     fcl::Vector3f pos {};
-//     const float path_len_max { 1 };
+void env::Environment::moveTwoTunnels(float delta_time)
+{
+    fcl::Vector3f pos {};
+    const float path_len_max { 0.2 };
 
-//     for (size_t i = 0; i < objects.size(); i++)
-//     {
-//         if (objects[i]->getLabel() != "dynamic_obstacle")
-//             continue;
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        if (objects[i]->getLabel() != "dynamic_obstacle")
+            continue;
 
-//         if (path_len > path_len_max)
-//         {
-//             sign *= -1;
-//             path_len = -path_len_max;
-//         }
+        if (path_len(i) > path_len_max)
+        {
+            sign(i) *= -1;
+            path_len(i) = -path_len_max;
+        }
         
-//         pos = objects[i]->getPosition();
-//         if (pos.y() > 0)
-//             objects[i]->setVelocity(Eigen::Vector3f::UnitX() * sign * objects[i]->getMaxVel());     // Move along x-axis
-//         else
-//             objects[i]->setVelocity(Eigen::Vector3f::UnitY() * sign * objects[i]->getMaxVel());     // Move along y-axis
+        pos = objects[i]->getPosition();
+        if (pos.y() > 0)
+            objects[i]->setVelocity(Eigen::Vector3f::UnitX() * sign(i) * objects[i]->getMaxVel());     // Move along x-axis
+        else
+            objects[i]->setVelocity(Eigen::Vector3f::UnitY() * sign(i) * objects[i]->getMaxVel());     // Move along y-axis
 
-//         path_len += objects[i]->getVelocity().norm() * delta_time;
-//         pos += objects[i]->getVelocity() * delta_time;
-//         objects[i]->setPosition(pos);
-//         // std::cout << i << ". " << objects[i];
-//     }
-// }
+        path_len(i) += objects[i]->getVelocity().norm() * delta_time;
+        pos += objects[i]->getVelocity() * delta_time;
+        objects[i]->setPosition(pos);
+        // std::cout << i << ". " << objects[i];
+    }
+}
 
 // Reflect obstacles in random directions 
 // Intented for "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
-// void env::Environment::updateEnvironment(float delta_time)
-// {
-//     float vel_intensity {};
-//     fcl::Vector3f pos {}, vel {};
+void env::Environment::moveRandomDirections(float delta_time)
+{
+    float vel_intensity {};
+    fcl::Vector3f pos {}, vel {};
 
-//     for (size_t i = 0; i < objects.size(); i++)
-//     {
-//         // std::cout << objects[i];
-//         if (objects[i]->getLabel() != "dynamic_obstacle")
-//             continue;
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        // std::cout << objects[i];
+        if (objects[i]->getLabel() != "dynamic_obstacle")
+            continue;
 
-//         vel = objects[i]->getVelocity() + objects[i]->getAcceleration() * delta_time;
-//         pos = objects[i]->getPosition() + vel * delta_time;
-//         vel_intensity = vel.norm();
-//         // std::cout << i << ". position: " << pos.transpose() << "\n";
-//         // std::cout << i << ". vel_intensity: " << vel_intensity << "\n";
+        vel = objects[i]->getVelocity() + objects[i]->getAcceleration() * delta_time;
+        pos = objects[i]->getPosition() + vel * delta_time;
+        vel_intensity = vel.norm();
+        // std::cout << i << ". position: " << pos.transpose() << "\n";
+        // std::cout << i << ". vel_intensity: " << vel_intensity << "\n";
 
-//         if (vel_intensity > objects[i]->getMaxVel())
-//         {
-//             // std::cout << i << ". Invalid object velocity. Computing new acceleration.\n";
-//             fcl::Vector3f acc = fcl::Vector3f::Random(3);
-//             acc.normalize();
-//             objects[i]->setAcceleration(objects[i]->getAcceleration().norm() * acc);
-//             i--;
-//         }
-//         else if (!isValid(pos, vel_intensity))
-//         {
-//             // std::cout << i << ". position: " << pos.transpose() << "\n";
-//             // std::cout << i << ". Invalid object position. Computing new velocity.\n";
-//             vel = fcl::Vector3f::Random(3);
-//             vel.normalize();
-//             objects[i]->setVelocity(vel_intensity * vel);
-//             i--;
-//         }
-//         else
-//         {
-//             objects[i]->setVelocity(vel);
-//             objects[i]->setPosition(pos);
-//             // std::cout << i << ". position successfully computed: " << pos.transpose() << "\n";
-//             // std::cout << i << ". " << objects[i];
-//         }
-//     }
-//     // std::cout << "-------------------------------------------------" << std::endl;
-// }
+        if (vel_intensity > objects[i]->getMaxVel())
+        {
+            // std::cout << i << ". Invalid object velocity. Computing new acceleration.\n";
+            fcl::Vector3f acc = fcl::Vector3f::Random(3);
+            acc.normalize();
+            objects[i]->setAcceleration(objects[i]->getAcceleration().norm() * acc);
+            i--;
+        }
+        else if (!isValid(pos, vel_intensity))
+        {
+            // std::cout << i << ". position: " << pos.transpose() << "\n";
+            // std::cout << i << ". Invalid object position. Computing new velocity.\n";
+            vel = fcl::Vector3f::Random(3);
+            vel.normalize();
+            objects[i]->setVelocity(vel_intensity * vel);
+            i--;
+        }
+        else
+        {
+            objects[i]->setVelocity(vel);
+            objects[i]->setPosition(pos);
+            // std::cout << i << ". position successfully computed: " << pos.transpose() << "\n";
+            // std::cout << i << ". " << objects[i];
+        }
+    }
+    // std::cout << "-------------------------------------------------" << std::endl;
+}
 
-// Intented for "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 // Reflect obstacles according to the principle of light reflecting
-void env::Environment::updateEnvironment(float delta_time)
+// Intented for "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
+void env::Environment::moveLightDirections(float delta_time)
 {
     float tol_radius {}, t_param {};
     fcl::Vector3f pos_next {}, vec_normal {};

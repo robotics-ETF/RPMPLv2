@@ -346,11 +346,11 @@ float planning::trajectory::Splines::computeDistanceUnderestimation(const std::s
 	return d_c;
 }
 
+// This function is just for debugging. You can set a desired path for the file to be saved.
 void planning::trajectory::Splines::recordTrajectory(bool spline_computed)
 {
-    // This function is just for debugging. You can set a desired path for the file to be saved.
     std::ofstream output_file {};
-    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/visualize_trajectory.log", 
+    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/temp/visualize_trajectory.log", 
         std::ofstream::app);
     
     output_file << "q_current - q_target \n";

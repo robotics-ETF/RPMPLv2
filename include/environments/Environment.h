@@ -46,14 +46,30 @@ namespace env
 		void updateEnvironment(float delta_time);
 
 	private:
+        void moveStraight(float delta_time);
+        void moveCircular(float delta_time);
+        void moveTwoTunnels(float delta_time);
+        void moveRandomDirections(float delta_time);
+        void moveLightDirections(float delta_time);
+
 		std::vector<std::shared_ptr<env::Object>> objects;		// All objects/parts of the environment
         fcl::Vector3f WS_center;								// Workspace center point in [m]
         float WS_radius; 										// Workspace radius in [m]
 		float base_radius;
 		float robot_max_vel;
 		size_t ground_included;
-		double path_len { 0 };
-    	int sign { 1 };
+		Eigen::VectorXf path_len;
+        Eigen::VectorXi sign;
+
+        enum class MotionType 
+		{
+			straight,
+			circular, 
+			two_tunnels, 
+			random_directions, 
+			light_directions 
+		}
+		motion_type;
 	};
 }
 

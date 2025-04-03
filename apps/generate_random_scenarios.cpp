@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario2/scenario2.yaml"
 		"/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
 	};
-	std::string output_file_name { "random_scenarios.yaml" };
+	const std::string output_file_name { "random_scenarios.yaml" };
 
 	// -------------------------------------------------------------------------------------- //
 
@@ -24,6 +24,8 @@ int main(int argc, char **argv)
 	if (clp != 0) return clp;
 
 	const std::string project_path { getProjectPath() };
+	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) };
+	std::filesystem::create_directory(directory_path);
 	ConfigurationReader::initConfiguration(project_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
 
@@ -40,8 +42,7 @@ int main(int argc, char **argv)
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
 
 	std::ofstream output_file {};
-	output_file.open(project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + 
-				"/" + output_file_name, std::ofstream::out);
+	output_file.open(directory_path + "/" + output_file_name, std::ofstream::out);
 	
 	while (init_num_obs <= max_num_obs)
 	{
@@ -93,8 +94,7 @@ int main(int argc, char **argv)
 		init_num_obs += (init_num_obs > 0) ? std::pow(10, std::floor(std::log10(init_num_obs))) : 1;
 	}
 	output_file.close();
-	LOG(INFO) << "Random scenarios are saved to the file: " 
-			  << project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/" + output_file_name;
+	LOG(INFO) << "Random scenarios are saved to the file: " << directory_path + "/" + output_file_name;
 
 	google::ShutDownCommandLineFlags();
 	return 0;

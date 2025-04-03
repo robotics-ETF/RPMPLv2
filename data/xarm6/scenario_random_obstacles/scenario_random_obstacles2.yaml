@@ -64,7 +64,8 @@ robot:
   max_jerk: [500, 500, 500, 500, 500, 500]                    # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
-  init_num: 1                     # Number of testing to start with
-  init_num_success: 0             # Initial number of already achieved successful tests
-  max_num: 1000                   # Maximal number of tests that should be carried out
-  reach_successful_tests: false	  # If true, run totally 'max_num' successful tests 
+  init_num: 1                       # Number of testing to start with
+  init_num_success: 0               # Initial number of already achieved successful tests
+  max_num: 1000                     # Maximal number of tests that should be carried out
+  reach_successful_tests: false	    # If true, run totally 'max_num' successful tests 
+  motion_type: "straight"           # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions"
