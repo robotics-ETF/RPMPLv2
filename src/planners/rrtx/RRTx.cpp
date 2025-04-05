@@ -173,7 +173,7 @@ bool planning::rrtx::RRTx::solve()
             }
         }
 
-        // Updating current state
+        // Procedure of updating current state
         q_next = start_state->getParent();
         // std::cout << "q_current: " << q_current << "\n";
         // std::cout << "q_next:    " << q_next << "\n";
@@ -181,9 +181,11 @@ bool planning::rrtx::RRTx::solve()
         status = base::State::Status::None;
         std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
         updating_state->setTimeIterStart(time_iter_start);
+        updating_state->setNextState(q_next);
         updating_state->update(q_previous, q_current_new, q_next, status);
 
-        if (status == base::State::Status::Advanced)
+        if (status == base::State::Status::Advanced ||
+            (status == base::State::Status::Reached && !ss->isEqual(q_current_new, q_next)))
         {
             // Update cost
             q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
