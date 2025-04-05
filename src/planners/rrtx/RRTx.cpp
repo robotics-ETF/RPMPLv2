@@ -52,6 +52,12 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
         motion_validity->setSplines(splines);
     }
 
+    RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;
+
+    eta = std::sqrt(ss->num_dimensions);
+    mi = std::pow(2 * M_PI, ss->num_dimensions);
+    zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
+    gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
 }
 
 planning::rrtx::RRTx::~RRTx()
@@ -601,10 +607,6 @@ float planning::rrtx::RRTx::generateRandomNumber(float min, float max)
 
 float planning::rrtx::RRTx::shrinkingBallRadius(size_t num_states) 
 {
-    float eta = std::sqrt(ss->num_dimensions);
-    float mi = std::pow(2 * M_PI, ss->num_dimensions);
-    float zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
-    float gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
     return std::min(gamma_rrt * float(std::pow(std::log(num_states) / num_states, 1.0f / ss->num_dimensions)), eta);
 }
 
@@ -626,8 +628,6 @@ void planning::rrtx::RRTx::outputPlannerData(const std::string &filename, bool o
         output_file << "\t Number of iterations:  " << planner_info->getNumIterations() << std::endl;
         output_file << "\t Number of states:      " << planner_info->getNumStates() << std::endl;
         output_file << "\t Planning time [s]:     " << planner_info->getPlanningTime() << std::endl;
-        output_file << "\t Rewire radius:         " << r_rewire << std::endl;
-        output_file << "\t Collision radius:      " << RRTxConfig::R_COLLISION << std::endl;
         
         if (output_states_and_paths)
         {

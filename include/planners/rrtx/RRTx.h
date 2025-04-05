@@ -73,6 +73,9 @@ namespace planning::rrtx
 
         // Radius for rewiring
         float r_rewire;
+
+        // Parameters for computing radius for rewiring
+        float eta, mi, zeta, gamma_rrt;
         
         // Sets and queues for dynamic replanning
         std::unordered_set<std::shared_ptr<base::State>> orphan_set;

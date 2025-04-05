@@ -223,16 +223,6 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "RRTxConfig::R_REWIRE is not defined! Using default value of " << RRTxConfig::R_REWIRE;
 
-    if (RRTxConfigRoot["R_COLLISION"].IsDefined())
-        RRTxConfig::R_COLLISION = RRTxConfigRoot["R_COLLISION"].as<float>();
-    else
-        LOG(INFO) << "RRTxConfig::R_COLLISION is not defined! Using default value of " << RRTxConfig::R_COLLISION;
-
-    if (RRTxConfigRoot["R_NEAREST"].IsDefined())
-        RRTxConfig::R_NEAREST = RRTxConfigRoot["R_NEAREST"].as<float>();
-    else
-        LOG(INFO) << "RRTxConfig::R_NEAREST is not defined! Using default value of " << RRTxConfig::R_NEAREST;
-
     if (RRTxConfigRoot["MAX_NEIGHBORS"].IsDefined())
         RRTxConfig::MAX_NEIGHBORS = RRTxConfigRoot["MAX_NEIGHBORS"].as<size_t>();
     else
@@ -242,11 +232,6 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         RRTxConfig::REPLANNING_THROTTLE = RRTxConfigRoot["REPLANNING_THROTTLE"].as<size_t>();
     else
         LOG(INFO) << "RRTxConfig::REPLANNING_THROTTLE is not defined! Using default value of " << RRTxConfig::REPLANNING_THROTTLE;
-
-    if (RRTxConfigRoot["REWIRE_FACTOR"].IsDefined())
-        RRTxConfig::REWIRE_FACTOR = RRTxConfigRoot["REWIRE_FACTOR"].as<float>();
-    else
-        LOG(INFO) << "RRTxConfig::REWIRE_FACTOR is not defined! Using default value of " << RRTxConfig::REWIRE_FACTOR;
 
     if (RRTxConfigRoot["START_BIAS"].IsDefined())
         RRTxConfig::START_BIAS = RRTxConfigRoot["START_BIAS"].as<float>();

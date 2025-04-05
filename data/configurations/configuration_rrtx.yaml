@@ -2,12 +2,9 @@ MAX_NUM_ITER: 1000000                 # Maximal number of iterations
 MAX_ITER_TIME: 0.050                  # Maximal runtime of a single iteration
 MAX_PLANNING_TIME: 10                 # Maximal planning time in seconds
 EPS_STEP: 0.1                         # Step size for extending
-R_REWIRE: 1.0                         # Radius for rewiring
-R_COLLISION: 0.2                      # Radius to check for collisions
-R_NEAREST: 0.5                        # Initial radius for nearest neighbors
-MAX_NEIGHBORS: 30                     # Maximal number of neighbors to consider
+R_REWIRE: 3.14159                     # Radius for rewiring
+MAX_NEIGHBORS: 1000                   # Maximal number of neighbors to consider
 REPLANNING_THROTTLE: 1                # Process obstacles every N iterations
-REWIRE_FACTOR: 1.1                    # Factor for rewire radius
-START_BIAS: 0.05                      # Probability of sampling start directly
+START_BIAS: 0.1                       # Probability of sampling start directly
 RESOLUTION_COLL_CHECK: 0.01           # Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
 TRAJECTORY_INTERPOLATION: "Spline"    # Method for interpolation of trajectory: "None" or "Spline"
