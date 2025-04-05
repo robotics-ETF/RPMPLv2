@@ -153,8 +153,7 @@ bool planning::rrtx::RRTx::solve()
         if (status != base::State::Status::Trapped)
         {
             // Compute initial cost
-            float cost = q_near->getCost() + distance(q_near, q_new);
-            q_new->setCost(cost);
+            q_new->setCost(q_near->getCost() + distance(q_near, q_new));
             
             // Find neighbors within r_rewire
             std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_new, r_rewire);
@@ -172,47 +171,48 @@ bool planning::rrtx::RRTx::solve()
             if (updatePath()) {
                 computePath();
             }
-
-            // Updating current state
-            q_next = start_state->getParent();
-            // std::cout << "q_current: " << q_current << "\n";
-            // std::cout << "q_next:    " << q_next << "\n";
-            
-            std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
-            updating_state->setTimeIterStart(time_iter_start);
-            updating_state->update(q_previous, q_current_new, q_next, status);
-
-            if (status == base::State::Status::Advanced)
-            {
-                // Update cost
-                q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
-                
-                // Find neighbors within r_rewire
-                std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
-                
-                // If possible, choose parent that minimizes cost. Otherwise, remain the old parent.
-                if (chooseParent(q_current_new, neighbors))
-                    tree->upgradeTree(q_current_new, q_current_new->getParent());
-                else
-                    tree->upgradeTree(q_current_new, q_next);
-                
-                // Rewire the tree
-                rewireNeighbors(q_current_new, neighbors);
-
-                q_current = q_current_new;
-            }
-            else if (status == base::State::Status::Reached)
-                q_current = q_next;
-
-            // Change start to the current state
-            start_state = q_current;
-
-            // Update the path if needed
-            if (updatePath()) {
-                computePath();
-            }
-            // std::cout << "q_current_new: " << q_current << "\n";
         }
+
+        // Updating current state
+        q_next = start_state->getParent();
+        // std::cout << "q_current: " << q_current << "\n";
+        // std::cout << "q_next:    " << q_next << "\n";
+        
+        status = base::State::Status::None;
+        std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
+        updating_state->setTimeIterStart(time_iter_start);
+        updating_state->update(q_previous, q_current_new, q_next, status);
+
+        if (status == base::State::Status::Advanced)
+        {
+            // Update cost
+            q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
+            
+            // Find neighbors within r_rewire
+            std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
+            
+            // If possible, choose parent that minimizes cost. Otherwise, remain the old parent.
+            if (chooseParent(q_current_new, neighbors))
+                tree->upgradeTree(q_current_new, q_current_new->getParent());
+            else
+                tree->upgradeTree(q_current_new, q_next);
+            
+            // Rewire the tree
+            rewireNeighbors(q_current_new, neighbors);
+
+            q_current = q_current_new;
+        }
+        else if (status == base::State::Status::Reached)
+            q_current = q_next;
+
+        // Change start to the current state
+        start_state = q_current;
+
+        // Update the path if needed
+        if (updatePath()) {
+            computePath();
+        }
+        // std::cout << "q_current_new: " << q_current << "\n";
 
         // Checking the real-time execution
         // float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
