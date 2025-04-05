@@ -139,7 +139,8 @@ bool planning::rrtx::RRTx::solve()
         time_iter_start = std::chrono::steady_clock::now();
 
         // Compute the shrinking ball radius
-        r_rewire = shrinkingBallRadius(tree->getNumStates());
+        // r_rewire = shrinkingBallRadius(tree->getNumStates());
+        r_rewire = RRTxConfig::R_REWIRE;
 
         // Sample a random state
         q_rand = ss->getRandomState();
@@ -174,7 +175,7 @@ bool planning::rrtx::RRTx::solve()
         }
 
         // Procedure of updating current state
-        q_next = start_state->getParent();
+        q_next = q_current->getParent();
         // std::cout << "q_current: " << q_current << "\n";
         // std::cout << "q_next:    " << q_next << "\n";
         
@@ -214,7 +215,7 @@ bool planning::rrtx::RRTx::solve()
         if (updatePath()) {
             computePath();
         }
-        // std::cout << "q_current_new: " << q_current << "\n";
+        // std::cout << "q_current_new: " << q_current << "\n\n";
 
         // Checking the real-time execution
         // float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
