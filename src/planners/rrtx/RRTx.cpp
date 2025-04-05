@@ -62,7 +62,7 @@ planning::rrtx::RRTx::~RRTx()
     
     orphan_set.clear();
     rewire_set.clear();
-    path.clear();
+    path_current.clear();
 }
 
 float planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const
@@ -509,7 +509,7 @@ void planning::rrtx::RRTx::propagateCostChanges(std::shared_ptr<base::State> nod
 
 bool planning::rrtx::RRTx::updatePath()
 {
-    if (path.empty()) {
+    if (path_current.empty()) {
         return false;
     }
     
@@ -536,7 +536,7 @@ bool planning::rrtx::RRTx::updatePath()
 
 void planning::rrtx::RRTx::computePath()
 {
-    path.clear();
+    path_current.clear();
     
     if (!start_state->getParent()) {
         // No path to start
@@ -547,7 +547,7 @@ void planning::rrtx::RRTx::computePath()
     std::shared_ptr<base::State> current = start_state;
     while (current != nullptr)
     {
-        path.push_back(current);
+        path_current.push_back(current);
         current = current->getParent();
     }
 }
