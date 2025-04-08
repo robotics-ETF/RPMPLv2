@@ -15,6 +15,7 @@ public:
     static float TIME_STEP;                     // Time step used for e.g. checking whether a spline is collision-free
     static float FINAL_JERK_STEP;               // Final jerk step when using bisection method for finding optimal value of coefficient 'c'
     static float FINAL_VELOCITY_STEP;           // Final velocity step when using bisection method for finding optimal value of final velocity
+    static float MAX_RADIUS;                    // Maximal radius in [rad] used when updating state (it should be experimentally evaluated)
 };
 
 #endif //RPMPL_SPLINESCONFIG_H

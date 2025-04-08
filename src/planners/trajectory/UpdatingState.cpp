@@ -150,15 +150,21 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
         if (t_spline_remain < 0)
             break;
 
+        float step { std::max(ss->robot->getMaxVel().norm() * max_iter_time,
+                              current_vel.norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS) };
+        std::shared_ptr<base::State> q_target { std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)) };
+
         splines->setCurrentState(q_current);
-        splines->setTargetState(q_next_reached);
+        splines->setTargetState(q_target);
+        // std::cout << "q_target:       " << q_target << "\n";
+        // std::cout << "q_next:         " << q_next << "\n";
         // std::cout << "q_next_reached: " << q_next_reached << "\n";
 
         if (guaranteed_safe_motion)
             spline_computed = splines->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
         else
         {
-            if (splines->spline_current->isFinalConf(q_next_reached->getCoord()))  // Spline to such 'q_next_reached' already exists!
+            if (splines->spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
                 break;
             spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
         }
@@ -184,8 +190,9 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     q_current = ss->getNewState(splines->spline_next->getPosition(splines->spline_next->getTimeEnd()));   // Current robot position at the end of iteration
     if (status != base::State::Status::Trapped)
     {
-        if (splines->spline_next->getTimeFinal() < splines->spline_next->getTimeEnd() + 2*max_iter_time - max_remaining_iter_time)
-            status = base::State::Status::Reached;  // 'q_next' must be reached, and not only 'q_next_reached'
+        if (ss->getNorm(q_current, q_next) <        // 'q_next' must be reached within the computed radius, and not only 'q_next_reached'
+            splines->spline_next->getVelocity(splines->spline_next->getTimeEnd()).norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS)
+            status = base::State::Status::Reached;
         else
             status = base::State::Status::Advanced;
     }

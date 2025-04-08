@@ -284,5 +284,10 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "SplinesConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << SplinesConfig::FINAL_VELOCITY_STEP;
     
+    if (SplinesConfigRoot["MAX_RADIUS"].IsDefined())
+        SplinesConfig::MAX_RADIUS = SplinesConfigRoot["MAX_RADIUS"].as<float>();
+    else
+        LOG(INFO) << "SplinesConfig::MAX_RADIUS is not defined! Using default value of " << SplinesConfig::MAX_RADIUS;
+    
     LOG(INFO) << "Configuration parameters read successfully!";
 }
