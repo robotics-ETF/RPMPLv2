@@ -26,6 +26,7 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
     measure_time = false;
     remaining_time = 0;
     q_next = nullptr;
+    q_next_reached = nullptr;
     drgbt_instance = nullptr;
 }
 
