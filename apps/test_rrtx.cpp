@@ -114,6 +114,7 @@ int main(int argc, char **argv)
 			output_file << "Success:\n" << result << std::endl;
 			output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 			output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
+			output_file << "Time for the initial path [s]:\n" << (result ? planner->getPlannerInfo()->getIterationTimes().front() : INFINITY) << std::endl;
 			output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
 
 			output_file << "--------------------------------------------------------------------\n";
