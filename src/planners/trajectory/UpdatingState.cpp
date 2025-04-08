@@ -169,7 +169,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
             spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
         }
     }
-    while (!spline_computed && invokeChangeNextState(q_next_reached));
+    while (!spline_computed && invokeChangeNextState());
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
 
     if (spline_computed)
@@ -206,10 +206,11 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     remaining_time = t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
 }
 
-bool planning::trajectory::UpdatingState::invokeChangeNextState(std::shared_ptr<base::State> &q_next_reached) 
+// This function will change 'q_next' and 'q_next_reached'
+bool planning::trajectory::UpdatingState::invokeChangeNextState() 
 {
     if (drgbt_instance != nullptr) 
-        return drgbt_instance->changeNextState(q_next_reached);
+        return drgbt_instance->changeNextState();
     
     return false;
 }

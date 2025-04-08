@@ -577,9 +577,8 @@ void planning::drbt::DRGBT::computeNextState()
 }
 
 /// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
-/// @param q_next_reached New reached state which is updated.
 /// @return Success of a change.
-bool planning::drbt::DRGBT::changeNextState(std::shared_ptr<base::State> &q_next_reached)
+bool planning::drbt::DRGBT::changeNextState()
 {
     // std::cout << "Change of q_next is required! \n";
     std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
@@ -612,7 +611,8 @@ bool planning::drbt::DRGBT::changeNextState(std::shared_ptr<base::State> &q_next
     {
         visited_states.emplace_back(q_new);
         q_next = q_new;
-        q_next_reached = q_next->getStateReached();
+        updating_state->setNextState(q_next->getState());
+        updating_state->setNextStateReached(q_next->getStateReached());
         return true;
     }
 

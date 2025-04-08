@@ -32,6 +32,7 @@ namespace planning::trajectory
         inline void setTimeIterStart(std::chrono::steady_clock::time_point &time_iter_start_) { time_iter_start = time_iter_start_; }
         inline void setMeasureTime(bool measure_time_) { measure_time = measure_time_; }
         inline void setNextState(const std::shared_ptr<base::State> &q_next_) { q_next = q_next_; }
+        inline void setNextStateReached(const std::shared_ptr<base::State> &q_next_reached_) { q_next_reached = q_next_reached_; }
         inline void setDRGBTinstance(planning::drbt::DRGBT* drgbt_instance_) { drgbt_instance = drgbt_instance_; };
         inline float getRemainingTime() { return remaining_time; }
 
@@ -62,6 +63,7 @@ namespace planning::trajectory
                                                                     // will become active (if 'planning::TrajectoryInterpolation::Spline' is used).
 
         std::shared_ptr<base::State> q_next;
+        std::shared_ptr<base::State> q_next_reached;
         planning::drbt::DRGBT* drgbt_instance;
     };
 }
