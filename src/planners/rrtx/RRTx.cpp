@@ -86,9 +86,6 @@ bool planning::rrtx::RRTx::solve()
     std::shared_ptr<base::State> q_new = nullptr;
     base::State::Status status = base::State::Status::None;
     bool first_path_found = false;
-
-    // Initially, radius for rewiring is set to a constant value
-    r_rewire = RRTxConfig::R_REWIRE;
     
     // Phase 1: Find an initial path (similar to RRT)
     std::cout << "Finding an initial path... \n";
@@ -112,31 +109,30 @@ bool planning::rrtx::RRTx::solve()
             
             rewireNeighbors(q_new);
             
-            if (distance(q_new, start_state) < r_rewire && 
+            if (distance(q_new, start_state) < RRTxConfig::EPS_STEP && 
                 ss->isValid(q_new, start_state) && 
                 !ss->robot->checkSelfCollision(q_new, start_state))
             {
                 start_state->setParent(q_new);
                 start_state->setCost(q_new->getCost() + distance(q_new, start_state));
-                //tree->addState(start_state);
                 tree->upgradeTree(start_state, q_new);
                 first_path_found = true;
                 computePath();
             }
         }
         
-        planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-        planner_info->addIterationTime(getElapsedTime(time_alg_start));
-        planner_info->setNumStates(tree->getNumStates());
-        
         // Check if we've exceeded time or iterations
         if (checkTerminatingCondition(status)) {
             return planner_info->getSuccessState();
         }
     }
+
+    planner_info->setNumIterations(planner_info->getNumIterations() + 1);
+    planner_info->addIterationTime(getElapsedTime(time_alg_start));
+    planner_info->setNumStates(tree->getNumStates());
     
     // Phase 2: Continue improving the solution
-    std::cout << "Dynamic planner is starting... \n";
+    std::cout << "Dynamic planner is starting with " << tree->getNumStates() << " states in tree...\n";
     while (true)
     {
         // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
@@ -188,7 +184,6 @@ bool planning::rrtx::RRTx::solve()
         status = base::State::Status::None;
         std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
         updating_state->setTimeIterStart(time_iter_start);
-        updating_state->setNextState(q_next);
         updating_state->update(q_previous, q_current_new, q_next, status);
 
         if (status == base::State::Status::Advanced ||
