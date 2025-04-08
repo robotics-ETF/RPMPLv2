@@ -30,16 +30,34 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
 }
 
 void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    const std::shared_ptr<base::State> q_next_, base::State::Status &status)
 {
     switch (traj_interpolation)
     {
     case planning::TrajectoryInterpolation::None:
-        update_v1(q_previous, q_current, q_next_reached, status);
+        update_v1(q_previous, q_current, q_next_, q_next_, status);
         break;
     
     case planning::TrajectoryInterpolation::Spline:
-        update_v2(q_previous, q_current, q_next_reached, status);
+        update_v2(q_previous, q_current, q_next_, q_next_, status);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+    const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
+{
+    switch (traj_interpolation)
+    {
+    case planning::TrajectoryInterpolation::None:
+        update_v1(q_previous, q_current, q_next_, q_next_reached_, status);
+        break;
+    
+    case planning::TrajectoryInterpolation::Spline:
+        update_v2(q_previous, q_current, q_next_, q_next_reached_, status);
         break;
 
     default:
@@ -51,27 +69,28 @@ void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q
 /// such that it can be reached within max_iter_time time, while considering robot maximal velocity.
 /// In other words, 'q_current_new' is determined using an advancing step size which depends on robot's maximal velocity.
 /// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
-/// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
+/// @note If 'q_next_reached' is not relevant in the algorithm, pass 'q_next' instead of it.
 void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
 {
     q_previous = q_current;
+    q_next = q_next_;
+    q_next_reached = q_next_reached_;
+        
     if (status == base::State::Status::Trapped)     // Current robot position will not be updated! 
     {                                               // We must wait for successful replanning to change 'status' to 'Reached'
         // std::cout << "Status: Trapped! \n";
         return;
     }
-    if (q_next == nullptr)
-        q_next = q_next_reached;
 
     std::shared_ptr<base::State> q_current_new { ss->getNewState(q_next_reached->getCoord()) };
     if (!ss->isEqual(q_current, q_current_new))
     {
         if (all_robot_vel_same)
         {
-            float max_edge_length_ { ss->robot->getMaxVel(0) * max_iter_time };
-            if (ss->getNorm(q_current, q_current_new) > max_edge_length_)
-                q_current_new = ss->pruneEdge2(q_current, q_current_new, max_edge_length_);
+            float max_delta_q { ss->robot->getMaxVel(0) * max_iter_time };
+            if (ss->getNorm(q_current, q_current_new) > max_delta_q)
+                q_current_new = ss->pruneEdge2(q_current, q_current_new, max_delta_q);
         }
         else
         {
@@ -79,8 +98,8 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
             for (size_t i = 0; i < ss->num_dimensions; i++)
             {
                 limits.emplace_back(std::pair<float, float>
-                (q_current->getCoord(i) - ss->robot->getMaxVel(i) * max_iter_time, 
-                    q_current->getCoord(i) + ss->robot->getMaxVel(i) * max_iter_time));
+                    (q_current->getCoord(i) - ss->robot->getMaxVel(i) * max_iter_time, 
+                     q_current->getCoord(i) + ss->robot->getMaxVel(i) * max_iter_time));
             }
             q_current_new = ss->pruneEdge(q_current, q_current_new, limits);
         }
@@ -91,8 +110,6 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
         status = base::State::Status::Reached;      // 'q_next' must be reached, and not only 'q_next_reached'
     else
         status = base::State::Status::Advanced;
-    
-    q_next = nullptr;
 
     // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
@@ -105,23 +122,25 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
 /// 'q_current' will be updated to a robot position from the end of current iteration.
 /// @note The new spline will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
-/// @note If 'q_next' is different from 'q_next_reached', the user is required to set 'q_next' via 'setNextState' function.
+/// @note If 'q_next_reached' is not relevant in the algorithm, pass 'q_next' instead of it.
 void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-    std::shared_ptr<base::State> &q_next_reached, base::State::Status &status)
+    const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
 {
-    splines->spline_current = splines->spline_next;
     q_previous = q_current;
+    q_next = q_next_;
+    q_next_reached = q_next_reached_;
+    splines->spline_current = splines->spline_next;
 
     float t_spline_max { (guaranteed_safe_motion ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
-                        SplinesConfig::MAX_TIME_PUBLISH * measure_time };
+                         SplinesConfig::MAX_TIME_PUBLISH * measure_time };
     float t_iter { getElapsedTime() };
     if (max_iter_time - max_remaining_iter_time - t_iter < t_spline_max)
         t_spline_max = max_iter_time - max_remaining_iter_time - t_iter;
     
     float t_iter_remain { max_iter_time - t_iter - t_spline_max };
     float t_spline_current { measure_time ? 
-                            splines->spline_current->getTimeCurrent(true) + t_spline_max :
-                            splines->spline_current->getTimeEnd() + t_iter + t_spline_max };
+                             splines->spline_current->getTimeCurrent(true) + t_spline_max :
+                             splines->spline_current->getTimeEnd() + t_iter + t_spline_max };
 
     splines->spline_current->setTimeBegin(splines->spline_current->getTimeEnd());
     splines->spline_current->setTimeCurrent(t_spline_current);
