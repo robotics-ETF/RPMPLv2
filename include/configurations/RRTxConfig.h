@@ -17,7 +17,7 @@ public:
     static float MAX_ITER_TIME;                                         // Maximal runtime of a single iteration
     static float MAX_PLANNING_TIME;                                     // Maximal planning time in seconds
     static float EPS_STEP;                                              // Step size for extending
-    static float R_REWIRE;                                              // Radius for rewiring
+    static float R_REWIRE;                                              // Radius for rewiring (If zero, the shrinking ball radius is computed. If greater than zero, constant value is used.)
     static size_t MAX_NEIGHBORS;                                        // Maximal number of neighbors to consider
     static size_t REPLANNING_THROTTLE;                                  // Process obstacles every N iterations
     static float START_BIAS;                                            // Probability of sampling start directly

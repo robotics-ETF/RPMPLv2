@@ -109,7 +109,7 @@ bool planning::rrtx::RRTx::solve()
             
             rewireNeighbors(q_new);
             
-            if (distance(q_new, start_state) < RRTxConfig::EPS_STEP && 
+            if (distance(q_new, start_state) < 2 * RRTxConfig::EPS_STEP && 
                 ss->isValid(q_new, start_state) && 
                 !ss->robot->checkSelfCollision(q_new, start_state))
             {
@@ -140,9 +140,11 @@ bool planning::rrtx::RRTx::solve()
         // Start the iteration clock
         time_iter_start = std::chrono::steady_clock::now();
 
-        // Compute the shrinking ball radius
-        // r_rewire = shrinkingBallRadius(tree->getNumStates());
-        r_rewire = RRTxConfig::R_REWIRE;
+        // Determine the shrinking ball radius
+        if (RRTxConfig::R_REWIRE > 0)
+            r_rewire = RRTxConfig::R_REWIRE;
+        else
+            r_rewire = shrinkingBallRadius(tree->getNumStates());
 
         // Sample a random state
         q_rand = ss->getRandomState();

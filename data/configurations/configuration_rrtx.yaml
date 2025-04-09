@@ -1,8 +1,8 @@
 MAX_NUM_ITER: 1000000                 # Maximal number of iterations
 MAX_ITER_TIME: 0.050                  # Maximal runtime of a single iteration
 MAX_PLANNING_TIME: 10                 # Maximal planning time in seconds
-EPS_STEP: 0.1                         # Step size for extending
-R_REWIRE: 3.14159                     # Radius for rewiring
+EPS_STEP: 1.0                         # Step size for extending
+R_REWIRE: 3.14                        # Radius for rewiring (If zero, the shrinking ball radius is computed. If greater than zero, constant value is used.)
 MAX_NEIGHBORS: 1000                   # Maximal number of neighbors to consider
 REPLANNING_THROTTLE: 1                # Process obstacles every N iterations
 START_BIAS: 0.1                       # Probability of sampling start directly
