@@ -98,9 +98,7 @@ bool planning::drbt::DRGBT::solve()
         updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
-        updating_state->setNextState(q_next->getState());
-        std::shared_ptr<base::State> q_next_reached { q_next->getStateReached() };
-        updating_state->update(q_previous, q_current, q_next_reached, status);   // ~ 1 [ms]
+        updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);   // ~ 1 [ms]
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
@@ -577,9 +575,8 @@ void planning::drbt::DRGBT::computeNextState()
 }
 
 /// @brief Choose the best state from the horizon so that it does not belong to 'visited_states'.
-/// @param q_next_reached New reached state which is updated.
 /// @return Success of a change.
-bool planning::drbt::DRGBT::changeNextState(std::shared_ptr<base::State> &q_next_reached)
+bool planning::drbt::DRGBT::changeNextState()
 {
     // std::cout << "Change of q_next is required! \n";
     std::shared_ptr<planning::drbt::HorizonState> q_new { nullptr };
@@ -612,7 +609,8 @@ bool planning::drbt::DRGBT::changeNextState(std::shared_ptr<base::State> &q_next
     {
         visited_states.emplace_back(q_new);
         q_next = q_new;
-        q_next_reached = q_next->getStateReached();
+        updating_state->setNextState(q_next->getState());
+        updating_state->setNextStateReached(q_next->getStateReached());
         return true;
     }
 

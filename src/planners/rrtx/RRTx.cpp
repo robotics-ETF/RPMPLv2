@@ -52,6 +52,12 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
         motion_validity->setSplines(splines);
     }
 
+    RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;
+
+    eta = std::sqrt(ss->num_dimensions);
+    mi = std::pow(2 * M_PI, ss->num_dimensions);
+    zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
+    gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
 }
 
 planning::rrtx::RRTx::~RRTx()
@@ -62,7 +68,7 @@ planning::rrtx::RRTx::~RRTx()
     
     orphan_set.clear();
     rewire_set.clear();
-    path.clear();
+    path_current.clear();
 }
 
 float planning::rrtx::RRTx::distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const
@@ -80,9 +86,6 @@ bool planning::rrtx::RRTx::solve()
     std::shared_ptr<base::State> q_new = nullptr;
     base::State::Status status = base::State::Status::None;
     bool first_path_found = false;
-
-    // Initially, radius for rewiring is set to a constant value
-    r_rewire = RRTxConfig::R_REWIRE;
     
     // Phase 1: Find an initial path (similar to RRT)
     std::cout << "Finding an initial path... \n";
@@ -106,31 +109,30 @@ bool planning::rrtx::RRTx::solve()
             
             rewireNeighbors(q_new);
             
-            if (distance(q_new, start_state) < r_rewire && 
+            if (distance(q_new, start_state) < 2 * RRTxConfig::EPS_STEP && 
                 ss->isValid(q_new, start_state) && 
                 !ss->robot->checkSelfCollision(q_new, start_state))
             {
                 start_state->setParent(q_new);
                 start_state->setCost(q_new->getCost() + distance(q_new, start_state));
-                //tree->addState(start_state);
                 tree->upgradeTree(start_state, q_new);
                 first_path_found = true;
                 computePath();
             }
         }
         
-        planner_info->setNumIterations(planner_info->getNumIterations() + 1);
-        planner_info->addIterationTime(getElapsedTime(time_alg_start));
-        planner_info->setNumStates(tree->getNumStates());
-        
         // Check if we've exceeded time or iterations
         if (checkTerminatingCondition(status)) {
             return planner_info->getSuccessState();
         }
     }
+
+    planner_info->setNumIterations(planner_info->getNumIterations() + 1);
+    planner_info->addIterationTime(getElapsedTime(time_alg_start));
+    planner_info->setNumStates(tree->getNumStates());
     
     // Phase 2: Continue improving the solution
-    std::cout << "Dynamic planner is starting... \n";
+    std::cout << "Dynamic planner is starting with " << tree->getNumStates() << " states in tree...\n";
     while (true)
     {
         // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
@@ -138,8 +140,11 @@ bool planning::rrtx::RRTx::solve()
         // Start the iteration clock
         time_iter_start = std::chrono::steady_clock::now();
 
-        // Compute the shrinking ball radius
-        r_rewire = shrinkingBallRadius(tree->getNumStates());
+        // Determine the shrinking ball radius
+        if (RRTxConfig::R_REWIRE > 0)
+            r_rewire = RRTxConfig::R_REWIRE;
+        else
+            r_rewire = shrinkingBallRadius(tree->getNumStates());
 
         // Sample a random state
         q_rand = ss->getRandomState();
@@ -153,8 +158,7 @@ bool planning::rrtx::RRTx::solve()
         if (status != base::State::Status::Trapped)
         {
             // Compute initial cost
-            float cost = q_near->getCost() + distance(q_near, q_new);
-            q_new->setCost(cost);
+            q_new->setCost(q_near->getCost() + distance(q_near, q_new));
             
             // Find neighbors within r_rewire
             std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_new, r_rewire);
@@ -172,47 +176,49 @@ bool planning::rrtx::RRTx::solve()
             if (updatePath()) {
                 computePath();
             }
-
-            // Updating current state
-            q_next = start_state->getParent();
-            // std::cout << "q_current: " << q_current << "\n";
-            // std::cout << "q_next:    " << q_next << "\n";
-            
-            std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
-            updating_state->setTimeIterStart(time_iter_start);
-            updating_state->update(q_previous, q_current_new, q_next, status);
-
-            if (status == base::State::Status::Advanced)
-            {
-                // Update cost
-                q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
-                
-                // Find neighbors within r_rewire
-                std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
-                
-                // If possible, choose parent that minimizes cost. Otherwise, remain the old parent.
-                if (chooseParent(q_current_new, neighbors))
-                    tree->upgradeTree(q_current_new, q_current_new->getParent());
-                else
-                    tree->upgradeTree(q_current_new, q_next);
-                
-                // Rewire the tree
-                rewireNeighbors(q_current_new, neighbors);
-
-                q_current = q_current_new;
-            }
-            else if (status == base::State::Status::Reached)
-                q_current = q_next;
-
-            // Change start to the current state
-            start_state = q_current;
-
-            // Update the path if needed
-            if (updatePath()) {
-                computePath();
-            }
-            // std::cout << "q_current_new: " << q_current << "\n";
         }
+
+        // Procedure of updating current state
+        q_next = q_current->getParent();
+        // std::cout << "q_current: " << q_current << "\n";
+        // std::cout << "q_next:    " << q_next << "\n";
+        
+        status = base::State::Status::None;
+        std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
+        updating_state->setTimeIterStart(time_iter_start);
+        updating_state->update(q_previous, q_current_new, q_next, status);
+
+        if (status == base::State::Status::Advanced ||
+            (status == base::State::Status::Reached && !ss->isEqual(q_current_new, q_next)))
+        {
+            // Update cost
+            q_current_new->setCost(q_next->getCost() + distance(q_next, q_current_new));
+            
+            // Find neighbors within r_rewire
+            std::vector<std::shared_ptr<base::State>> neighbors = findNeighbors(q_current_new, r_rewire);
+            
+            // If possible, choose parent that minimizes cost. Otherwise, remain the old parent.
+            if (chooseParent(q_current_new, neighbors))
+                tree->upgradeTree(q_current_new, q_current_new->getParent());
+            else
+                tree->upgradeTree(q_current_new, q_next);
+            
+            // Rewire the tree
+            rewireNeighbors(q_current_new, neighbors);
+
+            q_current = q_current_new;
+        }
+        else if (status == base::State::Status::Reached)
+            q_current = q_next;
+
+        // Change start to the current state
+        start_state = q_current;
+
+        // Update the path if needed
+        if (updatePath()) {
+            computePath();
+        }
+        // std::cout << "q_current_new: " << q_current << "\n\n";
 
         // Checking the real-time execution
         // float time_iter_remain = RRTxConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
@@ -509,7 +515,7 @@ void planning::rrtx::RRTx::propagateCostChanges(std::shared_ptr<base::State> nod
 
 bool planning::rrtx::RRTx::updatePath()
 {
-    if (path.empty()) {
+    if (path_current.empty()) {
         return false;
     }
     
@@ -536,7 +542,7 @@ bool planning::rrtx::RRTx::updatePath()
 
 void planning::rrtx::RRTx::computePath()
 {
-    path.clear();
+    path_current.clear();
     
     if (!start_state->getParent()) {
         // No path to start
@@ -547,7 +553,7 @@ void planning::rrtx::RRTx::computePath()
     std::shared_ptr<base::State> current = start_state;
     while (current != nullptr)
     {
-        path.push_back(current);
+        path_current.push_back(current);
         current = current->getParent();
     }
 }
@@ -598,10 +604,6 @@ float planning::rrtx::RRTx::generateRandomNumber(float min, float max)
 
 float planning::rrtx::RRTx::shrinkingBallRadius(size_t num_states) 
 {
-    float eta = std::sqrt(ss->num_dimensions);
-    float mi = std::pow(2 * M_PI, ss->num_dimensions);
-    float zeta = std::pow(M_PI, ss->num_dimensions / 2.0f) / std::tgamma(ss->num_dimensions / 2.0f + 1);
-    float gamma_rrt = 2 * std::pow((1 + 1.0 / ss->num_dimensions) * (mi / zeta), 1.0f / ss->num_dimensions);
     return std::min(gamma_rrt * float(std::pow(std::log(num_states) / num_states, 1.0f / ss->num_dimensions)), eta);
 }
 
@@ -623,8 +625,6 @@ void planning::rrtx::RRTx::outputPlannerData(const std::string &filename, bool o
         output_file << "\t Number of iterations:  " << planner_info->getNumIterations() << std::endl;
         output_file << "\t Number of states:      " << planner_info->getNumStates() << std::endl;
         output_file << "\t Planning time [s]:     " << planner_info->getPlanningTime() << std::endl;
-        output_file << "\t Rewire radius:         " << r_rewire << std::endl;
-        output_file << "\t Collision radius:      " << RRTxConfig::R_COLLISION << std::endl;
         
         if (output_states_and_paths)
         {

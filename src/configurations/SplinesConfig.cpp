@@ -7,3 +7,4 @@ float SplinesConfig::MAX_TIME_FINAL             = 10.0;
 float SplinesConfig::TIME_STEP                  = 0.01;
 float SplinesConfig::FINAL_JERK_STEP            = 1.0;
 float SplinesConfig::FINAL_VELOCITY_STEP        = 0.1;
+float SplinesConfig::MAX_RADIUS                 = 5.0;
