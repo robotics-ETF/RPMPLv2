@@ -16,6 +16,7 @@
 #include "RealVectorSpaceState.h"
 #include "Planar2DOF.h"
 #include "Planar10DOF.h"
+#include "Spatial10DOF.h"
 #include "xArm6.h"
 #include <yaml-cpp/yaml.h>
 

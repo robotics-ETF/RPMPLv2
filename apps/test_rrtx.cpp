@@ -13,6 +13,8 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		"/data/xarm6/scenario1/scenario1.yaml"
 		// "/data/xarm6/scenario2/scenario2.yaml"
+
+		// "/data/spatial_10dof/scenario1/scenario1.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 

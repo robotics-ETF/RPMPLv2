@@ -11,7 +11,7 @@ random_obstacles:
   dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
 
 robot:
-  type: "planar_10DOF"
+  type: "planar_10dof"
   urdf: "/data/planar_10dof/planar_10dof.urdf"
   space: "RealVectorSpaceFCL"
   num_DOFs: 10

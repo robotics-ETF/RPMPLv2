@@ -14,12 +14,15 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
                                                     robot_node["gripper_length"].as<float>(),
                                                     robot_node["ground_included"].as<size_t>());
-        else if (type == "planar_2DOF")
+        else if (type == "planar_2dof")
             robot = std::make_shared<robots::Planar2DOF>(root_path + robot_node["urdf"].as<std::string>());
-        else if (type == "planar_10DOF")
+        else if (type == "planar_10dof")
             robot = std::make_shared<robots::Planar10DOF>(root_path + robot_node["urdf"].as<std::string>());
+        else if (type == "spatial_10dof")
+            robot = std::make_shared<robots::Spatial10DOF>(root_path + robot_node["urdf"].as<std::string>(),
+                                                           robot_node["ground_included"].as<size_t>());
         else
-            throw std::logic_error("Robot type is not correct!");
+            throw std::logic_error("Robot type is not correct! Please check whether your robot is added to RPMPLv2 library.");
 
         YAML::Node capsules_radius_node { robot_node["capsules_radius"] };
         if (capsules_radius_node.IsDefined())
