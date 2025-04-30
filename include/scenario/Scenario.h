@@ -17,6 +17,9 @@
 #include "Planar2DOF.h"
 #include "Planar10DOF.h"
 #include "Spatial10DOF.h"
+#include "Spatial14DOF.h"
+#include "Spatial18DOF.h"
+#include "Spatial22DOF.h"
 #include "xArm6.h"
 #include <yaml-cpp/yaml.h>
 

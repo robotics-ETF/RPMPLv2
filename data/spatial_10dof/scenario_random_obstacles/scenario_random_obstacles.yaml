@@ -4,22 +4,13 @@ environment:
       dim: [1.5, 1.5, 0.1]
       pos: [0, 0, -0.05]
       min_dist_tol: 0.05          # Minimal distance tolerance for a static obstacle to not be included into a dynamic scene
-  - box:
-      dim: [0.5, 0.5, 1]
-      pos: [0.55, 0.55, 0.5]
-  - box:
-      dim: [0.5, 0.5, 1]
-      pos: [-0.55, 0.55, 0.5]
-  - box:
-      dim: [0.5, 0.5, 1]
-      pos: [0.55, -0.55, 0.5]
-  - box:
-      dim: [0.5, 0.5, 1]
-      pos: [-0.55, -0.55, 0.5]
 
 random_obstacles:
-  num: 0	                        # Number of random obstacles to be added
-  dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
+  init_num: 5		                  # Number of random obstacles to start with the testing
+  max_num: 5		                  # Maximal number of random obstacles to be added
+  max_vel: 0.3 			              # Maximal velocity of each obstacle in [m/s]
+  max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
+  dim: [0.3, 0.3, 0.3]            # Dimensions of each random obstacle in [m]
 
 robot:
   type: "spatial_10dof"
@@ -28,6 +19,7 @@ robot:
   num_DOFs: 10
   q_start: [0,    1.57, 0, 0, 0, 0, 0, 0, 0, 0]
   q_goal:  [3.14, 1.57, 0, 0, 0, 0, 0, 0, 0, 0]
+  min_dist_start_goal: 10                                     # If greater than zero, 'q_start' and 'q_goal' will be generated randomly, where the workspace distance between them is minimally 'min_dist_start_goal'
   capsules_radius: [0.025]
   gripper_length: 0.0                                         # In [m]
   ground_included: 2                                          # Please check whether 'ground' is added in 'environment'
@@ -39,6 +31,8 @@ robot:
   max_jerk: [500]                                             # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
-  max_num: 1000             # Maximal number of tests that should be carried out
-  max_vel_obs: 0.3          # Maximal velocity for each obstacle from "environment"
-  motion_type: "circular"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.
+  init_num: 1                       # Number of testing to start with
+  init_num_success: 0               # Initial number of already achieved successful tests
+  max_num: 1000                     # Maximal number of tests that should be carried out
+  reach_successful_tests: false	    # If true, run totally 'max_num' successful tests 
+  motion_type: "light_directions"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.

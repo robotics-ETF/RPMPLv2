@@ -2,7 +2,8 @@
 
 robots::Spatial10DOF::~Spatial10DOF() {}
 
-robots::Spatial10DOF::Spatial10DOF(const std::string &robot_desc, size_t ground_included_) : Planar2DOF(robot_desc, 10) 
+robots::Spatial10DOF::Spatial10DOF(const std::string &robot_desc, size_t ground_included_, size_t num_DOFs_) : 
+	Planar2DOF(robot_desc, num_DOFs_) 
 {
 	ground_included = ground_included_;
 }

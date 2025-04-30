@@ -22,12 +22,12 @@ random_obstacles:
   dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
 
 robot:
-  type: "spatial_10dof"
-  urdf: "/data/spatial_10dof/spatial_10dof.urdf"
+  type: "spatial_18dof"
+  urdf: "/data/spatial_18dof/spatial_18dof.urdf"
   space: "RealVectorSpace"
-  num_DOFs: 10
-  q_start: [0,    1.57, 0, 0, 0, 0, 0, 0, 0, 0]
-  q_goal:  [3.14, 1.57, 0, 0, 0, 0, 0, 0, 0, 0]
+  num_DOFs: 18
+  q_start: [0,    1.57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  q_goal:  [3.14, 1.57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   capsules_radius: [0.025]
   gripper_length: 0.0                                         # In [m]
   ground_included: 2                                          # Please check whether 'ground' is added in 'environment'
