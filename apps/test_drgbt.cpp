@@ -13,6 +13,11 @@ int main(int argc, char **argv)
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		"/data/xarm6/scenario1/scenario1.yaml"
 		// "/data/xarm6/scenario2/scenario2.yaml"
+
+		// "/data/spatial_10dof/scenario1/scenario1.yaml"
+		// "/data/spatial_14dof/scenario1/scenario1.yaml"
+		// "/data/spatial_18dof/scenario1/scenario1.yaml"
+		// "/data/spatial_22dof/scenario1/scenario1.yaml"
 	};
 	// -------------------------------------------------------------------------------------- //
 
@@ -126,7 +131,6 @@ int main(int argc, char **argv)
 			output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 			output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 			output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-			output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 			output_file << "--------------------------------------------------------------------\n";
 			output_file.close();

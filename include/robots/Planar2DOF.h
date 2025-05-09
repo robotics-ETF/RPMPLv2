@@ -47,4 +47,4 @@ namespace robots
 	};
 }
 
-#endif //RPMPL_ABSTRACTPLANNER_H
+#endif //RPMPL_PLANAR2DOF_H

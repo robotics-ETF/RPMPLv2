@@ -7,9 +7,15 @@ int main(int argc, char **argv)
 	std::string scenario_file_path
 	{
 		// "/data/planar_2dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+
 		"/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
+
+		// "/data/spatial_10dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/spatial_14dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/spatial_18dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/spatial_22dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
 	};
-	const std::string random_scenarios_path { "/data/xarm6/scenario_random_obstacles/random_scenarios.yaml" };
+	const std::string random_scenarios_path { scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/random_scenarios.yaml" };
 
 	// std::vector<std::string> routines		// Routines of which the time executions are stored
 	// { 	

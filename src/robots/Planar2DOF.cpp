@@ -140,7 +140,7 @@ std::shared_ptr<Eigen::MatrixXf> robots::Planar2DOF::computeEnclosingRadii(const
 	for (size_t i = 0; i < num_DOFs; i++) 			// Starting point on skeleton
 	{
 		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
-			R(i, j) = (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1];
+			R(i, j) = std::max(R(i, j-1), (skeleton->col(j) - skeleton->col(i)).norm() + capsules_radius[j-1]);
 	}
 
 	q->setEnclosingRadii(std::make_shared<Eigen::MatrixXf>(R));

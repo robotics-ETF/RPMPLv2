@@ -14,22 +14,38 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
             robot = std::make_shared<robots::xArm6>(root_path + robot_node["urdf"].as<std::string>(),
                                                     robot_node["gripper_length"].as<float>(),
                                                     robot_node["ground_included"].as<size_t>());
-        else if (type == "planar_2DOF")
+        else if (type == "planar_2dof")
             robot = std::make_shared<robots::Planar2DOF>(root_path + robot_node["urdf"].as<std::string>());
-        else if (type == "planar_10DOF")
+        else if (type == "planar_10dof")
             robot = std::make_shared<robots::Planar10DOF>(root_path + robot_node["urdf"].as<std::string>());
+        else if (type == "spatial_10dof")
+            robot = std::make_shared<robots::Spatial10DOF>(root_path + robot_node["urdf"].as<std::string>(),
+                                                           robot_node["ground_included"].as<size_t>());
+        else if (type == "spatial_14dof")
+            robot = std::make_shared<robots::Spatial14DOF>(root_path + robot_node["urdf"].as<std::string>(),
+                                                           robot_node["ground_included"].as<size_t>());
+        else if (type == "spatial_18dof")
+            robot = std::make_shared<robots::Spatial18DOF>(root_path + robot_node["urdf"].as<std::string>(),
+                                                           robot_node["ground_included"].as<size_t>());
+        else if (type == "spatial_22dof")
+            robot = std::make_shared<robots::Spatial22DOF>(root_path + robot_node["urdf"].as<std::string>(),
+                                                           robot_node["ground_included"].as<size_t>());
         else
-            throw std::logic_error("Robot type is not correct!");
+            throw std::logic_error("Robot type is not correct! Please check whether your robot is added to RPMPLv2 library.");
 
         YAML::Node capsules_radius_node { robot_node["capsules_radius"] };
         if (capsules_radius_node.IsDefined())
         {
-            if (capsules_radius_node.size() != num_DOFs)
-                throw std::logic_error("Number of capsules is not correct!");
-                
             std::vector<float> capsules_radius {};
-            for (size_t i = 0; i < num_DOFs; i++)
-                capsules_radius.emplace_back(capsules_radius_node[i].as<float>());
+            if (capsules_radius_node.size() == 1)
+                capsules_radius = std::vector<float>(num_DOFs, capsules_radius_node[0].as<float>());
+            else if (capsules_radius_node.size() != num_DOFs)
+                throw std::logic_error("Number of capsules is not correct!");
+            else
+            {
+                for (size_t i = 0; i < num_DOFs; i++)
+                    capsules_radius.emplace_back(capsules_radius_node[i].as<float>());
+            }
 
             robot->setCapsulesRadius(capsules_radius);
         }
@@ -37,39 +53,48 @@ scenario::Scenario::Scenario(const std::string &config_file_path, const std::str
         YAML::Node max_vel_node { robot_node["max_vel"] };
         if (max_vel_node.IsDefined())
         {
-            if (max_vel_node.size() != num_DOFs)
-                throw std::logic_error("The size of 'max_vel' is not correct!");
-
             Eigen::VectorXf max_vel(num_DOFs);
-            for (size_t i = 0; i < num_DOFs; i++)
-                max_vel(i) = max_vel_node[i].as<float>();
-
+            if (max_vel_node.size() == 1)
+                max_vel = max_vel_node[0].as<float>() * Eigen::VectorXf::Ones(num_DOFs);
+            else if (max_vel_node.size() != num_DOFs)
+                throw std::logic_error("The size of 'max_vel' is not correct!");
+            else
+            {
+                for (size_t i = 0; i < num_DOFs; i++)
+                    max_vel(i) = max_vel_node[i].as<float>();
+            }
             robot->setMaxVel(max_vel);
         }
 
         YAML::Node max_acc_node { robot_node["max_acc"] };
         if (max_acc_node.IsDefined())
         {
-            if (max_acc_node.size() != num_DOFs)
-                throw std::logic_error("The size of 'max_acc' is not correct!");
-
             Eigen::VectorXf max_acc(num_DOFs);
-            for (size_t i = 0; i < num_DOFs; i++)
-                max_acc(i) = max_acc_node[i].as<float>();
-
+            if (max_acc_node.size() == 1)
+                max_acc = max_acc_node[0].as<float>() * Eigen::VectorXf::Ones(num_DOFs);
+            else if (max_acc_node.size() != num_DOFs)
+                throw std::logic_error("The size of 'max_acc' is not correct!");
+            else
+            {
+                for (size_t i = 0; i < num_DOFs; i++)
+                    max_acc(i) = max_acc_node[i].as<float>();
+            }
             robot->setMaxAcc(max_acc);
         }
 
         YAML::Node max_jerk_node { robot_node["max_jerk"] };
         if (max_jerk_node.IsDefined())
         {
-            if (max_jerk_node.size() != num_DOFs)
-                throw std::logic_error("The size of 'max_jerk' is not correct!");
-
             Eigen::VectorXf max_jerk(num_DOFs);
-            for (size_t i = 0; i < num_DOFs; i++)
-                max_jerk(i) = max_jerk_node[i].as<float>();
-                
+            if (max_jerk_node.size() == 1)
+                max_jerk = max_jerk_node[0].as<float>() * Eigen::VectorXf::Ones(num_DOFs);
+            else if (max_jerk_node.size() != num_DOFs)
+                throw std::logic_error("The size of 'max_jerk' is not correct!");
+            else
+            {
+                for (size_t i = 0; i < num_DOFs; i++)
+                    max_jerk(i) = max_jerk_node[i].as<float>();
+            }                
             robot->setMaxJerk(max_jerk);
         }
 

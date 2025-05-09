@@ -5,15 +5,14 @@ int main(int argc, char **argv)
 {
 	std::string scenario_file_path
 	{
-		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
-		// "/data/planar_2dof/scenario1/scenario1.yaml"
-		// "/data/planar_2dof/scenario2/scenario2.yaml"
 		// "/data/planar_2dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
 
-		// "/data/xarm6/scenario_test/scenario_test.yaml"
-		// "/data/xarm6/scenario1/scenario1.yaml"
-		// "/data/xarm6/scenario2/scenario2.yaml"
-		"/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml"
+
+		// "/data/spatial_10dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/spatial_14dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		// "/data/spatial_18dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
+		"/data/spatial_22dof/scenario_random_obstacles/scenario_random_obstacles.yaml"
 	};
 	const std::string output_file_name { "random_scenarios.yaml" };
 
@@ -52,6 +51,7 @@ int main(int argc, char **argv)
 			output_file << "scenario_" << init_num_obs << ": \n";
 			for (size_t i = init_num_test-1; i < max_num_tests; i++)
 			{
+				LOG(INFO) << "Test num. " << i+1 << " of " << max_num_tests << "\n";
 				scenario::Scenario scenario(scenario_file_path, project_path);
 				std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
 				std::shared_ptr<env::Environment> env { scenario.getEnvironment() };

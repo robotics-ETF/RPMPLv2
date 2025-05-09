@@ -1,0 +1,44 @@
+environment:
+  - box:
+      label: "ground"
+      dim: [1.5, 1.5, 0.1]
+      pos: [0, 0, -0.05]
+      min_dist_tol: 0.05          # Minimal distance tolerance for a static obstacle to not be included into a dynamic scene
+  - box:
+      dim: [0.5, 0.5, 1]
+      pos: [0.55, 0.55, 0.5]
+  - box:
+      dim: [0.5, 0.5, 1]
+      pos: [-0.55, 0.55, 0.5]
+  - box:
+      dim: [0.5, 0.5, 1]
+      pos: [0.55, -0.55, 0.5]
+  - box:
+      dim: [0.5, 0.5, 1]
+      pos: [-0.55, -0.55, 0.5]
+
+random_obstacles:
+  num: 0	                        # Number of random obstacles to be added
+  dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
+
+robot:
+  type: "spatial_10dof"
+  urdf: "/data/spatial_10dof/spatial_10dof.urdf"
+  space: "RealVectorSpace"
+  num_DOFs: 10
+  q_start: [0,    1.57, 0, 0, 0, 0, 0, 0, 0, 0]
+  q_goal:  [3.14, 1.57, 0, 0, 0, 0, 0, 0, 0, 0]
+  capsules_radius: [0.025]
+  gripper_length: 0.0                                         # In [m]
+  ground_included: 2                                          # Please check whether 'ground' is added in 'environment'
+  self_collision_checking: false                              # Whether self-collision should be checked
+  WS_center: [0.0, 0.0, 0.1]                                  # Workspace center point in [m]
+  WS_radius: 1.5                                              # Workspace radius in [m] assuming spherical workspace shape
+  max_vel:  [3.1415]                                          # Maximal velocity of each robot's joint in [rad/s]
+  max_acc:  [20]                                              # Maximal acceleration of each robot's joint in [rad/s²]
+  max_jerk: [500]                                             # Maximal jerk of each robot's joint in [rad/s³]
+
+testing:
+  max_num: 1000             # Maximal number of tests that should be carried out
+  max_vel_obs: 0.3          # Maximal velocity for each obstacle from "environment"
+  motion_type: "circular"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.
