@@ -73,6 +73,9 @@ namespace planning::rrtx
 
         // Radius for rewiring
         float r_rewire;
+
+        // Parameters for computing radius for rewiring
+        float eta, mi, zeta, gamma_rrt;
         
         // Sets and queues for dynamic replanning
         std::unordered_set<std::shared_ptr<base::State>> orphan_set;
@@ -82,7 +85,7 @@ namespace planning::rrtx
                             CostComparator> propagation_queue;
         
         // Path from start to goal
-        std::vector<std::shared_ptr<base::State>> path;
+        std::vector<std::shared_ptr<base::State>> path_current;
 
         std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state

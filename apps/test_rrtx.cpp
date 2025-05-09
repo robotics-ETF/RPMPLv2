@@ -36,11 +36,8 @@ int main(int argc, char **argv)
 	output_file	<< "Maximal iteration time [s]:                             " << RRTxConfig::MAX_ITER_TIME << std::endl;
 	output_file << "Step size for extending [rad]:                          " << RRTxConfig::EPS_STEP << std::endl;
 	output_file << "Radius for rewiring [rad]:                              " << RRTxConfig::R_REWIRE << std::endl;
-	output_file << "Radius to check for collisions [rad]:                   " << RRTxConfig::R_COLLISION << std::endl;
-	output_file << "Initial radius for nearest neighbors [rad]:             " << RRTxConfig::R_NEAREST << std::endl;
 	output_file << "Maximal number of neighbors to consider:                " << RRTxConfig::MAX_NEIGHBORS << std::endl;
 	output_file << "Process obstacles every N iterations:                   " << RRTxConfig::REPLANNING_THROTTLE << std::endl;
-	output_file << "Factor for rewire radius:                               " << RRTxConfig::REWIRE_FACTOR << std::endl;
 	output_file << "Probability of sampling start directly:                 " << RRTxConfig::START_BIAS << std::endl;
 	output_file << "Resolution for collision checking [m]:                  " << RRTxConfig::RESOLUTION_COLL_CHECK << std::endl;
 	output_file << "Trajectory interpolation:                               " << RRTxConfig::TRAJECTORY_INTERPOLATION << std::endl;
@@ -117,6 +114,7 @@ int main(int argc, char **argv)
 			output_file << "Success:\n" << result << std::endl;
 			output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 			output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
+			output_file << "Time for the initial path [s]:\n" << (result ? planner->getPlannerInfo()->getIterationTimes().front() : INFINITY) << std::endl;
 			output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
 
 			output_file << "--------------------------------------------------------------------\n";
