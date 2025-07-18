@@ -1,15 +1,16 @@
 from xml.etree.ElementTree import PI
 from log_parser import LogParser
-from planar_10dof_vis import visualize
+from spatial_10dof_vis import visualize
 import yaml
 from math import pi
 import os
 
 if __name__ == "__main__":
-    data_file_path = "/RGBTConnect_data/test1.log"
+    data_file_path = "/DRGBT_data/test4_1.log"
+    # data_file_path = "/RRTx_data/test4_1.log"
+    # data_file_path = "/MARS_data/MARS_trajectory_scenario10dof_v1.log"
 
-    # scenario_file_path = "/data/planar_10dof/scenario_test/scenario_test.yaml"
-    scenario_file_path = "/data/planar_10dof/scenario1/scenario1.yaml"
+    scenario_file_path = "/data/spatial_10dof/scenario_random_obstacles/scenario_test.yaml"
 
     project_path = os.path.dirname(os.path.abspath(__file__))
     project_path = project_path.rsplit('/', 1)[0]
@@ -26,6 +27,6 @@ if __name__ == "__main__":
     with open(project_path + scenario_file_path, "r") as file:
         obstacles = yaml.safe_load(file)
     visualize(path, obstacles=obstacles, 
-              image_file=project_path + scenario_file_path.rsplit('/', 1)[0] + data_file_path + "planar_10dof.gif", 
-              is_trajectory=True, is_dynamic=False, duration=100) 
+              image_file=project_path + scenario_file_path.rsplit('/', 1)[0] + data_file_path + "spatial_10dof.gif", 
+              is_trajectory=True, is_dynamic=True, duration=50) 
     

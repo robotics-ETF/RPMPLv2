@@ -1,9 +1,6 @@
 import math
-from tkinter import LAST
-from turtle import width
 from urdfpy import URDF
 import pyrender
-from trimesh.creation import box, cylinder
 from state_spaces.real_vector_space import RealVectorSpace
 from trimesh.creation import box, cylinder
 from trimesh.collision import CollisionManager
@@ -14,36 +11,36 @@ import time
 import os
 import copy
 
-class Xarm6(RealVectorSpace):
+
+class Spatial10DOF(RealVectorSpace):
     def __init__(self, obstacles, positions=None, velocities=None) -> None:
         project_path = os.path.dirname(os.path.abspath(__file__))
         project_path = project_path.rsplit('/', 2)[0]
-        self.robot = URDF.load(project_path + "/data/xarm6/xarm6vis.urdf")
-        self.spaces = RealVectorSpace(6)
+        self.robot = URDF.load(project_path + "/data/spatial_10dof/spatial_10dof_v2.urdf")
+        self.spaces = RealVectorSpace(10)
         self.robot_cm = CollisionManager()
         self.env_cm = CollisionManager()
-        self.start_config = [0, 0, 0, 0, 0, 0]
+        self.start_config = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.camera_pos_z = 3.0
 
         self.traj = []
         self.count_i = 0
-        self.curr_q = [0, 0, 0, 0, 0, 0]
+        self.curr_q = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        cfg = self.get_config([0, 0, 0, 0, 0, 0])
-        self.init_poses = [0 for i in range(6)]
-        #print(cfg)
-        fk = self.robot.collision_trimesh_fk(cfg=cfg)
-        #fk = self.robot.visual_trimesh_fk(cfg=cfg)
-
-        # adding robot to the scene
+        cfg = self.get_config([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        fk = self.robot.link_fk(cfg=cfg)
+        self.init_poses = []
         for i, tm in enumerate(fk):
+            if i == 11:
+                break
             pose = fk[tm]
-            name = "link_" + str(i+1) 
-            self.init_poses.append(pose)
-            self.robot_cm.add_object(name, tm, pose)
+            init_pose, link_mesh = self.get_link_mesh(tm)
+            self.init_poses.append(init_pose)
+            self.robot_cm.add_object(
+                tm.name, link_mesh, np.matmul(pose, init_pose))
 
         for i, ob in enumerate(obstacles):
             self.env_cm.add_object("obstacle_" + str(i), ob)
-        for i, ob in enumerate(obstacles[:-1]):
             self.env_cm.add_object("prediction_" + str(i), ob)
 
         # Initial positions and velocities
@@ -84,22 +81,43 @@ class Xarm6(RealVectorSpace):
 
     def is_in_collision(self, q):
         cfg = self.get_config(q)
-        fk = self.robot.collision_trimesh_fk(cfg=cfg)
+        fk = self.robot.link_fk(cfg=cfg)
         # adding robot to the scene
         for i, tm in enumerate(fk):
+            if i == 11:
+                break
             pose = fk[tm]
-            self.robot_cm.set_transform("link_"+ str(i+1), pose)
+            init_pose = self.init_poses[i]
+            self.robot_cm.set_transform(tm.name, np.matmul(pose, init_pose))
 
         # print("obs:", self.env_cm._objs["obstacle_0"]["obj"].getTransform())
         return self.robot_cm.in_collision_other(self.env_cm)
 
+    def distance_to_obstacles(self, q):
+        cfg = self.get_config(q)
+        fk = self.robot.link_fk(cfg=cfg)
+        # adding robot to the scene
+        for i, tm in enumerate(fk):
+            if i == 11:
+                break
+            pose = fk[tm]
+            init_pose = self.init_poses[i]
+            self.robot_cm.set_transform(tm.name, np.matmul(pose, init_pose))
+            print(tm.name)
+            print(np.matmul(pose, init_pose))
+
+        # print("obs:", self.env_cm._objs["obstacle_0"]["obj"].getTransform())
+        min_dist, names, data = self.robot_cm.min_distance_other(self.env_cm, return_names=True, return_data=True)
+        return (min_dist, names, data.point(names[0]), data.point(names[1]))
+
     def distance(self, q):
         cfg = self.get_config(q)
-        fk = self.robot.collision_trimesh_fk(cfg=cfg)
+        fk = self.robot.link_fk(cfg=cfg)
         # adding robot to the scene
         for i, tm in enumerate(fk):
             pose = fk[tm]
-            self.robot_cm.set_transform("link_"+ str(i+1), pose)
+            init_pose = self.init_poses[i]
+            self.robot_cm.set_transform(tm.name, np.matmul(pose, init_pose))
 
         # print("obs:", self.env_cm._objs["obstacle_0"]["obj"].getTransform())
         return self.robot_cm.min_distance_other(self.env_cm)
@@ -127,120 +145,69 @@ class Xarm6(RealVectorSpace):
         return cfg
 
     def get_link_mesh(self, tm):
-        #print(tm.visuals)
         init_pose = tm.visuals[0].origin
         if tm.visuals[0].geometry.cylinder is not None:
             length = tm.visuals[0].geometry.cylinder.length
             radius = tm.visuals[0].geometry.cylinder.radius
             mesh = cylinder(radius, length)
-            mesh.visual.face_color = [230,230,230,255]#tm.visuals[0].material.color
+            mesh.visual.face_color = tm.visuals[0].material.color
             return init_pose, mesh
         else:
             ext = tm.visuals[0].geometry.box.size
             mesh = box(ext)
-            mesh.visual.face_colors = [230,230,230,255]#tm.visuals[0].material.color
+            mesh.visual.face_colors = tm.visuals[0].material.color
             return init_pose, mesh
 
-
-    def show(self, q=None, obstacles=None, use_collision=False):
+    def show(self, q=None, obstacles=None, image_file=None):
         cfg = self.get_config(q)
-        # print(cfg)
 
         # adding robot to the scene
-        scene = pyrender.Scene()
-        if use_collision:
-            fk = self.robot.collision_trimesh_fk(cfg=cfg)
-        else:
-            fk = self.robot.visual_trimesh_fk(cfg=cfg)
+        scene = pyrender.Scene(ambient_light=[0.02, 0.02, 0.02, 1.0])
+        fk = self.robot.link_fk(cfg=cfg)
         self.visualize_configuration(scene, fk)
 
         # adding base box to the scene
         ground = cylinder(radius=0.7, height=0.05) #([0.5, 0.5, 0.02])
         ground.apply_translation([0, 0, -0.025])
         ground.visual.vertex_colors = [0, 200, 0, 255]
-
         scene.add(pyrender.Mesh.from_trimesh(ground))
-        print("obstacles: ", len(obstacles))
-        # adding obstacles to the scene
-        for i, ob in enumerate(obstacles):
-            ob.visual.vertex_colors = [255, 0, 0, 255]
-            scene.add(pyrender.Mesh.from_trimesh(ob, smooth=False))
-
-        pyrender.Viewer(scene, viewport_size = (1400, 1050), use_raymond_lighting=True)
-
-    def animate(self, q_traj=None, obstacles=None, duration=100, image_file=None):
-        cfgs = self.interpolate(q_traj)    
-
-        # Create the scene
-        scene = pyrender.Scene()
-        fk = self.robot.visual_trimesh_fk(cfg=cfgs[0])
-        node_map, init_pose_map = self.visualize_configuration(scene, fk) 
-
-        # adding base box to the scene
-        ground = cylinder(radius=0.7, height=0.05) #([0.5, 0.5, 0.02])
-        ground.apply_translation([0, 0, -0.025])
-        ground.visual.vertex_colors = [0, 200, 0, 255]
-        scene.add(pyrender.Mesh.from_trimesh(ground))
-
-        # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
-        # init_cam_pose = np.array([[ 0.86595061,  0.28855402, -0.81698498, -0.76317579],\
-        #                           [-0.49829176,  0.567737,   -1.3105419,  -1.27955438],\
-        #                           [ 0.04283523,  0.77098072,  1.27083259,  1.64027461],\
-        #                           [ 0.,          0.,          0.,          1.        ]])
-
-        # cam = pyrender.PerspectiveCamera(yfov=4*np.pi / 3.0, aspectRatio=1.414)
-        # init_cam_pose = np.array([[1, 0, 0, 0],\
-        #                           [0, 0, 1, 1.2],\
-        #                           [0, -1, 0, 0.5],\
-        #                           [0, 0, 0, 1]])
 
         cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
-        init_cam_pose = np.array([[1, 0, 0, 0],\
-                                  [0, 1, 0, 0],\
-                                  [0, 0, 1, 2.5],\
-                                  [0, 0, 0, 1]])
-
+        # nc = pyrender.Node(camera=cam, matrix=np.eye(4))
+        # scene.add_node(nc)
+        init_cam_pose = np.eye(4)
+        init_cam_pose[2, 3] = self.camera_pos_z
         scene.add(cam, pose=init_cam_pose)
 
+        light = pyrender.DirectionalLight(color=np.ones(3), intensity=1.0)
+        scene.add(light, pose=init_cam_pose)
+
+        # scene.add(pyrender.Mesh.from_trimesh(ground))
+
         # adding obstacles to the scene
-        for i, ob in enumerate(obstacles):
-            ob.visual.vertex_colors = [1, 1, 1, 255]
+        for ob in obstacles:
+            ob.visual.vertex_colors = [0, 0, 0, 255]
             scene.add(pyrender.Mesh.from_trimesh(ob, smooth=False))
 
-        # Pop the visualizer asynchronously
-        v = pyrender.Viewer(scene, viewport_size = (1400, 1050), run_in_thread=True, use_raymond_lighting=True, record=True)
-        time.sleep(1.0)
-        # Now, run our loop
-        saved = False
-        i = 0
-        while v.is_active:
-            if i < len(cfgs) - 1:
-                i += 1
-            else:
-                i = 0
-                if not saved:
-                    saved = True
-                    if image_file is not None:
-                        v.close_external()
-                        v.save_gif(image_file)
-                time.sleep(1.0)
-            cfg = cfgs[i]
-            fk = self.robot.visual_trimesh_fk(cfg=cfg)
-            v.render_lock.acquire()
-            for mesh in fk:
-                pose = fk[mesh]
-                node_map[mesh].matrix = pose
-            v.render_lock.release()
-            time.sleep(duration / 1000)
+        if (image_file is not None):
+            from matplotlib import pyplot as plt
+            r = pyrender.OffscreenRenderer(640, 480, point_size=1.0)
+            color, _ = r.render(scene)
+            plt.figure(figsize=(20,20))
+            plt.axis('off')
+            plt.imshow(color)
+            plt.savefig(image_file)
+        else:
+            pyrender.Viewer(scene, viewport_size = (1400, 1050), use_raymond_lighting=True)
 
-    def animate_dynamic(self, q_traj=None, obstacles=None, duration=100, image_file=None):
-        cfgs = [self.get_config(q) for q in q_traj]
+    def animate(self, q_traj=None, obstacles=None, duration=100, image_file=None):
+        cfgs = self.interpolate(q_traj)
 
         # Create the scene
-        scene = pyrender.Scene()
-        fk_start = self.robot.visual_trimesh_fk(cfg=cfgs[0])
-        fk_goal = self.robot.visual_trimesh_fk(cfg=cfgs[len(cfgs)-1])
-        node_map, init_pose_map = self.visualize_configuration(scene, fk_start)        
+        scene = pyrender.Scene(ambient_light=[0.02, 0.02, 0.02, 1.0])
+        fk_start = self.robot.link_fk(cfg=cfgs[0])
+        fk_goal = self.robot.link_fk(cfg=cfgs[len(cfgs)-1])
+        node_map, init_pose_map = self.visualize_configuration(scene, fk_start)
         self.visualize_configuration(scene, fk_start, [255,0,255,100])
         self.visualize_configuration(scene, fk_goal, [0,255,0,100])
 
@@ -250,33 +217,77 @@ class Xarm6(RealVectorSpace):
         ground.visual.vertex_colors = [0, 200, 0, 255]
         scene.add(pyrender.Mesh.from_trimesh(ground))
 
-        cam = pyrender.PerspectiveCamera(yfov=2*np.pi / 3.0, aspectRatio=1.414)
-        init_cam_pose = np.array([[ 0.86595061,  0.28855402, -0.81698498, -0.66317579],\
-                                  [-0.49829176,  0.567737,   -1.3105419,  -1.17955438],\
-                                  [ 0.04283523,  0.77098072,  1.27083259,  1.64027461],\
-                                  [ 0.,          0.,          0.,          1.        ]])
-
-        # cam = pyrender.PerspectiveCamera(yfov=4*np.pi / 3.0, aspectRatio=1.414)
-        # init_cam_pose = np.array([[1, 0, 0, 0],\
-        #                           [0, 0, 1, 1.1],\
-        #                           [0, -1, 0, 0.5],\
-        #                           [0, 0, 0, 1]])
-
-        # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
-        # init_cam_pose = np.array([[1, 0, 0, 0],\
-        #                           [0, 1, 0, 0],\
-        #                           [0, 0, 1, 2.5],\
-        #                           [0, 0, 0, 1]])
-
+        cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
+        init_cam_pose = np.eye(4)
+        init_cam_pose[2, 3] = self.camera_pos_z
         scene.add(cam, pose=init_cam_pose)
 
-        # adding obstacles to the scene
+        light = pyrender.DirectionalLight(color=np.ones(3), intensity=1.0)
+        scene.add(light, pose=init_cam_pose)
+
+        for ob in obstacles:
+            ob.visual.vertex_colors = [0, 0, 0, 255]
+            scene.add(pyrender.Mesh.from_trimesh(ob, smooth=False))
+
+        # Pop the visualizer asynchronously
+        v = pyrender.Viewer(scene, viewport_size = (1400, 1050), run_in_thread=True, use_raymond_lighting=True, record=True)
+        time.sleep(1.0)
+        
+        # Now, run our loop
+        saved = False
+        i = 0
+        while v.is_active:            
+            if i < len(cfgs) - 1:
+                i += 1
+            else:
+                i = 0
+                if not saved:
+                    saved = True
+                    if image_file is not None:
+                        v.close_external()
+                    #     v.save_gif(image_file)
+                time.sleep(1.0)
+            cfg = cfgs[i]
+            fk = self.robot.link_fk(cfg=cfg)
+            v.render_lock.acquire()
+            for j, mesh in enumerate(fk):
+                if j < 11:
+                    pose = fk[mesh]
+                    node_map[mesh].matrix = np.matmul(pose, init_pose_map[mesh])
+            v.render_lock.release()
+            time.sleep(duration / 1000)
+    
+    def animate_dynamic(self, q_traj=None, obstacles=None, duration=100, image_file=None):
+        cfgs = [self.get_config(q) for q in q_traj]
+
+        # Create the scene
+        scene = pyrender.Scene(ambient_light=[0.02, 0.02, 0.02, 1.0])
+        fk_start = self.robot.link_fk(cfg=cfgs[0])
+        fk_goal = self.robot.link_fk(cfg=cfgs[len(cfgs)-1])
+        node_map, init_pose_map = self.visualize_configuration(scene, fk_start)
+        self.visualize_configuration(scene, fk_start, [255,0,255,100])
+        self.visualize_configuration(scene, fk_goal, [0,255,0,100])
+
+        # adding base box to the scene
+        ground = cylinder(radius=0.7, height=0.05) #([0.5, 0.5, 0.02])
+        ground.apply_translation([0, 0, -0.025])
+        ground.visual.vertex_colors = [0, 200, 0, 255]
+        scene.add(pyrender.Mesh.from_trimesh(ground))
+        
+        cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
+        init_cam_pose = np.eye(4)
+        init_cam_pose[2, 3] = self.camera_pos_z
+        scene.add(cam, pose=init_cam_pose)
+
+        light = pyrender.DirectionalLight(color=np.ones(3), intensity=1.0)
+        scene.add(light, pose=init_cam_pose)
+
         M = []
-        for i, ob in enumerate(obstacles):
-            ob.visual.vertex_colors = [1, 1, 1, 255]
+        for ob in obstacles:
+            ob.visual.vertex_colors = [0, 0, 0, 255]
             scene.add(pyrender.Mesh.from_trimesh(ob, smooth=False), name="Obstacles")
             M.append(transforms.identity_matrix())
-
+        
         # Pop the visualizer asynchronously
         v = pyrender.Viewer(scene, viewport_size = (1400, 1050), run_in_thread=True, use_raymond_lighting=True, record=True)
         time.sleep(10)
@@ -286,12 +297,11 @@ class Xarm6(RealVectorSpace):
         i = 0
         OB = v.scene.get_nodes(name="Obstacles")
         while v.is_active:
-            print("i = ", i)
             v.render_lock.acquire()
             M = self.update_obstacles(M, duration)
             for j, ob in enumerate(OB):
                 v.scene.set_pose(ob, M[j])
-
+                
             if i < len(cfgs) - 1:
                 i += 1
             else:
@@ -300,16 +310,19 @@ class Xarm6(RealVectorSpace):
                     saved = True
                     if image_file is not None:
                         v.close_external()
-                        v.save_gif(image_file)
+                    #     v.save_gif(image_file)
                 time.sleep(1.0)
             cfg = cfgs[i]
-            fk = self.robot.visual_trimesh_fk(cfg=cfg)
-            for mesh in fk:
-                pose = fk[mesh]
-                node_map[mesh].matrix = pose
+            print("i = ", i, "\t q: ", cfg)
+
+            fk = self.robot.link_fk(cfg=cfg)
+            for j, mesh in enumerate(fk):
+                if j < 11:
+                    pose = fk[mesh]
+                    node_map[mesh].matrix = np.matmul(pose, init_pose_map[mesh])
             v.render_lock.release()
             time.sleep(duration / 1000)
-    
+
     def interpolate(self, q_traj, step=0.1):
         cfgs = []
         idx = 0
@@ -326,44 +339,32 @@ class Xarm6(RealVectorSpace):
         return cfgs
 
     def update_obstacles(self, M, duration=100):
-        base_radius = 0.137321
-        WS_radius = 1.5
-        WS_center = np.array([0.0, 0.0, 0.267])
-        robot_max_vel = 3.1415
+        base_radius = 0.544615
+        WS_radius = 1.0
+        WS_center = np.array([0.0, 0.0, 0.1])
+        robot_max_vel = 1.0
         delta_time = duration / 1000.0
 
         for i in range(len(M)):
-            tol_radius = max(np.linalg.norm(self.velocities[i]) / robot_max_vel, base_radius)
-            pos_next = self.positions[i] + self.velocities[i] * delta_time
-            change = True
+            if self.positions[i][2] < 0 or self.positions[i][2] > WS_radius:
+                self.velocities[i] = -self.velocities[i]
 
-            if pos_next[2] < 0:
-                vec_normal = np.array([0, 0, 1])
-            elif np.linalg.norm(pos_next - WS_center) > WS_radius:
-                vec_normal = np.array([-pos_next[0], -pos_next[1], -(pos_next[2] - WS_center[2])])
-            elif np.linalg.norm(pos_next[0:2]) < tol_radius and pos_next[2] < WS_center[2]:
-                vec_normal = np.array([pos_next[0], pos_next[1], 0])
-            elif np.linalg.norm(pos_next - WS_center) < tol_radius:
-                vec_normal = np.array([pos_next[0], pos_next[1], pos_next[2] - WS_center[2]])
-            else:
-                self.positions[i] = pos_next
-                change = False
+            self.positions[i] = copy.deepcopy(self.positions[i] + self.velocities[i] * delta_time)
 
-            if change:
-                t_param = np.dot(pos_next - self.positions[i], vec_normal) / np.dot(vec_normal, vec_normal)
-                self.positions[i] = 2 * pos_next - self.positions[i] - 2 * t_param * vec_normal
-                self.velocities[i] = (self.positions[i] - pos_next) / delta_time
-
-            M[i][0:3,3] = self.positions[i] - self.init_pos[i]    # Since each obstacle is represented in its own local coo. system
+            M[i][0:3,3] = copy.deepcopy(self.positions[i] - self.init_pos[i])    # Since each obstacle is represented in its own local coo. system
             print("Obstacle i = ", i+1, "\t Pos: ", self.positions[i])
         return M
-
+    
     def visualize_configuration(self, scene, fk, color=None):
         node_map = {}
         init_pose_map = {}
-        for tm in fk:
+        for i, tm in enumerate(fk):
+            if i == 11:
+                break
+            init_pose, link_mesh = self.get_link_mesh(tm)
             if not color == None:
-                tm.visual.vertex_colors = color
-            mesh = pyrender.Mesh.from_trimesh(tm, smooth=False)
-            node_map[tm] = scene.add(mesh, pose=fk[tm])
+                link_mesh.visual.vertex_colors = color
+            mesh = pyrender.Mesh.from_trimesh(link_mesh, smooth=False)
+            node_map[tm] = scene.add(mesh, pose=np.matmul(fk[tm], init_pose))
+            init_pose_map[tm] = init_pose
         return node_map, init_pose_map
