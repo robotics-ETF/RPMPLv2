@@ -51,7 +51,7 @@ namespace planning::rrtx
                                bool output_states_and_paths = true, 
                                bool append_output = false) const override;
                                
-    private:
+    protected:
         // Custom comparator for priority queue based on cost
         struct CostComparator 
         {
