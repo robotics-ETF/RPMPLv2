@@ -8,11 +8,14 @@ import trimesh.transformations as transforms
 import numpy as np
 import threading
 import time
+import os
 
 
 class Planar2DOF(RealVectorSpace):
     def __init__(self, obstacles) -> None:
-        self.robot = URDF.load('../data/planar_2dof/planar_2dof.urdf')
+        project_path = os.path.dirname(os.path.abspath(__file__))
+        project_path = project_path.rsplit('/', 2)[0]
+        self.robot = URDF.load(project_path + "/data/planar_2dof/planar_2dof.urdf")
         self.spaces = RealVectorSpace(2)
         self.robot_cm = CollisionManager()
         self.env_cm = CollisionManager()
@@ -188,7 +191,7 @@ class Planar2DOF(RealVectorSpace):
         else:
             pyrender.Viewer(scene, viewport_size = (1400, 1050), use_raymond_lighting=True)
 
-    def animate(self, q_traj=None, obstacles=None, fps=10.0, image_file=None):
+    def animate(self, q_traj=None, obstacles=None, duration=100, image_file=None):
         cfgs = self.interpolate(q_traj)
 
         # Create the scene
@@ -236,9 +239,9 @@ class Planar2DOF(RealVectorSpace):
                     pose = fk[mesh]
                     node_map[mesh].matrix = np.matmul(pose, init_pose_map[mesh])
             v.render_lock.release()
-            time.sleep(1.0 / fps)
+            time.sleep(duration / 1000)
     
-    def animate_dynamic(self, q_traj=None, obstacles=None, fps=10.0, image_file=None):
+    def animate_dynamic(self, q_traj=None, obstacles=None, duration=100, image_file=None):
         cfgs = [self.get_config(q) for q in q_traj]
 
         # Create the scene
@@ -293,7 +296,7 @@ class Planar2DOF(RealVectorSpace):
                     pose = fk[mesh]
                     node_map[mesh].matrix = np.matmul(pose, init_pose_map[mesh])
             v.render_lock.release()
-            time.sleep(1.0 / fps)
+            time.sleep(duration / 1000)
 
     def interpolate(self, q_traj, step=0.1):
         cfgs = []

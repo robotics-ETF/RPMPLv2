@@ -187,12 +187,12 @@ Test DRGBT with random obstacles:
 ./test_drgbt_random_obstacles
 ```
 
-After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planner_data.log```).
+After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/RGBTConnect_data/test1.log```).
 
 ## 3.5 Visualize the robot and environment
 In the new tab type:
 ```
-cd ~/xarm6-etf-lab/build
+cd ~/RPMPLv2/build/rpmpl_library/apps
 ```
 
 Visualize plannar_2dof robot:

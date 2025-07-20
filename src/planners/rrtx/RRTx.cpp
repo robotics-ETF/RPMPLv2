@@ -185,6 +185,7 @@ bool planning::rrtx::RRTx::solve()
         
         status = base::State::Status::None;
         std::shared_ptr<base::State> q_current_new = ss->getNewState(q_current->getCoord());
+        updating_state->setNonZeroFinalVel(!ss->isEqual(q_next, q_goal));
         updating_state->setTimeIterStart(time_iter_start);
         updating_state->update(q_previous, q_current_new, q_next, status);
 

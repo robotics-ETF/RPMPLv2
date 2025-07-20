@@ -47,7 +47,6 @@ bool planning::trajectory::MotionValidity::check(const std::shared_ptr<base::Sta
 bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current)
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
-    bool is_valid { true };
     std::shared_ptr<base::State> q_temp { nullptr };
     float dist { ss->getNorm(q_previous, q_current) };
     float delta_time { max_iter_time / num_checks };
@@ -56,9 +55,7 @@ bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::
     {
         ss->env->updateEnvironment(delta_time);
         q_temp = ss->interpolateEdge(q_previous, q_current, dist * num_check / num_checks, dist);
-        path->emplace_back(q_temp);
-        is_valid = ss->isValid(q_temp) && !ss->robot->checkSelfCollision(q_temp);
-        if (!is_valid)
+        if (!ss->isValid(q_temp) || ss->robot->checkSelfCollision(q_temp))
             break;
     }
 
@@ -66,7 +63,8 @@ bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::
     // for (size_t i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
-    return is_valid;
+    path->emplace_back(q_temp);
+    return true;
 }
 
 // In case traj_interpolation == "Spline", discretely check the validity of motion 
@@ -74,7 +72,6 @@ bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::
 bool planning::trajectory::MotionValidity::check_v2()
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
-    bool is_valid { true };
     std::shared_ptr<base::State> q_temp { nullptr };
     size_t num_checks1 = std::ceil((splines->spline_current->getTimeCurrent() - splines->spline_current->getTimeBegin()) * num_checks / max_iter_time);
     size_t num_checks2 { num_checks - num_checks1 };
@@ -106,15 +103,15 @@ bool planning::trajectory::MotionValidity::check_v2()
             ss->env->updateEnvironment(delta_time2);
         }
 
-        path->emplace_back(q_temp);
-        is_valid = ss->isValid(q_temp) && !ss->robot->checkSelfCollision(q_temp);
-        if (!is_valid)
-            break;
+        if (!ss->isValid(q_temp) || ss->robot->checkSelfCollision(q_temp))
+            return false;
     }
     
     // std::cout << "Environment objects: \n";
     // for (size_t i = 0; i < ss->env->getNumObjects(); i++)
     //     std::cout << "i = " << i << " : " << ss->env->getObject(i)->getPosition().transpose() << "\n";
 
-    return is_valid;
+    // std::cout << q_temp << "\n";
+    path->emplace_back(q_temp);
+    return true;
 }
