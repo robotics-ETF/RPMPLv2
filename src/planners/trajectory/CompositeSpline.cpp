@@ -13,7 +13,10 @@ planning::trajectory::CompositeSpline::CompositeSpline(const std::vector<std::sh
 
     float time_final_sum { 0 };
     for (size_t i = 0; i < subsplines.size(); i++)
+    {
         time_final_sum += subsplines[i]->getTimeFinal();
+        times_connecting.emplace_back(time_final_sum);
+    }
     time_final = time_final_sum;
 }
 
@@ -21,13 +24,10 @@ planning::trajectory::CompositeSpline::~CompositeSpline() {}
 
 size_t planning::trajectory::CompositeSpline::findSubsplineIdx(float t)
 {
-    float time_final_sum { 0 };
-    for (size_t i = 0; i < subsplines.size(); i++)
+    for (size_t idx = 0; idx < subsplines.size(); idx++)
     {
-        if (t < subsplines[i]->getTimeFinal() + time_final_sum)
-            return i;
-        else
-            time_final_sum += subsplines[i]->getTimeFinal();
+        if (t < times_connecting[idx])
+            return idx;
     }
 
     return subsplines.size()-1;
@@ -36,28 +36,28 @@ size_t planning::trajectory::CompositeSpline::findSubsplineIdx(float t)
 Eigen::VectorXf planning::trajectory::CompositeSpline::getPosition(float t)
 {
     size_t idx { findSubsplineIdx(t) };
-    float t_offset { idx > 0 ? subsplines[idx-1]->getTimeFinal() : 0 };
+    float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getPosition(t - t_offset);
 }
 
 Eigen::VectorXf planning::trajectory::CompositeSpline::getVelocity(float t)
 {
     size_t idx { findSubsplineIdx(t) };
-    float t_offset { idx > 0 ? subsplines[idx-1]->getTimeFinal() : 0 };
+    float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getVelocity(t - t_offset);
 }
 
 Eigen::VectorXf planning::trajectory::CompositeSpline::getAcceleration(float t)
 {
     size_t idx { findSubsplineIdx(t) };
-    float t_offset { idx > 0 ? subsplines[idx-1]->getTimeFinal() : 0 };
+    float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getAcceleration(t - t_offset);
 }
 
 Eigen::VectorXf planning::trajectory::CompositeSpline::getJerk(float t)
 {
     size_t idx { findSubsplineIdx(t) };
-    float t_offset { idx > 0 ? subsplines[idx-1]->getTimeFinal() : 0 };
+    float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getJerk(t - t_offset);
 }
 

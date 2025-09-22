@@ -35,6 +35,9 @@ namespace planning::trajectory
         bool compute([[maybe_unused]] const Eigen::VectorXf &q_final, [[maybe_unused]] const Eigen::VectorXf &q_final_dot, 
                      [[maybe_unused]] const Eigen::VectorXf &q_final_ddot) override { return false; }
         bool checkConstraints([[maybe_unused]] size_t idx, [[maybe_unused]] float t_f) override { return false; }
+
+    private:
+        std::vector<float> times_connecting;
     };
 }
 
