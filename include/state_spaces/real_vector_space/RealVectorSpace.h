@@ -37,6 +37,8 @@ namespace base
 			const std::shared_ptr<base::State> q2, const std::vector<std::pair<float, float>> &limits_) override;
 		std::shared_ptr<base::State> pruneEdge2(const std::shared_ptr<base::State> q1, 
 			const std::shared_ptr<base::State> q2, float max_edge_length) override;
+		bool checkLinearDependency(const std::shared_ptr<base::State> q0, const std::shared_ptr<base::State> q1,
+			const std::shared_ptr<base::State> q2) override;
 		void preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
 			std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length) override;
 

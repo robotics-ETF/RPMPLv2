@@ -182,6 +182,21 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 	return q2;
 }
 
+/// @brief Check linear dependency of vectors [q0,q1] and [q1,q2].
+/// @return True if vectors are linearly dependent (collinear), and false otherwise.
+bool base::RealVectorSpace::checkLinearDependency(const std::shared_ptr<base::State> q0, const std::shared_ptr<base::State> q1,
+	const std::shared_ptr<base::State> q2)
+{
+	for (size_t k = 1; k < num_dimensions; k++)
+	{
+		if (std::abs((q2->getCoord(k) - q1->getCoord(k)) / (q1->getCoord(k) - q0->getCoord(k)) - 
+					 (q2->getCoord(k-1) - q1->getCoord(k-1)) / (q1->getCoord(k-1) - q0->getCoord(k-1))) > 
+			RealVectorSpaceConfig::EQUALITY_THRESHOLD)	// Two vectors are non-linearly dependent
+				return false;
+	}
+	return true;
+}
+
 /// @brief Generate a new path 'new_path' from a path 'original_path' in a way that the distance between two adjacent nodes
 /// is fixed (if possible) to a length of 'max_edge_length'. Geometrically, the new path remains the same as the original one,
 /// but only their nodes may differ.
