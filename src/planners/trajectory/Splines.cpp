@@ -1,5 +1,18 @@
 #include "Splines.h"
 
+planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &ss_)
+{
+    ss = ss_;
+    q_current = nullptr;
+    max_iter_time = 0;
+    max_remaining_iter_time = INFINITY;
+    max_obs_vel = 0;
+    spline_current = nullptr;
+    spline_next = nullptr;
+    composite_spline = nullptr;
+    setParams();
+}
+
 planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &ss_, 
     const std::shared_ptr<base::State> &q_current_, float max_iter_time_)
 {
@@ -17,7 +30,12 @@ planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &
 
     spline_current = std::make_shared<planning::trajectory::Spline5>(ss->robot, q_current->getCoord());
     spline_next = spline_current;
+    composite_spline = nullptr;
+    setParams();
+}
 
+void planning::trajectory::Splines::setParams()
+{
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
     {
@@ -346,7 +364,274 @@ float planning::trajectory::Splines::computeDistanceUnderestimation(const std::s
 	return d_c;
 }
 
-// This function is just for debugging. You can set a desired path for the file to be saved.
+/// @brief A method (v1) to convert a path 'path' to a corresponding trajectory.
+/// Converting this path to trajectory (i.e., assigning time instances to these points) will be automatically done by this function.
+/// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
+/// acceleration and jerk are surely always satisfied.
+/// @param path Path containing all points that robot should visit.
+/// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
+/// The robot motion between them is generally not a straight line in C-space. 
+/// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
+void planning::trajectory::Splines::path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path)
+{
+    std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
+
+    spline_current = std::make_shared<planning::trajectory::Spline5>
+    (
+        ss->robot, 
+        path.front()->getCoord(), 
+        Eigen::VectorXf::Zero(ss->num_dimensions), 
+        Eigen::VectorXf::Zero(ss->num_dimensions)
+    );
+    spline_current->compute(path[1]->getCoord());
+    
+    float t {}, t_max {};
+    bool spline_computed { false };
+    size_t num {};
+    const size_t max_num_iter { 5 };
+    
+    for (size_t i = 2; i < path.size(); i++)
+    {
+        spline_computed = false;
+        num = 0;
+        t = 0;
+        t_max = spline_current->getTimeFinal();
+        // std::cout << "i: " << i << " ---------------------------\n";
+        // std::cout << "t_max: " << t_max << " [s] \n";
+
+        while (!spline_computed && num++ < max_num_iter)
+        {
+            t = (num < max_num_iter) ?
+                (t + t_max) / 2 :
+                t_max;              // Solution surely exists, and 'spline_computed' will become true.
+            // std::cout << "t: " << t << " [s] \n";
+
+            spline_next = std::make_shared<planning::trajectory::Spline5>
+            (
+                ss->robot, 
+                spline_current->getPosition(t), 
+                spline_current->getVelocity(t), 
+                spline_current->getAcceleration(t)
+            );
+            spline_computed = spline_next->compute(path[i]->getCoord());
+
+            if (spline_computed && num < max_num_iter)
+            {
+                q_current = ss->getNewState(spline_current->getPosition(t));
+                ss->computeDistance(q_current);     // Required by 'checkCollision' function
+                if (q_current->getDistance() <= 0 || checkCollision(q_current, 0))
+                    spline_computed = false;
+            }
+        }
+
+        spline_current->setTimeFinal(t);
+        subsplines.emplace_back(spline_current);
+        spline_current = spline_next;
+    }
+
+    subsplines.emplace_back(spline_current);
+    composite_spline = std::make_shared<planning::trajectory::CompositeSpline>(subsplines);
+}
+
+/// @brief A method (v2) to convert a path 'path' to a corresponding trajectory.
+/// Converting this path to trajectory (i.e., assigning time instances to these points) will be automatically done by this function.
+/// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
+/// acceleration and jerk are surely always satisfied.
+/// @param path Path containing all points that robot should visit.
+/// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
+/// The robot motion between them is generally not a straight line in C-space. 
+/// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
+void planning::trajectory::Splines::path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path)
+{
+    std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
+
+    spline_current = std::make_shared<planning::trajectory::Spline5>
+    (
+        ss->robot, 
+        path.front()->getCoord(), 
+        Eigen::VectorXf::Zero(ss->num_dimensions), 
+        Eigen::VectorXf::Zero(ss->num_dimensions)
+    );
+    spline_current->compute(path[1]->getCoord());
+    
+    float t {}, t_max {};
+    bool spline_computed { false };
+    size_t num {};
+    const size_t max_num_iter { 5 };
+    bool non_zero_final_vel { false };
+    
+    for (size_t i = 2; i < path.size(); i++)
+    {
+        spline_computed = false;
+        num = 0;
+        t = 0;
+        t_max = spline_current->getTimeFinal();
+        non_zero_final_vel = (i < path.size()-1) ? ss->checkLinearDependency(path[i-1], path[i], path[i+1]) : false;
+        q_target = path[i];
+        // std::cout << "i: " << i << " ---------------------------\n";
+        // std::cout << "t_max: " << t_max << " [s] \n";
+
+        while (!spline_computed && num++ < max_num_iter)
+        {
+            t = (num < max_num_iter) ?
+                (t + t_max) / 2 :
+                t_max;                  // Solution surely exists, and 'spline_computed' will become true.
+            // std::cout << "t: " << t << " [s] \n";
+
+            q_current = path[i-1];      // Required for the estimation of final vector velocity
+            spline_computed = computeRegular(
+                spline_current->getPosition(t),
+                spline_current->getVelocity(t),
+                spline_current->getAcceleration(t),
+                max_remaining_iter_time,
+                SplinesConfig::MAX_TIME_COMPUTE_REGULAR,
+                non_zero_final_vel
+            );
+            
+            if (spline_computed && num < max_num_iter)
+            {
+                q_current = ss->getNewState(spline_current->getPosition(t));
+                ss->computeDistance(q_current);     // Required by 'checkCollision' function
+                if (q_current->getDistance() <= 0 || checkCollision(q_current, 0))
+                    spline_computed = false;
+            }
+        }
+
+        spline_current->setTimeFinal(t);
+        subsplines.emplace_back(spline_current);
+        spline_current = spline_next;
+    }
+
+    subsplines.emplace_back(spline_current);
+    composite_spline = std::make_shared<planning::trajectory::CompositeSpline>(subsplines);
+}
+
+/// @brief A method (v3) to convert a path 'path' to a corresponding trajectory.
+/// Converting this path to trajectory (i.e., assigning time instances to these points) will be automatically done by this function.
+/// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
+/// acceleration and jerk are surely always satisfied.
+/// @param path Path containing all points that robot should visit.
+/// @param must_visit Whether path points must be visited.
+/// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
+/// The robot motion between them is generally not a straight line in C-space. 
+/// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
+void planning::trajectory::Splines::path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
+{
+    std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines(path.size(), nullptr);
+    bool spline_computed { false };
+    size_t num_iter {};
+    size_t max_num_iter { 5 };
+    float delta_t_max {};
+    Eigen::VectorXf q_final_dot_max {};
+    Eigen::VectorXf q_final_dot_min {};
+    Eigen::VectorXf q_final_dot {};
+    Eigen::VectorXf q_final {};
+    std::vector<float> vel_coeff(path.size(), 1.0);
+    const float vel_coeff_const { 0.9 };
+    auto time_start = std::chrono::steady_clock::now();
+    float max_time { 1.0 };
+    bool monotonic { true };
+
+    subsplines.front() = std::make_shared<planning::trajectory::Spline5>
+    (
+        ss->robot, 
+        path.front()->getCoord(), 
+        Eigen::VectorXf::Zero(ss->num_dimensions), 
+        Eigen::VectorXf::Zero(ss->num_dimensions)
+    );
+    
+    for (size_t i = 1; i < path.size(); i++)
+    {
+        subsplines[i] = std::make_shared<planning::trajectory::Spline5>
+        (
+            ss->robot, 
+            subsplines[i-1]->getPosition(subsplines[i-1]->getTimeFinal()), 
+            subsplines[i-1]->getVelocity(subsplines[i-1]->getTimeFinal()), 
+            subsplines[i-1]->getAcceleration(subsplines[i-1]->getTimeFinal())
+        );
+
+        if (i == path.size() - 1)   // Final configuration will be reached, thus final velocity and acceleration must be zero!
+        {
+            spline_computed = subsplines[i]->compute(path.back()->getCoord()) && subsplines[i]->checkPositionMonotonicity() != 0;
+            if (!spline_computed) 
+            {
+                // std::cout << "Spline not computed! \n";
+                vel_coeff[--i] *= vel_coeff_const;
+                --i;
+            }
+            else
+                break;
+        }
+
+        if (i > 1)
+            monotonic = (!ss->checkLinearDependency(path[i-2], path[i-1], path[i])) ? false : true;
+        
+        if (!must_visit)
+            q_final = (path[i-1]->getCoord() + path[i]->getCoord()) / 2;
+        else
+            q_final = path[i]->getCoord();
+        
+        spline_computed = false;
+        num_iter = 0;
+        delta_t_max = ((q_final - path[i-1]->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff();
+        q_final_dot_max = (q_final - path[i-1]->getCoord()) / delta_t_max;
+        q_final_dot_min = Eigen::VectorXf::Zero(ss->num_dimensions);
+
+        do
+        {
+            q_final_dot = vel_coeff[i] * (q_final_dot_max + q_final_dot_min) / 2;
+            std::shared_ptr<planning::trajectory::Spline> spline_new {
+                std::make_shared<planning::trajectory::Spline5>
+                (
+                    ss->robot, 
+                    subsplines[i-1]->getPosition(subsplines[i-1]->getTimeFinal()), 
+                    subsplines[i-1]->getVelocity(subsplines[i-1]->getTimeFinal()), 
+                    subsplines[i-1]->getAcceleration(subsplines[i-1]->getTimeFinal())
+                )
+            };
+            
+            if (spline_new->compute(q_final, q_final_dot) && 
+                ((monotonic && spline_new->checkPositionMonotonicity() != 0) || !monotonic))
+            {
+                *subsplines[i] = *spline_new;
+                q_final_dot_min = q_final_dot;
+                spline_computed = true;
+            }
+            else
+                q_final_dot_max = q_final_dot;
+        }
+        while (++num_iter < max_num_iter);
+
+        if (!spline_computed)
+        {
+            spline_computed = subsplines[i]->compute(q_final) && 
+                              ((monotonic && subsplines[i]->checkPositionMonotonicity() != 0) || !monotonic);
+            if (!spline_computed)
+            {
+                // std::cout << "Spline not computed! \n";
+                vel_coeff[--i] *= vel_coeff_const;
+                --i;
+            }
+            // else std::cout << "Spline computed with zero final velocity! \n";
+        }
+
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count() * 1e-3 > max_time)
+        {
+            spline_computed = false;
+            break;
+        }
+    }
+
+    subsplines.erase(subsplines.begin());
+    if (spline_computed)
+        composite_spline = std::make_shared<planning::trajectory::CompositeSpline>(subsplines);
+    else
+        std::cout << "Could not convert path to trajectory! \n";
+        // path2traj(path);      // Add path using another method.
+}
+
+// This function is just for debugging. It operates in real-time by logging 'spline_current' and 'spline_next'. 
+// You can set a desired output path for the file to be saved.
 void planning::trajectory::Splines::recordTrajectory(bool spline_computed)
 {
     std::ofstream output_file {};

@@ -16,12 +16,17 @@ namespace planning::trajectory
     class Splines
     {
     public:
+        Splines(const std::shared_ptr<base::StateSpace> &ss_);
         Splines(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_current_, float max_iter_time_);
 
-        bool computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+        bool computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, const Eigen::VectorXf &current_acc, 
                             float t_iter_remain, float t_max, bool non_zero_final_vel);
-        bool computeSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
+        bool computeSafe(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, const Eigen::VectorXf &current_acc, 
                          float t_iter_remain, float t_max);
+        
+        void path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path);
+        void path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path);
+        void path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit);
         
         inline void setCurrentState(const std::shared_ptr<base::State> q_current_) { q_current = q_current_; }
         inline void setTargetState(const std::shared_ptr<base::State> q_target_) { q_target = q_target_; }
@@ -30,8 +35,10 @@ namespace planning::trajectory
 
         std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
         std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline generated from 'q_current' to 'q_target'
+        std::shared_ptr<planning::trajectory::Spline> composite_spline;         // Composite spline from the start to a desired target configuration
 
     private:
+        void setParams();
         bool checkCollision(std::shared_ptr<base::State> q_init, float t_iter);
         float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
                                              const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
