@@ -2,7 +2,7 @@
 // Created by dinko on 28.5.21..
 //
 #include "RealVectorSpaceState.h"
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 
 TEST(RealVectorSpaceStateTest, testConstructor)

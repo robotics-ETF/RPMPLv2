@@ -7,7 +7,7 @@
 #ifndef RPMPL_STATE_H
 #define RPMPL_STATE_H
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include <vector>
 #include <memory>
 #include <kdl/frames_io.hpp>

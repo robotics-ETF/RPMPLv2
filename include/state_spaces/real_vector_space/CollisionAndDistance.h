@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <memory>
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include <tuple>
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>

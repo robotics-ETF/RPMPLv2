@@ -26,6 +26,9 @@ robot:
   min_dist_start_goal: 0.1                                  # If greater than zero, 'q_start' and 'q_goal' will be generated randomly, where the workspace distance between them is minimally 'min_dist_start_goal'
   WS_center: [0.0, 0.0, 0.0]                                # Workspace center point in [m]
   WS_radius: 2                                              # Workspace radius in [m] assuming spherical workspace shape
+  max_vel:  [1, 1]                                          # Maximal velocity of each robot's joint in [rad/s]
+  max_acc:  [10, 10]                                        # Maximal acceleration of each robot's joint in [rad/s²]
+  max_jerk: [100, 100]                                      # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
   max_num: 1000                                             # Maximal number of tests that should be carried out
