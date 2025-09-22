@@ -59,6 +59,21 @@ target_compile_features(test_rgbmtstar PRIVATE cxx_std_17)
 target_link_libraries(test_rgbmtstar PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(test_rgbmtstar PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(test_rrtx test_rrtx.cpp)
+target_compile_features(test_rrtx PRIVATE cxx_std_17)
+target_link_libraries(test_rrtx PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rrtx PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
+add_executable(test_rrtx_random_obstacles test_rrtx_random_obstacles.cpp)
+target_compile_features(test_rrtx_random_obstacles PRIVATE cxx_std_17)
+target_link_libraries(test_rrtx_random_obstacles PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rrtx_random_obstacles PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
+add_executable(test_trajectory test_trajectory.cpp)
+target_compile_features(test_trajectory PRIVATE cxx_std_17)
+target_link_libraries(test_trajectory PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_trajectory PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 add_executable(generate_random_scenarios generate_random_scenarios.cpp)
 target_compile_features(generate_random_scenarios PRIVATE cxx_std_17)
 target_link_libraries(generate_random_scenarios PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
@@ -69,15 +84,6 @@ target_compile_features(generate_dataset PRIVATE cxx_std_17)
 target_link_libraries(generate_dataset PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(generate_dataset PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
-add_executable(test_rrtx test_rrtx.cpp)
-target_compile_features(test_rrtx PRIVATE cxx_std_17)
-target_link_libraries(test_rrtx PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
-target_include_directories(test_rrtx PUBLIC ${PROJECT_SOURCE_DIR}/apps)
-
-add_executable(test_rrtx_random_obstacles test_rrtx_random_obstacles.cpp)
-target_compile_features(test_rrtx_random_obstacles PRIVATE cxx_std_17)
-target_link_libraries(test_rrtx_random_obstacles PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
-target_include_directories(test_rrtx_random_obstacles PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 install(TARGETS
   test_nanoflann
@@ -93,8 +99,9 @@ install(TARGETS
   test_drgbt
   test_drgbt_random_obstacles
   test_rgbmtstar
-  generate_random_scenarios
-  generate_dataset
   test_rrtx
   test_rrtx_random_obstacles
+  test_trajectory
+  generate_random_scenarios
+  generate_dataset
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
