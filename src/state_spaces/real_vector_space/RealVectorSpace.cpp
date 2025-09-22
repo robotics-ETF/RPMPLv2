@@ -214,9 +214,6 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 	}
 	
 	std::vector<std::shared_ptr<base::State>> path { init_path.front() };
-    std::shared_ptr<base::State> q0 { nullptr };
-    std::shared_ptr<base::State> q1 { nullptr };
-    std::shared_ptr<base::State> q2 { nullptr };
 
 	// std::cout << "Initial path is: \n";
     // for (size_t i = 0; i < init_path.size(); i++)
@@ -225,20 +222,8 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 
 	for (size_t i = 1; i < init_path.size() - 1; i++)
 	{
-        q0 = init_path[i-1];
-        q1 = init_path[i];
-		q2 = init_path[i+1];
-
-		for (size_t k = 1; k < num_dimensions; k++)
-		{
-			if (std::abs((q2->getCoord(k) - q1->getCoord(k)) / (q1->getCoord(k) - q0->getCoord(k)) - 
-						 (q2->getCoord(k-1) - q1->getCoord(k-1)) / (q1->getCoord(k-1) - q0->getCoord(k-1))) > 
-				RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-			{
-				path.emplace_back(q1);
-				break;
-			}
-		}
+		if (!checkLinearDependency(init_path[i-1], init_path[i], init_path[i+1]))
+			path.emplace_back(init_path[i]);
 	}
 	path.emplace_back(init_path.back());
 
@@ -249,30 +234,22 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 
     new_path.clear();
     new_path.emplace_back(init_path.front());
-    base::State::Status status { base::State::Status::None };
-    float dist {};
+    float dist {}, dist_new {};
+	size_t N {};
+    std::shared_ptr<base::State> q_new { nullptr };
 
     for (size_t i = 1; i < path.size(); i++)
     {
-        status = base::State::Status::Advanced;
-        q0 = path[i-1];
-        q1 = path[i];
+		dist = getNorm(path[i-1], path[i]);
+		N = std::floor(getNorm(path[i-1], path[i]) / max_edge_length);
+		dist_new = dist / (N+1);
 
-        while (status == base::State::Status::Advanced)
-        {
-			dist = getNorm(q0, q1);
-            if (dist > max_edge_length)
-            {
-				q0 = interpolateEdge(q0, q1, max_edge_length, dist);
-                status = base::State::Status::Advanced;
-            }
-			else
-			{
-				q0 = q1;
-                status = base::State::Status::Reached;
-			}
-            new_path.emplace_back(q0);
-        }
+		for (size_t j = 1; j <= N; j++)
+		{
+			q_new = interpolateEdge(path[i-1], path[i], j * dist_new, dist);
+			new_path.emplace_back(q_new);
+		}
+		new_path.emplace_back(path[i]);
     }
 
     // std::cout << "Preprocessed path is: \n";
