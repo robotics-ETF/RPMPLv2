@@ -60,44 +60,47 @@ void planning::trajectory::Splines::setParams()
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @param non_zero_final_vel Whether final spline velocity can be non-zero
 /// @return The success of a spline computation
-bool planning::trajectory::Splines::computeRegular(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                                   float t_iter_remain, float t_max, bool non_zero_final_vel)
+bool planning::trajectory::Splines::computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
+    const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
     std::shared_ptr<planning::trajectory::Spline> spline_next_new 
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
     bool spline_computed { false };
-    Eigen::VectorXf new_current_pos {};    // Possible current position at the end of iteration
 
     if (non_zero_final_vel)
     {
         float num_iter { 0 };
-        float delta_t_max { ((q_target->getCoord() - current_pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
-        Eigen::VectorXf q_final_dot_max { (q_target->getCoord() - current_pos) / delta_t_max };
+        float delta_t_max { ((q_target->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+        Eigen::VectorXf q_final_dot_max { (q_target->getCoord() - q_current->getCoord()) / delta_t_max };
         Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
-        Eigen::VectorXf q_final_dot {};
+        Eigen::VectorXf q_final_dot { q_final_dot_max };
         
         while (num_iter++ < max_num_iter_spline_regular &&
                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
         {
-            q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
-            // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
-
             if (spline_next_new->compute(q_target->getCoord(), q_final_dot)) 
             {
                 *spline_next = *spline_next_new;
                 q_final_dot_min = q_final_dot;
                 spline_computed = true;
+                if (num_iter == 1)
+                    break;
             }
             else
                 q_final_dot_max = q_final_dot;
-        }
 
-        new_current_pos = spline_computed ? 
-                          spline_next->getPosition(t_iter_remain) : 
-                          spline_current->getPosition(spline_current->getTimeCurrent() + t_iter_remain);
+            q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
+            // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+        }
     }
+
+    Eigen::VectorXf new_current_pos {    // Possible current position at the end of iteration
+        spline_computed ? 
+        spline_next->getPosition(t_iter_remain) : 
+        spline_current->getPosition(spline_current->getTimeCurrent() + t_iter_remain)
+    };
     
     // If spline was not computed or robot is getting away from 'new_current_pos'
     if (!spline_computed || 
@@ -123,8 +126,8 @@ bool planning::trajectory::Splines::computeRegular(Eigen::VectorXf &current_pos,
 /// @param t_iter_remain Remaining time in [s] in the current iteration
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @return The success of a spline computation
-bool planning::trajectory::Splines::computeSafe(Eigen::VectorXf &current_pos, Eigen::VectorXf &current_vel, Eigen::VectorXf &current_acc, 
-                                                float t_iter_remain, float t_max)
+bool planning::trajectory::Splines::computeSafe(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
+    const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     std::shared_ptr<planning::trajectory::Spline> spline_next_new
@@ -276,6 +279,7 @@ bool planning::trajectory::Splines::checkCollision(std::shared_ptr<base::State> 
         t_iter += delta_t;
         rho_obs = max_obs_vel * (t_iter - t_init);
         delta_q = (q_final->getCoord() - q_init->getCoord()).cwiseAbs();
+        ss->robot->computeEnclosingRadii(q_init);
         for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
         {
             rho_robot = q_init->getEnclosingRadii()->col(i+1).dot(delta_q);
@@ -284,7 +288,6 @@ bool planning::trajectory::Splines::checkCollision(std::shared_ptr<base::State> 
                 // std::cout << "********** Possible collision ********** \n";
                 q_init = q_final;
                 computeDistanceUnderestimation(q_init, q_current->getNearestPoints(), t_iter);
-                ss->robot->computeEnclosingRadii(q_init);
                 t_init = t_iter;
 
                 if (q_init->getDistance() <= 0)
