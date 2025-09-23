@@ -18,7 +18,7 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
         }
     }
 
-    splines = nullptr;
+    traj = nullptr;
     guaranteed_safe_motion = false;
     non_zero_final_vel = true;
     max_remaining_iter_time = 0;
@@ -117,9 +117,9 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 }
 
-/// @brief Update a current state of the robot using 'splines->spline_current'.
-/// Compute a new spline 'splines->spline_next', or remain 'splines->spline_current'.
-/// Move 'q_current' towards 'q_next_reached' while following 'splines->spline_next'.
+/// @brief Update a current state of the robot using 'traj->spline_current'.
+/// Compute a new spline 'traj->spline_next', or remain 'traj->spline_current'.
+/// Move 'q_current' towards 'q_next_reached' while following 'traj->spline_next'.
 /// 'q_current' will be updated to a robot position from the end of current iteration.
 /// @note The new spline will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
@@ -130,7 +130,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     q_previous = q_current;
     q_next = q_next_;
     q_next_reached = q_next_reached_;
-    splines->spline_current = splines->spline_next;
+    traj->spline_current = traj->spline_next;
 
     float t_spline_max { (guaranteed_safe_motion ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
                          SplinesConfig::MAX_TIME_PUBLISH * measure_time };
@@ -140,24 +140,24 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     
     float t_iter_remain { max_iter_time - t_iter - t_spline_max };
     float t_spline_current { measure_time ? 
-                             splines->spline_current->getTimeCurrent(true) + t_spline_max :
-                             splines->spline_current->getTimeEnd() + t_iter + t_spline_max };
+                             traj->spline_current->getTimeCurrent(true) + t_spline_max :
+                             traj->spline_current->getTimeEnd() + t_iter + t_spline_max };
 
-    splines->spline_current->setTimeBegin(splines->spline_current->getTimeEnd());
-    splines->spline_current->setTimeCurrent(t_spline_current);
+    traj->spline_current->setTimeBegin(traj->spline_current->getTimeEnd());
+    traj->spline_current->setTimeCurrent(t_spline_current);
 
     // std::cout << "Iter. time:        " << t_iter * 1000 << " [ms] \n";
     // std::cout << "Max. spline time:  " << t_spline_max * 1000 << " [ms] \n";
     // std::cout << "Remain. time:      " << t_iter_remain * 1000 << " [ms] \n";
-    // std::cout << "Begin spline time: " << splines->spline_current->getTimeBegin() * 1000 << " [ms] \n";
+    // std::cout << "Begin spline time: " << traj->spline_current->getTimeBegin() * 1000 << " [ms] \n";
     // std::cout << "Curr. spline time: " << t_spline_current * 1000 << " [ms] \n";
     // ----------------------------------------------------------------------------------------- //
     
-    bool spline_computed { false };
+    bool traj_computed { false };
     float t_spline_remain {};
-    Eigen::VectorXf current_pos { splines->spline_current->getPosition(t_spline_current) };
-    Eigen::VectorXf current_vel { splines->spline_current->getVelocity(t_spline_current) };
-    Eigen::VectorXf current_acc { splines->spline_current->getAcceleration(t_spline_current) };
+    Eigen::VectorXf current_pos { traj->spline_current->getPosition(t_spline_current) };
+    Eigen::VectorXf current_vel { traj->spline_current->getVelocity(t_spline_current) };
+    Eigen::VectorXf current_acc { traj->spline_current->getAcceleration(t_spline_current) };
 
     // std::cout << "Curr. pos: " << current_pos.transpose() << "\n";
     // std::cout << "Curr. vel: " << current_vel.transpose() << "\n";
@@ -174,50 +174,50 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
                               current_vel.norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS) };
         std::shared_ptr<base::State> q_target { std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)) };
 
-        splines->setCurrentState(q_current);
-        splines->setTargetState(q_target);
+        traj->setCurrentState(q_current);
+        traj->setTargetState(q_target);
         // std::cout << "q_target:       " << q_target << "\n";
         // std::cout << "q_next:         " << q_next << "\n";
         // std::cout << "q_next_reached: " << q_next_reached << "\n";
 
         if (guaranteed_safe_motion)
-            spline_computed = splines->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
+            traj_computed = traj->computeSafe(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain);
         else
         {
-            if (splines->spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
+            if (traj->spline_current->isFinalConf(q_target->getCoord()))  // Spline to such 'q_target' already exists!
                 break;
-            spline_computed = splines->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
+            traj_computed = traj->computeRegular(current_pos, current_vel, current_acc, t_iter_remain, t_spline_remain, non_zero_final_vel);
         }
     }
-    while (!spline_computed && invokeChangeNextState());
+    while (!traj_computed && invokeChangeNextState());
     // std::cout << "Elapsed time for spline computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
 
-    if (spline_computed)
+    if (traj_computed)
     {
         // std::cout << "New spline is computed! \n";
-        splines->spline_current->setTimeEnd(t_spline_current);
-        splines->spline_next->setTimeEnd(t_iter_remain);
+        traj->spline_current->setTimeEnd(t_spline_current);
+        traj->spline_next->setTimeEnd(t_iter_remain);
     }
     else
     {
         // std::cout << "Continuing with the previous spline! \n";
-        splines->spline_next = splines->spline_current;
-        splines->spline_next->setTimeEnd(t_spline_current + t_iter_remain);
+        traj->spline_next = traj->spline_current;
+        traj->spline_next->setTimeEnd(t_spline_current + t_iter_remain);
     }
     
-    // splines->recordTrajectory(spline_computed);   // Only for debugging
+    // traj->recordTrajectory(traj_computed);   // Only for debugging
 
-    q_current = ss->getNewState(splines->spline_next->getPosition(splines->spline_next->getTimeEnd()));   // Current robot position at the end of iteration
+    q_current = ss->getNewState(traj->spline_next->getPosition(traj->spline_next->getTimeEnd()));   // Current robot position at the end of iteration
     if (status != base::State::Status::Trapped)
     {
         if (ss->getNorm(q_current, q_next) <        // 'q_next' must be reached within the computed radius, and not only 'q_next_reached'
-            splines->spline_next->getVelocity(splines->spline_next->getTimeEnd()).norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS)
+            traj->spline_next->getVelocity(traj->spline_next->getTimeEnd()).norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS)
             status = base::State::Status::Reached;
         else
             status = base::State::Status::Advanced;
     }
 
-    // std::cout << "Spline next: \n" << splines->spline_next << "\n";
+    // std::cout << "Spline next: \n" << traj->spline_next << "\n";
     // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")

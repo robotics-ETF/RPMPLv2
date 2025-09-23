@@ -19,7 +19,7 @@ namespace planning::trajectory
         ~MotionValidity() {}
 
         bool check(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current);
-        inline void setSplines(const std::shared_ptr<planning::trajectory::Trajectory> &splines_) { splines = splines_; }
+        inline void setTraj(const std::shared_ptr<planning::trajectory::Trajectory> &traj_) { traj = traj_; }
         
     private:
         bool check_v1(const std::shared_ptr<base::State> &q_previous, const std::shared_ptr<base::State> &q_current);
@@ -30,7 +30,7 @@ namespace planning::trajectory
         float resolution_coll_check;
         std::vector<std::shared_ptr<base::State>>* path;
         float max_iter_time;
-        std::shared_ptr<planning::trajectory::Trajectory> splines;
+        std::shared_ptr<planning::trajectory::Trajectory> traj;
         size_t num_checks;          // Maximal number of validity checks when robot moves from previous to current configuration, 
                                     // while the obstacles are moving simultaneously.
     };

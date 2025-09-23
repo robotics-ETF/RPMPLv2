@@ -87,7 +87,7 @@ namespace planning::rrtx
         // Path from start to goal
         std::vector<std::shared_ptr<base::State>> path_current;
 
-        std::shared_ptr<planning::trajectory::Trajectory> splines;                 // Everything related to splines
+        std::shared_ptr<planning::trajectory::Trajectory> traj;                 // Everything related to trajectory
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         

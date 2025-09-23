@@ -44,12 +44,12 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
         (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::RESOLUTION_COLL_CHECK, &path, RRTxConfig::MAX_ITER_TIME);
     
-    splines = nullptr;
+    traj = nullptr;
     if (RRTxConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
     {
-        splines = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
-        updating_state->setSplines(splines);
-        motion_validity->setSplines(splines);
+        traj = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
+        updating_state->setTraj(traj);
+        motion_validity->setTraj(traj);
     }
 
     RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;

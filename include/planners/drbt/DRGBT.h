@@ -62,7 +62,7 @@ namespace planning::drbt
         std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
         size_t num_lateral_states;                                              // Number of lateral states
         float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
-        std::shared_ptr<planning::trajectory::Trajectory> splines;              // Everything related to splines
+        std::shared_ptr<planning::trajectory::Trajectory> traj;                 // Everything related to trajectory
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;

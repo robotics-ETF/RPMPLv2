@@ -9,7 +9,7 @@ planning::trajectory::MotionValidity::MotionValidity(const std::shared_ptr<base:
     resolution_coll_check = resolution_coll_check_;
     path = path_;
     max_iter_time = max_iter_time_;
-    splines = nullptr;
+    traj = nullptr;
 
     float max_vel_obs { 0 };
     for (size_t i = 0; i < ss->env->getNumObjects(); i++)
@@ -68,37 +68,37 @@ bool planning::trajectory::MotionValidity::check_v1(const std::shared_ptr<base::
 }
 
 // In case traj_interpolation == "Spline", discretely check the validity of motion 
-// when the robot moves over splines 'splines->spline_current' and 'splines->spline_next' during the current iteration.
+// when the robot moves over splines 'traj->spline_current' and 'traj->spline_next' during the current iteration.
 bool planning::trajectory::MotionValidity::check_v2()
 {
     // std::cout << "Checking the validity of motion while updating environment... \n";
     std::shared_ptr<base::State> q_temp { nullptr };
-    size_t num_checks1 = std::ceil((splines->spline_current->getTimeCurrent() - splines->spline_current->getTimeBegin()) * num_checks / max_iter_time);
+    size_t num_checks1 = std::ceil((traj->spline_current->getTimeCurrent() - traj->spline_current->getTimeBegin()) * num_checks / max_iter_time);
     size_t num_checks2 { num_checks - num_checks1 };
-    float delta_time1 { (splines->spline_current->getTimeCurrent() - splines->spline_current->getTimeBegin()) / num_checks1 };
-    float delta_time2 { (splines->spline_next->getTimeEnd() - splines->spline_next->getTimeCurrent()) / num_checks2 };
+    float delta_time1 { (traj->spline_current->getTimeCurrent() - traj->spline_current->getTimeBegin()) / num_checks1 };
+    float delta_time2 { (traj->spline_next->getTimeEnd() - traj->spline_next->getTimeCurrent()) / num_checks2 };
     float t { 0 };
     
-    // std::cout << "Current spline times:   " << splines->spline_current->getTimeBegin() * 1000 << " [ms] \t"
-    //                                         << splines->spline_current->getTimeCurrent() * 1000 << " [ms] \t"
-    //                                         << splines->spline_current->getTimeEnd() * 1000 << " [ms] \n";
-    // std::cout << "Next spline times:      " << splines->spline_next->getTimeBegin() * 1000 << " [ms] \t"
-    //                                         << splines->spline_next->getTimeCurrent() * 1000 << " [ms] \t"
-    //                                         << splines->spline_next->getTimeEnd() * 1000 << " [ms] \n";
+    // std::cout << "Current spline times:   " << traj->spline_current->getTimeBegin() * 1000 << " [ms] \t"
+    //                                         << traj->spline_current->getTimeCurrent() * 1000 << " [ms] \t"
+    //                                         << traj->spline_current->getTimeEnd() * 1000 << " [ms] \n";
+    // std::cout << "Next spline times:      " << traj->spline_next->getTimeBegin() * 1000 << " [ms] \t"
+    //                                         << traj->spline_next->getTimeCurrent() * 1000 << " [ms] \t"
+    //                                         << traj->spline_next->getTimeEnd() * 1000 << " [ms] \n";
 
     for (size_t num_check = 1; num_check <= num_checks; num_check++)
     {
         if (num_check <= num_checks1)
         {
-            t = splines->spline_current->getTimeBegin() + num_check * delta_time1;
-            q_temp = ss->getNewState(splines->spline_current->getPosition(t));
+            t = traj->spline_current->getTimeBegin() + num_check * delta_time1;
+            q_temp = ss->getNewState(traj->spline_current->getPosition(t));
             // std::cout << "t: " << t * 1000 << " [ms]\t from curr. spline \t" << q_temp << "\n";
             ss->env->updateEnvironment(delta_time1);
         }
         else
         {
-            t = splines->spline_next->getTimeCurrent() + (num_check - num_checks1) * delta_time2;
-            q_temp = ss->getNewState(splines->spline_next->getPosition(t));
+            t = traj->spline_next->getTimeCurrent() + (num_check - num_checks1) * delta_time2;
+            q_temp = ss->getNewState(traj->spline_next->getPosition(t));
             // std::cout << "t: " << t * 1000 << " [ms]\t from next  spline \t" << q_temp << "\n";
             ss->env->updateEnvironment(delta_time2);
         }
