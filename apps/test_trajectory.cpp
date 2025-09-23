@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
-    std::shared_ptr<planning::trajectory::Splines> trajectory { nullptr };
+    std::shared_ptr<planning::trajectory::Trajectory> trajectory { nullptr };
 
 	bool result { false };
 	size_t num_obs { env->getNumObjects() };
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
                     output_file << new_path.at(i)->getCoord().transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
 
-                trajectory = std::make_shared<planning::trajectory::Splines>(ss);
+                trajectory = std::make_shared<planning::trajectory::Trajectory>(ss);
                 auto time1 = std::chrono::steady_clock::now();
                 trajectory->path2traj_v1(new_path);
 				comp_times1.emplace_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time1).count() * 1e-3);

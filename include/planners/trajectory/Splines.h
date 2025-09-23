@@ -2,8 +2,8 @@
 // Created by nermin on 20.07.24.
 //
 
-#ifndef RPMPL_SPLINES_H
-#define RPMPL_SPLINES_H
+#ifndef RPMPL_TRAJECTORY_H
+#define RPMPL_TRAJECTORY_H
 
 #include "StateSpace.h"
 #include "Spline4.h"
@@ -13,11 +13,11 @@
 
 namespace planning::trajectory
 {
-    class Splines
+    class Trajectory
     {
     public:
-        Splines(const std::shared_ptr<base::StateSpace> &ss_);
-        Splines(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_current_, float max_iter_time_);
+        Trajectory(const std::shared_ptr<base::StateSpace> &ss_);
+        Trajectory(const std::shared_ptr<base::StateSpace> &ss_, const std::shared_ptr<base::State> &q_current_, float max_iter_time_);
 
         bool computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, const Eigen::VectorXf &current_acc, 
                             float t_iter_remain, float t_max, bool non_zero_final_vel);
@@ -54,4 +54,4 @@ namespace planning::trajectory
     };
 }
 
-#endif //RPMPL_SPLINES_H
+#endif //RPMPL_TRAJECTORY_H

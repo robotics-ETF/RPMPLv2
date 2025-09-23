@@ -27,7 +27,7 @@ namespace planning::trajectory
             const std::shared_ptr<base::State> q_next_, base::State::Status &status);
         void update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
             const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
-        inline void setSplines(const std::shared_ptr<planning::trajectory::Splines> &splines_) { splines = splines_; }
+        inline void setSplines(const std::shared_ptr<planning::trajectory::Trajectory> &splines_) { splines = splines_; }
         inline void setGuaranteedSafeMotion(bool guaranteed_safe_motion_) { guaranteed_safe_motion = guaranteed_safe_motion_; }
         inline void setNonZeroFinalVel(bool non_zero_final_vel_) { non_zero_final_vel = non_zero_final_vel_; }
         inline void setMaxRemainingIterTime(float max_remaining_iter_time_) { max_remaining_iter_time = max_remaining_iter_time_; }
@@ -51,7 +51,7 @@ namespace planning::trajectory
         float max_iter_time;                                        // Maximal iteration time in [s]
         
         // Additional info (not mandatory to be set):
-        std::shared_ptr<planning::trajectory::Splines> splines;
+        std::shared_ptr<planning::trajectory::Trajectory> splines;
         bool all_robot_vel_same;                                    // Whether all joint velocities are the same
         bool guaranteed_safe_motion;                                // Whether robot motion is surely safe for environment
         bool non_zero_final_vel;                                    // Whether final spline velocity can be non-zero (available only when 'guaranteed_safe_motion' is false)

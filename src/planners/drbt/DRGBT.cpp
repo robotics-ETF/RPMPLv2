@@ -43,7 +43,7 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     splines = nullptr;
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
     {
-        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
+        splines = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
         splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
         updating_state->setSplines(splines);
         motion_validity->setSplines(splines);

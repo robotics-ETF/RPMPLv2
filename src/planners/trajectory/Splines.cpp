@@ -1,6 +1,6 @@
 #include "Splines.h"
 
-planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &ss_)
+planning::trajectory::Trajectory::Trajectory(const std::shared_ptr<base::StateSpace> &ss_)
 {
     ss = ss_;
     q_current = nullptr;
@@ -13,7 +13,7 @@ planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &
     setParams();
 }
 
-planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &ss_, 
+planning::trajectory::Trajectory::Trajectory(const std::shared_ptr<base::StateSpace> &ss_, 
     const std::shared_ptr<base::State> &q_current_, float max_iter_time_)
 {
     ss = ss_;
@@ -34,7 +34,7 @@ planning::trajectory::Splines::Splines(const std::shared_ptr<base::StateSpace> &
     setParams();
 }
 
-void planning::trajectory::Splines::setParams()
+void planning::trajectory::Trajectory::setParams()
 {
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
@@ -60,7 +60,7 @@ void planning::trajectory::Splines::setParams()
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @param non_zero_final_vel Whether final spline velocity can be non-zero
 /// @return The success of a spline computation
-bool planning::trajectory::Splines::computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
+bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
     const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
@@ -126,7 +126,7 @@ bool planning::trajectory::Splines::computeRegular(const Eigen::VectorXf &curren
 /// @param t_iter_remain Remaining time in [s] in the current iteration
 /// @param t_max Maximal available time in [s] for a spline computing
 /// @return The success of a spline computation
-bool planning::trajectory::Splines::computeSafe(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
+bool planning::trajectory::Trajectory::computeSafe(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
     const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
@@ -257,7 +257,7 @@ bool planning::trajectory::Splines::computeSafe(const Eigen::VectorXf &current_p
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when 'spline' is starting.
 /// @return True if the collision occurs. False if not.
 /// @note 'q_init' must have a distance-to-obstacles or its underestimation!
-bool planning::trajectory::Splines::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
+bool planning::trajectory::Trajectory::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
     float delta_t { SplinesConfig::TIME_STEP };
@@ -317,7 +317,7 @@ bool planning::trajectory::Splines::checkCollision(std::shared_ptr<base::State> 
 /// @return Underestimation of distance-to-obstacles.
 /// Note that if 'd_c' is negative, it means that one or more robot's links are penetrating through the plane,
 /// or they are located on the other side of the plane.
-float planning::trajectory::Splines::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
+float planning::trajectory::Trajectory::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
 	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t)
 {
 	float d_c_temp {};
@@ -375,7 +375,7 @@ float planning::trajectory::Splines::computeDistanceUnderestimation(const std::s
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Splines::path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path)
+void planning::trajectory::Trajectory::path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
 
@@ -444,7 +444,7 @@ void planning::trajectory::Splines::path2traj_v1(const std::vector<std::shared_p
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Splines::path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path)
+void planning::trajectory::Trajectory::path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
 
@@ -518,7 +518,7 @@ void planning::trajectory::Splines::path2traj_v2(const std::vector<std::shared_p
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Splines::path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
+void planning::trajectory::Trajectory::path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines(path.size(), nullptr);
     bool spline_computed { false };
@@ -635,7 +635,7 @@ void planning::trajectory::Splines::path2traj_v3(const std::vector<std::shared_p
 
 // This function is just for debugging. It operates in real-time by logging 'spline_current' and 'spline_next'. 
 // You can set a desired output path for the file to be saved.
-void planning::trajectory::Splines::recordTrajectory(bool spline_computed)
+void planning::trajectory::Trajectory::recordTrajectory(bool spline_computed)
 {
     std::ofstream output_file {};
     output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/temp/visualize_trajectory.log", 
