@@ -1,4 +1,4 @@
-#include "Splines.h"
+#include "Trajectory.h"
 
 planning::trajectory::Trajectory::Trajectory(const std::shared_ptr<base::StateSpace> &ss_)
 {

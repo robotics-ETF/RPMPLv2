@@ -9,7 +9,7 @@
 #include "RRTxConfig.h"
 #include "UpdatingState.h"
 #include "MotionValidity.h"
-#include "Splines.h"
+#include "Trajectory.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>

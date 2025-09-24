@@ -1,7 +1,7 @@
 #include "RGBTConnect.h"
 #include "ConfigurationReader.h"
 #include "CommonFunctions.h"
-#include "Splines.h"
+#include "Trajectory.h"
 
 int main(int argc, char **argv)
 {

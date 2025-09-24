@@ -6,7 +6,7 @@
 #define RPMPL_MOTIONVALIDITY_H
 
 #include "StateSpace.h"
-#include "Splines.h"
+#include "Trajectory.h"
 #include "PlanningTypes.h"
 
 namespace planning::trajectory

@@ -6,7 +6,7 @@
 #define RPMPL_UPDATINGSTATE_H
 
 #include "StateSpace.h"
-#include "Splines.h"
+#include "Trajectory.h"
 #include "RealVectorSpaceConfig.h"
 #include "PlanningTypes.h"
 
