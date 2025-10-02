@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		std::vector<float> path_lengths {};
 		size_t num_test { init_num_test };
 		size_t num_success_tests { init_num_success_test };
-		float num_real_success_tests { init_num_success_test };
+		float num_real_success_tests = init_num_success_test;
 
 		while (true)
 		{

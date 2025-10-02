@@ -70,8 +70,8 @@ bool planning::rbt::RGBTConnect::solve()
 
 // Generalized spine is generated from 'q' towards 'q_e'
 // 'q_new' is the final state from the generalized spine
-std::tuple<base::State::Status, std::shared_ptr<base::State>> 
-    planning::rbt::RGBTConnect::extendGenSpine(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
+std::tuple<base::State::Status, std::shared_ptr<base::State>> planning::rbt::RGBTConnect::extendGenSpine
+	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e, bool use_real_dist)
 {
     float d_c { ss->computeDistance(q) };
 	if (d_c <= 0)
@@ -83,8 +83,9 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
     for (size_t i = 0; i < RGBTConnectConfig::NUM_LAYERS; i++)
     {
         tie(status, q_new) = extendSpine(q_new, q_e);
-        d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
-		// d_c = ss->computeDistance(q_new);	// If you want to use real distance
+        d_c = use_real_dist ? 
+			ss->computeDistance(q_new) :
+			ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
         if (d_c < RBTConnectConfig::D_CRIT || status != base::State::Status::Advanced)
             break;
     }
@@ -93,8 +94,8 @@ std::tuple<base::State::Status, std::shared_ptr<base::State>>
 
 // Generalized spine is generated from 'q' towards 'q_e'
 // 'q_new_list' contains all states from the generalized spine
-std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> 
-    planning::rbt::RGBTConnect::extendGenSpine2(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e)
+std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> planning::rbt::RGBTConnect::extendGenSpine2
+	(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e, bool use_real_dist)
 {
     float d_c { ss->computeDistance(q) };
 	std::shared_ptr<base::State> q_new { q };
@@ -107,8 +108,9 @@ std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base
         q_temp = q_new;
         tie(status, q_new) = extendSpine(q_temp, q_e);
 		q_new_list.emplace_back(q_new);
-        d_c = ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
-		// d_c = ss->computeDistance(q_new);	// If you want to use real distance
+        d_c = use_real_dist ? 
+			ss->computeDistance(q_new) :
+			ss->computeDistanceUnderestimation(q_new, q->getNearestPoints());
         if (d_c < RBTConnectConfig::D_CRIT || status == base::State::Status::Reached)
             break;
     }
