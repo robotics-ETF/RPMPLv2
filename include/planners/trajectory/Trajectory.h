@@ -36,7 +36,8 @@ namespace planning::trajectory
         std::shared_ptr<planning::trajectory::Spline> spline_current;           // Current spline that 'q_current' is following in the current iteration
         std::shared_ptr<planning::trajectory::Spline> spline_next;              // Next spline generated from 'q_current' to 'q_target'
         std::shared_ptr<planning::trajectory::Spline> composite_spline;         // Composite spline from the start to a desired target configuration
-
+        std::vector<Eigen::VectorXf> traj_points_current_iter;                  // Trajectory points from the current iteration to be validated within 'MotionValidity'
+        
     private:
         void setParams();
         bool checkCollision(std::shared_ptr<base::State> q_init, float t_iter);
