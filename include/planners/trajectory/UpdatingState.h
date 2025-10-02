@@ -27,7 +27,7 @@ namespace planning::trajectory
             const std::shared_ptr<base::State> q_next_, base::State::Status &status);
         void update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
             const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
-        inline void setTraj(const std::shared_ptr<planning::trajectory::Trajectory> &traj_) { traj = traj_; }
+        inline void setTrajectory(const std::shared_ptr<planning::trajectory::Trajectory> &traj_) { traj = traj_; }
         inline void setGuaranteedSafeMotion(bool guaranteed_safe_motion_) { guaranteed_safe_motion = guaranteed_safe_motion_; }
         inline void setNonZeroFinalVel(bool non_zero_final_vel_) { non_zero_final_vel = non_zero_final_vel_; }
         inline void setMaxRemainingIterTime(float max_remaining_iter_time_) { max_remaining_iter_time = max_remaining_iter_time_; }
@@ -51,7 +51,7 @@ namespace planning::trajectory
         float max_iter_time;                                        // Maximal iteration time in [s]
         
         // Additional info (not mandatory to be set):
-        std::shared_ptr<planning::trajectory::Trajectory> traj;
+        std::shared_ptr<planning::trajectory::Trajectory> traj;     // Trajectory which is generated using the proposed approach from RPMPLv2 library
         bool all_robot_vel_same;                                    // Whether all joint velocities are the same
         bool guaranteed_safe_motion;                                // Whether robot motion is surely safe for environment
         bool non_zero_final_vel;                                    // Whether final spline velocity can be non-zero (available only when 'guaranteed_safe_motion' is false)
@@ -62,7 +62,7 @@ namespace planning::trajectory
                                                                     // It should always be false when simulation pacing is used, since then a time measuring will not be correct! 
         
         float remaining_time;                                       // Return value of 'update_v2' function. Remaining time in [s] after which the new spline 'traj->spline_next' 
-                                                                    // will become active (if 'planning::TrajectoryInterpolation::Spline' is used).
+                                                                    // will become active (if 'planning::TrajectoryInterpolation::None' is not used).
 
         std::shared_ptr<base::State> q_next;
         std::shared_ptr<base::State> q_next_reached;

@@ -31,22 +31,26 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
     updating_state = std::make_shared<planning::trajectory::UpdatingState>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
+                     (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
     updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
     updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
     updating_state->setMeasureTime(false);
     updating_state->setDRGBTinstance(this);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, &path, DRGBTConfig::MAX_ITER_TIME);
+                      (ss, DRGBTConfig::RESOLUTION_COLL_CHECK, DRGBTConfig::MAX_ITER_TIME, &path);
 
-    traj = nullptr;
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+    switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
     {
+    case planning::TrajectoryInterpolation::None:
+        traj = nullptr;
+        break;
+
+    case planning::TrajectoryInterpolation::Spline:
         traj = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
         traj->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
-        updating_state->setTraj(traj);
-        motion_validity->setTraj(traj);
+        updating_state->setTrajectory(traj);
+        break;
     }
 
 	// std::cout << "DRGBT planner initialized! \n";
@@ -122,7 +126,19 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if (!motion_validity->check(q_previous, q_current))
+        bool is_valid { false };
+        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::None:
+            is_valid = motion_validity->check(q_previous, q_current);
+            break;
+
+        case planning::TrajectoryInterpolation::Spline:
+            is_valid = motion_validity->check(traj->traj_points_current_iter);
+            break;
+        }
+
+        if (!is_valid)
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);
@@ -245,7 +261,7 @@ void planning::drbt::DRGBT::generateGBur()
     size_t max_num_attempts {};
     float time_elapsed {};
     float max_time { DRGBTConfig::MAX_TIME_TASK1 };
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
+    if (DRGBTConfig::TRAJECTORY_INTERPOLATION != planning::TrajectoryInterpolation::None)
         max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? TrajectoryConfig::MAX_TIME_COMPUTE_SAFE : TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR;
     planner_info->setTask1Interrupted(false);
 
