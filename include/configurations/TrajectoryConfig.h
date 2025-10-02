@@ -5,6 +5,8 @@
 #ifndef RPMPL_TRAJECTORYCONFIG_H
 #define RPMPL_TRAJECTORYCONFIG_H
 
+typedef unsigned long size_t;
+
 class TrajectoryConfig
 {
 public:
@@ -16,6 +18,7 @@ public:
     static float FINAL_JERK_STEP;               // Final jerk step when using bisection method for finding optimal value of coefficient 'c'
     static float FINAL_VELOCITY_STEP;           // Final velocity step when using bisection method for finding optimal value of final velocity
     static float MAX_RADIUS;                    // Maximal radius in [rad] used when updating state (it should be experimentally evaluated)
+    static size_t NUM_VALIDITY_POINTS_CHECK;    // Number of validity points from trajectory to be checked within 'MotionValidity' class
 };
 
 #endif //RPMPL_TRAJECTORYCONFIG_H

@@ -36,6 +36,8 @@ planning::trajectory::Trajectory::Trajectory(const std::shared_ptr<base::StateSp
 
 void planning::trajectory::Trajectory::setParams()
 {
+    traj_points_current_iter = {};
+    
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
     {
