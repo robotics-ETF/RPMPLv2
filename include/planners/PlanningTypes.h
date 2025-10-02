@@ -35,7 +35,8 @@ namespace planning
 		RGBTConnect,
 		RGBMTStar,
 		DRGBT,
-		RRTx
+		RRTx,
+		RT_RGBT
 	};
 
 	static std::unordered_map<std::string, planning::PlannerType> planner_type_map = 
@@ -45,7 +46,9 @@ namespace planning
 		{ "RBT-Connect", planning::PlannerType::RBTConnect },
 		{ "RGBT-Connect", planning::PlannerType::RGBTConnect },
 		{ "RGBMT*", planning::PlannerType::RGBMTStar },
-		{ "DRGBT", planning::PlannerType::DRGBT }
+		{ "DRGBT", planning::PlannerType::DRGBT },
+		{ "RRTx", planning::PlannerType::RRTx },
+		{ "RT-RGBT", planning::PlannerType::RT_RGBT }
 	};
 
 	enum class RealTimeScheduling
@@ -69,7 +72,13 @@ namespace planning
 	static std::unordered_map<std::string, planning::TrajectoryInterpolation> trajectory_interpolation_map = 
 	{
 		{ "None", planning::TrajectoryInterpolation::None },
-		{ "Spline", planning::TrajectoryInterpolation::Spline}
+		{ "Spline", planning::TrajectoryInterpolation::Spline }
+	};
+
+	static std::unordered_map<planning::TrajectoryInterpolation, std::string> trajectory_interpolation_map2 = 
+	{
+		{ planning::TrajectoryInterpolation::None, "None" },
+		{ planning::TrajectoryInterpolation::Spline, "Spline" }
 	};
 
 	std::ostream &operator<<(std::ostream &os, const planning::PlannerType &type);

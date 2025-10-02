@@ -10,6 +10,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
     YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
     YAML::Node TrajectoryConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_trajectory.yaml") };
+    YAML::Node RT_RGBTConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_rt_rgbt.yaml") };
 
     // RealVectorSpaceConfigRoot
     if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -288,6 +289,38 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         TrajectoryConfig::MAX_RADIUS = TrajectoryConfigRoot["MAX_RADIUS"].as<float>();
     else
         LOG(INFO) << "TrajectoryConfig::MAX_RADIUS is not defined! Using default value of " << TrajectoryConfig::MAX_RADIUS;
+    
+    
+    // RT_RGBTConfigRoot
+    if (RT_RGBTConfigRoot["MAX_NUM_ITER"].IsDefined())
+        RT_RGBTConfig::MAX_NUM_ITER = RT_RGBTConfigRoot["MAX_NUM_ITER"].as<size_t>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_NUM_ITER is not defined! Using default value of " << RT_RGBTConfig::MAX_NUM_ITER;
+    
+    if (RT_RGBTConfigRoot["MAX_ITER_TIME"].IsDefined())
+        RT_RGBTConfig::MAX_ITER_TIME = RT_RGBTConfigRoot["MAX_ITER_TIME"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_ITER_TIME is not defined! Using default value of " << RT_RGBTConfig::MAX_ITER_TIME;
+    
+    if (RT_RGBTConfigRoot["MAX_PLANNING_TIME"].IsDefined())
+        RT_RGBTConfig::MAX_PLANNING_TIME = RT_RGBTConfigRoot["MAX_PLANNING_TIME"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RT_RGBTConfig::MAX_PLANNING_TIME;
+
+    if (RT_RGBTConfigRoot["RESOLUTION_COLL_CHECK"].IsDefined())
+        RT_RGBTConfig::RESOLUTION_COLL_CHECK = RT_RGBTConfigRoot["RESOLUTION_COLL_CHECK"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::RESOLUTION_COLL_CHECK is not defined! Using default value of " << RT_RGBTConfig::RESOLUTION_COLL_CHECK;
+    
+    if (RT_RGBTConfigRoot["GOAL_PROBABILITY"].IsDefined())
+        RT_RGBTConfig::GOAL_PROBABILITY = RT_RGBTConfigRoot["GOAL_PROBABILITY"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::GOAL_PROBABILITY is not defined! Using default value of " << RT_RGBTConfig::GOAL_PROBABILITY;
+    
+    if (RT_RGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
+        RT_RGBTConfig::TRAJECTORY_INTERPOLATION = planning::trajectory_interpolation_map[RT_RGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>()];
+    else
+        LOG(INFO) << "RT_RGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << RT_RGBTConfig::TRAJECTORY_INTERPOLATION;
     
     LOG(INFO) << "Configuration parameters read successfully!";
 }

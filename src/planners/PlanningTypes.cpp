@@ -33,6 +33,10 @@ namespace planning
 			case planning::PlannerType::RRTx:
 				os << "RRTx";
 				break;
+
+			case planning::PlannerType::RT_RGBT:
+				os << "RT-RGBT";
+				break;
 		}
 
 		return os;

@@ -1,0 +1,6 @@
+MAX_NUM_ITER: 1000000		                # Maximal number of algorithm iterations
+MAX_ITER_TIME: 0.090 		                # Maximal runtime of a single iteration in [s]
+MAX_PLANNING_TIME: 10	                  # Maximal algorithm runtime in [s]
+RESOLUTION_COLL_CHECK: 0.01             # Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
+GOAL_PROBABILITY: 0.9                   # Probability for choosing 'q_goal' as 'q_target'
+TRAJECTORY_INTERPOLATION: "Spline"      # Method for interpolation of trajectory: 'None', 'Spline' or 'Reflexxes'

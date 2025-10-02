@@ -69,6 +69,11 @@ target_compile_features(test_rrtx_random_obstacles PRIVATE cxx_std_17)
 target_link_libraries(test_rrtx_random_obstacles PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(test_rrtx_random_obstacles PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(test_rt_rgbt test_rt_rgbt.cpp)
+target_compile_features(test_rt_rgbt PRIVATE cxx_std_17)
+target_link_libraries(test_rt_rgbt PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_rt_rgbt PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 add_executable(test_trajectory test_trajectory.cpp)
 target_compile_features(test_trajectory PRIVATE cxx_std_17)
 target_link_libraries(test_trajectory PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
@@ -101,6 +106,7 @@ install(TARGETS
   test_rgbmtstar
   test_rrtx
   test_rrtx_random_obstacles
+  test_rt_rgbt
   test_trajectory
   generate_random_scenarios
   generate_dataset

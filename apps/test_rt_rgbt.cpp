@@ -1,4 +1,4 @@
-#include "DRGBT.h"
+#include "RT_RGBT.h"
 #include "ConfigurationReader.h"
 #include "CommonFunctions.h"
 
@@ -17,15 +17,10 @@ int main(int argc, char **argv)
 	};
 	const std::string random_scenarios_path { scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/random_scenarios.yaml" };
 
-	// std::vector<std::string> routines		// Routines of which the time executions are stored
-	// { 	
-	// 	"replan [ms]",						// 0
-	// 	"computeDistance [us]", 			// 1
-	// 	"generateGBur [ms]", 				// 2
-	// 	"generateHorizon [us]", 			// 3
-	// 	"updateHorizon [us]",				// 4
-	// 	"updateCurrentState [us]"			// 5
-	// };
+	std::vector<std::string> routines		// Routines of which the time executions are stored
+	{ 	
+		"update [ms]"						// 0
+	};
 
 	// -------------------------------------------------------------------------------------- //
 
@@ -36,7 +31,7 @@ int main(int argc, char **argv)
 	const std::string project_path { getProjectPath() };
 	ConfigurationReader::initConfiguration(project_path);
 	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) 
-		+ "/DRGBT_data_" + planning::trajectory_interpolation_map2[DRGBTConfig::TRAJECTORY_INTERPOLATION] };
+		+ "/RT_RGBT_data_" + planning::trajectory_interpolation_map2[RT_RGBTConfig::TRAJECTORY_INTERPOLATION] };
 	std::filesystem::create_directory(directory_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
     YAML::Node node2 { YAML::LoadFile(project_path + random_scenarios_path) };
@@ -54,9 +49,6 @@ int main(int argc, char **argv)
 	size_t init_num_success_test { node["testing"]["init_num_success"].as<size_t>() };
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
 	bool reach_successful_tests { node["testing"]["reach_successful_tests"].as<bool>() };
-    if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
-        RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
-	}
 
 	while (init_num_obs <= max_num_obs)
 	{
@@ -66,26 +58,13 @@ int main(int argc, char **argv)
 		if (init_num_test == 1)
 		{
 			output_file.open(directory_path + "/results_" + std::to_string(init_num_obs) + "obs_" 
-				+ std::to_string(size_t(DRGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::out);
+				+ std::to_string(size_t(RT_RGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
-			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
-			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
-			output_file << "Maximal algorithm time [s]:                             " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
-			output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
-			output_file << "Treshold for the replanning assessment:                 " << DRGBTConfig::TRESHOLD_WEIGHT << std::endl;
-			output_file << "Critical distance in W-space [m]:                       " << DRGBTConfig::D_CRIT << std::endl;
-			output_file << "Maximal number of attempts when modifying states:       " << DRGBTConfig::MAX_NUM_MODIFY_ATTEMPTS << std::endl;
-			output_file << "Number of extensions for generating a generalized bur:  " << RGBTConnectConfig::NUM_LAYERS << std::endl;
-			output_file << "Number of iterations when computing a single spine:     " << RBTConnectConfig::NUM_ITER_SPINE << std::endl;
-			output_file << "Using expanded bubble when generating a spine:          " << (RBTConnectConfig::USE_EXPANDED_BUBBLE ? "true" : "false") << std::endl;
-			output_file << "Resolution for collision checking [m]:                  " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
-			output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
-			output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
-			output_file << "--------------------------------------------------------------------\n";
-			output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
-			output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
-			output_file << "Maximal time of Task 1 [s]:                             " << (DRGBTConfig::REAL_TIME_SCHEDULING == planning::RealTimeScheduling::None ? 
-																						 "None" : std::to_string(DRGBTConfig::MAX_TIME_TASK1)) << std::endl;
+			output_file << "Dynamic planner:                                        " << planning::PlannerType::RT_RGBT << std::endl;
+			output_file << "Maximal algorithm time [s]:                             " << RT_RGBTConfig::MAX_PLANNING_TIME << std::endl;
+			output_file << "Resolution for collision checking [m]:                  " << RT_RGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
+			output_file << "Trajectory interpolation:                               " << RT_RGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
+			output_file	<< "Maximal iteration time [s]:                             " << RT_RGBTConfig::MAX_ITER_TIME << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Number of obstacles:                                    " << init_num_obs << std::endl;
 			output_file << "Obstacles motion:                                       " << "random" << std::endl;
@@ -115,13 +94,6 @@ int main(int argc, char **argv)
 				env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
 				env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 
-				// First option (generating here in the code):
-				// if (min_dist_start_goal > 0)
-				// 	generateRandomStartAndGoal(scenario, min_dist_start_goal);
-				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
-				// ------------------------------------------------------------------------------- //
-
-				// Second option (reading from a yaml file):
 				Eigen::VectorXf start { Eigen::VectorXf::Zero(ss->num_dimensions) };
 				Eigen::VectorXf goal { Eigen::VectorXf::Zero(ss->num_dimensions) };
 				for (size_t i = 0; i < ss->num_dimensions; i++)
@@ -138,9 +110,9 @@ int main(int argc, char **argv)
 					for (size_t i = 0; i < 3; i++)
 					{
 						pos(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]
-								 ["object_" + std::to_string(j)]["pos"][i].as<float>();
+								["object_" + std::to_string(j)]["pos"][i].as<float>();
 						vel(i) = node2["scenario_" + std::to_string(init_num_obs)]["run_" + std::to_string(num_test-1)]
-								 ["object_" + std::to_string(j)]["vel"][i].as<float>();
+								["object_" + std::to_string(j)]["vel"][i].as<float>();
 					}
 					
 					std::shared_ptr<env::Object> object { nullptr };
@@ -159,15 +131,14 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Start:             " << scenario.getStart();
 				LOG(INFO) << "Goal:              " << scenario.getGoal();
 				
-				planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
+				planner = std::make_unique<planning::drbt::RT_RGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
 				num_real_success_tests += 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm();
-				
+
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Real success:         " << 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm();
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-				// LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log");
 
@@ -188,8 +159,9 @@ int main(int argc, char **argv)
 					num_success_tests++;
 				}
 
+
 				output_file.open(directory_path + "/results_" + std::to_string(init_num_obs) + "obs_" 
-					+ std::to_string(size_t(DRGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::app);
+					+ std::to_string(size_t(RT_RGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
@@ -198,23 +170,19 @@ int main(int argc, char **argv)
 				output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 				output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-				// output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
-
-				// if (result)
-				// {
-					// std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
-					// for (size_t idx = 0; idx < routines.size(); idx++)
-					// {
-					// 	LOG(INFO) << "Routine " << routines[idx];
-					// 	LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
-					// 	LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
-					// 	LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
-						
-					// 	output_file << "Routine " << routines[idx] << " times: " << std::endl;
-					// 	for (float t : routine_times[idx])
-					// 		output_file << t << std::endl;
-					// }
-				// }
+				
+				std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
+				for (size_t idx = 0; idx < routines.size(); idx++)
+				{
+					LOG(INFO) << "Routine " << routines[idx];
+					LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
+					LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
+					LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
+					
+					output_file << "Routine " << routines[idx] << " times: " << std::endl;
+					for (float t : routine_times[idx])
+						output_file << t << std::endl;
+				}
 
 				output_file << "--------------------------------------------------------------------\n";
 				output_file.close();
