@@ -64,7 +64,6 @@ bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &cur
     const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
-    spline_next = std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc);
     std::shared_ptr<planning::trajectory::Spline> spline_next_new 
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
     bool spline_computed { false };
@@ -82,11 +81,9 @@ bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &cur
         {
             if (spline_next_new->compute(q_target->getCoord(), q_final_dot)) 
             {
-                *spline_next = *spline_next_new;
-                q_final_dot_min = q_final_dot;
+                spline_next = spline_next_new;
                 spline_computed = true;
-                if (num_iter == 1)
-                    break;
+                break;
             }
             else
                 q_final_dot_max = q_final_dot;
