@@ -132,8 +132,8 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     q_next_reached = q_next_reached_;
     traj->spline_current = traj->spline_next;
 
-    float t_spline_max { (guaranteed_safe_motion ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR) - 
-                         SplinesConfig::MAX_TIME_PUBLISH * measure_time };
+    float t_spline_max { (guaranteed_safe_motion ? TrajectoryConfig::MAX_TIME_COMPUTE_SAFE : TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR) - 
+                         TrajectoryConfig::MAX_TIME_PUBLISH * measure_time };
     float t_iter { getElapsedTime() };
     if (max_iter_time - max_remaining_iter_time - t_iter < t_spline_max)
         t_spline_max = max_iter_time - max_remaining_iter_time - t_iter;
@@ -171,7 +171,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
             break;
 
         float step { std::max(ss->robot->getMaxVel().norm() * max_iter_time,
-                              current_vel.norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS) };
+                              current_vel.norm() / ss->robot->getMaxVel().norm() * TrajectoryConfig::MAX_RADIUS) };
         std::shared_ptr<base::State> q_target { std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)) };
 
         traj->setCurrentState(q_current);
@@ -211,7 +211,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     if (status != base::State::Status::Trapped)
     {
         if (ss->getNorm(q_current, q_next) <        // 'q_next' must be reached within the computed radius, and not only 'q_next_reached'
-            traj->spline_next->getVelocity(traj->spline_next->getTimeEnd()).norm() / ss->robot->getMaxVel().norm() * SplinesConfig::MAX_RADIUS)
+            traj->spline_next->getVelocity(traj->spline_next->getTimeEnd()).norm() / ss->robot->getMaxVel().norm() * TrajectoryConfig::MAX_RADIUS)
             status = base::State::Status::Reached;
         else
             status = base::State::Status::Advanced;
@@ -223,7 +223,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
     //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
 
-    remaining_time = t_spline_max + SplinesConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
+    remaining_time = t_spline_max + TrajectoryConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
 }
 
 // This function will change 'q_next' and 'q_next_reached'

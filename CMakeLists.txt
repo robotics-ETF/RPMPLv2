@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message("------------------ Using compiler: ${CMAKE_CXX_COMPILER} ------------------")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic) #-Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
@@ -62,10 +62,11 @@ find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
 
-add_subdirectory(external/ros_reflexxes/libreflexxestype2)
-include_directories(external/ros_reflexxes/libreflexxestype2/include)
+# add_subdirectory(external/ros_reflexxes/libreflexxestype2)
+# include_directories(external/ros_reflexxes/libreflexxestype2/include)
 
-set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp reflexxes)
+set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp) 
+#reflexxes)
 
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
@@ -80,7 +81,7 @@ add_subdirectory(src)
 
 # The executable code is here
 add_subdirectory(apps)
-add_subdirectory(external/ros_reflexxes/libreflexxestype2/src/RMLPositionSampleApplications)
+# add_subdirectory(external/ros_reflexxes/libreflexxestype2/src/RMLPositionSampleApplications)
 
 # Testing only available if this is the main app
 # Emergency override MODERN_CMAKE_BUILD_TESTING provided as well

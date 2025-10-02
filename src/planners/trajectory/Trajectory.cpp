@@ -47,8 +47,8 @@ void planning::trajectory::Trajectory::setParams()
     }
 
     max_num_iter_spline_regular = all_robot_vel_same ? 
-        std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / SplinesConfig::FINAL_VELOCITY_STEP)) :
-        std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / SplinesConfig::FINAL_VELOCITY_STEP));
+        std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / TrajectoryConfig::FINAL_VELOCITY_STEP)) :
+        std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / TrajectoryConfig::FINAL_VELOCITY_STEP));
 }
 
 /// @brief Compute a regular spline that is not surely safe for environment, meaning that,
@@ -257,7 +257,7 @@ bool planning::trajectory::Trajectory::computeSafe(const Eigen::VectorXf &curren
 bool planning::trajectory::Trajectory::checkCollision(std::shared_ptr<base::State> q_init, float t_iter)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
-    float delta_t { SplinesConfig::TIME_STEP };
+    float delta_t { TrajectoryConfig::TIME_STEP };
     size_t num_iter = std::ceil(spline_next->getTimeFinal() / delta_t);
     delta_t = spline_next->getTimeFinal() / num_iter;
     float rho_robot {};
@@ -484,7 +484,7 @@ void planning::trajectory::Trajectory::path2traj_v2(const std::vector<std::share
                 spline_current->getVelocity(t),
                 spline_current->getAcceleration(t),
                 max_remaining_iter_time,
-                SplinesConfig::MAX_TIME_COMPUTE_REGULAR,
+                TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR,
                 non_zero_final_vel
             );
             

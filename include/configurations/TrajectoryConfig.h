@@ -2,10 +2,10 @@
 // Created by nermin on 23.05.24.
 //
 
-#ifndef RPMPL_SPLINESCONFIG_H
-#define RPMPL_SPLINESCONFIG_H
+#ifndef RPMPL_TRAJECTORYCONFIG_H
+#define RPMPL_TRAJECTORYCONFIG_H
 
-class SplinesConfig
+class TrajectoryConfig
 {
 public:
     static float MAX_TIME_COMPUTE_REGULAR;      // Maximal time in [s] for computing a regular spline
@@ -18,4 +18,4 @@ public:
     static float MAX_RADIUS;                    // Maximal radius in [rad] used when updating state (it should be experimentally evaluated)
 };
 
-#endif //RPMPL_SPLINESCONFIG_H
+#endif //RPMPL_TRAJECTORYCONFIG_H

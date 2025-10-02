@@ -9,7 +9,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
     YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
-    YAML::Node SplinesConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_splines.yaml") };
+    YAML::Node TrajectoryConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_trajectory.yaml") };
 
     // RealVectorSpaceConfigRoot
     if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -248,46 +248,46 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "RRTxConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << RRTxConfig::TRAJECTORY_INTERPOLATION;
     
-    // SplinesConfigRoot
-    if (SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
-        SplinesConfig::MAX_TIME_COMPUTE_REGULAR = SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();
+    // TrajectoryConfigRoot
+    if (TrajectoryConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
+        TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR = TrajectoryConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_REGULAR is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR;
 
-    if (SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].IsDefined())
-        SplinesConfig::MAX_TIME_COMPUTE_SAFE = SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
+    if (TrajectoryConfigRoot["MAX_TIME_COMPUTE_SAFE"].IsDefined())
+        TrajectoryConfig::MAX_TIME_COMPUTE_SAFE = TrajectoryConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_SAFE;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_COMPUTE_SAFE;
 
-    if (SplinesConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
-        SplinesConfig::MAX_TIME_PUBLISH = SplinesConfigRoot["MAX_TIME_PUBLISH"].as<float>();
+    if (TrajectoryConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
+        TrajectoryConfig::MAX_TIME_PUBLISH = TrajectoryConfigRoot["MAX_TIME_PUBLISH"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_PUBLISH is not defined! Using default value of " << SplinesConfig::MAX_TIME_PUBLISH;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_PUBLISH is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_PUBLISH;
 
-    if (SplinesConfigRoot["MAX_TIME_FINAL"].IsDefined())
-        SplinesConfig::MAX_TIME_FINAL = SplinesConfigRoot["MAX_TIME_FINAL"].as<float>();
+    if (TrajectoryConfigRoot["MAX_TIME_FINAL"].IsDefined())
+        TrajectoryConfig::MAX_TIME_FINAL = TrajectoryConfigRoot["MAX_TIME_FINAL"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_FINAL is not defined! Using default value of " << SplinesConfig::MAX_TIME_FINAL;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_FINAL is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_FINAL;
 
-    if (SplinesConfigRoot["TIME_STEP"].IsDefined())
-        SplinesConfig::TIME_STEP = SplinesConfigRoot["TIME_STEP"].as<float>();
+    if (TrajectoryConfigRoot["TIME_STEP"].IsDefined())
+        TrajectoryConfig::TIME_STEP = TrajectoryConfigRoot["TIME_STEP"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::TIME_STEP is not defined! Using default value of " << SplinesConfig::TIME_STEP;
+        LOG(INFO) << "TrajectoryConfig::TIME_STEP is not defined! Using default value of " << TrajectoryConfig::TIME_STEP;
 
-    if (SplinesConfigRoot["FINAL_JERK_STEP"].IsDefined())
-        SplinesConfig::FINAL_JERK_STEP = SplinesConfigRoot["FINAL_JERK_STEP"].as<float>();
+    if (TrajectoryConfigRoot["FINAL_JERK_STEP"].IsDefined())
+        TrajectoryConfig::FINAL_JERK_STEP = TrajectoryConfigRoot["FINAL_JERK_STEP"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::FINAL_JERK_STEP is not defined! Using default value of " << SplinesConfig::FINAL_JERK_STEP;
+        LOG(INFO) << "TrajectoryConfig::FINAL_JERK_STEP is not defined! Using default value of " << TrajectoryConfig::FINAL_JERK_STEP;
     
-    if (SplinesConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
-        SplinesConfig::FINAL_VELOCITY_STEP = SplinesConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
+    if (TrajectoryConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
+        TrajectoryConfig::FINAL_VELOCITY_STEP = TrajectoryConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << SplinesConfig::FINAL_VELOCITY_STEP;
+        LOG(INFO) << "TrajectoryConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << TrajectoryConfig::FINAL_VELOCITY_STEP;
     
-    if (SplinesConfigRoot["MAX_RADIUS"].IsDefined())
-        SplinesConfig::MAX_RADIUS = SplinesConfigRoot["MAX_RADIUS"].as<float>();
+    if (TrajectoryConfigRoot["MAX_RADIUS"].IsDefined())
+        TrajectoryConfig::MAX_RADIUS = TrajectoryConfigRoot["MAX_RADIUS"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_RADIUS is not defined! Using default value of " << SplinesConfig::MAX_RADIUS;
+        LOG(INFO) << "TrajectoryConfig::MAX_RADIUS is not defined! Using default value of " << TrajectoryConfig::MAX_RADIUS;
     
     LOG(INFO) << "Configuration parameters read successfully!";
 }

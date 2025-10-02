@@ -246,7 +246,7 @@ void planning::drbt::DRGBT::generateGBur()
     float time_elapsed {};
     float max_time { DRGBTConfig::MAX_TIME_TASK1 };
     if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
+        max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? TrajectoryConfig::MAX_TIME_COMPUTE_SAFE : TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR;
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)

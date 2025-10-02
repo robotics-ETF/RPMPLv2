@@ -20,7 +20,7 @@
 #include "RGBMTStarConfig.h"
 #include "DRGBTConfig.h"
 #include "RRTxConfig.h"
-#include "SplinesConfig.h"
+#include "TrajectoryConfig.h"
 
 class ConfigurationReader
 {

@@ -35,10 +35,10 @@ bool planning::trajectory::Spline::isFinalConf(const Eigen::VectorXf &q)
 /// @return Return 0 if the function is non monotonic.
 int planning::trajectory::Spline::checkPositionMonotonicity(size_t idx)
 {
-    float value { getVelocity(SplinesConfig::TIME_STEP, idx) };
+    float value { getVelocity(TrajectoryConfig::TIME_STEP, idx) };
     int monotonic { value > 0 ? 1 : -1 };
 
-    for (float t = 2*SplinesConfig::TIME_STEP; t <= times_final[idx]; t += SplinesConfig::TIME_STEP)
+    for (float t = 2*TrajectoryConfig::TIME_STEP; t <= times_final[idx]; t += TrajectoryConfig::TIME_STEP)
     {
         value = getVelocity(t, idx);
         if ((value > 0 && monotonic == -1) || (value < 0 && monotonic == 1))

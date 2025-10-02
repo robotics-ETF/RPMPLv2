@@ -9,7 +9,7 @@
 
 #include "AbstractRobot.h"
 #include "RealVectorSpaceConfig.h"
-#include "SplinesConfig.h"
+#include "TrajectoryConfig.h"
 
 namespace planning::trajectory
 {
