@@ -1,4 +1,0 @@
-[submodule "external/ros_reflexxes"]
-path = external/ros_reflexxes
-url = https://github.com/PickNikRobotics/ros_reflexxes.git
-branch = foxy

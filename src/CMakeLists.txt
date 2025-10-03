@@ -18,7 +18,6 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include/scenario
         ${PROJECT_SOURCE_DIR}/include/configurations
         ${PROJECT_SOURCE_DIR}/include/benchmark
-        ${PROJECT_SOURCE_DIR}/external/ros_reflexxes/libreflexxestype2/include
 )
 
 # Optionally glob, but only for CMake 3.12 or later:

@@ -61,12 +61,9 @@ include_directories(${OROCOS_KDL_INCLUDE_DIR})
 find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
+find_package(ruckig REQUIRED)
 
-# add_subdirectory(external/ros_reflexxes/libreflexxestype2)
-# include_directories(external/ros_reflexxes/libreflexxestype2/include)
-
-set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp) 
-#reflexxes)
+set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig)
 
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
@@ -81,7 +78,6 @@ add_subdirectory(src)
 
 # The executable code is here
 add_subdirectory(apps)
-# add_subdirectory(external/ros_reflexxes/libreflexxestype2/src/RMLPositionSampleApplications)
 
 # Testing only available if this is the main app
 # Emergency override MODERN_CMAKE_BUILD_TESTING provided as well

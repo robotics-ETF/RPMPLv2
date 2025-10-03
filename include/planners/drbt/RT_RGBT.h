@@ -5,10 +5,11 @@
 #ifndef RPMPL_RTRGBT_H
 #define RPMPL_RTRGBT_H
 
+#include "RT_RGBTConfig.h"
 #include "RGBTConnect.h"
 #include "MotionValidity.h"
 #include "Trajectory.h"
-#include "RT_RGBTConfig.h"
+#include <ruckig/ruckig.hpp>
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
