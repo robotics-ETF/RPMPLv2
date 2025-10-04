@@ -66,44 +66,44 @@ bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &cur
     const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
     std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    float t_remain { t_max };
     std::shared_ptr<planning::trajectory::Spline> spline_next_new 
         { std::make_shared<planning::trajectory::Spline5>(ss->robot, current_pos, current_vel, current_acc) };
     bool spline_computed { false };
 
     if (non_zero_final_vel)
     {
-        float num_iter { 0 };
+        size_t num_iter { 0 };
         float delta_t_max { ((q_target->getCoord() - q_current->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
         Eigen::VectorXf q_final_dot_max { (q_target->getCoord() - q_current->getCoord()) / delta_t_max };
         Eigen::VectorXf q_final_dot_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
         Eigen::VectorXf q_final_dot { q_final_dot_max };
         
-        while (num_iter++ < max_num_iter_spline_regular &&
-               std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
+        while (!spline_computed && num_iter++ < max_num_iter_spline_regular && t_remain > 0)
         {
             if (spline_next_new->compute(q_target->getCoord(), q_final_dot)) 
             {
                 spline_next = spline_next_new;
                 spline_computed = true;
-                break;
             }
             else
                 q_final_dot_max = q_final_dot;
 
             q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
+            t_remain -= std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() / 1e6;
             // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
         }
     }
 
-    Eigen::VectorXf new_current_pos {    // Possible current position at the end of iteration
-        spline_computed ? 
+    // Possible current position at the end of iteration
+    Eigen::VectorXf new_current_pos { spline_computed ? 
         spline_next->getPosition(t_iter_remain) : 
         spline_current->getPosition(spline_current->getTimeCurrent() + t_iter_remain)
     };
     
     // If spline was not computed or robot is getting away from 'new_current_pos'
-    if (!spline_computed || 
-        (new_current_pos - q_target->getCoord()).norm() > (current_pos - q_target->getCoord()).norm())
+    if ((!spline_computed || (new_current_pos - q_target->getCoord()).norm() > (current_pos - q_target->getCoord()).norm()) &&
+        t_remain > 0)
     {
         spline_computed = spline_next_new->compute(q_target->getCoord());
         if (spline_computed)
@@ -364,6 +364,16 @@ float planning::trajectory::Trajectory::computeDistanceUnderestimation(const std
 	q->setIsRealDistance(false);
 
 	return d_c;
+}
+
+void planning::trajectory::Trajectory::addTrajPointCurrentIter(const Eigen::VectorXf &pos)
+{
+    traj_points_current_iter.emplace_back(pos);
+}
+
+void planning::trajectory::Trajectory::clearTrajPointCurrentIter()
+{
+    traj_points_current_iter.clear();
 }
 
 /// @brief A method (v1) to convert a path 'path' to a corresponding trajectory.
