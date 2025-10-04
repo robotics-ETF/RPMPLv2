@@ -47,7 +47,7 @@ namespace planning
 		switch (type)
 		{
 			case planning::RealTimeScheduling::None:
-				os << "none";
+				os << "None";
 				break;
 
 			case planning::RealTimeScheduling::FPS:
@@ -63,11 +63,15 @@ namespace planning
 		switch (type)
 		{
 			case planning::TrajectoryInterpolation::None:
-				os << "none";
+				os << "None";
 				break;
 
 			case planning::TrajectoryInterpolation::Spline:
-				os << "spline";
+				os << "Spline";
+				break;
+			
+			case planning::TrajectoryInterpolation::Ruckig:
+				os << "Ruckig";
 				break;
 		}
 

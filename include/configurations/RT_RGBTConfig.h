@@ -17,7 +17,7 @@ public:
     static float MAX_PLANNING_TIME;                                         // Maximal algorithm runtime
     static float RESOLUTION_COLL_CHECK;                                     // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
     static float GOAL_PROBABILITY;                                          // Probability for choosing 'q_goal' as 'q_target'
-    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None", "Spline" or "Reflexxes"
+    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None", "Spline" or "Ruckig"
 };
 
 #endif //RPMPL_RTRGBTCONFIG_H

@@ -66,19 +66,22 @@ namespace planning
 	enum class TrajectoryInterpolation
 	{
 		None,
-		Spline
+		Spline,
+		Ruckig
 	};
 
 	static std::unordered_map<std::string, planning::TrajectoryInterpolation> trajectory_interpolation_map = 
 	{
 		{ "None", planning::TrajectoryInterpolation::None },
-		{ "Spline", planning::TrajectoryInterpolation::Spline }
+		{ "Spline", planning::TrajectoryInterpolation::Spline },
+		{ "Ruckig", planning::TrajectoryInterpolation::Ruckig }
 	};
 
 	static std::unordered_map<planning::TrajectoryInterpolation, std::string> trajectory_interpolation_map2 = 
 	{
 		{ planning::TrajectoryInterpolation::None, "None" },
-		{ planning::TrajectoryInterpolation::Spline, "Spline" }
+		{ planning::TrajectoryInterpolation::Spline, "Spline" },
+		{ planning::TrajectoryInterpolation::Ruckig, "Ruckig" }
 	};
 
 	std::ostream &operator<<(std::ostream &os, const planning::PlannerType &type);

@@ -52,7 +52,7 @@ bool planning::trajectory::MotionValidity::check(const std::shared_ptr<base::Sta
     return true;
 }
 
-/// @brief In case traj_interpolation == "Spline" or "Reflexxes", discretely check the validity of motion 
+/// @brief In case traj_interpolation == "Spline" or "Ruckig", discretely check the validity of motion 
 /// when the robot moves over the current trajectory during the current iteration.
 /// During this checking obstacles are moving simultaneously. Finally, environment is updated within this function.
 /// @return Validity of motion.

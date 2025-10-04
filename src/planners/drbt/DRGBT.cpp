@@ -44,12 +44,18 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     {
     case planning::TrajectoryInterpolation::None:
         traj = nullptr;
+        traj_ruckig = nullptr;
         break;
 
     case planning::TrajectoryInterpolation::Spline:
         traj = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
         traj->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
         updating_state->setTrajectory(traj);
+        break;
+    
+    case planning::TrajectoryInterpolation::Ruckig:
+        traj_ruckig = std::make_shared<planning::trajectory::TrajectoryRuckig>(ss, q_current->getCoord(), DRGBTConfig::MAX_ITER_TIME);
+        updating_state->setTrajectory(traj_ruckig);
         break;
     }
 
@@ -134,7 +140,11 @@ bool planning::drbt::DRGBT::solve()
             break;
 
         case planning::TrajectoryInterpolation::Spline:
-            is_valid = motion_validity->check(traj->traj_points_current_iter);
+            is_valid = motion_validity->check(traj->getTrajPointCurrentIter());
+            break;
+
+        case planning::TrajectoryInterpolation::Ruckig:
+            is_valid = motion_validity->check(traj_ruckig->getTrajPointCurrentIter());
             break;
         }
 

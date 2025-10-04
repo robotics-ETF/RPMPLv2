@@ -46,13 +46,19 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     
     switch (RRTxConfig::TRAJECTORY_INTERPOLATION)
     {
+    case planning::TrajectoryInterpolation::None:
+        traj = nullptr;
+        break;
+
     case planning::TrajectoryInterpolation::Spline:
         traj = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
         updating_state->setTrajectory(traj);
         break;
 
-    default:
-        traj = nullptr;
+    case planning::TrajectoryInterpolation::Ruckig:
+        traj_ruckig = std::make_shared<planning::trajectory::TrajectoryRuckig>(ss, q_current->getCoord(), RRTxConfig::MAX_ITER_TIME);
+        updating_state->setTrajectory(traj_ruckig);
+        break;
     }
 
     RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;
@@ -231,7 +237,23 @@ bool planning::rrtx::RRTx::solve()
         //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // Update environment and check if the collision occurs
-        if (!motion_validity->check(q_previous, q_current))
+        bool is_valid { false };
+        switch (RRTxConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::None:
+            is_valid = motion_validity->check(q_previous, q_current);
+            break;
+
+        case planning::TrajectoryInterpolation::Spline:
+            is_valid = motion_validity->check(traj->getTrajPointCurrentIter());
+            break;
+
+        case planning::TrajectoryInterpolation::Ruckig:
+            is_valid = motion_validity->check(traj_ruckig->getTrajPointCurrentIter());
+            break;
+        }
+
+        if (!is_valid)
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);
