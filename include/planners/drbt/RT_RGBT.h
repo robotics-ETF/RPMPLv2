@@ -7,9 +7,10 @@
 
 #include "RT_RGBTConfig.h"
 #include "RGBTConnect.h"
+#include "UpdatingState.h"
 #include "MotionValidity.h"
 #include "Trajectory.h"
-#include <ruckig/ruckig.hpp>
+#include "TrajectoryRuckig.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
@@ -28,14 +29,15 @@ namespace planning::drbt
 		
 		bool solve() override;
 		void computeTargetState();
-		void update();
 		bool checkTerminatingCondition(base::State::Status status) override;
 		void outputPlannerData(const std::string &filename, bool output_states_and_paths = true, bool append_output = false) const override;
 		
 	protected:
 		std::shared_ptr<base::State> q_current;            								// Current robot configuration
 		std::shared_ptr<base::State> q_target;          		 						// Target (next) robot configuration
-        std::shared_ptr<planning::trajectory::Trajectory> traj;                     	// Trajectory which is generated using the proposed approach from RPMPLv2 library
+        std::shared_ptr<planning::trajectory::Trajectory> traj;                     	// Trajectory which is generated using splines from RPMPLv2 library
+        std::shared_ptr<planning::trajectory::TrajectoryRuckig> traj_ruckig;        	// Trajectory which is generated using Ruckig library
+        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        	// Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      	// Class for checking validity of motion
         float max_edge_length;															// Distance between 'q_current' and 'q_target'
 		bool compute_new_target_state;													// Whether to compute 'q_target'
