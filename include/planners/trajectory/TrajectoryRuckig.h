@@ -22,6 +22,8 @@ namespace planning::trajectory
         bool computeRegular(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, 
                             const Eigen::VectorXf &current_acc, float t_iter_remain, float t_max, bool non_zero_final_vel);
         
+        void setCurrentState(const Eigen::VectorXf &current_pos, const Eigen::VectorXf &current_vel, const Eigen::VectorXf &current_acc);
+        void setTargetState(const Eigen::VectorXf &target_pos, const Eigen::VectorXf &target_vel, const Eigen::VectorXf &target_acc);
         Eigen::VectorXf getPosition(float t);
         Eigen::VectorXf getVelocity(float t);
         Eigen::VectorXf getAcceleration(float t);
@@ -44,10 +46,10 @@ namespace planning::trajectory
         inline void setTimeCurrent(float time_current_) { time_current = time_current_; }
         
     private:
-        ruckig::InputParameter<ruckig::DynamicDOFs, ruckig::EigenVector> input;
-        ruckig::Trajectory<ruckig::DynamicDOFs, ruckig::EigenVector> traj;
-        ruckig::Trajectory<ruckig::DynamicDOFs, ruckig::EigenVector> traj_temp;
-        ruckig::Ruckig<ruckig::DynamicDOFs, ruckig::EigenVector> otg;
+        ruckig::InputParameter<ruckig::DynamicDOFs> input;
+        // ruckig::OutputParameter<ruckig::DynamicDOFs> output;
+        ruckig::Trajectory<ruckig::DynamicDOFs> traj;
+        ruckig::Trajectory<ruckig::DynamicDOFs> traj_temp;
 
         std::shared_ptr<base::StateSpace> ss;
         Eigen::VectorXf q_current;                                  // Current robot configuration

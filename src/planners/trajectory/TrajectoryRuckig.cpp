@@ -1,10 +1,10 @@
 #include "TrajectoryRuckig.h"
 
-planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, const Eigen::VectorXf &q_current_, float max_iter_time_) : 
-    input(ss->num_dimensions), 
-    traj(ss->num_dimensions), 
-    traj_temp(ss->num_dimensions),
-    otg(ss->num_dimensions)
+planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, 
+                                                         const Eigen::VectorXf &q_current_, float max_iter_time_) : 
+    input(ss_->num_dimensions), 
+    traj(ss_->num_dimensions), 
+    traj_temp(ss_->num_dimensions)
 {
     ss = ss_;
     q_current = q_current_;
@@ -19,13 +19,20 @@ planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<b
     is_zero_final_vel = true;
     traj_points_current_iter = {};
 
-    input.current_position = q_current.cast<double>();
-    input.current_velocity = Eigen::VectorXd::Zero(ss->num_dimensions);
-    input.current_acceleration = Eigen::VectorXd::Zero(ss->num_dimensions);
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+    {
+        input.current_position[i] = q_current(i);
+        input.current_velocity[i] = 0;
+        input.current_acceleration[i] = 0;
 
-    input.max_velocity = ss->robot->getMaxVel().cast<double>();
-    input.max_acceleration = ss->robot->getMaxAcc().cast<double>();
-    input.max_jerk = ss->robot->getMaxJerk().cast<double>();
+        input.max_velocity[i] = ss->robot->getMaxVel(i);
+        input.max_acceleration[i] = ss->robot->getMaxAcc(i);
+        input.max_jerk[i] = ss->robot->getMaxJerk(i);
+    }
+    input.synchronization = ruckig::Synchronization::Time;
+
+    if (!input.validate())
+        throw std::runtime_error("Invalid input parameters for Ruckig");
 
     all_robot_vel_same = true;
     for (size_t i = 1; i < ss->num_dimensions; i++)
@@ -58,10 +65,8 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(const Eigen::VectorX
     float t_remain { t_max };
     bool traj_computed { false };
     ruckig::Result result { ruckig::Result::Working };
-
-    input.current_position = current_pos.cast<double>();
-    input.current_velocity = current_vel.cast<double>();
-    input.current_acceleration = current_acc.cast<double>();
+    ruckig::Ruckig<ruckig::DynamicDOFs> otg(ss->num_dimensions);
+    setCurrentState(current_pos, current_vel, current_acc);
 
     if (non_zero_final_vel)
     {
@@ -73,13 +78,11 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(const Eigen::VectorX
         Eigen::VectorXf q_final_dot { q_final_dot_max };
         
         while (!traj_computed && num_iter++ < max_num_iter_trajectory && t_remain > 0)
-        {            
-            input.target_position = q_target.cast<double>();
-            input.target_velocity = q_final_dot.cast<double>();
-            input.target_acceleration = Eigen::VectorXd::Zero(ss->num_dimensions);
+        {
+            setTargetState(q_target, q_final_dot, Eigen::VectorXf::Zero(ss->num_dimensions));
             result = otg.calculate(input, traj_temp);
-
-            if (result == ruckig::Result::Finished)
+            
+            if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
             {
                 traj = traj_temp;
                 time_current = 0;
@@ -91,7 +94,7 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(const Eigen::VectorX
 
             q_final_dot = (q_final_dot_max + q_final_dot_min) / 2;
             t_remain -= std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() / 1e6;
-            std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
+            // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
         }
     }
 
@@ -102,46 +105,95 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(const Eigen::VectorX
     if ((!traj_computed || (new_current_pos - q_target).norm() > (current_pos - q_target).norm()) && t_remain > 0)
     {
         is_zero_final_vel = true;
-        input.target_velocity = Eigen::VectorXd::Zero(ss->num_dimensions);
+        setTargetState(q_target, Eigen::VectorXf::Zero(ss->num_dimensions), Eigen::VectorXf::Zero(ss->num_dimensions));
         result = otg.calculate(input, traj_temp);
 
-        if (result == ruckig::Result::Finished)
+        if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
         {
             traj = traj_temp;
             time_current = 0;
             time_final = traj.get_duration();
             traj_computed = true;
-            std::cout << "\t Trajectory computed with ZERO final velocity. \n";
         }
     }
-    else std::cout << "\t Trajectory computed with NON-ZERO final velocity. \n";
 
+    // std::cout << "\t Trajectory " << (!traj_computed ? "NOT " : "") << "computed with " 
+    //           << (!is_zero_final_vel ? "NON-" : "") <<  "ZERO final velocity. \n";
     return traj_computed;
+}
+
+void planning::trajectory::TrajectoryRuckig::setCurrentState(const Eigen::VectorXf &current_pos, 
+    const Eigen::VectorXf &current_vel, const Eigen::VectorXf &current_acc)
+{
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+    {
+        input.current_position[i] = current_pos(i);
+        input.current_velocity[i] = current_vel(i);
+        input.current_acceleration[i] = current_acc(i);
+    }
+}
+
+void planning::trajectory::TrajectoryRuckig::setTargetState(const Eigen::VectorXf &target_pos, 
+    const Eigen::VectorXf &target_vel, const Eigen::VectorXf &target_acc)
+{
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+    {
+        input.target_position[i] = target_pos(i);
+        input.target_velocity[i] = target_vel(i);
+        input.target_acceleration[i] = target_acc(i);
+    }
 }
 
 Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getPosition(float t)
 {
-    ruckig::EigenVector<double, ruckig::DynamicDOFs> pos;
-    traj.at_time(t, pos);
-    return pos.cast<float>();
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+
+    if (time_final == 0)
+        pos = input.current_position;
+    else
+        traj.at_time(t, pos);
+
+    Eigen::VectorXf ret(ss->num_dimensions);
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+        ret(i) = pos[i];
+
+    return ret;
 }
 
 Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getVelocity(float t)
 {
-    [[maybe_unused]] ruckig::EigenVector<double, ruckig::DynamicDOFs> pos, acc;
-    ruckig::EigenVector<double, ruckig::DynamicDOFs> vel;
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
+    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
 
-    traj.at_time(t, pos, vel, acc);
-    return vel.cast<float>();
+    if (time_final == 0)
+        vel = input.current_velocity;
+    else
+        traj.at_time(t, pos, vel, acc);
+
+    Eigen::VectorXf ret(ss->num_dimensions);
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+        ret(i) = vel[i];
+
+    return ret;
 }
 
 Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcceleration(float t)
 {
-    [[maybe_unused]] ruckig::EigenVector<double, ruckig::DynamicDOFs> pos, vel;
-    ruckig::EigenVector<double, ruckig::DynamicDOFs> acc;
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
+    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
 
-    traj.at_time(t, pos, vel, acc);
-    return acc.cast<float>();
+    if (time_final == 0)
+        acc = input.current_acceleration;
+    else
+        traj.at_time(t, pos, vel, acc);
+    
+    Eigen::VectorXf ret(ss->num_dimensions);
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+        ret(i) = acc[i];
+
+    return ret;
 }
 
 void planning::trajectory::TrajectoryRuckig::addTrajPointCurrentIter(const Eigen::VectorXf &pos)
