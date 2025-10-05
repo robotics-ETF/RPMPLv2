@@ -23,7 +23,7 @@ public:
     static planning::PlannerType STATIC_PLANNER_TYPE;                       // Name of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect" 
     static planning::RealTimeScheduling REAL_TIME_SCHEDULING;               // "FPS" - Fixed Priority Scheduling; "None" - Without real-time scheduling    
     static float MAX_TIME_TASK1;                                            // Maximal time which Task 1 can take from the processor
-    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None" or "Spline"
+    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;      // Method for interpolation of trajectory: "None", "Spline" or "Ruckig"
     static bool GUARANTEED_SAFE_MOTION;                                     // Whether robot motion is surely safe for environment
 };
 

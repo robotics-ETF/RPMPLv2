@@ -21,7 +21,7 @@ public:
     static size_t REPLANNING_THROTTLE;                                  // Process obstacles every N iterations
     static float START_BIAS;                                            // Probability of sampling start directly
     static float RESOLUTION_COLL_CHECK;                                 // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
-    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;  // Method for interpolation of trajectory: "None" or "Spline"
+    static planning::TrajectoryInterpolation TRAJECTORY_INTERPOLATION;  // Method for interpolation of trajectory: "None", "Spline" or "Ruckig"
 };
 
 #endif // RPMPL_RRTXCONFIG_H

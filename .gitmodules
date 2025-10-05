@@ -1,0 +1,4 @@
+[submodule "external/ruckig"]
+path = external/ruckig
+url = https://github.com/pantor/ruckig.git
+branch = v0.15.3

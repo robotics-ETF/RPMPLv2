@@ -61,9 +61,12 @@ include_directories(${OROCOS_KDL_INCLUDE_DIR})
 find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
-find_package(ruckig REQUIRED)
 
-set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig)
+# If any problems occur about which version of Ruckig is built, just type the following in terminal:
+# export LD_LIBRARY_PATH=<absolute_path_to_build_directory/build/rpmpl_library/external/ruckig:$LD_LIBRARY_PATH
+add_subdirectory(external/ruckig)
+
+set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig::ruckig)
 
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 

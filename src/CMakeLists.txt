@@ -18,6 +18,7 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include/scenario
         ${PROJECT_SOURCE_DIR}/include/configurations
         ${PROJECT_SOURCE_DIR}/include/benchmark
+        ${PROJECT_SOURCE_DIR}/external/ruckig/include
 )
 
 # Optionally glob, but only for CMake 3.12 or later:
@@ -34,6 +35,8 @@ target_include_directories(rpmpl_library PUBLIC ${INCLUDE_DIRS})
 
 # All users of this library will need at least C++17
 target_compile_features(rpmpl_library PUBLIC cxx_std_17)
+
+target_link_libraries(rpmpl_library PRIVATE ruckig::ruckig)
 
 # IDEs should put the headers in a nice place
 source_group(
