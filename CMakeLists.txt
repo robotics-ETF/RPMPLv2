@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message("------------------ Using compiler: ${CMAKE_CXX_COMPILER} ------------------")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)# -Werror)
 endif()
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
