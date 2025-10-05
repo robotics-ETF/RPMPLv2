@@ -93,6 +93,8 @@ bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &cur
             t_remain -= std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() / 1e6;
             // std::cout << "Num. iter. " << num_iter << "\t q_final_dot: " << q_final_dot.transpose() << "\n";
         }
+
+        // if (spline_computed) std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
     }
 
     // Possible current position at the end of iteration
@@ -112,8 +114,7 @@ bool planning::trajectory::Trajectory::computeRegular(const Eigen::VectorXf &cur
             // std::cout << "\t Spline computed with ZERO final velocity. \n";
         }
     }
-    // else std::cout << "\t Spline computed with NON-ZERO final velocity. \n";
-
+    
     return spline_computed;
 }
 

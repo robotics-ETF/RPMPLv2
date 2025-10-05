@@ -306,10 +306,10 @@ void planning::trajectory::UpdatingState::update_v3(std::shared_ptr<base::State>
     {
         t = traj_ruckig->getTimeBegin() + num_check * delta_time1;
         traj_ruckig->addTrajPointCurrentIter(traj_ruckig->getPosition(t));
-        std::cout << "t: " << t * 1000 << " [ms]\t"
-                  << "pos: " << traj_ruckig->getPosition(t).transpose() << "\t" 
-                  << "vel: " << traj_ruckig->getVelocity(t).transpose() << "\t"
-                  << "acc: " << traj_ruckig->getAcceleration(t).transpose() << "\n";
+        // std::cout << "t: " << t * 1000 << " [ms]\t"
+        //           << "pos: " << traj_ruckig->getPosition(t).transpose() << "\t" 
+        //           << "vel: " << traj_ruckig->getVelocity(t).transpose() << "\t"
+        //           << "acc: " << traj_ruckig->getAcceleration(t).transpose() << "\n";
     }
     // ----------------------------------------------------------------------------------------- //
 
@@ -365,8 +365,8 @@ void planning::trajectory::UpdatingState::update_v3(std::shared_ptr<base::State>
         else
             status = base::State::Status::Advanced;
     }
-
-    std::cout << "Elapsed time for trajectory computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
+    
+    // std::cout << "Elapsed time for trajectory computing: " << (getElapsedTime() - t_iter) * 1e3 << " [ms] \n";
     // std::cout << "q_current: " << q_current << "\n";
     // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
     //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
@@ -380,10 +380,10 @@ void planning::trajectory::UpdatingState::update_v3(std::shared_ptr<base::State>
     {
         t = traj_ruckig->getTimeCurrent() + num_check * delta_time2;
         traj_ruckig->addTrajPointCurrentIter(traj_ruckig->getPosition(t));
-        std::cout << "t: " << t * 1000 << " [ms]\t"
-                  << "pos: " << traj_ruckig->getPosition(t).transpose() << "\t" 
-                  << "vel: " << traj_ruckig->getVelocity(t).transpose() << "\t"
-                  << "acc: " << traj_ruckig->getAcceleration(t).transpose() << "\n";
+        // std::cout << "t: " << t * 1000 << " [ms]\t"
+        //           << "pos: " << traj_ruckig->getPosition(t).transpose() << "\t" 
+        //           << "vel: " << traj_ruckig->getVelocity(t).transpose() << "\t"
+        //           << "acc: " << traj_ruckig->getAcceleration(t).transpose() << "\n";
     }
     // ----------------------------------------------------------------------------------------- //
 
