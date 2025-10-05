@@ -91,24 +91,26 @@ bool planning::drbt::DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Since the environment may change, a new distance is required!
         // auto time_computeDistance { std::chrono::steady_clock::now() };
-        ss->computeDistance(q_current, true);     // ~ 1 [ms]
+        ss->computeDistance(q_current, true);
         // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
-            generateHorizon();          // ~ 2 [us]
+            generateHorizon();
             
-        updateHorizon();                // ~ 10 [us]
-        generateGBur();                 // ~ 10 [ms] Time consuming routine... 
-        computeNextState();             // ~ 1 [us]
+        updateHorizon();
+        generateGBur();
+        computeNextState();
         
+        // ------------------------------------------------------------------------------- //
+        // Compute a trajectory and update current state
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
         visited_states = { q_next };
         updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
-        updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);   // ~ 1 [ms]
+        updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 

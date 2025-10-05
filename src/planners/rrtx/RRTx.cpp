@@ -48,6 +48,7 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     {
     case planning::TrajectoryInterpolation::None:
         traj = nullptr;
+        traj_ruckig = nullptr;
         break;
 
     case planning::TrajectoryInterpolation::Spline:

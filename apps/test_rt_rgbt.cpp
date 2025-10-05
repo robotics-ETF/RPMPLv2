@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	std::vector<std::string> routines		// Routines of which the time executions are stored
 	{ 	
-		"update [ms]"						// 0
+		"updateCurrentState [ms]"						// 0
 	};
 
 	// -------------------------------------------------------------------------------------- //
@@ -158,7 +158,6 @@ int main(int argc, char **argv)
 					num_iters.emplace_back(planner->getPlannerInfo()->getNumIterations());
 					num_success_tests++;
 				}
-
 
 				output_file.open(directory_path + "/results_" + std::to_string(init_num_obs) + "obs_" 
 					+ std::to_string(size_t(RT_RGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::app);
