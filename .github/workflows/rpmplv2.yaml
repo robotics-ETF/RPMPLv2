@@ -10,7 +10,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-
+        with:
+          submodules: true        # make sure submodules are fetched
+          fetch-depth: 0          # fetch full history (needed for submodules)
+          
+      - name: Init submodules
+        run: git submodule update --init --recursive
+  
       - name: Install dependencies
         run: |
           sudo apt update && sudo apt upgrade && sudo apt install -y libunwind-dev apt-transport-https \
