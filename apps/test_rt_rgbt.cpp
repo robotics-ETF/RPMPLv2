@@ -133,10 +133,11 @@ int main(int argc, char **argv)
 				
 				planner = std::make_unique<planning::drbt::RT_RGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
-				num_real_success_tests += 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm();
+				float real_result { std::max(0.0f, 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm()) };
+				num_real_success_tests += real_result;
 
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
-				LOG(INFO) << "Real success:         " << 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm();
+				LOG(INFO) << "Real success:         " << real_result;
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
@@ -165,7 +166,7 @@ int main(int argc, char **argv)
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
 				output_file << "Success:\n" << result << std::endl;
-				output_file << "Real success:\n" << 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm() << std::endl;
+				output_file << "Real success:\n" << real_result << std::endl;
 				output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 				output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
