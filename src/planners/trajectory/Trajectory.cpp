@@ -8,7 +8,7 @@ planning::trajectory::Trajectory::Trajectory(const std::shared_ptr<base::StateSp
 
 planning::trajectory::Trajectory::Trajectory
     (const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current, float max_iter_time_) : 
-        AbstractTrajectory(ss_, max_iter_time)
+        AbstractTrajectory(ss_, max_iter_time_)
 {
     spline = std::make_shared<planning::trajectory::Spline5>(ss->robot, current.pos, current.vel, current.acc);
 }
@@ -70,9 +70,9 @@ bool planning::trajectory::Trajectory::computeRegular(planning::trajectory::Stat
             setSpline(spline_new);
     }
     
-    std::cout << "\t Spline " << (!spline_computed ? "NOT " : "") << "computed with " 
-              << (!is_zero_final_vel ? "NON-" : "") <<  "ZERO final velocity. \n";
-    std::cout << "Spline: \n" << spline << "\n";
+    // std::cout << "\t Spline " << (!spline_computed ? "NOT " : "") << "computed with " 
+    //           << (!is_zero_final_vel ? "NON-" : "") <<  "ZERO final velocity. \n";
+    // std::cout << "Spline: \n" << spline << "\n";
     return spline_computed;
 }
 

@@ -8,7 +8,7 @@ planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<b
 
 planning::trajectory::TrajectoryRuckig::TrajectoryRuckig
     (const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current, float max_iter_time_) : 
-        AbstractTrajectory(ss_, max_iter_time), 
+        AbstractTrajectory(ss_, max_iter_time_), 
         input(ss_->num_dimensions), 
         traj(ss_->num_dimensions)
 {
@@ -113,8 +113,9 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(planning::trajectory
 /// @param t_max Maximal available time in [s] for a trajectory computing
 /// @param q_current Current robot's configuration
 /// @return The success of a trajectory computation
-bool planning::trajectory::TrajectoryRuckig::computeSafe(planning::trajectory::State current, 
-    planning::trajectory::State target, float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current)
+bool planning::trajectory::TrajectoryRuckig::computeSafe([[maybe_unused]] planning::trajectory::State current, 
+    [[maybe_unused]] planning::trajectory::State target, [[maybe_unused]] float t_iter_remain, [[maybe_unused]] float t_max, 
+    [[maybe_unused]] const std::shared_ptr<base::State> q_current)
 {
     // TODO
     return false;

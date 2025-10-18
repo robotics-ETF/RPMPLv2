@@ -180,9 +180,9 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
         traj->getAcceleration(t_traj_current)
     );
     planning::trajectory::State target(ss->num_dimensions);
-    std::cout << "Curr. pos: " << current.pos.transpose() << "\n";
-    std::cout << "Curr. vel: " << current.vel.transpose() << "\n";
-    std::cout << "Curr. acc: " << current.acc.transpose() << "\n";
+    // std::cout << "Curr. pos: " << current.pos.transpose() << "\n";
+    // std::cout << "Curr. vel: " << current.vel.transpose() << "\n";
+    // std::cout << "Curr. acc: " << current.acc.transpose() << "\n";
 
     do
     {
@@ -195,7 +195,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
                               current.vel.norm() / ss->robot->getMaxVel().norm() * TrajectoryConfig::MAX_RADIUS);
         target.pos = (std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)))->getCoord();
 
-        std::cout << "target pos:     " << target.pos.transpose() << "\n";
+        // std::cout << "target pos:     " << target.pos.transpose() << "\n";
         // std::cout << "q_next:         " << q_next << "\n";
         // std::cout << "q_next_reached: " << q_next_reached << "\n";
 
@@ -211,7 +211,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     while (!traj_computed && invokeChangeNextState());
 
     traj->setTimeEnd(!traj_computed * t_traj_current + t_iter_remain);
-    std::cout << "New trajectory is " << (traj_computed ? "computed!\n" : "NOT computed! Continuing with the previous trajectory!\n");
+    // std::cout << "New trajectory is " << (traj_computed ? "computed!\n" : "NOT computed! Continuing with the previous trajectory!\n");
     // traj->recordTrajectory(traj_computed);   // Only for debugging
 
     q_current = ss->getNewState(traj->getPosition(traj->getTimeEnd()));   // Current robot position at the end of iteration
@@ -225,14 +225,14 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
             status = base::State::Status::Advanced;
     }
 
-    std::cout << "Elapsed time for trajectory computing: " << (getElapsedTime() - t_iter) * 1e6 << " [us] \n";
-    std::cout << "q_current: " << q_current << "\n";
-    std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
-                            << (status == base::State::Status::Trapped  ? "Trapped"  : "")
-                            << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
-    std::cout << "Trajectory times:   " << traj->getTimeBegin() * 1000 << " [ms] \t"
-                                        << traj->getTimeCurrent() * 1000 << " [ms] \t"
-                                        << traj->getTimeEnd() * 1000 << " [ms] \n";   
+    // std::cout << "Elapsed time for trajectory computing: " << (getElapsedTime() - t_iter) * 1e6 << " [us] \n";
+    // std::cout << "q_current: " << q_current << "\n";
+    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
+    //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
+    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+    // std::cout << "Trajectory times:   " << traj->getTimeBegin() * 1000 << " [ms] \t"
+    //                                     << traj->getTimeCurrent() * 1000 << " [ms] \t"
+    //                                     << traj->getTimeEnd() * 1000 << " [ms] \n";   
     
     // ----------------------------------------------------------------------------------------- //
     // Store trajectory points from the current iteration to be validated later within 'MotionValidity'
