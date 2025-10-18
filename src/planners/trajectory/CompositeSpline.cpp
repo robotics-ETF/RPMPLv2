@@ -3,11 +3,6 @@
 planning::trajectory::CompositeSpline::CompositeSpline(const std::vector<std::shared_ptr<planning::trajectory::Spline>> &subsplines_)
 {
     subsplines = subsplines_;
-    time_start = std::chrono::steady_clock::now();
-    time_start_offset = 0;
-    time_current = 0;
-    time_begin = 0;
-    time_end = 0;
     is_zero_final_vel = subsplines.back()->getIsZeroFinalVel();
     is_zero_final_acc = subsplines.back()->getIsZeroFinalAcc();
 
