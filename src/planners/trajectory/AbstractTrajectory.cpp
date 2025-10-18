@@ -23,10 +23,7 @@ planning::trajectory::State::State(const Eigen::VectorXf &pos_, const Eigen::Vec
 
 planning::trajectory::AbstractTrajectory::AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_)
 {
-    ss = ss_;
-    current = planning::trajectory::State(ss->num_dimensions);
-    target = current;
-    
+    ss = ss_;    
     max_iter_time = 0;
     max_remaining_iter_time = INFINITY;
     max_obs_vel = 0;
@@ -34,13 +31,9 @@ planning::trajectory::AbstractTrajectory::AbstractTrajectory(const std::shared_p
     setParams();
 }
 
-planning::trajectory::AbstractTrajectory::AbstractTrajectory
-    (const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current_, float max_iter_time_)
+planning::trajectory::AbstractTrajectory::AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_, float max_iter_time_)
 {
     ss = ss_;
-    current = current_;
-    target = current;
-
     max_iter_time = max_iter_time_;
     max_remaining_iter_time = 0;
     time_current = 0;
@@ -131,8 +124,8 @@ void planning::trajectory::AbstractTrajectory::recordTrajectory(bool traj_comput
     output_file << "Current pos. & target pos.: \n";
     if (traj_computed)
     {
-        output_file << current.pos.transpose() << "\n";
-        output_file << target.pos.transpose() << "\n";
+        output_file << getPosition(time_current).transpose() << "\n";
+        output_file << getPosition(time_final).transpose() << "\n";
     }
     else
         output_file << INFINITY << "\n";

@@ -28,12 +28,12 @@ namespace planning::trajectory
     {
     public:
         AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_);
-        AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current_, float max_iter_time_);
+        AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_, float max_iter_time_);
         virtual ~AbstractTrajectory() = 0;
         
-        virtual bool computeRegular(planning::trajectory::State current_, planning::trajectory::State target_, 
+        virtual bool computeRegular(planning::trajectory::State current, planning::trajectory::State target, 
                                     float t_iter_remain, float t_max, bool non_zero_final_vel) = 0;
-        virtual bool computeSafe(planning::trajectory::State current_, planning::trajectory::State target_, 
+        virtual bool computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
                                  float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current) = 0;
 
         virtual Eigen::VectorXf getPosition(float t) = 0;
@@ -62,8 +62,6 @@ namespace planning::trajectory
         void setParams();
         
         std::shared_ptr<base::StateSpace> ss;                       // State space of the robot
-        planning::trajectory::State current;                        // Current robot's state
-        planning::trajectory::State target;                         // Target robot's state
         float max_iter_time;                                        // Maximal iteration time
         float max_remaining_iter_time;                              // Maximal remaining iteration time in [s] till the end of the current iteration
         float time_current;                                         // Elapsed time in [s] from a time instant when the trajectory is created. It is used to determine a current robot's position, velocity and acceleration. 
