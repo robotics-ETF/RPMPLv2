@@ -10,6 +10,7 @@
 #include "UpdatingState.h"
 #include "MotionValidity.h"
 #include "Trajectory.h"
+#include "TrajectoryRuckig.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
@@ -87,8 +88,7 @@ namespace planning::rrtx
         // Path from start to goal
         std::vector<std::shared_ptr<base::State>> path_current;
 
-        std::shared_ptr<planning::trajectory::Trajectory> traj;                     // Trajectory which is generated using splines from RPMPLv2 library
-        std::shared_ptr<planning::trajectory::TrajectoryRuckig> traj_ruckig;        // Trajectory which is generated using Ruckig library
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;             // Trajectory which is generated from 'q_current' towards 'q_next'
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        // Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      // Class for checking validity of motion
         

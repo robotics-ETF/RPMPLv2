@@ -63,8 +63,7 @@ namespace planning::drbt
         std::vector<std::shared_ptr<base::State>> predefined_path;                  // The predefined path that is being followed
         size_t num_lateral_states;                                                  // Number of lateral states
         float max_edge_length;                                                      // Maximal edge length when acquiring a new predefined path
-        std::shared_ptr<planning::trajectory::Trajectory> traj;                     // Trajectory which is generated using splines from RPMPLv2 library
-        std::shared_ptr<planning::trajectory::TrajectoryRuckig> traj_ruckig;        // Trajectory which is generated using Ruckig library
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;             // Trajectory which is generated from 'q_current' towards 'q_next'
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        // Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      // Class for checking validity of motion
         std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;  // Set of visited states when choosing 'q_next'

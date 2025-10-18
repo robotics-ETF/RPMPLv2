@@ -106,21 +106,21 @@ int main(int argc, char **argv)
                 auto time1 = std::chrono::steady_clock::now();
                 trajectory->path2traj_v1(new_path);
 				comp_times1.emplace_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time1).count() * 1e-3);
-                final_times1.emplace_back(trajectory->composite_spline->getTimeFinal());
+                final_times1.emplace_back(trajectory->getTimeFinal());
 
                 output_file << "Trajectory 1 (position): \n";
-                for (float t = 0; t < trajectory->composite_spline->getTimeFinal(); t += delta_time)
-                    output_file << trajectory->composite_spline->getPosition(t).transpose() << "\n";
+                for (float t = 0; t < trajectory->getTimeFinal(); t += delta_time)
+                    output_file << trajectory->getPosition(t).transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
                 
                 auto time2 = std::chrono::steady_clock::now();
                 trajectory->path2traj_v2(new_path);
 				comp_times2.emplace_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time2).count() * 1e-3);
-                final_times2.emplace_back(trajectory->composite_spline->getTimeFinal());
+                final_times2.emplace_back(trajectory->getTimeFinal());
 
                 output_file << "Trajectory 2 (position): \n";
-                for (float t = 0; t < trajectory->composite_spline->getTimeFinal(); t += delta_time)
-                    output_file << trajectory->composite_spline->getPosition(t).transpose() << "\n";
+                for (float t = 0; t < trajectory->getTimeFinal(); t += delta_time)
+                    output_file << trajectory->getPosition(t).transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
                 output_file.close();
 			}

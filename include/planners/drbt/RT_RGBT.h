@@ -35,8 +35,7 @@ namespace planning::drbt
 	protected:
 		std::shared_ptr<base::State> q_current;            								// Current robot configuration
 		std::shared_ptr<base::State> q_target;          		 						// Target (next) robot configuration
-        std::shared_ptr<planning::trajectory::Trajectory> traj;                     	// Trajectory which is generated using splines from RPMPLv2 library
-        std::shared_ptr<planning::trajectory::TrajectoryRuckig> traj_ruckig;        	// Trajectory which is generated using Ruckig library
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;             	// Trajectory which is generated from 'q_current' towards 'q_target'
         std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        	// Class for updating current state
         std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      	// Class for checking validity of motion
         float max_edge_length;															// Distance between 'q_current' and 'q_target'

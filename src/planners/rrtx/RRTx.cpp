@@ -37,30 +37,39 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     
     planner_info->setNumIterations(0);
     planner_info->setNumStates(1);
-
-    updating_state = std::make_shared<planning::trajectory::UpdatingState>
-                     (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
-
-    motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-                      (ss, RRTxConfig::RESOLUTION_COLL_CHECK, RRTxConfig::MAX_ITER_TIME, &path);
     
     switch (RRTxConfig::TRAJECTORY_INTERPOLATION)
     {
     case planning::TrajectoryInterpolation::None:
         traj = nullptr;
-        traj_ruckig = nullptr;
         break;
 
     case planning::TrajectoryInterpolation::Spline:
-        traj = std::make_shared<planning::trajectory::Trajectory>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
-        updating_state->setTrajectory(traj);
+        traj = std::make_shared<planning::trajectory::Trajectory>
+        (
+            ss, 
+            planning::trajectory::State(q_current->getCoord()), 
+            RRTxConfig::MAX_ITER_TIME
+        );
         break;
 
     case planning::TrajectoryInterpolation::Ruckig:
-        traj_ruckig = std::make_shared<planning::trajectory::TrajectoryRuckig>(ss, q_current->getCoord(), RRTxConfig::MAX_ITER_TIME);
-        updating_state->setTrajectory(traj_ruckig);
+        traj = std::make_shared<planning::trajectory::TrajectoryRuckig>
+        (
+            ss, 
+            planning::trajectory::State(q_current->getCoord()), 
+            RRTxConfig::MAX_ITER_TIME
+        );
         break;
     }
+
+    updating_state = std::make_shared<planning::trajectory::UpdatingState>
+                     (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
+    updating_state->setMeasureTime(false);
+    updating_state->setTrajectory(traj);
+
+    motion_validity = std::make_shared<planning::trajectory::MotionValidity>
+                      (ss, RRTxConfig::RESOLUTION_COLL_CHECK, RRTxConfig::MAX_ITER_TIME, &path);
 
     RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;
 
@@ -245,12 +254,8 @@ bool planning::rrtx::RRTx::solve()
             is_valid = motion_validity->check(q_previous, q_current);
             break;
 
-        case planning::TrajectoryInterpolation::Spline:
+        default:
             is_valid = motion_validity->check(traj->getTrajPointCurrentIter());
-            break;
-
-        case planning::TrajectoryInterpolation::Ruckig:
-            is_valid = motion_validity->check(traj_ruckig->getTrajPointCurrentIter());
             break;
         }
 

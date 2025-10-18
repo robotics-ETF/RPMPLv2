@@ -8,8 +8,7 @@
 #include "StateSpace.h"
 #include "RealVectorSpaceConfig.h"
 #include "PlanningTypes.h"
-#include "Trajectory.h"
-#include "TrajectoryRuckig.h"
+#include "AbstractTrajectory.h"
 
 namespace planning::drbt
 {
@@ -28,8 +27,7 @@ namespace planning::trajectory
             const std::shared_ptr<base::State> q_next_, base::State::Status &status);
         void update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
             const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
-        inline void setTrajectory(const std::shared_ptr<planning::trajectory::Trajectory> &traj_) { traj = traj_; }
-        inline void setTrajectory(const std::shared_ptr<planning::trajectory::TrajectoryRuckig> &traj_ruckig_) { traj_ruckig = traj_ruckig_; }
+        inline void setTrajectory(const std::shared_ptr<planning::trajectory::AbstractTrajectory> &traj_) { traj = traj_; }
         inline void setGuaranteedSafeMotion(bool guaranteed_safe_motion_) { guaranteed_safe_motion = guaranteed_safe_motion_; }
         inline void setNonZeroFinalVel(bool non_zero_final_vel_) { non_zero_final_vel = non_zero_final_vel_; }
         inline void setMaxRemainingIterTime(float max_remaining_iter_time_) { max_remaining_iter_time = max_remaining_iter_time_; }
@@ -45,8 +43,6 @@ namespace planning::trajectory
             const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
         void update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
             const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
-        void update_v3(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
-            const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status);
         bool invokeChangeNextState();
         float getElapsedTime();
 
@@ -55,8 +51,7 @@ namespace planning::trajectory
         float max_iter_time;                                                    // Maximal iteration time in [s]
         
         // Additional info (not mandatory to be set):
-        std::shared_ptr<planning::trajectory::Trajectory> traj;                 // Trajectory which is generated using splines from RPMPLv2 library
-        std::shared_ptr<planning::trajectory::TrajectoryRuckig> traj_ruckig;    // Trajectory which is generated using Ruckig library
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;         // Trajectory which is generated from 'q_current' towards 'q_next'
         bool all_robot_vel_same;                                                // Whether all joint velocities are the same
         bool guaranteed_safe_motion;                                            // Whether robot motion is surely safe for environment
         bool non_zero_final_vel;                                                // Whether final spline velocity can be non-zero (available only when 'guaranteed_safe_motion' is false)
