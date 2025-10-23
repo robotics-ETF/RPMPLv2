@@ -13,7 +13,7 @@ namespace planning::trajectory
     class TrajectoryRuckig : public AbstractTrajectory
     {
     public:
-        TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_);
+        TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, size_t num_waypoints);
         TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current, float max_iter_time_);
         ~TrajectoryRuckig();
         
@@ -25,13 +25,16 @@ namespace planning::trajectory
         Eigen::VectorXf getPosition(float t) override;
         Eigen::VectorXf getVelocity(float t) override;
         Eigen::VectorXf getAcceleration(float t) override;
+
+        bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) override;
         
     private:
+        void setParams();
         void setCurrentState(const planning::trajectory::State &current);
         void setTargetState(const planning::trajectory::State &target);
 
         ruckig::InputParameter<ruckig::DynamicDOFs> input;
-        // ruckig::OutputParameter<ruckig::DynamicDOFs> output;
+        ruckig::OutputParameter<ruckig::DynamicDOFs> output;
         ruckig::Trajectory<ruckig::DynamicDOFs> traj;
 
     };

@@ -336,15 +336,23 @@ float planning::trajectory::Trajectory::computeDistanceUnderestimation(const std
 	return d_c;
 }
 
+void planning::trajectory::Trajectory::setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_)
+{
+    spline = spline_;
+    time_current = 0;
+    time_final = spline->getTimeFinal();
+}
+
 /// @brief A method (v1) to convert a path 'path' to a corresponding trajectory.
 /// Converting this path to trajectory (i.e., assigning time instances to these points) will be automatically done by this function.
 /// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
+/// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Trajectory::path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path)
+bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<std::shared_ptr<base::State>> &path)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
     std::shared_ptr<planning::trajectory::Spline> spline_current
@@ -407,6 +415,8 @@ void planning::trajectory::Trajectory::path2traj_v1(const std::vector<std::share
 
     subsplines.emplace_back(spline_current);
     setSpline(std::make_shared<planning::trajectory::CompositeSpline>(subsplines));
+
+    return true;
 }
 
 /// @brief A method (v2) to convert a path 'path' to a corresponding trajectory.
@@ -414,10 +424,11 @@ void planning::trajectory::Trajectory::path2traj_v1(const std::vector<std::share
 /// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
+/// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Trajectory::path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path)
+bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<std::shared_ptr<base::State>> &path)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
     std::shared_ptr<planning::trajectory::Spline> spline_current
@@ -489,6 +500,8 @@ void planning::trajectory::Trajectory::path2traj_v2(const std::vector<std::share
 
     subsplines.emplace_back(spline_current);
     setSpline(std::make_shared<planning::trajectory::CompositeSpline>(subsplines));
+
+    return true;
 }
 
 /// @brief A method (v3) to convert a path 'path' to a corresponding trajectory.
@@ -497,10 +510,11 @@ void planning::trajectory::Trajectory::path2traj_v2(const std::vector<std::share
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
 /// @param must_visit Whether path points must be visited.
+/// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-void planning::trajectory::Trajectory::path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
+bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines(path.size(), nullptr);
     bool spline_computed { false };
@@ -611,17 +625,20 @@ void planning::trajectory::Trajectory::path2traj_v3(const std::vector<std::share
     subsplines.erase(subsplines.begin());
     
     if (spline_computed)
+    {
         setSpline(std::make_shared<planning::trajectory::CompositeSpline>(subsplines));
+        return true;
+    }
     else
     {
         std::cout << "Could not convert path to a trajectory! \n";
-        // path2traj_v1(path);      // Add path using another method.
+        return false;
     }
 }
 
-void planning::trajectory::Trajectory::setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_)
+bool planning::trajectory::Trajectory::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path)
 {
-    spline = spline_;
-    time_current = 0;
-    time_final = spline->getTimeFinal();
+    return convertPathToTraj_v1(path);      // The best results are obtained with this one.
+    // return convertPathToTraj_v2(path);
+    // return convertPathToTraj_v3(path);
 }

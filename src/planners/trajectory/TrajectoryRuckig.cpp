@@ -1,19 +1,27 @@
 #include "TrajectoryRuckig.h"
 
-planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_) : 
+planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, size_t num_waypoints) : 
     AbstractTrajectory(ss_), 
-    input(ss_->num_dimensions), 
-    traj(ss_->num_dimensions)
-{}
+    input(ss_->num_dimensions, num_waypoints), 
+    output(ss_->num_dimensions, num_waypoints), 
+    traj(ss_->num_dimensions, num_waypoints)
+{
+    setParams();
+}
 
 planning::trajectory::TrajectoryRuckig::TrajectoryRuckig
     (const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current, float max_iter_time_) : 
         AbstractTrajectory(ss_, max_iter_time_), 
         input(ss_->num_dimensions), 
+        output(ss_->num_dimensions), 
         traj(ss_->num_dimensions)
 {
     setCurrentState(current);
-    
+    setParams();
+}
+
+void planning::trajectory::TrajectoryRuckig::setParams()
+{
     for (size_t i = 0; i < ss->num_dimensions; i++)
     {
         input.max_velocity[i] = ss->robot->getMaxVel(i);
@@ -191,4 +199,40 @@ Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcceleration(float t)
         ret(i) = acc[i];
 
     return ret;
+}
+
+bool planning::trajectory::TrajectoryRuckig::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path)
+{
+    planning::trajectory::State start(path.front()->getCoord());
+    planning::trajectory::State goal(path.back()->getCoord());
+    setCurrentState(start);
+    setTargetState(goal);
+
+    if (path.size() > 2)
+    {
+        ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+        for (size_t idx = 1; idx < path.size()-1; idx++)
+        {
+            for (size_t i = 0; i < ss->num_dimensions; i++)
+                pos[i] = path[idx]->getCoord(i);
+            
+            input.intermediate_positions.emplace_back(pos);
+        }
+    }
+
+    ruckig::Result result { ruckig::Result::Working };
+    ruckig::Ruckig<ruckig::DynamicDOFs> otg(ss->num_dimensions);
+
+    result = otg.calculate(input, traj);
+    // std::cout << "result: " << result << "\n";
+    
+    if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
+    {
+        traj = output.trajectory;
+        time_current = 0;
+        time_final = traj.get_duration();
+        return true;
+    }
+
+    return false;
 }

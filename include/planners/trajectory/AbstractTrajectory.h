@@ -35,6 +35,7 @@ namespace planning::trajectory
                                     float t_iter_remain, float t_max, bool non_zero_final_vel) = 0;
         virtual bool computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
                                  float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current) = 0;
+        virtual bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) = 0;
 
         virtual Eigen::VectorXf getPosition(float t) = 0;
         virtual Eigen::VectorXf getVelocity(float t) = 0;

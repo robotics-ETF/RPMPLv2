@@ -29,16 +29,18 @@ namespace planning::trajectory
         inline Eigen::VectorXf getVelocity(float t) override { return spline->getVelocity(t); }
         inline Eigen::VectorXf getAcceleration(float t) override { return spline->getAcceleration(t); }
 
-        void path2traj_v1(const std::vector<std::shared_ptr<base::State>> &path);
-        void path2traj_v2(const std::vector<std::shared_ptr<base::State>> &path);
-        void path2traj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit);
-        
+        bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) override;
+
     private:
         bool isSafe(const std::shared_ptr<planning::trajectory::Spline> spline_safe, 
                     const std::shared_ptr<base::State> q_current, float t_iter);
         float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
                                              const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
         void setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_);
+
+        bool convertPathToTraj_v1(const std::vector<std::shared_ptr<base::State>> &path);
+        bool convertPathToTraj_v2(const std::vector<std::shared_ptr<base::State>> &path);
+        bool convertPathToTraj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit = false);
 
         std::shared_ptr<planning::trajectory::Spline> spline;
     };

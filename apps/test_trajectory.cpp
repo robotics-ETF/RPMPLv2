@@ -2,6 +2,7 @@
 #include "ConfigurationReader.h"
 #include "CommonFunctions.h"
 #include "Trajectory.h"
+#include "TrajectoryRuckig.h"
 
 int main(int argc, char **argv)
 {
@@ -44,7 +45,8 @@ int main(int argc, char **argv)
 	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
-    std::shared_ptr<planning::trajectory::Trajectory> trajectory { nullptr };
+    std::shared_ptr<planning::trajectory::AbstractTrajectory> trajectory1 { nullptr };
+    std::shared_ptr<planning::trajectory::AbstractTrajectory> trajectory2 { nullptr };
 
 	bool result { false };
 	size_t num_obs { env->getNumObjects() };
@@ -102,25 +104,26 @@ int main(int argc, char **argv)
                     output_file << new_path.at(i)->getCoord().transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
 
-                trajectory = std::make_shared<planning::trajectory::Trajectory>(ss);
+                trajectory1 = std::make_shared<planning::trajectory::Trajectory>(ss);
                 auto time1 = std::chrono::steady_clock::now();
-                trajectory->path2traj_v1(new_path);
+                trajectory1->convertPathToTraj(new_path);
 				comp_times1.emplace_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time1).count() * 1e-3);
-                final_times1.emplace_back(trajectory->getTimeFinal());
+                final_times1.emplace_back(trajectory1->getTimeFinal());
 
-                output_file << "Trajectory 1 (position): \n";
-                for (float t = 0; t < trajectory->getTimeFinal(); t += delta_time)
-                    output_file << trajectory->getPosition(t).transpose() << "\n";
+                output_file << "Trajectory ours (position): \n";
+                for (float t = 0; t <= trajectory1->getTimeFinal(); t += delta_time)
+                    output_file << trajectory1->getPosition(t).transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
                 
+                trajectory2 = std::make_shared<planning::trajectory::TrajectoryRuckig>(ss, new_path.size()-2);
                 auto time2 = std::chrono::steady_clock::now();
-                trajectory->path2traj_v2(new_path);
+                trajectory2->convertPathToTraj(new_path);
 				comp_times2.emplace_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time2).count() * 1e-3);
-                final_times2.emplace_back(trajectory->getTimeFinal());
+                final_times2.emplace_back(trajectory2->getTimeFinal());
 
-                output_file << "Trajectory 2 (position): \n";
-                for (float t = 0; t < trajectory->getTimeFinal(); t += delta_time)
-                    output_file << trajectory->getPosition(t).transpose() << "\n";
+                output_file << "Trajectory ruckig (position): \n";
+                for (float t = 0; t <= trajectory2->getTimeFinal(); t += delta_time)
+                    output_file << trajectory2->getPosition(t).transpose() << "\n";
                 output_file << "--------------------------------------------------------------------\n";
                 output_file.close();
 			}
