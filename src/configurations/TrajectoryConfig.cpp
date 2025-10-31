@@ -2,7 +2,6 @@
 
 float TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR   = 0.001;
 float TrajectoryConfig::MAX_TIME_COMPUTE_SAFE      = 0.003;
-float TrajectoryConfig::MAX_TIME_PUBLISH           = 0.0005;
 float TrajectoryConfig::MAX_TIME_FINAL             = 10.0;
 float TrajectoryConfig::TIME_STEP                  = 0.001;
 float TrajectoryConfig::FINAL_JERK_STEP            = 1.0;

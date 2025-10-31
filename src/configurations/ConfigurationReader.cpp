@@ -259,12 +259,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         TrajectoryConfig::MAX_TIME_COMPUTE_SAFE = TrajectoryConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
     else
         LOG(INFO) << "TrajectoryConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_COMPUTE_SAFE;
-
-    if (TrajectoryConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
-        TrajectoryConfig::MAX_TIME_PUBLISH = TrajectoryConfigRoot["MAX_TIME_PUBLISH"].as<float>();
-    else
-        LOG(INFO) << "TrajectoryConfig::MAX_TIME_PUBLISH is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_PUBLISH;
-
+    
     if (TrajectoryConfigRoot["MAX_TIME_FINAL"].IsDefined())
         TrajectoryConfig::MAX_TIME_FINAL = TrajectoryConfigRoot["MAX_TIME_FINAL"].as<float>();
     else
