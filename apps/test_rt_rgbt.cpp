@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	std::vector<std::string> routines		// Routines of which the time executions are stored
 	{ 	
-		"updateCurrentState [ms]"						// 0
+		"updateCurrentState [us]"			// 0
 	};
 
 	// -------------------------------------------------------------------------------------- //

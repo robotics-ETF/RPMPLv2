@@ -63,4 +63,32 @@ namespace base
 			os << "q: (" << state->getCoord().transpose() << "); parent q: (" << state->getParent()->getCoord().transpose() << ")";
 		return os;
 	}
+
+	std::ostream &operator<<(std::ostream &os, const base::State::Status &status)
+	{
+		switch (status)
+		{
+			case base::State::Status::None:
+				os << "None";
+				break;
+
+			case base::State::Status::Advanced:
+				os << "Advanced";
+				break;
+
+			case base::State::Status::Trapped:
+				os << "Trapped";
+				break;
+
+			case base::State::Status::Reached:
+				os << "Reached";
+				break;
+
+			case base::State::Status::Orphan:
+				os << "Orphan";
+				break;
+		}
+
+		return os;
+	}
 }

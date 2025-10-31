@@ -99,7 +99,7 @@ bool planning::drbt::RT_RGBT::solve()
         updating_state->setNonZeroFinalVel(!ss->isEqual(q_target, q_goal));
         updating_state->setTimeIterStart(time_iter_start);
         updating_state->update(q_current, q_current, q_target, status);
-        planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::ms), 0);
+        planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 0);
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
