@@ -60,7 +60,6 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
                      (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
     updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
     updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
-    updating_state->setMeasureTime(false);
     updating_state->setDRGBTinstance(this);
     updating_state->setTrajectory(traj);
 

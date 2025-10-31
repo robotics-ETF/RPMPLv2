@@ -23,40 +23,35 @@ planning::trajectory::UpdatingState::UpdatingState(const std::shared_ptr<base::S
     non_zero_final_vel = true;
     max_remaining_iter_time = 0;
     time_iter_start = std::chrono::steady_clock::now();
-    measure_time = false;
-    remaining_time = 0;
+    waiting_time = 0;
     q_next = nullptr;
     q_next_reached = nullptr;
     drgbt_instance = nullptr;
 }
 
-void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+bool planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> q_next_, base::State::Status &status)
 {
     switch (traj_interpolation)
     {
     case planning::TrajectoryInterpolation::None:
-        update_v1(q_previous, q_current, q_next_, q_next_, status);
-        break;
+        return update_v1(q_previous, q_current, q_next_, q_next_, status);
     
     default:
-        update_v2(q_previous, q_current, q_next_, q_next_, status);
-        break;
+        return update_v2(q_previous, q_current, q_next_, q_next_, status);
     }
 }
 
-void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+bool planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
 {
     switch (traj_interpolation)
     {
     case planning::TrajectoryInterpolation::None:
-        update_v1(q_previous, q_current, q_next_, q_next_reached_, status);
-        break;
+        return update_v1(q_previous, q_current, q_next_, q_next_reached_, status);
     
     default:
-        update_v2(q_previous, q_current, q_next_, q_next_reached_, status);
-        break;
+        return update_v2(q_previous, q_current, q_next_, q_next_reached_, status);
     }
 }
 
@@ -64,8 +59,9 @@ void planning::trajectory::UpdatingState::update(std::shared_ptr<base::State> &q
 /// such that it can be reached within max_iter_time time, while considering robot maximal velocity.
 /// In other words, 'q_current_new' is determined using an advancing step size which depends on robot's maximal velocity.
 /// Move 'q_current' to 'q_current_new' meaning that 'q_current' will be updated to a robot position from the end of current iteration.
+/// @return Whether a new current state is computed.
 /// @note If 'q_next_reached' is not relevant in the algorithm, pass 'q_next' instead of it.
-void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+bool planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
 {
     q_previous = q_current;
@@ -75,7 +71,7 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
     if (status == base::State::Status::Trapped)     // Current robot position will not be updated! 
     {                                               // We must wait for successful replanning to change 'status' to 'Reached'
         // std::cout << "Status: Trapped! \n";
-        return;
+        return false;
     }
 
     std::shared_ptr<base::State> q_current_new { ss->getNewState(q_next_reached->getCoord()) };
@@ -107,51 +103,46 @@ void planning::trajectory::UpdatingState::update_v1(std::shared_ptr<base::State>
         status = base::State::Status::Advanced;
 
     // std::cout << "q_current: " << q_current << "\n";
-    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
-    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
+    // std::cout << "Status: " << status << "\n";
+
+    return true;
 }
 
 /// @brief Update a current state of the robot by computing a trajectory 'traj'.
 /// Move 'q_current' towards 'q_next_reached'.
 /// 'q_current' will be updated to a robot position from the end of current iteration.
+/// @return True if a new trajectory is computed. False if the previous trajectory is retained.
 /// @note The new trajectory will be computed in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @note If 'q_next_reached' is not relevant in the algorithm, pass 'q_next' instead of it.
-void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
+bool planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State> &q_previous, std::shared_ptr<base::State> &q_current, 
     const std::shared_ptr<base::State> q_next_, const std::shared_ptr<base::State> q_next_reached_, base::State::Status &status)
 {
     q_previous = q_current;
     q_next = q_next_;
     q_next_reached = q_next_reached_;
 
-    float t_traj_max 
+    float t_traj_max    // Maximal available time for computing a new trajectory
     { 
-        (guaranteed_safe_motion ? 
+        guaranteed_safe_motion ? 
             TrajectoryConfig::MAX_TIME_COMPUTE_SAFE : 
-            TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR) 
-                - TrajectoryConfig::MAX_TIME_PUBLISH * measure_time 
+            TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR
     };
 
-    float t_iter { getElapsedTime() };
+    float t_iter { getElapsedTime() };      // Elapsed time in [s] from the beginning of the current iteration
     if (max_iter_time - max_remaining_iter_time - t_iter < t_traj_max)
         t_traj_max = max_iter_time - max_remaining_iter_time - t_iter;
     
-    float t_iter_remain { max_iter_time - t_iter - t_traj_max };
-    float t_traj_current 
-    { 
-        measure_time ? 
-            traj->getTimeCurrent(true) + t_traj_max :
-            traj->getTimeEnd() + t_iter + t_traj_max 
-    };
+    float t_iter_remain { max_iter_time - t_iter - t_traj_max };    // Remaining time in the current iteration
 
     traj->setTimeBegin(traj->getTimeEnd());
-    traj->setTimeCurrent(t_traj_current);
+    traj->setTimeCurrent(traj->getTimeBegin() + t_iter + t_traj_max);
 
-    // std::cout << "Iter. time:            " << t_iter * 1000 << " [ms] \n";
     // std::cout << "Max. trajectory time:  " << t_traj_max * 1000 << " [ms] \n";
-    // std::cout << "Remain. time:          " << t_iter_remain * 1000 << " [ms] \n";
+    // std::cout << "Iter. time:            " << t_iter * 1000 << " [ms] \n";
+    // std::cout << "Remain. iter. time:    " << t_iter_remain * 1000 << " [ms] \n";
     // std::cout << "Begin trajectory time: " << traj->getTimeBegin() * 1000 << " [ms] \n";
-    // std::cout << "Curr. trajectory time: " << t_traj_current * 1000 << " [ms] \n";
+    // std::cout << "Curr. trajectory time: " << traj->getTimeCurrent() * 1000 << " [ms] \n";
     
     // ----------------------------------------------------------------------------------------- //
     // Store trajectory points from the current iteration to be validated later within 'MotionValidity'
@@ -175,9 +166,9 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     float t_traj_remain {};
     planning::trajectory::State current
     (
-        traj->getPosition(t_traj_current),
-        traj->getVelocity(t_traj_current),
-        traj->getAcceleration(t_traj_current)
+        traj->getPosition(traj->getTimeCurrent()),
+        traj->getVelocity(traj->getTimeCurrent()),
+        traj->getAcceleration(traj->getTimeCurrent())
     );
     planning::trajectory::State target(ss->num_dimensions);
     // std::cout << "Curr. pos: " << current.pos.transpose() << "\n";
@@ -210,7 +201,7 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     }
     while (!traj_computed && invokeChangeNextState());
 
-    traj->setTimeEnd(!traj_computed * t_traj_current + t_iter_remain);
+    traj->setTimeEnd(!traj_computed * traj->getTimeCurrent() + t_iter_remain);
     // std::cout << "New trajectory is " << (traj_computed ? "computed!\n" : "NOT computed! Continuing with the previous trajectory!\n");
     // traj->recordTrajectory(traj_computed);   // Only for debugging
 
@@ -227,12 +218,9 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
 
     // std::cout << "Elapsed time for trajectory computing: " << (getElapsedTime() - t_iter) * 1e6 << " [us] \n";
     // std::cout << "q_current: " << q_current << "\n";
-    // std::cout << "Status: " << (status == base::State::Status::Advanced ? "Advanced" : "")
-    //                         << (status == base::State::Status::Trapped  ? "Trapped"  : "")
-    //                         << (status == base::State::Status::Reached  ? "Reached"  : "") << "\n";
-    // std::cout << "Trajectory times:   " << traj->getTimeBegin() * 1000 << " [ms] \t"
-    //                                     << traj->getTimeCurrent() * 1000 << " [ms] \t"
-    //                                     << traj->getTimeEnd() * 1000 << " [ms] \n";   
+    // std::cout << "Status: " << status << "\n";
+    // std::cout << "Curr. trajectory time: " << traj->getTimeCurrent() * 1000 << " [ms] \n";
+    // std::cout << "End trajectory time:   " << traj->getTimeEnd() * 1000 << " [ms] \n";
     
     // ----------------------------------------------------------------------------------------- //
     // Store trajectory points from the current iteration to be validated later within 'MotionValidity'
@@ -249,7 +237,8 @@ void planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
     }
     // ----------------------------------------------------------------------------------------- //
 
-    remaining_time = t_traj_max + TrajectoryConfig::MAX_TIME_PUBLISH * measure_time - (getElapsedTime() - t_iter);
+    waiting_time = t_traj_max - (getElapsedTime() - t_iter);
+    return traj_computed;
 }
 
 // This function will change 'q_next' and 'q_next_reached'
@@ -261,6 +250,7 @@ bool planning::trajectory::UpdatingState::invokeChangeNextState()
     return false;
 }
 
+// Get elapsed time in [s] from the beginning of the current iteration.
 float planning::trajectory::UpdatingState::getElapsedTime()
 {
     float t = std::chrono::duration_cast<std::chrono::nanoseconds>

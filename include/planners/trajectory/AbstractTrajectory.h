@@ -41,14 +41,13 @@ namespace planning::trajectory
         virtual Eigen::VectorXf getVelocity(float t) = 0;
         virtual Eigen::VectorXf getAcceleration(float t) = 0;
 
-        float getTimeCurrent(bool measure_time = false);
         inline float getTimeBegin() const { return time_begin; }
         inline float getTimeEnd() const { return time_end; }
+        inline float getTimeCurrent() const { return time_current; }
         inline float getTimeFinal() const { return time_final; }
         inline bool getIsZeroFinalVel() const { return is_zero_final_vel; }
         inline const std::vector<Eigen::VectorXf> &getTrajPointCurrentIter() const { return traj_points_current_iter; }
 
-        void setTimeStart(float time_start_offset_);
         inline void setTimeBegin(float time_begin_) { time_begin = time_begin_; }
         inline void setTimeEnd(float time_end_) { time_end = time_end_; }
         inline void setTimeCurrent(float time_current_) { time_current = time_current_; }
@@ -69,8 +68,6 @@ namespace planning::trajectory
         float time_final;                                           // Final time for the trajectory
         float time_begin;                                           // Time instance in [s] when the trajectory begins in the current iteration
         float time_end;                                             // Time instance in [s] when the trajectory ends in the current iteration
-        std::chrono::steady_clock::time_point time_start;           // Start time point when the trajectory is created
-        float time_start_offset;                                    // Time offset in [s] which determines how much earlier 'time_start' is created
         bool is_zero_final_vel;                                     // Whether final velocity is zero. If not, robot will move at constant velocity after 'time_final'.
         bool all_robot_vel_same;                                    // Whether all joint velocities are the same
         float max_obs_vel;                                          // Maximal velocity of dynamic obstacles used to generate dynamic bubbles

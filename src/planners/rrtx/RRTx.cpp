@@ -65,7 +65,6 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
 
     updating_state = std::make_shared<planning::trajectory::UpdatingState>
                      (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
-    updating_state->setMeasureTime(false);
     updating_state->setTrajectory(traj);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>

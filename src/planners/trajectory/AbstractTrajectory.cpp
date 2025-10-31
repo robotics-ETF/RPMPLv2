@@ -36,12 +36,10 @@ planning::trajectory::AbstractTrajectory::AbstractTrajectory(const std::shared_p
     ss = ss_;
     max_iter_time = max_iter_time_;
     max_remaining_iter_time = 0;
-    time_current = 0;
-    time_final = 0;
     time_begin = 0;
     time_end = 0;
-    time_start = std::chrono::steady_clock::now();
-    time_start_offset = 0;
+    time_current = 0;
+    time_final = 0;
     is_zero_final_vel = true;
 
     max_obs_vel = 0;
@@ -73,26 +71,6 @@ void planning::trajectory::AbstractTrajectory::setParams()
     max_num_iter_trajectory = all_robot_vel_same ? 
         std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / TrajectoryConfig::FINAL_VELOCITY_STEP)) :
         std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / TrajectoryConfig::FINAL_VELOCITY_STEP));
-}
-
-/// @brief Get current time of the trajectory.
-/// @param measure_time If true, current time will be automatically computed/measured (default: false).
-/// @note 'measure_time' should always be false when simulation pacing is used, since then a time measuring will not be correct! 
-/// In such case, it is assumed that user was previously set 'measure_time' to a correct value.
-float planning::trajectory::AbstractTrajectory::getTimeCurrent(bool measure_time)
-{
-    if (!measure_time)
-        return time_current;
-    
-    time_current = std::chrono::duration_cast<std::chrono::nanoseconds>
-                   (std::chrono::steady_clock::now() - time_start).count() * 1e-9 - time_start_offset;
-    return time_current;
-}
-
-void planning::trajectory::AbstractTrajectory::setTimeStart(float time_start_offset_)
-{
-    time_start = std::chrono::steady_clock::now();
-    time_start_offset = time_start_offset_;
 }
 
 /// @brief Check whether 'q' is a final configuration of the trajectory.
