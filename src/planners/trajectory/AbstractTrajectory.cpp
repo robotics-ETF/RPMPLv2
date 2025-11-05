@@ -91,31 +91,54 @@ void planning::trajectory::AbstractTrajectory::clearTrajPointCurrentIter()
     traj_points_current_iter.clear();
 }
 
-// This function is just for debugging. It operates in real-time by logging 'spline_current' and 'spline'. 
+// This function is just for debugging. It operates in real-time by logging all trajectory points. 
 // You can hardcode a desired output path for the file to be saved.
-void planning::trajectory::AbstractTrajectory::recordTrajectory(bool traj_computed)
+void planning::trajectory::AbstractTrajectory::recordTrajectory(bool traj_computed, float t_offset)
 {
     std::ofstream output_file {};
-    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/temp/visualize_trajectory.log", 
+    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/visualize_trajectory/test.log", 
         std::ofstream::app);
     
-    output_file << "Current pos. & target pos.: \n";
+    output_file << "Time offset [s] in the current iteration:\n";
+    output_file << t_offset << "\n";
+    output_file << "--------------------------------------------------------------------\n";
+
     if (traj_computed)
     {
-        output_file << getPosition(time_current).transpose() << "\n";
+        output_file << "New trajectory is computed! \n";
+        output_file << "Time [s] (all points): \n";
+        for (float t = time_current; t < time_final; t += TrajectoryConfig::TIME_STEP)
+            output_file << t << "\n";
+        output_file << time_final << "\n";
+        output_file << "--------------------------------------------------------------------\n";
+
+        output_file << "Position (all points): \n";
+        for (float t = time_current; t < time_final; t += TrajectoryConfig::TIME_STEP)
+            output_file << getPosition(t).transpose() << "\n";
         output_file << getPosition(time_final).transpose() << "\n";
+        output_file << "--------------------------------------------------------------------\n";
+
+        output_file << "Velocity (all points): \n";
+        for (float t = time_current; t < time_final; t += TrajectoryConfig::TIME_STEP)
+            output_file << getVelocity(t).transpose() << "\n";
+        output_file << getVelocity(time_final).transpose() << "\n";
+        output_file << "--------------------------------------------------------------------\n";
+
+        output_file << "Acceleration (all points): \n";
+        for (float t = time_current; t < time_final; t += TrajectoryConfig::TIME_STEP)
+            output_file << getAcceleration(t).transpose() << "\n";
+        output_file << getAcceleration(time_final).transpose() << "\n";
+        output_file << "--------------------------------------------------------------------\n";
     }
     else
+    {
+        output_file << "Continuing with the previous trajectory! \n";
         output_file << INFINITY << "\n";
+        output_file << "--------------------------------------------------------------------\n";
+    }
 
-    output_file << "All points: \n";
-    for (float t = getTimeCurrent(); t < getTimeFinal(); t += 0.001)
-        output_file << getPosition(t).transpose() << "\n";
-    output_file << getPosition(getTimeFinal()).transpose() << "\n";
-
-    output_file << "Only points until the end of the current iteration: \n";
-    for (float t = getTimeCurrent(); t < getTimeEnd(); t += 0.001)
-        output_file << getPosition(t).transpose() << "\n";
-    output_file << getPosition(getTimeEnd()).transpose() << "\n";
+    output_file << "Delta time [s] in the current iteration: \n";
+    output_file << time_end - time_current << "\n";
     output_file << "--------------------------------------------------------------------\n";
+
 }

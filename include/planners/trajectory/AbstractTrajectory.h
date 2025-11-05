@@ -56,7 +56,7 @@ namespace planning::trajectory
         bool isFinalConf(const Eigen::VectorXf &pos);
         void addTrajPointCurrentIter(const Eigen::VectorXf &pos);
         void clearTrajPointCurrentIter();
-        void recordTrajectory(bool traj_computed);
+        void recordTrajectory(bool traj_computed, float t_offset);
         
     protected:
         void setParams();
