@@ -6,6 +6,7 @@
 #define RPMPL_TRAJECTORYRUCKIG_H
 
 #include "AbstractTrajectory.h"
+#include "RRTConnectConfig.h"
 #include <ruckig/ruckig.hpp>
 
 namespace planning::trajectory
@@ -36,6 +37,8 @@ namespace planning::trajectory
         ruckig::InputParameter<ruckig::DynamicDOFs> input;
         ruckig::OutputParameter<ruckig::DynamicDOFs> output;
         ruckig::Trajectory<ruckig::DynamicDOFs> traj;
+        ruckig::Trajectory<ruckig::DynamicDOFs> traj_emg;
+        float time_join;                                        // In case emergency trajectory is not computed, it is set to -1.
 
     };
 }

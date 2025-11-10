@@ -4,7 +4,8 @@ planning::trajectory::TrajectoryRuckig::TrajectoryRuckig(const std::shared_ptr<b
     AbstractTrajectory(ss_), 
     input(ss_->num_dimensions, num_waypoints), 
     output(ss_->num_dimensions, num_waypoints), 
-    traj(ss_->num_dimensions, num_waypoints)
+    traj(ss_->num_dimensions, num_waypoints), 
+    traj_emg(ss_->num_dimensions, num_waypoints)
 {
     setParams();
 }
@@ -14,7 +15,8 @@ planning::trajectory::TrajectoryRuckig::TrajectoryRuckig
         AbstractTrajectory(ss_, max_iter_time_), 
         input(ss_->num_dimensions), 
         output(ss_->num_dimensions), 
-        traj(ss_->num_dimensions)
+        traj(ss_->num_dimensions), 
+        traj_emg(ss_->num_dimensions)
 {
     setCurrentState(current);
     setParams();
@@ -29,6 +31,7 @@ void planning::trajectory::TrajectoryRuckig::setParams()
         input.max_jerk[i] = ss->robot->getMaxJerk(i);
     }
     input.synchronization = ruckig::Synchronization::Time;
+    time_join = -1;
 
     if (!input.validate())
         throw std::runtime_error("Invalid input parameters for Ruckig!");
@@ -121,12 +124,156 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(planning::trajectory
 /// @param t_max Maximal available time in [s] for a trajectory computing
 /// @param q_current Current robot's configuration
 /// @return The success of a trajectory computation
-bool planning::trajectory::TrajectoryRuckig::computeSafe([[maybe_unused]] planning::trajectory::State current, 
-    [[maybe_unused]] planning::trajectory::State target, [[maybe_unused]] float t_iter_remain, [[maybe_unused]] float t_max, 
-    [[maybe_unused]] const std::shared_ptr<base::State> q_current)
+bool planning::trajectory::TrajectoryRuckig::computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
+    float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current)
 {
-    // TODO
-    return false;
+    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    ruckig::Result result { ruckig::Result::Working };
+    ruckig::Ruckig<ruckig::DynamicDOFs> otg(ss->num_dimensions);
+    ruckig::Trajectory<ruckig::DynamicDOFs> traj_new(ss->num_dimensions);
+    ruckig::Trajectory<ruckig::DynamicDOFs> traj_temp(ss->num_dimensions);
+    ruckig::Trajectory<ruckig::DynamicDOFs> traj_emg_new(ss->num_dimensions);
+    ruckig::Trajectory<ruckig::DynamicDOFs> traj_emg_temp(ss->num_dimensions);
+    
+    float rho_robot {};
+    float rho_obs {};
+    bool is_safe {};
+    bool traj_computed { false };
+    bool traj_emg_computed { false };
+    float t_iter { max_iter_time - t_iter_remain };
+    float t_traj_max { t_iter_remain + (max_iter_time - max_remaining_iter_time) };
+    int num_iter { 0 };
+    int max_num_iter = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
+                                           (current.pos - target.pos).norm() / RRTConnectConfig::EPS_STEP));
+    if (max_num_iter <= 0) max_num_iter = 1;
+    Eigen::VectorXf target_pos_min { current.pos };
+    Eigen::VectorXf target_pos_max { target.pos };
+    time_join = -1;
+
+    auto computeRho = [&](Eigen::VectorXf pos) -> float
+    {
+        float rho { 0 };
+        std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(ss->getNewState(pos)) };
+        for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
+            rho = std::max(rho, (q_current->getSkeleton()->col(k) - skeleton->col(k)).norm());
+
+        return rho;
+    };
+    
+    while (num_iter++ < max_num_iter &&
+           std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
+    {
+        is_safe = false;
+        // std::cout << "Num. iter.  " << num_iter << "\n";
+        // std::cout << "target.pos: " << target.pos.transpose() << "\n";
+
+        input.control_interface = ruckig::ControlInterface::Position;
+        input.synchronization = ruckig::Synchronization::Time;
+        setCurrentState(current);
+        setTargetState(target);
+        result = otg.calculate(input, traj_temp);
+
+        if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
+        {
+            // std::cout << "Trajectory is computed! \n";
+            if (traj_temp.get_duration() < t_traj_max)
+            {
+                rho_obs = max_obs_vel * (t_iter + traj_temp.get_duration());
+                if (rho_obs < q_current->getDistance())
+                {
+                    rho_robot = computeRho(target.pos);
+                    if (rho_obs + rho_robot < q_current->getDistance())
+                    {
+                        traj_emg_computed = false;
+                        is_safe = true;
+                    }
+                }
+            }
+            else
+            {
+                // Synchronization is disabled so that each DoF stops as fast as possible independently
+                input.control_interface = ruckig::ControlInterface::Velocity;
+                input.synchronization = ruckig::Synchronization::None;
+                planning::trajectory::State current_temp
+                (
+                    getPos(traj_temp, t_traj_max), 
+                    getVel(traj_temp, t_traj_max), 
+                    getAcc(traj_temp, t_traj_max)
+                );
+                setCurrentState(current_temp);
+                result = otg.calculate(input, traj_emg_temp);
+
+                if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
+                {
+                    // std::cout << "Emergency trajectory is computed! \n";
+                    rho_obs = max_obs_vel * (t_iter + t_traj_max + traj_emg_temp.get_duration());
+                    if (rho_obs < q_current->getDistance())
+                    {
+                        rho_robot = computeRho(getPos(traj_emg_temp, traj_emg_temp.get_duration()));
+                        if (rho_obs + rho_robot < q_current->getDistance())
+                        {
+                            traj_emg_new = traj_emg_temp;
+                            traj_emg_computed = true;
+                            is_safe = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // std::cout << "\trho_obs: " << rho_obs << " [m]\t";
+        // std::cout << "rho_robot: " << rho_robot << " [m]\t";
+        // std::cout << "rho_sum: " << rho_obs + rho_robot << " [m]\t";
+        // std::cout << "d_c: " << q_current->getDistance() << " [m]\n";
+        // rho_obs = 0; rho_robot = 0;     // Reset only for console output
+        
+        if (is_safe)
+        {
+            // std::cout << "\tRobot is safe! \n";
+            traj_new = traj_temp;
+            traj_computed = true;
+            target_pos_min = target.pos;
+            if (num_iter == 1) 
+                break;
+        }
+        else
+        {
+            // std::cout << "\tRobot is NOT safe! \n";
+            target_pos_max = target.pos;
+        }
+        target.pos = (target_pos_min + target_pos_max) / 2;
+    }
+
+    if (traj_computed)    // Check whether computed trajectories are collision-free
+    {
+        std::vector<Eigen::VectorXf> pos_points {};
+        if (traj_emg_computed)
+        {
+            for (float t = TrajectoryConfig::TIME_STEP; t <= t_traj_max; t += TrajectoryConfig::TIME_STEP)
+                pos_points.emplace_back(getPos(traj_new, t));
+
+            for (float t = TrajectoryConfig::TIME_STEP; t <= traj_emg_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
+                pos_points.emplace_back(getPos(traj_emg_new, t));
+        }
+        else
+        {
+            for (float t = TrajectoryConfig::TIME_STEP; t <= traj_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
+                pos_points.emplace_back(getPos(traj_new, t));
+        }
+
+        traj_computed = isSafe(pos_points, q_current, t_iter);
+        // std::cout << "traj_computed: " << traj_computed << "\n";
+
+        if (traj_computed)
+        {
+            setTraj(traj_new);
+            traj_emg = traj_emg_new;
+            time_final = traj_emg_computed ? (t_traj_max + traj_emg_new.get_duration()) : traj_new.get_duration();
+            time_join = traj_emg_computed ? t_traj_max : -1;
+        }
+    }
+
+    return traj_computed;
 }
 
 void planning::trajectory::TrajectoryRuckig::setCurrentState(const planning::trajectory::State &current)
