@@ -56,6 +56,10 @@ namespace planning::trajectory
         bool isFinalConf(const Eigen::VectorXf &pos);
         void addTrajPointCurrentIter(const Eigen::VectorXf &pos);
         void clearTrajPointCurrentIter();
+        bool isSafe(const std::vector<Eigen::VectorXf> &pos_points, const std::shared_ptr<base::State> q_current, float t_iter, 
+                    float time_step = TrajectoryConfig::TIME_STEP);
+        float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
+                                             const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
         void recordTrajectory(bool traj_computed, float t_offset);
         
     protected:
