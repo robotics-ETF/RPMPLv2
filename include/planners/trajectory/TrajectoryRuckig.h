@@ -33,13 +33,17 @@ namespace planning::trajectory
         void setParams();
         void setCurrentState(const planning::trajectory::State &current);
         void setTargetState(const planning::trajectory::State &target);
+        void setTraj(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_);
+        Eigen::VectorXf getPos(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
+        Eigen::VectorXf getVel(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
+        Eigen::VectorXf getAcc(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
 
         ruckig::InputParameter<ruckig::DynamicDOFs> input;
         ruckig::OutputParameter<ruckig::DynamicDOFs> output;
         ruckig::Trajectory<ruckig::DynamicDOFs> traj;
         ruckig::Trajectory<ruckig::DynamicDOFs> traj_emg;
         float time_join;                                        // In case emergency trajectory is not computed, it is set to -1.
-
+        
     };
 }
 

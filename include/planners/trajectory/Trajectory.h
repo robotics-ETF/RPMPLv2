@@ -32,10 +32,8 @@ namespace planning::trajectory
         bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) override;
 
     private:
-        bool isSafe(const std::shared_ptr<planning::trajectory::Spline> spline_safe, 
-                    const std::shared_ptr<base::State> q_current, float t_iter);
-        float computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
-                                             const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t);
+        bool isSafeSpline(const std::shared_ptr<planning::trajectory::Spline> spline_safe, 
+                          const std::shared_ptr<base::State> q_current, float t_iter);
         void setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_);
 
         bool convertPathToTraj_v1(const std::vector<std::shared_ptr<base::State>> &path);

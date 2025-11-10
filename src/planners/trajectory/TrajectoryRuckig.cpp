@@ -66,28 +66,25 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(planning::trajectory
         float delta_t_max { ((target.pos - current.pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
         Eigen::VectorXf target_vel_max { (target.pos - current.pos) / delta_t_max };
         Eigen::VectorXf target_vel_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
-        Eigen::VectorXf target_vel { target_vel_max };
+        target.vel = target_vel_max;
         
         while (!traj_computed && num_iter++ < max_num_iter_trajectory && t_remain > 0)
         {
-            target.vel = target_vel;
             setTargetState(target);
             result = otg.calculate(input, traj_new);
             
             if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
             {
-                traj = traj_new;
-                time_current = 0;
-                time_final = traj.get_duration();
+                setTraj(traj_new);
                 traj_computed = true;
             }
             else
-                target_vel_max = target_vel;
+                target_vel_max = target.vel;
 
-            target_vel = (target_vel_max + target_vel_min) / 2;
+            target.vel = (target_vel_max + target_vel_min) / 2;
             t_remain -= std::chrono::duration_cast<std::chrono::microseconds>
                         (std::chrono::steady_clock::now() - time_start_).count() / 1e6;
-            // std::cout << "Num. iter. " << num_iter << "\t target_vel: " << target_vel.transpose() << "\n";
+            // std::cout << "Num. iter. " << num_iter << "\t target.vel: " << target.vel.transpose() << "\n";
         }
     }
 
@@ -104,9 +101,7 @@ bool planning::trajectory::TrajectoryRuckig::computeRegular(planning::trajectory
 
         if (result == ruckig::Result::Working || result == ruckig::Result::Finished)
         {
-            traj = traj_new;
-            time_current = 0;
-            time_final = traj.get_duration();
+            setTraj(traj_new);
             traj_computed = true;
         }
     }
@@ -296,14 +291,21 @@ void planning::trajectory::TrajectoryRuckig::setTargetState(const planning::traj
     }
 }
 
-Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getPosition(float t)
+void planning::trajectory::TrajectoryRuckig::setTraj(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_)
+{
+    traj = traj_;
+    time_current = 0;
+    time_final = traj.get_duration();
+}
+
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getPos(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t)
 {
     ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
 
     if (time_final == 0)
         pos = input.current_position;
     else
-        traj.at_time(t, pos);
+        traj_.at_time(t, pos);
 
     Eigen::VectorXf ret(ss->num_dimensions);
     for (size_t i = 0; i < ss->num_dimensions; i++)
@@ -312,16 +314,29 @@ Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getPosition(float t)
     return ret;
 }
 
-Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getVelocity(float t)
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getPosition(float t)
 {
+    if (time_join > 0)
+    {
+        if (t < time_join)
+            return getPos(traj, t);
+        else
+            return getPos(traj_emg, t - time_join);
+    }
+
+    return getPos(traj, t);
+}
+
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getVel(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t)
+{
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
     ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
-    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
-    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
 
     if (time_final == 0)
         vel = input.current_velocity;
     else
-        traj.at_time(t, pos, vel, acc);
+        traj_.at_time(t, pos, vel, acc);
 
     Eigen::VectorXf ret(ss->num_dimensions);
     for (size_t i = 0; i < ss->num_dimensions; i++)
@@ -330,22 +345,48 @@ Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getVelocity(float t)
     return ret;
 }
 
-Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcceleration(float t)
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getVelocity(float t)
 {
+    if (time_join > 0)
+    {
+        if (t < time_join)
+            return getVel(traj, t);
+        else
+            return getVel(traj_emg, t - time_join);
+    }
+
+    return getVel(traj, t);
+}
+
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcc(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t)
+{
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
     ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
-    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
-    [[maybe_unused]] ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
 
     if (time_final == 0)
         acc = input.current_acceleration;
     else
-        traj.at_time(t, pos, vel, acc);
+        traj_.at_time(t, pos, vel, acc);
     
     Eigen::VectorXf ret(ss->num_dimensions);
     for (size_t i = 0; i < ss->num_dimensions; i++)
         ret(i) = acc[i];
 
     return ret;
+}
+
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcceleration(float t)
+{
+    if (time_join > 0)
+    {
+        if (t < time_join)
+            return getAcc(traj, t);
+        else
+            return getAcc(traj_emg, t - time_join);
+    }
+
+    return getAcc(traj, t);
 }
 
 bool planning::trajectory::TrajectoryRuckig::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path)

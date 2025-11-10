@@ -39,22 +39,22 @@ bool planning::trajectory::Trajectory::computeRegular(planning::trajectory::Stat
         float delta_t_max { ((target.pos - current.pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
         Eigen::VectorXf target_vel_max { (target.pos - current.pos) / delta_t_max };
         Eigen::VectorXf target_vel_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
-        Eigen::VectorXf target_vel { target_vel_max };
+        target.vel = target_vel_max;
         
         while (!spline_computed && num_iter++ < max_num_iter_trajectory && t_remain > 0)
         {
-            if (spline_new->compute(target.pos, target_vel)) 
+            if (spline_new->compute(target.pos, target.vel)) 
             {
                 spline_computed = true;
                 setSpline(spline_new);
             }
             else
-                target_vel_max = target_vel;
+                target_vel_max = target.vel;
 
-            target_vel = (target_vel_max + target_vel_min) / 2;
+            target.vel = (target_vel_max + target_vel_min) / 2;
             t_remain -= std::chrono::duration_cast<std::chrono::microseconds>
                         (std::chrono::steady_clock::now() - time_start_).count() / 1e6;
-            // std::cout << "Num. iter. " << num_iter << "\t target_vel: " << target_vel.transpose() << "\n";
+            // std::cout << "Num. iter. " << num_iter << "\t target.vel: " << target.vel.transpose() << "\n";
         }
     }
 
@@ -109,12 +109,11 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
     if (max_num_iter <= 0) max_num_iter = 1;
     Eigen::VectorXf target_pos_min { current.pos };
     Eigen::VectorXf target_pos_max { target.pos };
-    Eigen::VectorXf target_pos { target.pos };
 
-    auto computeRho = [&](Eigen::VectorXf q_coord) -> float
+    auto computeRho = [&](Eigen::VectorXf pos) -> float
     {
         float rho { 0 };
-        std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(ss->getNewState(q_coord)) };
+        std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(ss->getNewState(pos)) };
         for (size_t k = 1; k <= ss->robot->getNumLinks(); k++)
             rho = std::max(rho, (q_current->getSkeleton()->col(k) - skeleton->col(k)).norm());
 
@@ -125,10 +124,10 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() < t_max * 1e6)
     {
         is_safe = false;
-        // std::cout << "Num. iter. " << num_iter << "\n";
-        // std::cout << "target_pos: " << target_pos.transpose() << "\n";
+        // std::cout << "Num. iter.  " << num_iter << "\n";
+        // std::cout << "target.pos: " << target.pos.transpose() << "\n";
 
-        if (spline_temp->compute(target_pos))
+        if (spline_temp->compute(target.pos))
         {
             // std::cout << "Spline is computed! \n";
             if (spline_temp->getTimeFinal() < t_spline_max)
@@ -136,7 +135,7 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
                 rho_obs = max_obs_vel * (t_iter + spline_temp->getTimeFinal());
                 if (rho_obs < q_current->getDistance())
                 {
-                    rho_robot = computeRho(target_pos);
+                    rho_robot = computeRho(target.pos);
                     if (rho_obs + rho_robot < q_current->getDistance())
                     {
                         spline_emg_computed = false;
@@ -160,7 +159,7 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
                     rho_obs = max_obs_vel * (t_iter + t_spline_max + spline_emg_temp->getTimeFinal());
                     if (rho_obs < q_current->getDistance())
                     {
-                        rho_robot = computeRho(spline_emg_temp->getPosition(INFINITY));
+                        rho_robot = computeRho(spline_emg_temp->getPosition(spline_emg_temp->getTimeFinal()));
                         if (rho_obs + rho_robot < q_current->getDistance())
                         {
                             *spline_emg_new = *spline_emg_temp;
@@ -184,16 +183,16 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
             // std::cout << "\tRobot is safe! \n";
             *spline_new = *spline_temp;
             spline_computed = true;
-            target_pos_min = target_pos;
+            target_pos_min = target.pos;
             if (num_iter == 1) 
                 break;
         }
         else
         {
             // std::cout << "\tRobot is NOT safe! \n";
-            target_pos_max = target_pos;
+            target_pos_max = target.pos;
         }
-        target_pos = (target_pos_min + target_pos_max) / 2;
+        target.pos = (target_pos_min + target_pos_max) / 2;
     }
 
     if (spline_computed)    // Check whether computed splines are collision-free
@@ -207,7 +206,7 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
         };
 
         // std::cout << "Spline: \n" << spline << "\n";
-        spline_computed = isSafe(spline_safe, q_current, t_iter);
+        spline_computed = isSafeSpline(spline_safe, q_current, t_iter);
 
         if (spline_computed)
             setSpline(spline_safe);
@@ -223,117 +222,18 @@ bool planning::trajectory::Trajectory::computeSafe(planning::trajectory::State c
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when the spline is starting.
 /// @return True if safe. False if not.
 /// @note 'q_current' must have a distance-to-obstacles or its underestimation!
-bool planning::trajectory::Trajectory::isSafe(const std::shared_ptr<planning::trajectory::Spline> spline_safe,
-                                              const std::shared_ptr<base::State> q_current, float t_iter)
+bool planning::trajectory::Trajectory::isSafeSpline(const std::shared_ptr<planning::trajectory::Spline> spline_safe,
+                                                    const std::shared_ptr<base::State> q_current, float t_iter)
 {
-    // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };    
-    float delta_t { TrajectoryConfig::TIME_STEP };
-    size_t num_iter = std::ceil(spline_safe->getTimeFinal() / delta_t);
-    delta_t = spline_safe->getTimeFinal() / num_iter;
-    float rho_robot {};
-    float rho_obs {};
-    float t_init { 0 };
-    std::shared_ptr<base::State> q_temp { q_current };
-    std::shared_ptr<base::State> q_final { nullptr };
-	Eigen::VectorXf delta_q {};
+    std::vector<Eigen::VectorXf> pos_points {};
+    float time_step { TrajectoryConfig::TIME_STEP };
+    size_t num_iter = std::ceil(spline_safe->getTimeFinal() / time_step);
+    time_step = spline_safe->getTimeFinal() / num_iter;
 
-    for (float t = delta_t; t <= spline_safe->getTimeFinal() + RealVectorSpaceConfig::EQUALITY_THRESHOLD; t += delta_t)
-    {
-        // std::cout << "Considering t: " << t << "\n";
-        q_final = ss->getNewState(spline_safe->getPosition(t));
-        if (ss->robot->checkSelfCollision(q_final))
-            return false;
-        
-        t_iter += delta_t;
-        rho_obs = max_obs_vel * (t_iter - t_init);
-        delta_q = (q_final->getCoord() - q_temp->getCoord()).cwiseAbs();
-        ss->robot->computeEnclosingRadii(q_temp);
-
-        for (size_t i = 0; i < ss->robot->getNumDOFs(); i++)
-        {
-            rho_robot = q_temp->getEnclosingRadii()->col(i+1).dot(delta_q);
-            if (rho_robot + rho_obs >= q_temp->getDistanceProfile(i))    // Possible collision
-            {
-                // std::cout << "********** Possible collision ********** \n";
-                q_temp = q_final;
-                computeDistanceUnderestimation(q_temp, q_current->getNearestPoints(), t_iter);
-                t_init = t_iter;
-
-                if (q_temp->getDistance() <= 0)
-                {
-                    // std::cout << "\t Trajectory is NOT safe! \n";
-                    return false;
-                }
-                break;
-            }
-            // else std::cout << "\t OK! rho_robot + rho_obs < q_temp->getDistance() \n";
-        }
-    }
+    for (float t = time_step; t <= spline_safe->getTimeFinal() + RealVectorSpaceConfig::EQUALITY_THRESHOLD; t += time_step)
+        pos_points.emplace_back(spline_safe->getPosition(t));
     
-    // auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };
-    // std::cout << "Elapsed time for the spline collision checking: " << t_elapsed << " [us] \n";
-    return true;
-}
-
-/// @brief Compute an underestimation of distance-to-obstacles 'd_c', i.e., a distance-to-planes, for each robot's link,
-/// i.e., compute a distance-to-planes profile function, when the robot takes a configuration 'q'.
-/// Planes approximate obstacles, and are generated according to 'nearest_points'.
-/// Each plane is moved at the maximal obstacle velocity 'ss->env->getObject(j)->getMaxVel()' towards the robot 
-/// during the time interval 'delta_t'.
-/// @param q Configuration of the robot.
-/// @param nearest_points Nearest points between the robot and obstacles.
-/// @param delta_t Time interval when planes are moving towards the robot.
-/// @return Underestimation of distance-to-obstacles.
-/// Note that if 'd_c' is negative, it means that one or more robot's links are penetrating through the plane,
-/// or they are located on the other side of the plane.
-float planning::trajectory::Trajectory::computeDistanceUnderestimation(const std::shared_ptr<base::State> q, 
-	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t)
-{
-	float d_c_temp {};
-    float d_c { INFINITY };
-	std::vector<float> d_c_profile(ss->robot->getNumLinks(), 0);
-    Eigen::Vector3f R {};		// Robot's nearest point
-	Eigen::Vector3f O {};    	// Obstacle's nearest point
-    Eigen::Vector3f delta_RO {};
-	std::shared_ptr<Eigen::MatrixXf> skeleton { ss->robot->computeSkeleton(q) };
-    
-    for (size_t i = 0; i < ss->robot->getNumLinks(); i++)
-    {
-		d_c_profile[i] = INFINITY;
-        for (size_t j = 0; j < ss->env->getNumObjects(); j++)
-        {
-            O = nearest_points->at(j).col(i).tail(3);
-			if (O.norm() == INFINITY)
-                continue;
-			
-            R = nearest_points->at(j).col(i).head(3);
-
-            // Move both points, R and O, to maintain a normal plane vector 'R - O'
-            delta_RO = (R - O).normalized() * ss->env->getObject(j)->getMaxVel() * delta_t;
-            R += delta_RO;
-            O += delta_RO;
-
-            d_c_temp = std::min((skeleton->col(i) - O).dot((R - O).normalized()), 
-                                (skeleton->col(i+1) - O).dot((R - O).normalized())) 
-                                - ss->robot->getCapsuleRadius(i);
-            if (d_c_temp < 0)
-                return 0;
-
-			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
-
-            // std::cout << "(i, j) = " << "(" << i << ", " << j << "):" << std::endl;
-            // std::cout << "Robot nearest point:    " << R.transpose() << std::endl;
-            // std::cout << "Obstacle nearest point: " << O.transpose() << std::endl;
-            // std::cout << "d_c: " << d_c_profile[i] << std::endl;
-		}
-		d_c = std::min(d_c, d_c_profile[i]);
-    }
-
-	q->setDistance(d_c);
-	q->setDistanceProfile(d_c_profile);
-	q->setIsRealDistance(false);
-
-	return d_c;
+    return isSafe(pos_points, q_current, t_iter, time_step);
 }
 
 void planning::trajectory::Trajectory::setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_)
@@ -402,8 +302,8 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<st
             if (spline_computed && num < max_num_iter)
             {
                 q_current = ss->getNewState(spline_current->getPosition(t));
-                ss->computeDistance(q_current);     // Required by 'isSafe' function
-                if (q_current->getDistance() <= 0 || !isSafe(spline_next, q_current, 0))
+                ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
+                if (q_current->getDistance() <= 0 || !isSafeSpline(spline_next, q_current, 0))
                     spline_computed = false;
             }
         }
@@ -487,8 +387,8 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<st
             if (spline_computed && num < max_num_iter)
             {
                 q_current = ss->getNewState(spline_current->getPosition(t));
-                ss->computeDistance(q_current);     // Required by 'isSafe' function
-                if (q_current->getDistance() <= 0 || !isSafe(spline, q_current, 0))
+                ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
+                if (q_current->getDistance() <= 0 || !isSafeSpline(spline, q_current, 0))
                     spline_computed = false;
             }
         }
@@ -523,8 +423,7 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
     float delta_t_max {};
     Eigen::VectorXf target_vel_max {};
     Eigen::VectorXf target_vel_min {};
-    Eigen::VectorXf target_vel {};
-    Eigen::VectorXf target_pos {};
+    planning::trajectory::State target {};
     std::vector<float> vel_coeff(path.size(), 1.0);
     const float vel_coeff_const { 0.9 };
     auto time_start_ { std::chrono::steady_clock::now() };
@@ -566,19 +465,19 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
             monotonic = (!ss->checkLinearDependency(path[i-2], path[i-1], path[i])) ? false : true;
         
         if (!must_visit)
-            target_pos = (path[i-1]->getCoord() + path[i]->getCoord()) / 2;
+            target.pos = (path[i-1]->getCoord() + path[i]->getCoord()) / 2;
         else
-            target_pos = path[i]->getCoord();
+            target.pos = path[i]->getCoord();
         
         spline_computed = false;
         num_iter = 0;
-        delta_t_max = ((target_pos - path[i-1]->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff();
-        target_vel_max = (target_pos - path[i-1]->getCoord()) / delta_t_max;
+        delta_t_max = ((target.pos - path[i-1]->getCoord()).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff();
+        target_vel_max = (target.pos - path[i-1]->getCoord()) / delta_t_max;
         target_vel_min = Eigen::VectorXf::Zero(ss->num_dimensions);
 
         do
         {
-            target_vel = vel_coeff[i] * (target_vel_max + target_vel_min) / 2;
+            target.pos = vel_coeff[i] * (target_vel_max + target_vel_min) / 2;
             std::shared_ptr<planning::trajectory::Spline> spline_new 
             {
                 std::make_shared<planning::trajectory::Spline5>(
@@ -589,21 +488,21 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
                 )
             };
             
-            if (spline_new->compute(target_pos, target_vel) && 
+            if (spline_new->compute(target.pos, target.pos) && 
                 ((monotonic && spline_new->checkPositionMonotonicity() != 0) || !monotonic))
             {
                 *subsplines[i] = *spline_new;
-                target_vel_min = target_vel;
+                target_vel_min = target.pos;
                 spline_computed = true;
             }
             else
-                target_vel_max = target_vel;
+                target_vel_max = target.pos;
         }
         while (++num_iter < max_num_iter);
 
         if (!spline_computed)
         {
-            spline_computed = subsplines[i]->compute(target_pos) && 
+            spline_computed = subsplines[i]->compute(target.pos) && 
                               ((monotonic && subsplines[i]->checkPositionMonotonicity() != 0) || !monotonic);
             if (!spline_computed)
             {
