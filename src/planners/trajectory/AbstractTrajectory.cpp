@@ -40,7 +40,6 @@ planning::trajectory::AbstractTrajectory::AbstractTrajectory(const std::shared_p
     time_end = 0;
     time_current = 0;
     time_final = 0;
-    is_zero_final_vel = true;
 
     max_obs_vel = 0;
     for (size_t i = 0; i < ss->env->getNumObjects(); i++)
@@ -68,27 +67,139 @@ void planning::trajectory::AbstractTrajectory::setParams()
         }
     }
 
-    max_num_iter_trajectory = all_robot_vel_same ? 
+    max_num_iter_vel = all_robot_vel_same ? 
         std::ceil(std::log2(2 * ss->robot->getMaxVel(0) / TrajectoryConfig::FINAL_VELOCITY_STEP)) :
         std::ceil(std::log2(2 * ss->robot->getMaxVel().maxCoeff() / TrajectoryConfig::FINAL_VELOCITY_STEP));
 }
 
-/// @brief Check whether 'q' is a final configuration of the trajectory.
-/// @param pos Configuration to be checked.
-/// @return True if yes, false if not.
-bool planning::trajectory::AbstractTrajectory::isFinalConf(const Eigen::VectorXf &pos)
+/// @brief Compute a regular trajectory that is not surely safe for environment, meaning that,
+/// if collision eventually occurs, it may be at robot's non-zero velocity.
+/// @param current Current robot's state
+/// @param target Target robot's state
+/// @param t_iter_remain Remaining time in [s] in the current iteration
+/// @param t_max Maximal available time in [s] for a trajectory computing
+/// @param non_zero_final_vel Whether final velocity can be non-zero
+/// @return The success of a trajectory computation
+bool planning::trajectory::AbstractTrajectory::computeRegular(planning::trajectory::State current, 
+    planning::trajectory::State target, float t_iter_remain, float t_max, bool non_zero_final_vel)
 {
-    return ((pos - getPosition(time_final)).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD) ? true : false;
+    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    float t_elapsed { 0 };
+    bool traj_computed { false };
+    // bool is_zero_final_vel { !non_zero_final_vel };
+
+    if (non_zero_final_vel)
+    {
+        size_t num_iter_vel { 0 };
+        float delta_t_max { ((target.pos - current.pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+        Eigen::VectorXf target_vel_max { (target.pos - current.pos) / delta_t_max };
+        Eigen::VectorXf target_vel_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
+        target.vel = target_vel_max;
+        
+        while (!traj_computed && num_iter_vel++ < max_num_iter_vel && t_elapsed < t_max)
+        {
+            // std::cout << "\tNum. iter. vel. " << num_iter_vel << "\t target.vel: " << target.vel.transpose() << "\n";
+            traj_computed = computeRegularTraj(current, target);
+
+            if (!traj_computed)
+            {
+                target_vel_max = target.vel;
+                target.vel = (target_vel_max + target_vel_min) / 2;
+            }
+
+            t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>
+                        (std::chrono::steady_clock::now() - time_start_).count() / 1e6;
+            // std::cout << "\tt_elapsed: " << t_elapsed * 1e3 << " [ms]\n";
+        }
+    }
+
+    // Possible current position at the end of iteration
+    Eigen::VectorXf new_current_pos { getPosition(time_current + t_iter_remain) };
+    
+    // If trajectory was not computed or robot is getting away from 'new_current_pos'
+    if ((!traj_computed || (new_current_pos - target.pos).norm() > (current.pos - target.pos).norm()) && t_elapsed < t_max)
+    {
+        // is_zero_final_vel = true;
+        target.vel = Eigen::VectorXf::Zero(ss->num_dimensions);
+        traj_computed = computeRegularTraj(current, target);
+    }
+    
+    // std::cout << "\tTrajectory " << (!traj_computed ? "NOT " : "") << "computed with " 
+    //           << (!is_zero_final_vel ? "NON-" : "") <<  "ZERO final velocity. \n";
+    return traj_computed;
 }
 
-void planning::trajectory::AbstractTrajectory::addTrajPointCurrentIter(const Eigen::VectorXf &pos)
+/// @brief Compute a safe trajectory that will render a robot motion surely safe for environment. 
+/// If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. 
+/// @param current Current robot's state
+/// @param target Target robot's state
+/// @param t_iter_remain Remaining time in [s] in the current iteration
+/// @param t_max Maximal available time in [s] for a trajectory computing
+/// @param non_zero_final_vel Whether final trajectory velocity can be non-zero
+/// @param q_current Current robot's configuration
+/// @return The success of a trajectory computation
+bool planning::trajectory::AbstractTrajectory::computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
+    float t_iter_remain, float t_max, bool non_zero_final_vel, const std::shared_ptr<base::State> q_current)
 {
-    traj_points_current_iter.emplace_back(pos);
-}
+    std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
+    bool traj_computed { false };
+    float t_iter { max_iter_time - t_iter_remain };
+    float t_traj_max { t_iter_remain + (max_iter_time - max_remaining_iter_time) };
+    float t_elapsed { 0 };
+    int num_iter_pos { 0 };
+    int max_num_iter_pos = std::ceil(std::log2(RealVectorSpaceConfig::NUM_INTERPOLATION_VALIDITY_CHECKS * 
+                                               (current.pos - target.pos).norm() / RRTConnectConfig::EPS_STEP));
+    if (max_num_iter_pos <= 0) max_num_iter_pos = 1;
+    Eigen::VectorXf target_pos_min { current.pos };
+    Eigen::VectorXf target_pos_max { target.pos };
+    
+    // First, try to compute a safe trajectory using zero final velocity.
+    while (!traj_computed && num_iter_pos++ < max_num_iter_pos && t_elapsed < t_max)
+    {
+        // std::cout << "Num. iter. pos. " << num_iter_pos << "\t target.pos: " << target.pos.transpose() << "\n";        
+        traj_computed = computeSafeTraj(current, target, t_iter, t_traj_max, q_current);
 
-void planning::trajectory::AbstractTrajectory::clearTrajPointCurrentIter()
-{
-    traj_points_current_iter.clear();
+        if (!traj_computed)
+        {
+            // std::cout << "\tRobot is NOT safe! \n";
+            target_pos_max = target.pos;
+            target.pos = (target_pos_min + target_pos_max) / 2;
+        }
+
+        t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>
+                    (std::chrono::steady_clock::now() - time_start_).count() / 1e6;
+        // std::cout << "\tt_elapsed: " << t_elapsed * 1e3 << " [ms]\n";
+    }
+
+    // Additionally, try to compute a safe trajectory using non-zero final velocity.
+    if (traj_computed && non_zero_final_vel)
+    {
+        // std::cout << "Trying to compute a trajectory using non-zero final velocity... \n";
+        bool new_traj_computed { false };
+        size_t num_iter_vel { 0 };
+        float delta_t_max { ((target.pos - current.pos).cwiseQuotient(ss->robot->getMaxVel())).cwiseAbs().maxCoeff() };
+        Eigen::VectorXf target_vel_max { (target.pos - current.pos) / delta_t_max };
+        Eigen::VectorXf target_vel_min { Eigen::VectorXf::Zero(ss->num_dimensions) };
+        target.vel = target_vel_max;
+        
+        while (!new_traj_computed && num_iter_vel++ < max_num_iter_vel && t_elapsed < t_max)
+        {
+            // std::cout << "\tNum. iter. vel. " << num_iter_vel << "\t target.vel: " << target.vel.transpose() << "\n";
+            new_traj_computed = computeSafeTraj(current, target, t_iter, t_traj_max, q_current);
+
+            if (!new_traj_computed)
+            {
+                target_vel_max = target.vel;
+                target.vel = (target_vel_max + target_vel_min) / 2;
+            }
+
+            t_elapsed = std::chrono::duration_cast<std::chrono::microseconds>
+                        (std::chrono::steady_clock::now() - time_start_).count() / 1e6;
+            // std::cout << "\tt_elapsed: " << t_elapsed * 1e3 << " [ms]\n";
+        }
+    }
+
+    return traj_computed;
 }
 
 /// @brief Check whether the computed trajectory is safe (i.e., collision-free during the time interval [0, 't_final'])
@@ -207,6 +318,24 @@ float planning::trajectory::AbstractTrajectory::computeDistanceUnderestimation(c
 	q->setIsRealDistance(false);
 
 	return d_c;
+}
+
+/// @brief Check whether 'q' is a final configuration of the trajectory.
+/// @param pos Configuration to be checked.
+/// @return True if yes, false if not.
+bool planning::trajectory::AbstractTrajectory::isFinalConf(const Eigen::VectorXf &pos)
+{
+    return ((pos - getPosition(time_final)).norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD) ? true : false;
+}
+
+void planning::trajectory::AbstractTrajectory::addTrajPointCurrentIter(const Eigen::VectorXf &pos)
+{
+    traj_points_current_iter.emplace_back(pos);
+}
+
+void planning::trajectory::AbstractTrajectory::clearTrajPointCurrentIter()
+{
+    traj_points_current_iter.clear();
 }
 
 // This function is just for debugging. It operates in real-time by logging all trajectory points. 

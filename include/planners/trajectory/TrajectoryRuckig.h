@@ -6,7 +6,6 @@
 #define RPMPL_TRAJECTORYRUCKIG_H
 
 #include "AbstractTrajectory.h"
-#include "RRTConnectConfig.h"
 #include <ruckig/ruckig.hpp>
 
 namespace planning::trajectory
@@ -18,10 +17,9 @@ namespace planning::trajectory
         TrajectoryRuckig(const std::shared_ptr<base::StateSpace> &ss_, planning::trajectory::State current, float max_iter_time_);
         ~TrajectoryRuckig();
         
-        bool computeRegular(planning::trajectory::State current, planning::trajectory::State target, 
-                            float t_iter_remain, float t_max, bool non_zero_final_vel) override;
-        bool computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
-                         float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current) override;
+        bool computeRegularTraj(const planning::trajectory::State &current, const planning::trajectory::State &target) override;
+        bool computeSafeTraj(const planning::trajectory::State &current, const planning::trajectory::State &target, 
+                             float t_iter, float t_spline_max, const std::shared_ptr<base::State> q_current) override;
         
         Eigen::VectorXf getPosition(float t) override;
         Eigen::VectorXf getVelocity(float t) override;

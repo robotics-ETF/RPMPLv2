@@ -191,7 +191,7 @@ bool planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
         // std::cout << "q_next_reached: " << q_next_reached << "\n";
 
         if (guaranteed_safe_motion)
-            traj_computed = traj->computeSafe(current, target, t_iter_remain, t_traj_remain, q_current);
+            traj_computed = traj->computeSafe(current, target, t_iter_remain, t_traj_remain, non_zero_final_vel, q_current);
         else
         {
             if (traj->isFinalConf(target.pos))  // Spline to such 'target.pos' already exists!
@@ -203,7 +203,7 @@ bool planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
 
     traj->setTimeEnd(!traj_computed * traj->getTimeCurrent() + t_iter_remain);
     // std::cout << "New trajectory is " << (traj_computed ? "computed!\n" : "NOT computed! Continuing with the previous trajectory!\n");
-    // traj->recordTrajectory(traj_computed);   // Only for debugging
+    // traj->recordTrajectory(traj_computed, t_iter + t_traj_max);   // Only for debugging
 
     q_current = ss->getNewState(traj->getPosition(traj->getTimeEnd()));   // Current robot position at the end of iteration
     

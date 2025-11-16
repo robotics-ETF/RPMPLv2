@@ -8,6 +8,7 @@
 #include "StateSpace.h"
 #include "TrajectoryConfig.h"
 #include "RealVectorSpaceConfig.h"
+#include "RRTConnectConfig.h"
 
 namespace planning::trajectory
 {
@@ -31,10 +32,10 @@ namespace planning::trajectory
         AbstractTrajectory(const std::shared_ptr<base::StateSpace> &ss_, float max_iter_time_);
         virtual ~AbstractTrajectory() = 0;
         
-        virtual bool computeRegular(planning::trajectory::State current, planning::trajectory::State target, 
-                                    float t_iter_remain, float t_max, bool non_zero_final_vel) = 0;
-        virtual bool computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
-                                 float t_iter_remain, float t_max, const std::shared_ptr<base::State> q_current) = 0;
+        bool computeRegular(planning::trajectory::State current, planning::trajectory::State target, 
+                            float t_iter_remain, float t_max, bool non_zero_final_vel);
+        bool computeSafe(planning::trajectory::State current, planning::trajectory::State target, 
+                         float t_iter_remain, float t_max, bool non_zero_final_vel, const std::shared_ptr<base::State> q_current);
         virtual bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) = 0;
 
         virtual Eigen::VectorXf getPosition(float t) = 0;
@@ -45,7 +46,6 @@ namespace planning::trajectory
         inline float getTimeEnd() const { return time_end; }
         inline float getTimeCurrent() const { return time_current; }
         inline float getTimeFinal() const { return time_final; }
-        inline bool getIsZeroFinalVel() const { return is_zero_final_vel; }
         inline const std::vector<Eigen::VectorXf> &getTrajPointCurrentIter() const { return traj_points_current_iter; }
 
         inline void setTimeBegin(float time_begin_) { time_begin = time_begin_; }
@@ -64,6 +64,9 @@ namespace planning::trajectory
         
     protected:
         void setParams();
+        virtual bool computeRegularTraj(const planning::trajectory::State &current, const planning::trajectory::State &target) = 0;
+        virtual bool computeSafeTraj(const planning::trajectory::State &current, const planning::trajectory::State &target, 
+                                     float t_iter, float t_traj_max, const std::shared_ptr<base::State> q_current) = 0;
         
         std::shared_ptr<base::StateSpace> ss;                       // State space of the robot
         float max_iter_time;                                        // Maximal iteration time
@@ -72,10 +75,9 @@ namespace planning::trajectory
         float time_final;                                           // Final time for the trajectory
         float time_begin;                                           // Time instance in [s] when the trajectory begins in the current iteration
         float time_end;                                             // Time instance in [s] when the trajectory ends in the current iteration
-        bool is_zero_final_vel;                                     // Whether final velocity is zero. If not, robot will move at constant velocity after 'time_final'.
         bool all_robot_vel_same;                                    // Whether all joint velocities are the same
         float max_obs_vel;                                          // Maximal velocity of dynamic obstacles used to generate dynamic bubbles
-        size_t max_num_iter_trajectory;                             // Maximal number of iterations when computing trajectory
+        size_t max_num_iter_vel;                                    // Maximal number of iterations when changing final velocity when computing a trajectory
         std::vector<Eigen::VectorXf> traj_points_current_iter;      // Trajectory points from the current iteration to be validated within 'MotionValidity'
         
     };
