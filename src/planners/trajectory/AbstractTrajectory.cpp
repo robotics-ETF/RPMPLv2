@@ -205,7 +205,6 @@ bool planning::trajectory::AbstractTrajectory::computeSafe(planning::trajectory:
 /// @brief Check whether the computed trajectory is safe (i.e., collision-free during the time interval [0, 't_final'])
 /// @param pos_points Trajectory points which need to be validated.
 /// @param q_current Current configuration from where bur spines are generated.
-/// @param nearest_points Nearest points between the robot and obstacles.
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when the trajectory is starting.
 /// @param time_step Time step when moving over the trajectory (default: TrajectoryConfig::TIME_STEP).
 /// @return True if safe. False if not.

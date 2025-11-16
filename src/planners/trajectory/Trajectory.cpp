@@ -128,7 +128,6 @@ bool planning::trajectory::Trajectory::computeSafeTraj(const planning::trajector
 /// @brief Check whether the computed spline is safe (i.e., collision-free during the time interval [0, 'spline_safe->getTimeFinal()'])
 /// @param spline_safe Safe spline which needs to be validated.
 /// @param q_current Current configuration from where bur spines are generated.
-/// @param nearest_points Nearest points between the robot and obstacles.
 /// @param t_iter Elapsed time from the beginning of iteration to a time instance when the spline is starting.
 /// @return True if safe. False if not.
 /// @note 'q_current' must have a distance-to-obstacles or its underestimation!
