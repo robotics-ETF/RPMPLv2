@@ -210,8 +210,8 @@ bool planning::trajectory::AbstractTrajectory::computeSafe(planning::trajectory:
 /// @param time_step Time step when moving over the trajectory (default: TrajectoryConfig::TIME_STEP).
 /// @return True if safe. False if not.
 /// @note 'q_current' must have a distance-to-obstacles or its underestimation!
-bool planning::trajectory::AbstractTrajectory::isSafe
-    (const std::vector<Eigen::VectorXf> &pos_points, const std::shared_ptr<base::State> q_current, float t_iter, float time_step)
+bool planning::trajectory::AbstractTrajectory::isSafe(const std::vector<Eigen::VectorXf> &pos_points, 
+    const std::shared_ptr<base::State> q_current, float t_iter, float time_step)
 {
     // std::chrono::steady_clock::time_point time_start_ { std::chrono::steady_clock::now() };
     float rho_robot {};
@@ -228,7 +228,6 @@ bool planning::trajectory::AbstractTrajectory::isSafe
         if (ss->robot->checkSelfCollision(q_final))
             return false;
         
-        t_iter += time_step;
         rho_obs = max_obs_vel * (t_iter - t_init);
         delta_q = (q_final->getCoord() - q_temp->getCoord()).cwiseAbs();
         ss->robot->computeEnclosingRadii(q_temp);
@@ -252,6 +251,7 @@ bool planning::trajectory::AbstractTrajectory::isSafe
             }
             // else std::cout << "\t OK! rho_robot + rho_obs < q_temp->getDistance() \n";
         }
+        t_iter += time_step;
     }
     
     // auto t_elapsed { std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - time_start_).count() };

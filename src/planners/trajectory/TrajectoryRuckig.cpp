@@ -99,7 +99,7 @@ bool planning::trajectory::TrajectoryRuckig::computeSafeTraj(const planning::tra
     float rho_robot {};
     float rho_obs {};
 
-    if (traj_new.get_duration() < t_traj_max)
+    if (traj_new.get_duration() < t_traj_max && target.vel.norm() < RealVectorSpaceConfig::EQUALITY_THRESHOLD)
     {
         rho_obs = max_obs_vel * (t_iter + traj_new.get_duration());
         if (rho_obs < q_current->getDistance())
@@ -157,15 +157,15 @@ bool planning::trajectory::TrajectoryRuckig::computeSafeTraj(const planning::tra
         std::vector<Eigen::VectorXf> pos_points {};
         if (traj_emg_computed)
         {
-            for (float t = TrajectoryConfig::TIME_STEP; t <= t_traj_max; t += TrajectoryConfig::TIME_STEP)
+            for (float t = 0; t <= t_traj_max; t += TrajectoryConfig::TIME_STEP)
                 pos_points.emplace_back(getPos(traj_new, t));
 
-            for (float t = TrajectoryConfig::TIME_STEP; t <= traj_emg_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
+            for (float t = 0; t <= traj_emg_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
                 pos_points.emplace_back(getPos(traj_emg_new, t));
         }
         else
         {
-            for (float t = TrajectoryConfig::TIME_STEP; t <= traj_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
+            for (float t = 0; t <= traj_new.get_duration(); t += TrajectoryConfig::TIME_STEP)
                 pos_points.emplace_back(getPos(traj_new, t));
         }
 

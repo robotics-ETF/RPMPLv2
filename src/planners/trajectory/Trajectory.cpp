@@ -60,7 +60,7 @@ bool planning::trajectory::Trajectory::computeSafeTraj(const planning::trajector
     float rho_robot {};
     float rho_obs {};
 
-    if (spline_new->getTimeFinal() < t_spline_max)
+    if (spline_new->getTimeFinal() < t_spline_max && spline_new->getIsZeroFinalVel())
     {
         rho_obs = max_obs_vel * (t_iter + spline_new->getTimeFinal());
         if (rho_obs < q_current->getDistance())
@@ -136,14 +136,10 @@ bool planning::trajectory::Trajectory::isSafeSpline(const std::shared_ptr<planni
                                                     const std::shared_ptr<base::State> q_current, float t_iter)
 {
     std::vector<Eigen::VectorXf> pos_points {};
-    float time_step { TrajectoryConfig::TIME_STEP };
-    size_t num_iter = std::ceil(spline_safe->getTimeFinal() / time_step);
-    time_step = spline_safe->getTimeFinal() / num_iter;
-
-    for (float t = time_step; t <= spline_safe->getTimeFinal() + RealVectorSpaceConfig::EQUALITY_THRESHOLD; t += time_step)
+    for (float t = 0; t <= spline_safe->getTimeFinal(); t += TrajectoryConfig::TIME_STEP)
         pos_points.emplace_back(spline_safe->getPosition(t));
     
-    return isSafe(pos_points, q_current, t_iter, time_step);
+    return isSafe(pos_points, q_current, t_iter);
 }
 
 void planning::trajectory::Trajectory::setSpline(const std::shared_ptr<planning::trajectory::Spline> spline_)
