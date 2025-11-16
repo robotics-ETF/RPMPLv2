@@ -34,16 +34,16 @@ namespace planning::trajectory
         int checkPositionMonotonicity();
 
         virtual Eigen::VectorXf getPosition(float t);
-        float getPosition(float t, size_t idx);
+        virtual float getPosition(float t, size_t idx) = 0;
 
         virtual Eigen::VectorXf getVelocity(float t);
-        float getVelocity(float t, size_t idx);
+        virtual float getVelocity(float t, size_t idx) = 0;
 
         virtual Eigen::VectorXf getAcceleration(float t);
-        float getAcceleration(float t, size_t idx);
+        virtual float getAcceleration(float t, size_t idx) = 0;
 
         virtual Eigen::VectorXf getJerk(float t);
-        virtual float getJerk(float t, size_t idx);
+        virtual float getJerk(float t, size_t idx) = 0;
 
         float getCoeff(size_t i, size_t j) const { return coeff(i, j); }
         float getTimeFinal() const { return time_final; }

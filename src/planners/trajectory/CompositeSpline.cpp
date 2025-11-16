@@ -35,11 +35,21 @@ Eigen::VectorXf planning::trajectory::CompositeSpline::getPosition(float t)
     return subsplines[idx]->getPosition(t - t_offset);
 }
 
+float planning::trajectory::CompositeSpline::getPosition(float t, size_t idx)
+{
+    return getPosition(t)(idx);
+}
+
 Eigen::VectorXf planning::trajectory::CompositeSpline::getVelocity(float t)
 {
     size_t idx { findSubsplineIdx(t) };
     float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getVelocity(t - t_offset);
+}
+
+float planning::trajectory::CompositeSpline::getVelocity(float t, size_t idx)
+{
+    return getVelocity(t)(idx);
 }
 
 Eigen::VectorXf planning::trajectory::CompositeSpline::getAcceleration(float t)
@@ -49,11 +59,21 @@ Eigen::VectorXf planning::trajectory::CompositeSpline::getAcceleration(float t)
     return subsplines[idx]->getAcceleration(t - t_offset);
 }
 
+float planning::trajectory::CompositeSpline::getAcceleration(float t, size_t idx)
+{
+    return getAcceleration(t)(idx);
+}
+
 Eigen::VectorXf planning::trajectory::CompositeSpline::getJerk(float t)
 {
     size_t idx { findSubsplineIdx(t) };
     float t_offset { idx > 0 ? times_connecting[idx-1] : 0 };
     return subsplines[idx]->getJerk(t - t_offset);
+}
+
+float planning::trajectory::CompositeSpline::getJerk(float t, size_t idx)
+{
+    return getJerk(t)(idx);
 }
 
 std::vector<float> planning::trajectory::CompositeSpline::getPositionExtremumTimes(size_t idx)

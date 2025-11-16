@@ -36,16 +36,16 @@ namespace planning::trajectory
         float compute_b(size_t idx, float t_f, float q_f_dot, float q_f_ddot);
         float compute_c(size_t idx, float t_f, float q_f, float q_f_dot, float q_f_ddot);
 
-        using Spline::getPosition;
+        float getPosition(float t, size_t idx) override;
         float getPosition(float t, size_t idx, float t_f);
 
-        using Spline::getVelocity;
+        float getVelocity(float t, size_t idx) override;
         float getVelocity(float t, size_t idx, float t_f);
 
-        using Spline::getAcceleration;
+        float getAcceleration(float t, size_t idx) override;
         float getAcceleration(float t, size_t idx, float t_f);
 
-        using Spline::getJerk;
+        float getJerk(float t, size_t idx) override;
         float getJerk(float t, size_t idx, float t_f);
 
         const std::vector<float> solveQubicEquation(float a, float b, float c, float d);        

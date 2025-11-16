@@ -15,12 +15,20 @@ namespace planning::trajectory
         CompositeSpline(const std::vector<std::shared_ptr<planning::trajectory::Spline>> &subsplines_);
         ~CompositeSpline();
 
-        size_t findSubsplineIdx(float t);
-        Eigen::VectorXf getPosition(float t) override;
-        Eigen::VectorXf getVelocity(float t) override;
-        Eigen::VectorXf getAcceleration(float t) override;
-        Eigen::VectorXf getJerk(float t) override;
         float getCoeff(size_t i, size_t j, size_t idx) const { return subsplines[idx]->getCoeff(i, j); }
+        size_t findSubsplineIdx(float t);
+
+        Eigen::VectorXf getPosition(float t) override;
+        float getPosition(float t, size_t idx) override;
+
+        Eigen::VectorXf getVelocity(float t) override;
+        float getVelocity(float t, size_t idx) override;
+
+        Eigen::VectorXf getAcceleration(float t) override;
+        float getAcceleration(float t, size_t idx) override;
+        
+        Eigen::VectorXf getJerk(float t) override;
+        float getJerk(float t, size_t idx) override;
         
         std::vector<float> getPositionExtremumTimes(size_t idx) override;
         std::vector<float> getVelocityExtremumTimes(size_t idx) override;

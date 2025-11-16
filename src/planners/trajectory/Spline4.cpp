@@ -244,7 +244,10 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         times_final[idx] = t_f_opt;
     }
 
-    // Corrections
+    if (t_f_opt == 0)   // No solution is found!
+        return false;
+
+    // Corrections to synchronize all joints
     Eigen::Vector2f ab {};
     for (int idx = 0; idx < idx_corr; idx++)
     {
@@ -428,6 +431,11 @@ std::vector<float> planning::trajectory::Spline4::getAccelerationExtremumTimes(s
     return t_extrema;
 }
 
+float planning::trajectory::Spline4::getPosition(float t, size_t idx)
+{
+    return getPosition(t, idx, times_final[idx]);
+}
+
 float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
 {
     float delta_t { 0 };
@@ -443,7 +451,7 @@ float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
         }
         else if (!is_zero_final_acc)
         {
-            delta_t = t - times_final[idx];
+            delta_t = t - t_f;
             acc_final = getAcceleration(t, idx, t_f);
         }
         t = t_f;
@@ -453,6 +461,11 @@ float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
     
     return e(idx) + d(idx)*t + c(idx)*t*t + b(idx)*t*t*t + a(idx)*t*t*t*t 
            + vel_final * delta_t + acc_final * delta_t*delta_t * 0.5;
+}
+
+float planning::trajectory::Spline4::getVelocity(float t, size_t idx)
+{
+    return getVelocity(t, idx, times_final[idx]);
 }
 
 float planning::trajectory::Spline4::getVelocity(float t, size_t idx, float t_f)
@@ -476,6 +489,11 @@ float planning::trajectory::Spline4::getVelocity(float t, size_t idx, float t_f)
            + acc_final * delta_t;
 }
 
+float planning::trajectory::Spline4::getAcceleration(float t, size_t idx)
+{
+    return getAcceleration(t, idx, times_final[idx]);
+}
+
 float planning::trajectory::Spline4::getAcceleration(float t, size_t idx, float t_f)
 {
     if (t > t_f)
@@ -484,6 +502,11 @@ float planning::trajectory::Spline4::getAcceleration(float t, size_t idx, float 
         t = 0;
 
     return 2*c(idx) + 6*b(idx)*t + 12*a(idx)*t*t;
+}
+
+float planning::trajectory::Spline4::getJerk(float t, size_t idx)
+{
+    return getJerk(t, idx, times_final[idx]);
 }
 
 float planning::trajectory::Spline4::getJerk(float t, size_t idx, float t_f)

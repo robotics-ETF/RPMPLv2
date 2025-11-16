@@ -60,36 +60,6 @@ Eigen::VectorXf planning::trajectory::Spline::getPosition(float t)
     return pos;
 }
 
-float planning::trajectory::Spline::getPosition(float t, size_t idx)
-{
-    float pos { 0 };
-    float delta_t { 0 };
-    float vel_final { 0 };
-    float acc_final { 0 };
-
-    if (t > times_final[idx])
-    {
-        if (!is_zero_final_vel && is_zero_final_acc)
-        {
-            delta_t = t - times_final[idx];
-            vel_final = getVelocity(t, idx);
-        }
-        else if (!is_zero_final_acc)
-        {
-            delta_t = t - times_final[idx];
-            acc_final = getAcceleration(t, idx);
-        }
-        t = times_final[idx];
-    }
-    else if (t < 0)
-        t = 0;
-    
-    for (size_t i = 0; i <= order; i++)
-        pos += coeff(idx, i) * std::pow(t, i);
-
-    return pos + vel_final * delta_t + acc_final * delta_t*delta_t * 0.5;
-}
-
 Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 {
     Eigen::VectorXf vel { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
@@ -98,30 +68,6 @@ Eigen::VectorXf planning::trajectory::Spline::getVelocity(float t)
 
     // std::cout << "Robot velocity at time " << t << " [s] is " << vel.transpose() << "\n";
     return vel;
-}
-
-float planning::trajectory::Spline::getVelocity(float t, size_t idx)
-{
-    float vel { 0 };
-    float delta_t { 0 };
-    float acc_final { 0 };
-
-    if (t > times_final[idx])
-    {
-        if (!is_zero_final_acc)
-        {
-            delta_t = t - times_final[idx];
-            acc_final = getAcceleration(t, idx);
-        }
-        t = times_final[idx];
-    }
-    else if (t < 0)
-        t = 0;
-
-    for (size_t i = 1; i <= order; i++)
-        vel += coeff(idx, i) * i * std::pow(t, i-1);
-
-    return vel + acc_final * delta_t;
 }
 
 Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
@@ -134,20 +80,6 @@ Eigen::VectorXf planning::trajectory::Spline::getAcceleration(float t)
     return acc;
 }
 
-float planning::trajectory::Spline::getAcceleration(float t, size_t idx)
-{
-    if (t > times_final[idx])
-        t = times_final[idx];
-    else if (t < 0)
-        t = 0;
-
-    float acc { 0 };
-    for (size_t i = 2; i <= order; i++)
-        acc += coeff(idx, i) * i * (i-1) * std::pow(t, i-2);
-
-    return acc;
-}
-
 Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
 {
     Eigen::VectorXf jerk { Eigen::VectorXf::Zero(robot->getNumDOFs()) };
@@ -155,20 +87,6 @@ Eigen::VectorXf planning::trajectory::Spline::getJerk(float t)
         jerk(i) = getJerk(t, i);
 
     // std::cout << "Robot jerk at time " << t << " [s] is " << jerk.transpose() << "\n";
-    return jerk;
-}
-
-float planning::trajectory::Spline::getJerk(float t, size_t idx)
-{
-    if (t > times_final[idx])
-        t = times_final[idx];
-    else if (t < 0)
-        t = 0;
-
-    float jerk { 0 };
-    for (size_t i = 3; i <= order; i++)
-        jerk += coeff(idx, i) * i * (i-1) * (i-2) * std::pow(t, i-3);
-
     return jerk;
 }
 
