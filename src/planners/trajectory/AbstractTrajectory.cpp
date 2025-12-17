@@ -342,7 +342,8 @@ void planning::trajectory::AbstractTrajectory::clearTrajPointCurrentIter()
 void planning::trajectory::AbstractTrajectory::recordTrajectory(bool traj_computed, float t_offset)
 {
     std::ofstream output_file {};
-    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario_random_obstacles/visualize_trajectory/test.log", 
+    output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/planar_2dof/scenario2/visualize_trajectory/test.log", 
+    // output_file.open("/home/spear/xarm6-etf-lab/src/etf_modules/RPMPLv2/data/xarm6/scenario_random_obstacles/visualize_trajectory/test.log", 
         std::ofstream::app);
     
     output_file << "Time offset [s] in the current iteration:\n";

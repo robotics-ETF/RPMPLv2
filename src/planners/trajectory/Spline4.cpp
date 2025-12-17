@@ -343,8 +343,8 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     // Maximal jerk constraint
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(b(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    // 6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD  // satisfied
-    if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx))
+    if (6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||
+        std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
     {
         // std::cout << "\t Maximal jerk constraint not satisfied! \n";
         return false;
@@ -356,7 +356,7 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     for (size_t i = 0; i < t_extrema.size(); i++)
     {
         // std::cout << "\t Max. acceleration.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getAcceleration(t_extrema[i], idx, t_f)) << "\n";
-        if (std::abs(getAcceleration(t_extrema[i], idx, t_f)) > robot->getMaxAcc(idx))
+        if (std::abs(getAcceleration(t_extrema[i], idx, t_f)) > robot->getMaxAcc(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
             // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
             return false;
@@ -369,7 +369,7 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     for (size_t i = 0; i < t_extrema.size(); i++)
     {
         // std::cout << "\t Max. velocity.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getVelocity(t_extrema[i], idx, t_f)) << "\n";
-        if (std::abs(getVelocity(t_extrema[i], idx, t_f)) > robot->getMaxVel(idx))
+        if (std::abs(getVelocity(t_extrema[i], idx, t_f)) > robot->getMaxVel(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
             // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
