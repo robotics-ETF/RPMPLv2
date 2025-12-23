@@ -13,21 +13,23 @@ env::Environment::Environment(const std::shared_ptr<env::Environment> env)
 env::Environment::Environment(const std::string &config_file_path, const std::string &root_path)
 {
     YAML::Node node { YAML::LoadFile(root_path + config_file_path) };
+    YAML::Node node_env { node["environment"] };
+    YAML::Node node_robot { node["robot"] };
     size_t num_added { 0 };
 
     try
     {
-        for (size_t i = 0; i < node["environment"].size(); i++)
+        for (size_t i = 0; i < node_env.size(); i++)
         {
             std::shared_ptr<env::Object> object;
-            YAML::Node obstacle = node["environment"][i];
+            YAML::Node obstacle { node_env[i] };
             if (obstacle["box"].IsDefined())
             {
                 std::string label = "";
                 if (obstacle["box"]["label"].IsDefined())
                     label = obstacle["box"]["label"].as<std::string>();
 
-                if (label == "ground" && node["robot"]["ground_included"].as<size_t>() == 0)
+                if (label == "ground" && node_robot["ground_included"].as<size_t>() == 0)
                     continue;
 
                 YAML::Node d = obstacle["box"]["dim"];
@@ -59,41 +61,45 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
             std::cout << "Added " << num_added++ << ". " << object;
         }
 
-        if (node["robot"]["ground_included"].IsDefined())
-            ground_included = node["robot"]["ground_included"].as<size_t>();
-        else if (node["robot"]["type"].as<std::string>() == "xarm6")
+        if (node_robot["ground_included"].IsDefined())
+            ground_included = node_robot["ground_included"].as<size_t>();
+        else if (node_robot["type"].as<std::string>() == "xarm6")
         {
             ground_included = 0;
             throw std::domain_error("It is not defined whether ground is included! Thus, it will not be included. ");
         }
 
-        if (node["robot"]["WS_center"].IsDefined())
+        if (node_robot["WS_center"].IsDefined())
         {
             for (size_t i = 0; i < 3; i++)
-                WS_center(i) = node["robot"]["WS_center"][i].as<float>();
+                WS_center(i) = node_robot["WS_center"][i].as<float>();
 
-            WS_radius = node["robot"]["WS_radius"].as<float>();
+            WS_radius = node_robot["WS_radius"].as<float>();
         }
         else
             throw std::domain_error("Workspace center point is not defined! ");
 
-        sign = Eigen::VectorXi::Ones(node["environment"].size());
-        path_len = Eigen::VectorXf::Zero(node["environment"].size());
+        sign = Eigen::VectorXi::Ones(node_env.size());
+        path_len = Eigen::VectorXf::Zero(node_env.size());
 
-        if (node["testing"]["motion_type"].as<std::string>() == "straight")
-            motion_type = MotionType::straight;
-        else if (node["testing"]["motion_type"].as<std::string>() == "circular")
-            motion_type = MotionType::circular;
-        else if (node["testing"]["motion_type"].as<std::string>() == "two_tunnels")
-            motion_type = MotionType::two_tunnels;
-        else if (node["testing"]["motion_type"].as<std::string>() == "random_directions")
-            motion_type = MotionType::random_directions;
-        else if (node["testing"]["motion_type"].as<std::string>() == "light_directions")
-            motion_type = MotionType::light_directions;
-        else
+        YAML::Node node_testing { node["testing"] };
+        if (node_testing.IsDefined())
         {
-            motion_type = MotionType::light_directions;
-            throw std::domain_error("Motion type is not specified! Using 'light_directions'.");
+            if (node_testing["motion_type"].as<std::string>() == "straight")
+                motion_type = MotionType::straight;
+            else if (node_testing["motion_type"].as<std::string>() == "circular")
+                motion_type = MotionType::circular;
+            else if (node_testing["motion_type"].as<std::string>() == "two_tunnels")
+                motion_type = MotionType::two_tunnels;
+            else if (node_testing["motion_type"].as<std::string>() == "random_directions")
+                motion_type = MotionType::random_directions;
+            else if (node_testing["motion_type"].as<std::string>() == "light_directions")
+                motion_type = MotionType::light_directions;
+            else
+            {
+                motion_type = MotionType::light_directions;
+                throw std::domain_error("Motion type is not specified! Using 'light_directions'.");
+            }
         }
     }
     catch (std::exception &e)
