@@ -41,6 +41,7 @@ namespace planning::trajectory
         virtual Eigen::VectorXf getPosition(float t) = 0;
         virtual Eigen::VectorXf getVelocity(float t) = 0;
         virtual Eigen::VectorXf getAcceleration(float t) = 0;
+        virtual Eigen::VectorXf getJerk(float t) = 0;
 
         inline float getTimeBegin() const { return time_begin; }
         inline float getTimeEnd() const { return time_end; }

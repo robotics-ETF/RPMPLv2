@@ -24,6 +24,7 @@ namespace planning::trajectory
         Eigen::VectorXf getPosition(float t) override;
         Eigen::VectorXf getVelocity(float t) override;
         Eigen::VectorXf getAcceleration(float t) override;
+        Eigen::VectorXf getJerk(float t) override;
 
         bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe = false) override;
         
@@ -35,6 +36,7 @@ namespace planning::trajectory
         Eigen::VectorXf getPos(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
         Eigen::VectorXf getVel(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
         Eigen::VectorXf getAcc(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
+        Eigen::VectorXf getJerk_(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t);
 
         ruckig::InputParameter<ruckig::DynamicDOFs> input;
         ruckig::OutputParameter<ruckig::DynamicDOFs> output;

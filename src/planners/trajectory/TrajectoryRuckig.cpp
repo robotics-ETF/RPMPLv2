@@ -301,7 +301,39 @@ Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getAcceleration(float t)
     return getAcc(traj, t);
 }
 
-bool planning::trajectory::TrajectoryRuckig::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path)
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getJerk_(const ruckig::Trajectory<ruckig::DynamicDOFs> &traj_, float t)
+{
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> pos(ss->num_dimensions);
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> vel(ss->num_dimensions);
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> acc(ss->num_dimensions);
+    ruckig::StandardVector<double, ruckig::DynamicDOFs> jerk(ss->num_dimensions);
+    size_t new_section;
+
+    if (time_final > 0)
+        traj_.at_time(t, pos, vel, acc, jerk, new_section);
+    
+    Eigen::VectorXf ret(ss->num_dimensions);
+    for (size_t i = 0; i < ss->num_dimensions; i++)
+        ret(i) = jerk[i];
+
+    return ret;
+}
+
+Eigen::VectorXf planning::trajectory::TrajectoryRuckig::getJerk(float t)
+{
+    if (time_join > 0)
+    {
+        if (t < time_join)
+            return getJerk_(traj, t);
+        else
+            return getJerk_(traj_emg, t - time_join);
+    }
+
+    return getJerk_(traj, t);
+}
+
+bool planning::trajectory::TrajectoryRuckig::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path, 
+                                                               [[maybe_unused]] bool is_safe)
 {
     planning::trajectory::State start(path.front()->getCoord());
     planning::trajectory::State goal(path.back()->getCoord());

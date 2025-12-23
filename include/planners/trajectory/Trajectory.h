@@ -26,6 +26,7 @@ namespace planning::trajectory
         inline Eigen::VectorXf getPosition(float t) override { return spline->getPosition(t); }
         inline Eigen::VectorXf getVelocity(float t) override { return spline->getVelocity(t); }
         inline Eigen::VectorXf getAcceleration(float t) override { return spline->getAcceleration(t); }
+        inline Eigen::VectorXf getJerk(float t) override { return spline->getJerk(t); }
 
         bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe = false) override;
 
