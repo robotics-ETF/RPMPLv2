@@ -25,7 +25,7 @@ namespace planning::trajectory
         Eigen::VectorXf getVelocity(float t) override;
         Eigen::VectorXf getAcceleration(float t) override;
 
-        bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path) override;
+        bool convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe = false) override;
         
     private:
         void setParams();

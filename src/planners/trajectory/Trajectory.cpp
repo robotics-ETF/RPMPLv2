@@ -154,11 +154,12 @@ void planning::trajectory::Trajectory::setSpline(const std::shared_ptr<planning:
 /// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
+/// @param is_safe Whether computed trajectory must be safe for the environment under bounded maximal obstacle velocity.
 /// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<std::shared_ptr<base::State>> &path)
+bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
     std::shared_ptr<planning::trajectory::Spline> spline_current
@@ -208,9 +209,12 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<st
             if (spline_computed && num < max_num_iter)
             {
                 q_current = ss->getNewState(spline_current->getPosition(t));
-                ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
-                if (q_current->getDistance() <= 0 || !isSafeSpline(spline_next, q_current, 0))
-                    spline_computed = false;
+                if (is_safe)
+                {
+                    ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
+                    if (q_current->getDistance() <= 0 || !isSafeSpline(spline_next, q_current, 0))
+                        spline_computed = false;
+                }
             }
         }
 
@@ -230,11 +234,12 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v1(const std::vector<st
 /// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
+/// @param is_safe Whether computed trajectory must be safe for the environment under bounded maximal obstacle velocity.
 /// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<std::shared_ptr<base::State>> &path)
+bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines {};
     std::shared_ptr<planning::trajectory::Spline> spline_current
@@ -293,9 +298,12 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<st
             if (spline_computed && num < max_num_iter)
             {
                 q_current = ss->getNewState(spline_current->getPosition(t));
-                ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
-                if (q_current->getDistance() <= 0 || !isSafeSpline(spline, q_current, 0))
-                    spline_computed = false;
+                if (is_safe)
+                {
+                    ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
+                    if (q_current->getDistance() <= 0 || !isSafeSpline(spline, q_current, 0))
+                        spline_computed = false;
+                }
             }
         }
 
@@ -315,12 +323,14 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v2(const std::vector<st
 /// This is done by creating a sequence of quintic splines in a way that all constraints on robot's maximal velocity, 
 /// acceleration and jerk are surely always satisfied.
 /// @param path Path containing all points that robot should visit.
+/// @param is_safe Whether computed trajectory must be safe for the environment under bounded maximal obstacle velocity.
 /// @param must_visit Whether path points must be visited.
 /// @return Success of converting a path to a corresponding trajectory.
 /// @note Be careful since the distance between each two adjacent points from 'path' should not be too long! 
 /// The robot motion between them is generally not a straight line in C-space. 
 /// Consider using 'preprocessPath' function from 'base::RealVectorSpace' class before using this function.
-bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<std::shared_ptr<base::State>> &path, bool must_visit)
+bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<std::shared_ptr<base::State>> &path, 
+                                                            bool is_safe, bool must_visit)
 {
     std::vector<std::shared_ptr<planning::trajectory::Spline>> subsplines(path.size(), nullptr);
     bool spline_computed { false };
@@ -335,6 +345,7 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
     auto time_start_ { std::chrono::steady_clock::now() };
     float max_time { 1.0 };
     bool monotonic { true };
+    std::shared_ptr<base::State> q_current { nullptr };
 
     subsplines.front() = std::make_shared<planning::trajectory::Spline5>
     (
@@ -383,7 +394,7 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
 
         do
         {
-            target.pos = vel_coeff[i] * (target_vel_max + target_vel_min) / 2;
+            target.vel = vel_coeff[i] * (target_vel_max + target_vel_min) / 2;
             std::shared_ptr<planning::trajectory::Spline> spline_new 
             {
                 std::make_shared<planning::trajectory::Spline5>(
@@ -394,15 +405,23 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
                 )
             };
             
-            if (spline_new->compute(target.pos, target.pos) && 
+            if (spline_new->compute(target.pos, target.vel) && 
                 ((monotonic && spline_new->checkPositionMonotonicity() != 0) || !monotonic))
             {
                 *subsplines[i] = *spline_new;
-                target_vel_min = target.pos;
+                target_vel_min = target.vel;
                 spline_computed = true;
+
+                if (is_safe)
+                {
+                    q_current = ss->getNewState(subsplines[i-1]->getPosition(subsplines[i-1]->getTimeFinal()));
+                    ss->computeDistance(q_current);     // Required by 'isSafeSpline' function
+                    if (q_current->getDistance() <= 0 || !isSafeSpline(spline_new, q_current, 0))
+                        spline_computed = false;
+                }
             }
             else
-                target_vel_max = target.pos;
+                target_vel_max = target.vel;
         }
         while (++num_iter < max_num_iter);
 
@@ -441,9 +460,9 @@ bool planning::trajectory::Trajectory::convertPathToTraj_v3(const std::vector<st
     }
 }
 
-bool planning::trajectory::Trajectory::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path)
+bool planning::trajectory::Trajectory::convertPathToTraj(const std::vector<std::shared_ptr<base::State>> &path, bool is_safe)
 {
-    return convertPathToTraj_v1(path);      // The best results are obtained with this one.
-    // return convertPathToTraj_v2(path);
-    // return convertPathToTraj_v3(path);
+    return convertPathToTraj_v1(path, is_safe);      // The best results are obtained with this one.
+    // return convertPathToTraj_v2(path, is_safe);
+    // return convertPathToTraj_v3(path, is_safe);
 }
