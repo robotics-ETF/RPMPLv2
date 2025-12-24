@@ -143,7 +143,7 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
 - ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
-- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: "None", "Spline" or "Ruckig". If "None" is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if "Spline" is used, then a quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. If "Ruckig" is used, then trajectory is generated using Ruckig library. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_trajectory.yaml```.
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: "None", "Spline" or "Ruckig". If "None" is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if "Spline" is used, then a quartic/quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. If "Ruckig" is used, then trajectory is generated using Ruckig library. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_trajectory.yaml```.
 - ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to "Spline".
 
 Finally, in the file ```/apps/test_drgbt_random_obstacles.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_random_obstacles/DRGBT_data_<TRAJECTORY_INTERPOLATION>/results_<num_obstacles>obs_<MAX_ITER_TIME>ms.log``` will contain all logged execution times.
@@ -170,11 +170,13 @@ Test RGBT-Connect:
 ```
 ./test_rgbtconnect
 ```
+For more details about RBT-Connect and RGBT-Connect, see [video](https://www.youtube.com/watch?v=Ht_zS7I9SOA).
 
 Test RGBMT*:
 ```
 ./test_rgbmtstar
 ```
+For more details about RGBMT*, see [video](https://www.youtube.com/watch?v=kGSYePEWuJU).
 
 Test DRGBT with predefined obstacles:
 ```
@@ -185,6 +187,7 @@ Test DRGBT with random obstacles:
 ```
 ./test_drgbt_random_obstacles
 ```
+For more details about DRGBT, see [video](https://www.youtube.com/watch?v=EGJnvsyMNa8) (see simulations from 09:05).
 
 After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/RGBTConnect_data/test1.log```).
 
@@ -219,7 +222,7 @@ python3 visualizer/run_visualizer_xarm6.py
 The visualization gif files will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
 
 ## 3.6 Test trajectory generation
-To test trajectory generation (both by spline approach and by Ruckig approach) in static environments, open ```test_trajectory.cpp``` and in the new tab run the following:
+To test trajectory generation (both by Spline approach and by Ruckig approach) in static environments, open ```test_trajectory.cpp``` and in the new tab run the following:
 ```
 cd ~/RPMPLv2/build/rpmpl_library/apps
 ./test_trajectory
@@ -235,7 +238,7 @@ Before running Ruckig, you need to source the environment with:
 source source_dirs.bash
 ```
 
-To implement trajectory generation (both by spline approach and by Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
+To implement trajectory generation (both by Spline approach and by Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
 ```
 cd ~/RPMPLv2/build/rpmpl_library/apps
 ./test_rt_rgbt
