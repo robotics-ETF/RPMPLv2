@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 					// 	Eigen::Vector3f R {}, R_min {}, O {}, O_min {};
 					// 	for (size_t j = 0; j < ss->num_dimensions; j++)
 					// 	{
-					// 		float d_min { INFINITY };
+					// 		float d_min { RealVectorSpaceConfig::MAX_DISTANCE };
 					// 		for (size_t k = 0; k < env->getNumObjects(); k++)
 					// 		{
 					// 			R = nearest_points->at(k).col(j).head(3);

@@ -54,7 +54,7 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 	Eigen::Vector4f rec {}; rec << obs.head(coord), obs.segment(coord+1, 2-coord), obs.segment(3, coord), obs.tail(2-coord);
 	Eigen::Vector2f A_rec {}; A_rec << A.head(coord), A.tail(2-coord);
 	Eigen::Vector2f B_rec {}; B_rec << B.head(coord), B.tail(2-coord);
-    float t { (B(coord) - A(coord)) != 0 ? (obs_coord - A(coord)) / (B(coord) - A(coord)) : INFINITY };
+    float t { (B(coord) - A(coord)) != 0 ? (obs_coord - A(coord)) / (B(coord) - A(coord)) : RealVectorSpaceConfig::MAX_DISTANCE };
 	Eigen::Vector2f M { A_rec + t * (B_rec - A_rec) };
 	Eigen::Vector3f A_proj { get3DPoint(A_rec, obs_coord, coord) };
 	Eigen::Vector3f B_proj { get3DPoint(B_rec, obs_coord, coord) };
@@ -113,8 +113,8 @@ bool base::CollisionAndDistance::collisionCapsuleToRectangle(const Eigen::Vector
 float base::CollisionAndDistance::checkCases(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector4f &rec, 
 											 Eigen::Vector2f &point, float obs_coord, size_t coord)
 {
-	float d_c1 { INFINITY };
-	float d_c2 { INFINITY };
+	float d_c1 { RealVectorSpaceConfig::MAX_DISTANCE };
+	float d_c2 { RealVectorSpaceConfig::MAX_DISTANCE };
 	Eigen::Vector3f C {};
 	Eigen::Vector3f D {};
 	
@@ -217,7 +217,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::distanceLineSegToLineSeg
 	(const Eigen::Vector3f &A, const Eigen::Vector3f &B, const Eigen::Vector3f &C, const Eigen::Vector3f &D)
 {
-    float d_c { INFINITY };
+    float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
     std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
     std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp { std::make_shared<Eigen::MatrixXf>(3, 2) };
     float alpha1 { (B - A).squaredNorm() };
@@ -400,10 +400,10 @@ base::CollisionAndDistance::CapsuleToBox::CapsuleToBox(const Eigen::Vector3f &A_
 	AB << A_, B_;
 	radius = radius_;
 	obs = obs_;
-	d_c = INFINITY;
+	d_c = RealVectorSpaceConfig::MAX_DISTANCE;
     nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
 	projections = Eigen::MatrixXi::Zero(6, 2);
-	dist_AB_obs = Eigen::Vector2f(INFINITY, INFINITY);
+	dist_AB_obs = Eigen::Vector2f(RealVectorSpaceConfig::MAX_DISTANCE, RealVectorSpaceConfig::MAX_DISTANCE);
 }
 
 void base::CollisionAndDistance::CapsuleToBox::compute()

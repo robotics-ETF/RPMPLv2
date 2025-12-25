@@ -321,7 +321,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 		return q->getDistance();
 
 	float d_c_temp {};
-	float d_c { INFINITY };
+	float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
 		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
@@ -330,14 +330,14 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
-				d_c_temp = INFINITY;
+				d_c_temp = RealVectorSpaceConfig::MAX_DISTANCE;
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
-				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point
+				nearest_pts->col(1) << 0, 0, -RealVectorSpaceConfig::MAX_DISTANCE;		// Obstacle nearest point
 			}
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
@@ -365,7 +365,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
             }
 
 			if (d_c_temp > env->getObject(j)->getMinDistTol())
-				d_c_temp = INFINITY;
+				d_c_temp = RealVectorSpaceConfig::MAX_DISTANCE;
 
 			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
             if (d_c_profile[i] <= 0)		// The collision occurs
@@ -406,7 +406,7 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
 		return q->getDistance();
 	
 	float d_c_temp {};
-    float d_c { INFINITY };
+    float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
     Eigen::Vector3f R {};		// Robot's nearest point
 	Eigen::Vector3f O {};    	// Obstacle's nearest point
@@ -414,11 +414,11 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
     
     for (size_t i = 0; i < robot->getNumLinks(); i++)
     {
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
         for (size_t j = 0; j < env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
-			if (O.norm() == INFINITY)
+			if (O.norm() == RealVectorSpaceConfig::MAX_DISTANCE)
 				continue;
 			
 			R = nearest_points->at(j).col(i).head(3);

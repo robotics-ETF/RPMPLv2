@@ -10,6 +10,6 @@ env::Box::Box(const fcl::Vector3f &dim, const fcl::Vector3f &pos, const fcl::Qua
     acceleration = fcl::Vector3f::Zero();
     max_vel = 0;
     max_acc = 0;
-    min_dist_tol = INFINITY;
+    min_dist_tol = RealVectorSpaceConfig::MAX_DISTANCE;
     label = label_;
 }

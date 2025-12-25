@@ -22,6 +22,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         RealVectorSpaceConfig::EQUALITY_THRESHOLD = RealVectorSpaceConfigRoot["EQUALITY_THRESHOLD"].as<float>();
     else
         LOG(INFO) << "RealVectorSpaceConfig::EQUALITY_THRESHOLD is not defined! Using default value of " << RealVectorSpaceConfig::EQUALITY_THRESHOLD;
+    
+    if (RealVectorSpaceConfigRoot["MAX_DISTANCE"].IsDefined())
+        RealVectorSpaceConfig::MAX_DISTANCE = RealVectorSpaceConfigRoot["MAX_DISTANCE"].as<float>();
+    else
+        LOG(INFO) << "RealVectorSpaceConfig::MAX_DISTANCE is not defined! Using default value of " << RealVectorSpaceConfig::MAX_DISTANCE;
 
     // RRTConnectConfigRoot
     if (RRTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())

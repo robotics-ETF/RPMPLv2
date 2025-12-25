@@ -273,7 +273,7 @@ float planning::trajectory::AbstractTrajectory::computeDistanceUnderestimation(c
 	const std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points, float delta_t)
 {
 	float d_c_temp {};
-    float d_c { INFINITY };
+    float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(ss->robot->getNumLinks(), 0);
     Eigen::Vector3f R {};		// Robot's nearest point
 	Eigen::Vector3f O {};    	// Obstacle's nearest point
@@ -282,11 +282,11 @@ float planning::trajectory::AbstractTrajectory::computeDistanceUnderestimation(c
     
     for (size_t i = 0; i < ss->robot->getNumLinks(); i++)
     {
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
         for (size_t j = 0; j < ss->env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
-			if (O.norm() == INFINITY)
+			if (O.norm() == RealVectorSpaceConfig::MAX_DISTANCE)
                 continue;
 			
             R = nearest_points->at(j).col(i).head(3);
