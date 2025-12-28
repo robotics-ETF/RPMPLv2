@@ -222,7 +222,7 @@ python3 visualizer/run_visualizer_xarm6.py
 The visualization gif files will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
 
 ## 3.6 Test trajectory generation
-To test trajectory generation (both by Spline approach and by Ruckig approach) in static environments, open ```test_trajectory.cpp``` and in the new tab run the following:
+To test trajectory generation (both by Splines approach and by Ruckig approach) in static environments, open ```test_trajectory.cpp``` and in the new tab run the following:
 ```
 cd ~/RPMPLv2/build/rpmpl_library/apps
 ./test_trajectory
@@ -235,13 +235,24 @@ export LD_LIBRARY_PATH=<absolute_path_to_your_build_directory>/build/rpmpl_libra
 
 Before running Ruckig, you need to source the environment with:
 ```
-source source_dirs.bash
+source /opt/ros/humble/setup.bash
+source ./install/setup.bash
 ```
 
-To implement trajectory generation (both by Spline approach and by Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
+To implement trajectory generation (both by Splines approach and by Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
 ```
 cd ~/RPMPLv2/build/rpmpl_library/apps
 ./test_rt_rgbt
 ```
 
 For more details, you can examine the files ```src/planners/drbt/DRGBT.cpp``` and ```src/planners/rrtx/RRTx.cpp```. The main class for updating current state of the robot is ```src/planners/trajectory/UpdatingState.cpp```, which is utilized by all dynamic planners.
+
+For instance, generating trajectories for a planar 2-DoF manipulator by both Splines and Ruckig methods is available in the following video:
+
+https://github.com/user-attachments/assets/eb3269f0-1e35-40a6-bd35-4d9f75a66d50
+
+For instance, generating trajectories for xArm6 manipulator by both Splines and Ruckig methods is available in the following videos:
+
+https://github.com/user-attachments/assets/d372f2d6-a75b-4d3a-a624-b637ac0fa995
+
+https://github.com/user-attachments/assets/2c7c2b44-1a35-40da-b955-163f82844f88
