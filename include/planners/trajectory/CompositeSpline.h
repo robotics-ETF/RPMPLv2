@@ -15,12 +15,20 @@ namespace planning::trajectory
         CompositeSpline(const std::vector<std::shared_ptr<planning::trajectory::Spline>> &subsplines_);
         ~CompositeSpline();
 
-        size_t findSubsplineIdx(float t);
-        Eigen::VectorXf getPosition(float t) override;
-        Eigen::VectorXf getVelocity(float t) override;
-        Eigen::VectorXf getAcceleration(float t) override;
-        Eigen::VectorXf getJerk(float t) override;
         float getCoeff(size_t i, size_t j, size_t idx) const { return subsplines[idx]->getCoeff(i, j); }
+        size_t findSubsplineIdx(float t);
+
+        Eigen::VectorXf getPosition(float t) override;
+        float getPosition(float t, size_t idx) override;
+
+        Eigen::VectorXf getVelocity(float t) override;
+        float getVelocity(float t, size_t idx) override;
+
+        Eigen::VectorXf getAcceleration(float t) override;
+        float getAcceleration(float t, size_t idx) override;
+        
+        Eigen::VectorXf getJerk(float t) override;
+        float getJerk(float t, size_t idx) override;
         
         std::vector<float> getPositionExtremumTimes(size_t idx) override;
         std::vector<float> getVelocityExtremumTimes(size_t idx) override;
@@ -35,6 +43,9 @@ namespace planning::trajectory
         bool compute([[maybe_unused]] const Eigen::VectorXf &q_final, [[maybe_unused]] const Eigen::VectorXf &q_final_dot, 
                      [[maybe_unused]] const Eigen::VectorXf &q_final_ddot) override { return false; }
         bool checkConstraints([[maybe_unused]] size_t idx, [[maybe_unused]] float t_f) override { return false; }
+
+    private:
+        std::vector<float> times_connecting;
     };
 }
 

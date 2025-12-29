@@ -13,7 +13,8 @@
 #include "HorizonState.h"
 #include "UpdatingState.h"
 #include "MotionValidity.h"
-#include "Splines.h"
+#include "Trajectory.h"
+#include "TrajectoryRuckig.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
@@ -50,22 +51,22 @@ namespace planning::drbt
         std::unique_ptr<planning::AbstractPlanner> initStaticPlanner(float max_planning_time);
         virtual void replan(float max_planning_time);
 
-        std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;     // List of all horizon states and their information
-        std::shared_ptr<base::State> q_current;                                 // Current robot configuration
-        std::shared_ptr<base::State> q_previous;                                // Previous robot configuration
-        std::shared_ptr<planning::drbt::HorizonState> q_next;                   // Next robot configuration
-        std::shared_ptr<planning::drbt::HorizonState> q_next_previous;          // Next robot configuration from the previous iteration
-        float d_max_mean;                                                       // Averaged maximal distance-to-obstacles through iterations
-        size_t horizon_size;                                                    // Number of states that is required to be in the horizon
-        bool replanning_required;                                               // Whether predefined path replanning is explicitly required
-        base::State::Status status;                                             // The status of proceeding from 'q_current' towards 'q_next'
-        std::vector<std::shared_ptr<base::State>> predefined_path;              // The predefined path that is being followed
-        size_t num_lateral_states;                                              // Number of lateral states
-        float max_edge_length;                                                  // Maximal edge length when acquiring a new predefined path
-        std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
-        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
-        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
-        std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;
+        std::vector<std::shared_ptr<planning::drbt::HorizonState>> horizon;         // List of all horizon states and their information
+        std::shared_ptr<base::State> q_current;                                     // Current robot configuration
+        std::shared_ptr<base::State> q_previous;                                    // Previous robot configuration
+        std::shared_ptr<planning::drbt::HorizonState> q_next;                       // Next robot configuration
+        std::shared_ptr<planning::drbt::HorizonState> q_next_previous;              // Next robot configuration from the previous iteration
+        float d_max_mean;                                                           // Averaged maximal distance-to-obstacles through iterations
+        size_t horizon_size;                                                        // Number of states that is required to be in the horizon
+        bool replanning_required;                                                   // Whether predefined path replanning is explicitly required
+        base::State::Status status;                                                 // The status of proceeding from 'q_current' towards 'q_next'
+        std::vector<std::shared_ptr<base::State>> predefined_path;                  // The predefined path that is being followed
+        size_t num_lateral_states;                                                  // Number of lateral states
+        float max_edge_length;                                                      // Maximal edge length when acquiring a new predefined path
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;             // Trajectory which is generated from 'q_current' towards 'q_next'
+        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        // Class for updating current state
+        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      // Class for checking validity of motion
+        std::vector<std::shared_ptr<planning::drbt::HorizonState>> visited_states;  // Set of visited states when choosing 'q_next'
     };
 }
 

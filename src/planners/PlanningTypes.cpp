@@ -33,6 +33,10 @@ namespace planning
 			case planning::PlannerType::RRTx:
 				os << "RRTx";
 				break;
+
+			case planning::PlannerType::RT_RGBT:
+				os << "RT-RGBT";
+				break;
 		}
 
 		return os;
@@ -43,7 +47,7 @@ namespace planning
 		switch (type)
 		{
 			case planning::RealTimeScheduling::None:
-				os << "none";
+				os << "None";
 				break;
 
 			case planning::RealTimeScheduling::FPS:
@@ -59,11 +63,15 @@ namespace planning
 		switch (type)
 		{
 			case planning::TrajectoryInterpolation::None:
-				os << "none";
+				os << "None";
 				break;
 
 			case planning::TrajectoryInterpolation::Spline:
-				os << "spline";
+				os << "Spline";
+				break;
+			
+			case planning::TrajectoryInterpolation::Ruckig:
+				os << "Ruckig";
 				break;
 		}
 

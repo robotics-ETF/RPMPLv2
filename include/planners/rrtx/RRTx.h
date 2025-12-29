@@ -9,7 +9,8 @@
 #include "RRTxConfig.h"
 #include "UpdatingState.h"
 #include "MotionValidity.h"
-#include "Splines.h"
+#include "Trajectory.h"
+#include "TrajectoryRuckig.h"
 
 // #include <glog/log_severity.h>
 // #include <glog/logging.h>
@@ -87,9 +88,9 @@ namespace planning::rrtx
         // Path from start to goal
         std::vector<std::shared_ptr<base::State>> path_current;
 
-        std::shared_ptr<planning::trajectory::Splines> splines;                 // Everything related to splines
-        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;    // Class for updating current state
-        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;  // Class for checking validity of motion
+        std::shared_ptr<planning::trajectory::AbstractTrajectory> traj;             // Trajectory which is generated from 'q_current' towards 'q_next'
+        std::shared_ptr<planning::trajectory::UpdatingState> updating_state;        // Class for updating current state
+        std::shared_ptr<planning::trajectory::MotionValidity> motion_validity;      // Class for checking validity of motion
         
         // Helper method to calculate distance between states (using getNorm)
         float distance(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) const;

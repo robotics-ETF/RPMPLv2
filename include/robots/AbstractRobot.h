@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include <fcl/fcl.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames_io.hpp>

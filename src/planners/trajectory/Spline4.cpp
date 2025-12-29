@@ -77,7 +77,7 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
     float t_f_left { 0 }, t_f_right { 0 };
     float b_left {}, b_right {};
     float a_left {}, a_right {};
-    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / SplinesConfig::FINAL_JERK_STEP));
+    const size_t max_num_iter = std::ceil(std::log2(2 * robot->getMaxJerk(0) / TrajectoryConfig::FINAL_JERK_STEP));
 
     for (size_t idx = 0; idx < robot->getNumDOFs(); idx++)
     {
@@ -244,7 +244,10 @@ bool planning::trajectory::Spline4::compute(const Eigen::VectorXf &q_final_dot, 
         times_final[idx] = t_f_opt;
     }
 
-    // Corrections
+    if (t_f_opt == 0)   // No solution is found!
+        return false;
+
+    // Corrections to synchronize all joints
     Eigen::Vector2f ab {};
     for (int idx = 0; idx < idx_corr; idx++)
     {
@@ -303,7 +306,7 @@ float planning::trajectory::Spline4::computeFinalTime(size_t idx, float q_f_dot,
     for (size_t i = 0; i < t_sol.size(); i++)
     {
         // std::cout << "t_sol: " << t_sol[i] << " [s] \n";
-        if (t_sol[i] > 0 && t_sol[i] < SplinesConfig::MAX_TIME_FINAL)
+        if (t_sol[i] > 0 && t_sol[i] < TrajectoryConfig::MAX_TIME_FINAL)
             t_f.emplace_back(t_sol[i]);
     }
     
@@ -340,8 +343,8 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     // Maximal jerk constraint
     // std::cout << "\t Max. jerk.\t t_f: " << 0 << "\t value: " << 6*std::abs(b(idx)) << "\n";
     // std::cout << "\t Max. jerk.\t t_f: " << t_f << "\t value: " << std::abs(getJerk(t_f, idx, t_f)) << "\n";
-    // 6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD  // satisfied
-    if (std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx))
+    if (6*std::abs(b(idx)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD ||
+        std::abs(getJerk(t_f, idx, t_f)) > robot->getMaxJerk(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
     {
         // std::cout << "\t Maximal jerk constraint not satisfied! \n";
         return false;
@@ -353,7 +356,7 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     for (size_t i = 0; i < t_extrema.size(); i++)
     {
         // std::cout << "\t Max. acceleration.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getAcceleration(t_extrema[i], idx, t_f)) << "\n";
-        if (std::abs(getAcceleration(t_extrema[i], idx, t_f)) > robot->getMaxAcc(idx))
+        if (std::abs(getAcceleration(t_extrema[i], idx, t_f)) > robot->getMaxAcc(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
             // std::cout << "\t Maximal acceleration constraint not satisfied! \n";
             return false;
@@ -366,7 +369,7 @@ bool planning::trajectory::Spline4::checkConstraints(size_t idx, float t_f)
     for (size_t i = 0; i < t_extrema.size(); i++)
     {
         // std::cout << "\t Max. velocity.\t t_extrema: " << t_extrema[i] << "\t value: " << std::abs(getVelocity(t_extrema[i], idx, t_f)) << "\n";
-        if (std::abs(getVelocity(t_extrema[i], idx, t_f)) > robot->getMaxVel(idx))
+        if (std::abs(getVelocity(t_extrema[i], idx, t_f)) > robot->getMaxVel(idx) + RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
             // std::cout << "\t Maximal velocity constraint not satisfied! \n";
             return false;
@@ -387,12 +390,12 @@ std::vector<float> planning::trajectory::Spline4::getPositionExtremumTimes(size_
     float pos_prev { getPosition(0, idx, times_final[idx]) };
     bool rising { getVelocity(0, idx, times_final[idx]) > 0 ? true : false };
 
-    for (float t = SplinesConfig::TIME_STEP; t <= times_final[idx]; t += SplinesConfig::TIME_STEP)
+    for (float t = TrajectoryConfig::TIME_STEP; t <= times_final[idx]; t += TrajectoryConfig::TIME_STEP)
     {
         pos_curr = getPosition(t, idx, times_final[idx]);
         if ((pos_curr > pos_prev && !rising) || (pos_curr < pos_prev && rising))
         {
-            t_extrema.emplace_back((2*t - SplinesConfig::TIME_STEP) * 0.5);
+            t_extrema.emplace_back((2*t - TrajectoryConfig::TIME_STEP) * 0.5);
             rising = !rising;
         }
         pos_prev = pos_curr;
@@ -428,6 +431,11 @@ std::vector<float> planning::trajectory::Spline4::getAccelerationExtremumTimes(s
     return t_extrema;
 }
 
+float planning::trajectory::Spline4::getPosition(float t, size_t idx)
+{
+    return getPosition(t, idx, times_final[idx]);
+}
+
 float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
 {
     float delta_t { 0 };
@@ -443,7 +451,7 @@ float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
         }
         else if (!is_zero_final_acc)
         {
-            delta_t = t - times_final[idx];
+            delta_t = t - t_f;
             acc_final = getAcceleration(t, idx, t_f);
         }
         t = t_f;
@@ -453,6 +461,11 @@ float planning::trajectory::Spline4::getPosition(float t, size_t idx, float t_f)
     
     return e(idx) + d(idx)*t + c(idx)*t*t + b(idx)*t*t*t + a(idx)*t*t*t*t 
            + vel_final * delta_t + acc_final * delta_t*delta_t * 0.5;
+}
+
+float planning::trajectory::Spline4::getVelocity(float t, size_t idx)
+{
+    return getVelocity(t, idx, times_final[idx]);
 }
 
 float planning::trajectory::Spline4::getVelocity(float t, size_t idx, float t_f)
@@ -476,6 +489,11 @@ float planning::trajectory::Spline4::getVelocity(float t, size_t idx, float t_f)
            + acc_final * delta_t;
 }
 
+float planning::trajectory::Spline4::getAcceleration(float t, size_t idx)
+{
+    return getAcceleration(t, idx, times_final[idx]);
+}
+
 float planning::trajectory::Spline4::getAcceleration(float t, size_t idx, float t_f)
 {
     if (t > t_f)
@@ -484,6 +502,11 @@ float planning::trajectory::Spline4::getAcceleration(float t, size_t idx, float 
         t = 0;
 
     return 2*c(idx) + 6*b(idx)*t + 12*a(idx)*t*t;
+}
+
+float planning::trajectory::Spline4::getJerk(float t, size_t idx)
+{
+    return getJerk(t, idx, times_final[idx]);
 }
 
 float planning::trajectory::Spline4::getJerk(float t, size_t idx, float t_f)

@@ -10,6 +10,7 @@
 #include <memory>
 #include <ostream>
 #include <fcl/fcl.h>
+#include "RealVectorSpaceConfig.h"
 
 namespace env
 {	

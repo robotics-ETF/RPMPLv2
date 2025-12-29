@@ -30,24 +30,41 @@ planning::drbt::DRGBT::DRGBT(const std::shared_ptr<base::StateSpace> ss_, const 
     path.emplace_back(q_start);     // State 'q_start' is added to the realized path
     max_edge_length = ss->robot->getMaxVel().norm() * DRGBTConfig::MAX_ITER_TIME;
 
+    switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
+    {
+    case planning::TrajectoryInterpolation::None:
+        traj = nullptr;
+        break;
+
+    case planning::TrajectoryInterpolation::Spline:
+        traj = std::make_shared<planning::trajectory::Trajectory>
+        (
+            ss, 
+            planning::trajectory::State(q_current->getCoord()), 
+            DRGBTConfig::MAX_ITER_TIME
+        );
+        traj->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
+        break;
+    
+    case planning::TrajectoryInterpolation::Ruckig:
+        traj = std::make_shared<planning::trajectory::TrajectoryRuckig>
+        (
+            ss,
+            planning::trajectory::State(q_current->getCoord()), 
+            DRGBTConfig::MAX_ITER_TIME
+        );        
+        break;
+    }
+
     updating_state = std::make_shared<planning::trajectory::UpdatingState>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
+                     (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::MAX_ITER_TIME);
     updating_state->setGuaranteedSafeMotion(DRGBTConfig::GUARANTEED_SAFE_MOTION);
     updating_state->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
-    updating_state->setMeasureTime(false);
     updating_state->setDRGBTinstance(this);
+    updating_state->setTrajectory(traj);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, DRGBTConfig::TRAJECTORY_INTERPOLATION, DRGBTConfig::RESOLUTION_COLL_CHECK, &path, DRGBTConfig::MAX_ITER_TIME);
-
-    splines = nullptr;
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-    {
-        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, DRGBTConfig::MAX_ITER_TIME);
-        splines->setMaxRemainingIterTime(DRGBTConfig::MAX_ITER_TIME - DRGBTConfig::MAX_TIME_TASK1);
-        updating_state->setSplines(splines);
-        motion_validity->setSplines(splines);
-    }
+                      (ss, DRGBTConfig::RESOLUTION_COLL_CHECK, DRGBTConfig::MAX_ITER_TIME, &path);
 
 	// std::cout << "DRGBT planner initialized! \n";
 }
@@ -81,24 +98,26 @@ bool planning::drbt::DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Since the environment may change, a new distance is required!
         // auto time_computeDistance { std::chrono::steady_clock::now() };
-        ss->computeDistance(q_current, true);     // ~ 1 [ms]
+        ss->computeDistance(q_current, true);
         // planner_info->addRoutineTime(getElapsedTime(time_computeDistance, planning::TimeUnit::us), 1);
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
 
         // ------------------------------------------------------------------------------- //
         if (status != base::State::Status::Advanced)
-            generateHorizon();          // ~ 2 [us]
+            generateHorizon();
             
-        updateHorizon();                // ~ 10 [us]
-        generateGBur();                 // ~ 10 [ms] Time consuming routine... 
-        computeNextState();             // ~ 1 [us]
+        updateHorizon();
+        generateGBur();
+        computeNextState();
         
+        // ------------------------------------------------------------------------------- //
+        // Compute a trajectory and update current state
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
         visited_states = { q_next };
         updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
                                            q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
-        updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);   // ~ 1 [ms]
+        updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
 
@@ -122,7 +141,19 @@ bool planning::drbt::DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
-        if (!motion_validity->check(q_previous, q_current))
+        bool is_valid { false };
+        switch (DRGBTConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::None:
+            is_valid = motion_validity->check(q_previous, q_current);
+            break;
+
+        default:
+            is_valid = motion_validity->check(traj->getTrajPointCurrentIter());
+            break;
+        }
+
+        if (!is_valid)
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);
@@ -245,8 +276,8 @@ void planning::drbt::DRGBT::generateGBur()
     size_t max_num_attempts {};
     float time_elapsed {};
     float max_time { DRGBTConfig::MAX_TIME_TASK1 };
-    if (DRGBTConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-        max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? SplinesConfig::MAX_TIME_COMPUTE_SAFE : SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
+    if (DRGBTConfig::TRAJECTORY_INTERPOLATION != planning::TrajectoryInterpolation::None)
+        max_time -= DRGBTConfig::GUARANTEED_SAFE_MOTION ? TrajectoryConfig::MAX_TIME_COMPUTE_SAFE : TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR;
     planner_info->setTask1Interrupted(false);
 
     for (size_t idx = 0; idx < horizon.size(); idx++)

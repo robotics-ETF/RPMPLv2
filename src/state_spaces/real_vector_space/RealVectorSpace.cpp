@@ -182,6 +182,21 @@ std::shared_ptr<base::State> base::RealVectorSpace::pruneEdge2(const std::shared
 	return q2;
 }
 
+/// @brief Check linear dependency of vectors [q0,q1] and [q1,q2].
+/// @return True if vectors are linearly dependent (collinear), and false otherwise.
+bool base::RealVectorSpace::checkLinearDependency(const std::shared_ptr<base::State> q0, const std::shared_ptr<base::State> q1,
+	const std::shared_ptr<base::State> q2)
+{
+	for (size_t k = 1; k < num_dimensions; k++)
+	{
+		if (std::abs((q2->getCoord(k) - q1->getCoord(k)) / (q1->getCoord(k) - q0->getCoord(k)) - 
+					 (q2->getCoord(k-1) - q1->getCoord(k-1)) / (q1->getCoord(k-1) - q0->getCoord(k-1))) > 
+			RealVectorSpaceConfig::EQUALITY_THRESHOLD)	// Two vectors are non-linearly dependent
+				return false;
+	}
+	return true;
+}
+
 /// @brief Generate a new path 'new_path' from a path 'original_path' in a way that the distance between two adjacent nodes
 /// is fixed (if possible) to a length of 'max_edge_length'. Geometrically, the new path remains the same as the original one,
 /// but only their nodes may differ.
@@ -199,9 +214,6 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 	}
 	
 	std::vector<std::shared_ptr<base::State>> path { init_path.front() };
-    std::shared_ptr<base::State> q0 { nullptr };
-    std::shared_ptr<base::State> q1 { nullptr };
-    std::shared_ptr<base::State> q2 { nullptr };
 
 	// std::cout << "Initial path is: \n";
     // for (size_t i = 0; i < init_path.size(); i++)
@@ -210,20 +222,8 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 
 	for (size_t i = 1; i < init_path.size() - 1; i++)
 	{
-        q0 = init_path[i-1];
-        q1 = init_path[i];
-		q2 = init_path[i+1];
-
-		for (size_t k = 1; k < num_dimensions; k++)
-		{
-			if (std::abs((q2->getCoord(k) - q1->getCoord(k)) / (q1->getCoord(k) - q0->getCoord(k)) - 
-						 (q2->getCoord(k-1) - q1->getCoord(k-1)) / (q1->getCoord(k-1) - q0->getCoord(k-1))) > 
-				RealVectorSpaceConfig::EQUALITY_THRESHOLD)
-			{
-				path.emplace_back(q1);
-				break;
-			}
-		}
+		if (!checkLinearDependency(init_path[i-1], init_path[i], init_path[i+1]))
+			path.emplace_back(init_path[i]);
 	}
 	path.emplace_back(init_path.back());
 
@@ -234,30 +234,22 @@ void base::RealVectorSpace::preprocessPath(const std::vector<std::shared_ptr<bas
 
     new_path.clear();
     new_path.emplace_back(init_path.front());
-    base::State::Status status { base::State::Status::None };
-    float dist {};
+    float dist {}, dist_new {};
+	size_t N {};
+    std::shared_ptr<base::State> q_new { nullptr };
 
     for (size_t i = 1; i < path.size(); i++)
     {
-        status = base::State::Status::Advanced;
-        q0 = path[i-1];
-        q1 = path[i];
+		dist = getNorm(path[i-1], path[i]);
+		N = std::floor(getNorm(path[i-1], path[i]) / max_edge_length);
+		dist_new = dist / (N+1);
 
-        while (status == base::State::Status::Advanced)
-        {
-			dist = getNorm(q0, q1);
-            if (dist > max_edge_length)
-            {
-				q0 = interpolateEdge(q0, q1, max_edge_length, dist);
-                status = base::State::Status::Advanced;
-            }
-			else
-			{
-				q0 = q1;
-                status = base::State::Status::Reached;
-			}
-            new_path.emplace_back(q0);
-        }
+		for (size_t j = 1; j <= N; j++)
+		{
+			q_new = interpolateEdge(path[i-1], path[i], j * dist_new, dist);
+			new_path.emplace_back(q_new);
+		}
+		new_path.emplace_back(path[i]);
     }
 
     // std::cout << "Preprocessed path is: \n";
@@ -329,7 +321,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 		return q->getDistance();
 
 	float d_c_temp {};
-	float d_c { INFINITY };
+	float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
 		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
@@ -338,14 +330,14 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
     	for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
-				d_c_temp = INFINITY;
+				d_c_temp = RealVectorSpaceConfig::MAX_DISTANCE;
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
-				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point
+				nearest_pts->col(1) << 0, 0, -RealVectorSpaceConfig::MAX_DISTANCE;		// Obstacle nearest point
 			}
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
@@ -373,7 +365,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
             }
 
 			if (d_c_temp > env->getObject(j)->getMinDistTol())
-				d_c_temp = INFINITY;
+				d_c_temp = RealVectorSpaceConfig::MAX_DISTANCE;
 
 			d_c_profile[i] = std::min(d_c_profile[i], d_c_temp);
             if (d_c_profile[i] <= 0)		// The collision occurs
@@ -414,7 +406,7 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
 		return q->getDistance();
 	
 	float d_c_temp {};
-    float d_c { INFINITY };
+    float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
     Eigen::Vector3f R {};		// Robot's nearest point
 	Eigen::Vector3f O {};    	// Obstacle's nearest point
@@ -422,11 +414,11 @@ float base::RealVectorSpace::computeDistanceUnderestimation(const std::shared_pt
     
     for (size_t i = 0; i < robot->getNumLinks(); i++)
     {
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
         for (size_t j = 0; j < env->getNumObjects(); j++)
         {
             O = nearest_points->at(j).col(i).tail(3);
-			if (O.norm() == INFINITY)
+			if (O.norm() == RealVectorSpaceConfig::MAX_DISTANCE)
 				continue;
 			
 			R = nearest_points->at(j).col(i).head(3);

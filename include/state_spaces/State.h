@@ -7,7 +7,7 @@
 #ifndef RPMPL_STATE_H
 #define RPMPL_STATE_H
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include <vector>
 #include <memory>
 #include <kdl/frames_io.hpp>
@@ -19,7 +19,7 @@ namespace base
 	class State
 	{
 	public:
-		enum class Status {None, Advanced, Trapped, Reached, Orphan};
+		enum class Status { None, Advanced, Trapped, Reached, Orphan };
 		
 	protected:
 		base::StateSpaceType state_space_type;
@@ -87,7 +87,9 @@ namespace base
 		void removeChild(const std::shared_ptr<State> child);
 		void addNeighbourState(const std::shared_ptr<State> neighbour);
 		void clearNeighbourStates();
+
 		friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<base::State> state);
+		friend std::ostream &operator<<(std::ostream &os, const base::State::Status &status);
 	};
 }
 

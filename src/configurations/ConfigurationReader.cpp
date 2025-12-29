@@ -9,7 +9,8 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
     YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
-    YAML::Node SplinesConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_splines.yaml") };
+    YAML::Node TrajectoryConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_trajectory.yaml") };
+    YAML::Node RT_RGBTConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_rt_rgbt.yaml") };
 
     // RealVectorSpaceConfigRoot
     if (RealVectorSpaceConfigRoot["NUM_INTERPOLATION_VALIDITY_CHECKS"].IsDefined())
@@ -21,6 +22,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         RealVectorSpaceConfig::EQUALITY_THRESHOLD = RealVectorSpaceConfigRoot["EQUALITY_THRESHOLD"].as<float>();
     else
         LOG(INFO) << "RealVectorSpaceConfig::EQUALITY_THRESHOLD is not defined! Using default value of " << RealVectorSpaceConfig::EQUALITY_THRESHOLD;
+    
+    if (RealVectorSpaceConfigRoot["MAX_DISTANCE"].IsDefined())
+        RealVectorSpaceConfig::MAX_DISTANCE = RealVectorSpaceConfigRoot["MAX_DISTANCE"].as<float>();
+    else
+        LOG(INFO) << "RealVectorSpaceConfig::MAX_DISTANCE is not defined! Using default value of " << RealVectorSpaceConfig::MAX_DISTANCE;
 
     // RRTConnectConfigRoot
     if (RRTConnectConfigRoot["MAX_NUM_ITER"].IsDefined())
@@ -248,46 +254,73 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "RRTxConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << RRTxConfig::TRAJECTORY_INTERPOLATION;
     
-    // SplinesConfigRoot
-    if (SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
-        SplinesConfig::MAX_TIME_COMPUTE_REGULAR = SplinesConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();
+    // TrajectoryConfigRoot
+    if (TrajectoryConfigRoot["MAX_TIME_COMPUTE_REGULAR"].IsDefined())
+        TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR = TrajectoryConfigRoot["MAX_TIME_COMPUTE_REGULAR"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_REGULAR is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_REGULAR;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_COMPUTE_REGULAR;
 
-    if (SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].IsDefined())
-        SplinesConfig::MAX_TIME_COMPUTE_SAFE = SplinesConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
+    if (TrajectoryConfigRoot["MAX_TIME_COMPUTE_SAFE"].IsDefined())
+        TrajectoryConfig::MAX_TIME_COMPUTE_SAFE = TrajectoryConfigRoot["MAX_TIME_COMPUTE_SAFE"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << SplinesConfig::MAX_TIME_COMPUTE_SAFE;
-
-    if (SplinesConfigRoot["MAX_TIME_PUBLISH"].IsDefined())
-        SplinesConfig::MAX_TIME_PUBLISH = SplinesConfigRoot["MAX_TIME_PUBLISH"].as<float>();
-    else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_PUBLISH is not defined! Using default value of " << SplinesConfig::MAX_TIME_PUBLISH;
-
-    if (SplinesConfigRoot["MAX_TIME_FINAL"].IsDefined())
-        SplinesConfig::MAX_TIME_FINAL = SplinesConfigRoot["MAX_TIME_FINAL"].as<float>();
-    else
-        LOG(INFO) << "SplinesConfig::MAX_TIME_FINAL is not defined! Using default value of " << SplinesConfig::MAX_TIME_FINAL;
-
-    if (SplinesConfigRoot["TIME_STEP"].IsDefined())
-        SplinesConfig::TIME_STEP = SplinesConfigRoot["TIME_STEP"].as<float>();
-    else
-        LOG(INFO) << "SplinesConfig::TIME_STEP is not defined! Using default value of " << SplinesConfig::TIME_STEP;
-
-    if (SplinesConfigRoot["FINAL_JERK_STEP"].IsDefined())
-        SplinesConfig::FINAL_JERK_STEP = SplinesConfigRoot["FINAL_JERK_STEP"].as<float>();
-    else
-        LOG(INFO) << "SplinesConfig::FINAL_JERK_STEP is not defined! Using default value of " << SplinesConfig::FINAL_JERK_STEP;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_COMPUTE_SAFE is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_COMPUTE_SAFE;
     
-    if (SplinesConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
-        SplinesConfig::FINAL_VELOCITY_STEP = SplinesConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
+    if (TrajectoryConfigRoot["MAX_TIME_FINAL"].IsDefined())
+        TrajectoryConfig::MAX_TIME_FINAL = TrajectoryConfigRoot["MAX_TIME_FINAL"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << SplinesConfig::FINAL_VELOCITY_STEP;
+        LOG(INFO) << "TrajectoryConfig::MAX_TIME_FINAL is not defined! Using default value of " << TrajectoryConfig::MAX_TIME_FINAL;
+
+    if (TrajectoryConfigRoot["TIME_STEP"].IsDefined())
+        TrajectoryConfig::TIME_STEP = TrajectoryConfigRoot["TIME_STEP"].as<float>();
+    else
+        LOG(INFO) << "TrajectoryConfig::TIME_STEP is not defined! Using default value of " << TrajectoryConfig::TIME_STEP;
+
+    if (TrajectoryConfigRoot["FINAL_JERK_STEP"].IsDefined())
+        TrajectoryConfig::FINAL_JERK_STEP = TrajectoryConfigRoot["FINAL_JERK_STEP"].as<float>();
+    else
+        LOG(INFO) << "TrajectoryConfig::FINAL_JERK_STEP is not defined! Using default value of " << TrajectoryConfig::FINAL_JERK_STEP;
     
-    if (SplinesConfigRoot["MAX_RADIUS"].IsDefined())
-        SplinesConfig::MAX_RADIUS = SplinesConfigRoot["MAX_RADIUS"].as<float>();
+    if (TrajectoryConfigRoot["FINAL_VELOCITY_STEP"].IsDefined())
+        TrajectoryConfig::FINAL_VELOCITY_STEP = TrajectoryConfigRoot["FINAL_VELOCITY_STEP"].as<float>();
     else
-        LOG(INFO) << "SplinesConfig::MAX_RADIUS is not defined! Using default value of " << SplinesConfig::MAX_RADIUS;
+        LOG(INFO) << "TrajectoryConfig::FINAL_VELOCITY_STEP is not defined! Using default value of " << TrajectoryConfig::FINAL_VELOCITY_STEP;
+    
+    if (TrajectoryConfigRoot["MAX_RADIUS"].IsDefined())
+        TrajectoryConfig::MAX_RADIUS = TrajectoryConfigRoot["MAX_RADIUS"].as<float>();
+    else
+        LOG(INFO) << "TrajectoryConfig::MAX_RADIUS is not defined! Using default value of " << TrajectoryConfig::MAX_RADIUS;
+    
+    
+    // RT_RGBTConfigRoot
+    if (RT_RGBTConfigRoot["MAX_NUM_ITER"].IsDefined())
+        RT_RGBTConfig::MAX_NUM_ITER = RT_RGBTConfigRoot["MAX_NUM_ITER"].as<size_t>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_NUM_ITER is not defined! Using default value of " << RT_RGBTConfig::MAX_NUM_ITER;
+    
+    if (RT_RGBTConfigRoot["MAX_ITER_TIME"].IsDefined())
+        RT_RGBTConfig::MAX_ITER_TIME = RT_RGBTConfigRoot["MAX_ITER_TIME"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_ITER_TIME is not defined! Using default value of " << RT_RGBTConfig::MAX_ITER_TIME;
+    
+    if (RT_RGBTConfigRoot["MAX_PLANNING_TIME"].IsDefined())
+        RT_RGBTConfig::MAX_PLANNING_TIME = RT_RGBTConfigRoot["MAX_PLANNING_TIME"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::MAX_PLANNING_TIME is not defined! Using default value of " << RT_RGBTConfig::MAX_PLANNING_TIME;
+
+    if (RT_RGBTConfigRoot["RESOLUTION_COLL_CHECK"].IsDefined())
+        RT_RGBTConfig::RESOLUTION_COLL_CHECK = RT_RGBTConfigRoot["RESOLUTION_COLL_CHECK"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::RESOLUTION_COLL_CHECK is not defined! Using default value of " << RT_RGBTConfig::RESOLUTION_COLL_CHECK;
+    
+    if (RT_RGBTConfigRoot["GOAL_PROBABILITY"].IsDefined())
+        RT_RGBTConfig::GOAL_PROBABILITY = RT_RGBTConfigRoot["GOAL_PROBABILITY"].as<float>();
+    else
+        LOG(INFO) << "RT_RGBTConfig::GOAL_PROBABILITY is not defined! Using default value of " << RT_RGBTConfig::GOAL_PROBABILITY;
+    
+    if (RT_RGBTConfigRoot["TRAJECTORY_INTERPOLATION"].IsDefined())
+        RT_RGBTConfig::TRAJECTORY_INTERPOLATION = planning::trajectory_interpolation_map[RT_RGBTConfigRoot["TRAJECTORY_INTERPOLATION"].as<std::string>()];
+    else
+        LOG(INFO) << "RT_RGBTConfig::TRAJECTORY_INTERPOLATION is not defined! Using default value of " << RT_RGBTConfig::TRAJECTORY_INTERPOLATION;
     
     LOG(INFO) << "Configuration parameters read successfully!";
 }

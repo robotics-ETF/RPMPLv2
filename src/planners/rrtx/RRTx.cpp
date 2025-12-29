@@ -37,20 +37,38 @@ planning::rrtx::RRTx::RRTx(const std::shared_ptr<base::StateSpace> ss_, const st
     
     planner_info->setNumIterations(0);
     planner_info->setNumStates(1);
+    
+    switch (RRTxConfig::TRAJECTORY_INTERPOLATION)
+    {
+    case planning::TrajectoryInterpolation::None:
+        traj = nullptr;
+        break;
+
+    case planning::TrajectoryInterpolation::Spline:
+        traj = std::make_shared<planning::trajectory::Trajectory>
+        (
+            ss, 
+            planning::trajectory::State(q_current->getCoord()), 
+            RRTxConfig::MAX_ITER_TIME
+        );
+        break;
+
+    case planning::TrajectoryInterpolation::Ruckig:
+        traj = std::make_shared<planning::trajectory::TrajectoryRuckig>
+        (
+            ss, 
+            planning::trajectory::State(q_current->getCoord()), 
+            RRTxConfig::MAX_ITER_TIME
+        );
+        break;
+    }
 
     updating_state = std::make_shared<planning::trajectory::UpdatingState>
-        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
+                     (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::MAX_ITER_TIME);
+    updating_state->setTrajectory(traj);
 
     motion_validity = std::make_shared<planning::trajectory::MotionValidity>
-        (ss, RRTxConfig::TRAJECTORY_INTERPOLATION, RRTxConfig::RESOLUTION_COLL_CHECK, &path, RRTxConfig::MAX_ITER_TIME);
-    
-    splines = nullptr;
-    if (RRTxConfig::TRAJECTORY_INTERPOLATION == planning::TrajectoryInterpolation::Spline)
-    {
-        splines = std::make_shared<planning::trajectory::Splines>(ss, q_current, RRTxConfig::MAX_ITER_TIME);
-        updating_state->setSplines(splines);
-        motion_validity->setSplines(splines);
-    }
+                      (ss, RRTxConfig::RESOLUTION_COLL_CHECK, RRTxConfig::MAX_ITER_TIME, &path);
 
     RRTConnectConfig::EPS_STEP = RRTxConfig::EPS_STEP;
 
@@ -228,7 +246,19 @@ bool planning::rrtx::RRTx::solve()
         //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // Update environment and check if the collision occurs
-        if (!motion_validity->check(q_previous, q_current))
+        bool is_valid { false };
+        switch (RRTxConfig::TRAJECTORY_INTERPOLATION)
+        {
+        case planning::TrajectoryInterpolation::None:
+            is_valid = motion_validity->check(q_previous, q_current);
+            break;
+
+        default:
+            is_valid = motion_validity->check(traj->getTrajPointCurrentIter());
+            break;
+        }
+
+        if (!is_valid)
         {
             std::cout << "*************** Collision has been occurred!!! *************** \n";
             planner_info->setSuccessState(false);

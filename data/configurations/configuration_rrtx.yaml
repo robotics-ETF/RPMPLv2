@@ -7,4 +7,4 @@ MAX_NEIGHBORS: 1000                   # Maximal number of neighbors to consider
 REPLANNING_THROTTLE: 1                # Process obstacles every N iterations
 START_BIAS: 0.1                       # Probability of sampling start directly
 RESOLUTION_COLL_CHECK: 0.01           # Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
-TRAJECTORY_INTERPOLATION: "Spline"    # Method for interpolation of trajectory: "None" or "Spline"
+TRAJECTORY_INTERPOLATION: "Spline"    # Method for interpolation of trajectory: "None", "Spline" or "Ruckig"

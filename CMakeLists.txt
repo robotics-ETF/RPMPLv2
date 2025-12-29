@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message("------------------ Using compiler: ${CMAKE_CXX_COMPILER} ------------------")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)# -Werror)
 endif()
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
@@ -62,7 +62,9 @@ find_package(yaml-cpp REQUIRED)
 find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
 
-set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp)
+add_subdirectory(external/ruckig)
+
+set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig::ruckig)
 
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 

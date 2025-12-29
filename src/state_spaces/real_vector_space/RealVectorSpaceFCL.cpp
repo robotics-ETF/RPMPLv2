@@ -51,7 +51,7 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 	if (!compute_again && q->getDistance() > 0 && q->getIsRealDistance())
 		return q->getDistance();
 	
-	float d_c { INFINITY };
+	float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
 	std::vector<float> d_c_profile(robot->getNumLinks(), 0);
 	std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { std::make_shared<std::vector<Eigen::MatrixXf>>
 		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
@@ -61,13 +61,13 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 	
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
-		d_c_profile[i] = INFINITY;
+		d_c_profile[i] = RealVectorSpaceConfig::MAX_DISTANCE;
 		for (size_t j = 0; j < env->getNumObjects(); j++)
 		{
 			if (env->getObject(j)->getLabel() == "ground" && i < robot->getGroundIncluded())
 			{
 				nearest_pts->col(0) << 0, 0, 0; 			// Robot nearest point
-				nearest_pts->col(1) << 0, 0, -INFINITY;		// Obstacle nearest point
+				nearest_pts->col(1) << 0, 0, -RealVectorSpaceConfig::MAX_DISTANCE;		// Obstacle nearest point
 			}
 			else
 			{
@@ -83,7 +83,7 @@ float base::RealVectorSpaceFCL::computeDistance(const std::shared_ptr<base::Stat
 				collision_manager_robot->distance(collision_manager_env.get(), &distance_data, fcl::DefaultDistanceFunction);
 
 				if (distance_data.result.min_distance > env->getObject(j)->getMinDistTol())
-					distance_data.result.min_distance = INFINITY;
+					distance_data.result.min_distance = RealVectorSpaceConfig::MAX_DISTANCE;
 
 				d_c_profile[i] = std::min(d_c_profile[i], distance_data.result.min_distance);
 				nearest_pts->col(0) = distance_data.result.nearest_points[0];

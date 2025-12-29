@@ -28,9 +28,9 @@ namespace planning::rbt
 
 	protected:
 		std::tuple<base::State::Status, std::shared_ptr<base::State>> extendGenSpine
-			(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+			(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e, bool use_real_dist = false);
 		std::tuple<base::State::Status, std::shared_ptr<std::vector<std::shared_ptr<base::State>>>> extendGenSpine2
-			(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e);
+			(const std::shared_ptr<base::State> q, const std::shared_ptr<base::State> q_e, bool use_real_dist = false);
 		base::State::Status connectGenSpine(const std::shared_ptr<base::Tree> tree, const std::shared_ptr<base::State> q, 
 											const std::shared_ptr<base::State> q_e);
 	};

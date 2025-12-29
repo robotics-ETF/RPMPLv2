@@ -34,9 +34,10 @@ int main(int argc, char **argv)
 	if (clp != 0) return clp;
 
 	const std::string project_path { getProjectPath() };
-	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) + "/DRGBT_data" };
-	std::filesystem::create_directory(directory_path);
 	ConfigurationReader::initConfiguration(project_path);
+	const std::string directory_path { project_path + scenario_file_path.substr(0, scenario_file_path.find_last_of("/\\")) 
+		+ "/DRGBT_data_" + planning::trajectory_interpolation_map2[DRGBTConfig::TRAJECTORY_INTERPOLATION] };
+	std::filesystem::create_directory(directory_path);
     YAML::Node node { YAML::LoadFile(project_path + scenario_file_path) };
     YAML::Node node2 { YAML::LoadFile(project_path + random_scenarios_path) };
 
@@ -64,7 +65,8 @@ int main(int argc, char **argv)
 		std::ofstream output_file {};
 		if (init_num_test == 1)
 		{
-			output_file.open(directory_path + "/results" + std::to_string(init_num_obs) + ".log", std::ofstream::out);
+			output_file.open(directory_path + "/results_" + std::to_string(init_num_obs) + "obs_" 
+				+ std::to_string(size_t(DRGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
@@ -99,6 +101,7 @@ int main(int argc, char **argv)
 		std::vector<float> path_lengths {};
 		size_t num_test { init_num_test };
 		size_t num_success_tests { init_num_success_test };
+		float num_real_success_tests = init_num_success_test;
 
 		while (true)
 		{
@@ -158,11 +161,14 @@ int main(int argc, char **argv)
 				
 				planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
+				float real_result { std::max(0.0f, 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm()) };
+				num_real_success_tests += real_result;
 				
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+				LOG(INFO) << "Real success:         " << real_result;
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
 				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
-				LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
+				// LOG(INFO) << "Task 1 interrupted:   " << (planner->getPlannerInfo()->getTask1Interrupted() ? "true" : "false");
 				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log");
 
@@ -183,36 +189,40 @@ int main(int argc, char **argv)
 					num_success_tests++;
 				}
 
-				output_file.open(directory_path + "/results" + std::to_string(init_num_obs) + ".log", std::ofstream::app);
+				output_file.open(directory_path + "/results_" + std::to_string(init_num_obs) + "obs_" 
+					+ std::to_string(size_t(DRGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::app);
 				output_file << "Test number: " << num_test << std::endl;
 				output_file << "Number of successful tests: " << num_success_tests << " of " << num_test 
 							<< " = " << 100.0 * num_success_tests / num_test << " %" << std::endl;
 				output_file << "Success:\n" << result << std::endl;
+				output_file << "Real success:\n" << real_result << std::endl;
 				output_file << "Number of iterations:\n" << planner->getPlannerInfo()->getNumIterations() << std::endl;
 				output_file << "Algorithm execution time [s]:\n" << planner->getPlannerInfo()->getPlanningTime() << std::endl;
 				output_file << "Path length [rad]:\n" << (result ? path_length : INFINITY) << std::endl;
-				output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
+				// output_file << "Task 1 interrupted:\n" << planner->getPlannerInfo()->getTask1Interrupted() << std::endl;
 
 				// if (result)
 				// {
-				// 	std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
-				// 	for (size_t idx = 0; idx < routines.size(); idx++)
-				// 	{
-				// 		// LOG(INFO) << "Routine " << routines[idx];
-				// 		// LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
-				// 		// LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
-				// 		// LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
+					// std::vector<std::vector<float>> routine_times { planner->getPlannerInfo()->getRoutineTimes() };
+					// for (size_t idx = 0; idx < routines.size(); idx++)
+					// {
+					// 	LOG(INFO) << "Routine " << routines[idx];
+					// 	LOG(INFO) << "\tAverage time: " << getMean(routine_times[idx]) << " +- " << getStd(routine_times[idx]);
+					// 	LOG(INFO) << "\tMaximal time: " << *std::max_element(routine_times[idx].begin(), routine_times[idx].end());
+					// 	LOG(INFO) << "\tData size: " << routine_times[idx].size(); 
 						
-				// 		output_file << "Routine " << routines[idx] << " times: " << std::endl;
-				// 		for (float t : routine_times[idx])
-				// 			output_file << t << std::endl;
-				// 	}
+					// 	output_file << "Routine " << routines[idx] << " times: " << std::endl;
+					// 	for (float t : routine_times[idx])
+					// 		output_file << t << std::endl;
+					// }
 				// }
 
 				output_file << "--------------------------------------------------------------------\n";
 				output_file.close();
-				LOG(INFO) << "Number of successful tests: " << num_success_tests << " of " << num_test 
+				LOG(INFO) << "Number of successful tests:      " << num_success_tests << " of " << num_test 
 						  << " = " << 100.0 * num_success_tests / num_test << " %";
+				LOG(INFO) << "Number of real successful tests: " << num_real_success_tests << " of " << num_test 
+						  << " = " << 100.0 * num_real_success_tests / num_test << " %";
 				LOG(INFO) << "--------------------------------------------------------------------\n\n";
 			}
 			catch (std::exception &e)
@@ -230,6 +240,7 @@ int main(int argc, char **argv)
 		init_num_obs += (init_num_obs > 0) ? std::pow(10, std::floor(std::log10(init_num_obs))) : 1;
 
 		LOG(INFO) << "Success rate:                     " << 100.0 * num_success_tests / (num_test - 1) << " [%]";
+		LOG(INFO) << "Real success rate:                " << 100.0 * num_real_success_tests / (num_test - 1) << " [%]";
 		LOG(INFO) << "Average algorithm execution time: " << getMean(alg_times) << " +- " << getStd(alg_times) << " [s]";
 		LOG(INFO) << "Average iteration execution time: " << getMean(iter_times) * 1e3 << " +- " << getStd(iter_times) * 1e3 << " [ms]";
 		LOG(INFO) << "Average number of iterations:     " << getMean(num_iters) << " +- " << getStd(num_iters);

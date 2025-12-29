@@ -30,13 +30,15 @@ namespace base
 		bool isEqual(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2) override;
 		bool isEqual(const Eigen::VectorXf &q1_coord, const Eigen::VectorXf &q2_coord) override;
 		std::shared_ptr<base::State> interpolateEdge
-			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist) override;
+			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist = -1) override;
 		std::tuple<base::State::Status, std::shared_ptr<base::State>> interpolateEdge2
-			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist) override;
+			(const std::shared_ptr<base::State> q1, const std::shared_ptr<base::State> q2, float step, float dist = -1) override;
 		std::shared_ptr<base::State> pruneEdge(const std::shared_ptr<base::State> q1, 
 			const std::shared_ptr<base::State> q2, const std::vector<std::pair<float, float>> &limits_) override;
 		std::shared_ptr<base::State> pruneEdge2(const std::shared_ptr<base::State> q1, 
 			const std::shared_ptr<base::State> q2, float max_edge_length) override;
+		bool checkLinearDependency(const std::shared_ptr<base::State> q0, const std::shared_ptr<base::State> q1,
+			const std::shared_ptr<base::State> q2) override;
 		void preprocessPath(const std::vector<std::shared_ptr<base::State>> &original_path, 
 			std::vector<std::shared_ptr<base::State>> &new_path, float max_edge_length) override;
 
