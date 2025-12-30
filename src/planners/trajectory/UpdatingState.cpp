@@ -182,9 +182,11 @@ bool planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
         if (t_traj_remain < 0)
             break;
 
-        float step = std::max(ss->robot->getMaxVel().norm() * max_iter_time,
-                              current.vel.norm() / ss->robot->getMaxVel().norm() * TrajectoryConfig::MAX_RADIUS);
-        target.pos = (std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)))->getCoord();
+        // float step = std::max(ss->robot->getMaxVel().norm() * max_iter_time,
+        //                       current.vel.norm() / ss->robot->getMaxVel().norm() * TrajectoryConfig::MAX_RADIUS);
+        // target.pos = (std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)))->getCoord();
+
+        target.pos = q_next_reached->getCoord();
 
         // std::cout << "target pos:     " << target.pos.transpose() << "\n";
         // std::cout << "q_next:         " << q_next << "\n";
