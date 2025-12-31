@@ -18,6 +18,7 @@ public:
     static float FINAL_VELOCITY_STEP;           // Final velocity step when using bisection method for finding optimal value of final velocity
     static float MAX_RADIUS;                    // Maximal radius in [rad] used when updating state (it should be experimentally evaluated)
     static size_t NUM_VALIDITY_POINTS_CHECK;    // Number of validity points from trajectory to be checked within 'MotionValidity' class
+    static bool SCALE_TARGET;                   // Whether target state is scaled depending on the robot's current velocity. Recommended true in simulation, but false on a real robot to reduce jerk changes (i.e., to increase the lifespan of actuators). 
 };
 
 #endif //RPMPL_TRAJECTORYCONFIG_H
