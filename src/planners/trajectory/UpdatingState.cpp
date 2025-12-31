@@ -189,7 +189,7 @@ bool planning::trajectory::UpdatingState::update_v2(std::shared_ptr<base::State>
             target.pos = (std::get<1>(ss->interpolateEdge2(q_current, q_next_reached, step)))->getCoord();
         }
         else
-        target.pos = q_next_reached->getCoord();
+            target.pos = q_next_reached->getCoord();
 
         // std::cout << "target pos:     " << target.pos.transpose() << "\n";
         // std::cout << "q_next:         " << q_next << "\n";
