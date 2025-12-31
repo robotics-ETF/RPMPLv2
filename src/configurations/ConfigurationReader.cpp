@@ -290,6 +290,10 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "TrajectoryConfig::MAX_RADIUS is not defined! Using default value of " << TrajectoryConfig::MAX_RADIUS;
     
+    if (TrajectoryConfigRoot["SCALE_TARGET"].IsDefined())
+        TrajectoryConfig::SCALE_TARGET = TrajectoryConfigRoot["SCALE_TARGET"].as<bool>();
+    else
+        LOG(INFO) << "TrajectoryConfig::SCALE_TARGET is not defined! Using default value of " << TrajectoryConfig::SCALE_TARGET;
     
     // RT_RGBTConfigRoot
     if (RT_RGBTConfigRoot["MAX_NUM_ITER"].IsDefined())

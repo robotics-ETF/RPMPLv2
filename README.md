@@ -32,6 +32,7 @@ cd ~/RPMPLv2
 git pull
 git submodule sync
 git submodule update --init --remote
+cd /external/ruckig && git checkout v0.15.3 && cd ../..
 ```
 
 ## 2.4 Install required packages

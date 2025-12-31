@@ -8,3 +8,4 @@ float TrajectoryConfig::FINAL_JERK_STEP            = 1.0;
 float TrajectoryConfig::FINAL_VELOCITY_STEP        = 0.1;
 float TrajectoryConfig::MAX_RADIUS                 = 5.0;
 size_t TrajectoryConfig::NUM_VALIDITY_POINTS_CHECK = 10;
+bool TrajectoryConfig::SCALE_TARGET                = true;
