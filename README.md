@@ -1,27 +1,33 @@
 # 1. Introduction
-This repository contains Rapid Prototyping Motion Planning Library v2 (RPMPLv2) implemented in C++.
+This repository contains the Rapid Prototyping Motion Planning Library v2 (RPMPLv2) implemented in C++.
 
-Available planners are:
+Available (static) path planners are:
 - Rapidly-exploring Random Trees ([RRT-Connect](https://ieeexplore.ieee.org/abstract/document/844730))
 - Rapidly-exploring Bur Trees ([RBT-Connect](https://ieeexplore.ieee.org/abstract/document/7487117))
 - Rapidly-exploring Generalized Bur Trees ([RGBT-Connect](https://ieeexplore.ieee.org/abstract/document/9196920))
 - Rapidly-exploring Generalized Bur Multi-Tree star ([RGBMT*](https://link.springer.com/article/10.1007/s10846-023-01893-4))
+
+Available (dynamic) motion planners are:
 - Dynamic Rapidly-exploring Generalized Bur Trees ([DRGBT](https://ieeexplore.ieee.org/abstract/document/9636730) & [Real-time DRGBT](https://arxiv.org/pdf/2501.00507))
 - Dynamic Rapidly-exploring Random Trees ([RRTx](http://ottelab.com/html_stuff/pdf_files/Otte.Frazzoli.IJRR15.pdf))
 
-The development and test environment are tested on Ubuntu 22.04 + ROS2 Humble.
+Available online trajectory generators are:
+- Collision-Free Splines 4th/5th order ([CFS45](https://ieeexplore.ieee.org/document/11600999))
+- ([Ruckig](https://ruckig.com/))
+
+The development and test environment is tested on Ubuntu 22.04 + ROS2 Humble.
 
 # 2. How to use
-## 2.1 Use docker and devcontainer
+## 2.1 Use Docker and devcontainer
 
-If VS Code (or any other IDE with a support for VS Code's devcontainers), then just open and use "Rebuild and open in container" option. Then proceed with 2.6. Otherwise, continue with 2.2.
+If you use VS Code (or any other IDE that supports VS Code's devcontainers), then just open and use the "Rebuild and open in container" option. Then proceed with 2.6. Otherwise, continue with 2.2.
 
 ## 2.2 Obtain source code of "RPMPLv2" repository
 Choose the location for a target workspace, e.g.:
 ```
 cd ~/
 ```
-DO NOT omit "--recursive"，or the source code of dependent submodules will not be downloaded:
+DO NOT omit "--recursive", or the source code of dependent submodules will not be downloaded:
 ```
 git clone https://github.com/roboticsETF/RPMPLv2.git --recursive
 ```
@@ -32,7 +38,7 @@ cd ~/RPMPLv2
 git pull
 git submodule sync
 git submodule update --init --remote
-cd /external/ruckig && git checkout v0.15.3 && cd ../..
+cd external/ruckig && git checkout v0.15.3 && cd ../.. # Tested on v0.15.3
 ```
 
 ## 2.4 Install required packages
@@ -49,7 +55,6 @@ pip3 install trimesh urdfpy
 ```
 cd ~/RPMPLv2
 rosdep update
-make dependencies
 ```
 
 ## 2.6 Build "RPMPLv2" repository
@@ -59,7 +64,7 @@ make build
 
 # 3. Run the simulation
 ## 3.1 Set configuration parameters
-On the location ```/data/configurations``` you can find the configuration yaml files, which can be modified in order to set the desired configuration parameters for each planner.
+In the location ```/data/configurations```, you can find the configuration YAML files, which can be modified in order to set the desired configuration parameters for each planner.
 
 For example, open ```configuration_rgbmtstar.yaml```, and set the maximal planning time to 10 seconds:
 ```
@@ -67,15 +72,15 @@ MAX_PLANNING_TIME: 10
 ```
 
 ## 3.2 Set scenario parameters for static planning
-Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario yaml files.
+Open the folder ```/data```, where you can find three subfolders: ```/planar_2dof```, ```/planar_10dof``` and ```/xarm6```. Inside each of them, you can find different scenario folders containing the corresponding scenario YAML files.
 
 For example, open the file ```/data/planar_2dof/scenario_test/scenario_test.yaml```. You can set as many objects as you want in the ```environment``` node. You can set the following:
 - ```label```: Label to name the object (e.g., ```ground```, ```dynamic_obstacle```, ```picking_object```, etc.). If not specified, it will be an empty string;
 - ```dim```: Dimensions of the object (x, y and z in [m]);
 - ```pos```: Position of the object (x, y and z in [m]);
-- ```rot```: Rotation of the object (x, y, z in [m], and w in [rad]), specified as quaternion. If not specified, the object will be AABB (axis-aligned bounding-box);
+- ```rot```: Rotation of the object (x, y, z in [m], and w in [rad]), specified as a quaternion. If not specified, the object will be an AABB (axis-aligned bounding box);
 
-Additionally, by setting ```num``` in ```random_obstacles``` node, you can set as many random obstacles as you want with dimensions ```dim```. All of them will be collision free with your start (and goal) configuration. Note that if you set zero random obstacles, they will not be initialized. 
+Additionally, by setting ```num``` in the ```random_obstacles``` node, you can set as many random obstacles as you want with dimensions ```dim```. All of them will be collision-free with your start (and goal) configuration. Note that if you set zero random obstacles, they will not be initialized. 
 
 Moreover, some details about the used robot can be set in the ```robot``` node, such as:
 - ```type```: Robot type;
@@ -86,7 +91,7 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```q_goal```: Goal configuration;
 - ```capsules_radius```: Radius of each capsule in [m] that approximates a corresponding robot's link;
 - ```gripper_length```: Gripper length in [m] (just set 0 if the gripper is not attached);
-- ```ground_included```: Information whether to include ground on which the robot is mounted. Please check whether 'ground' is added in ```environment```. When set to '0', ground is not included. Otherwise, when set to a number greater than zero, it determines the starting robot's link that may collide with ground;
+- ```ground_included```: Information on whether to include ground on which the robot is mounted. Please check whether 'ground' is added in ```environment```. When set to '0', ground is not included. Otherwise, when set to a number greater than zero, it determines the starting robot link that may collide with the ground;
 - ```self_collision_checking```: Whether self-collision should be checked;
 - ```WS_center```: Workspace center point in [m];
 - ```WS_radius```: Workspace radius in [m] assuming spherical workspace shape;
@@ -94,9 +99,9 @@ Moreover, some details about the used robot can be set in the ```robot``` node, 
 - ```max_acc```: Maximal acceleration of each robot's joint in [rad/s²] for revolute joints, or in [mm/s²] for prismatic joints;
 - ```max_jerk```: Maximal jerk of each robot's joint in [rad/s³] for revolute joints, or in [mm/s³] for prismatic joints.
 
-Note that ```gripper_length``` and ```ground_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be ommited, if not relevant in the planning. 
+Note that ```gripper_length``` and ```ground_included``` are only available for ```/xarm6``` robot. Moreover, parameters ```max_vel```, ```max_acc``` and ```max_jerk``` can be omitted if not relevant in the planning. 
 
-Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be ommited.
+Parameters ```WS_center``` and ```WS_radius``` are relevant only when random obstacles exist. Otherwise, they can be omitted.
 
 Total number of tests/runs can be specified by ```max_num``` within the ```testing``` node.
 
@@ -104,7 +109,7 @@ For example, if you do not want to use FCL (Flexible Collision Library) in plann
 ```
 space: "RealVectorSpace"
 ```
-Be aware that, in such case, robot links are approximated with capsules, thus collision checks and distance queries between primitives, capsule and AABB, are performed. In most cases, this executes faster than when using FCL, especially for more complicated robot mesh structures (containing too many triangles), such as xarm6 structure.
+Be aware that, in such a case, robot links are approximated with capsules; thus, collision checks and distance queries between primitives (capsule and AABB) are performed. In most cases, this executes faster than when using FCL, especially for more complicated robot mesh structures (containing too many triangles), such as the xarm6 structure.
 
 Otherwise, if you do want to use FCL, just set:
 ```
@@ -112,30 +117,30 @@ space: "RealVectorSpaceFCL"
 ```
 
 ## 3.3 Set scenario parameters for dynamic real-time planning
-In the following example, we are using DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml```. You can set the following in the ```random_obstacles``` node:
+In the following example, we are using the DRGBT algorithm. Please, open the file ```/data/xarm6/scenario_random_obstacles/scenario_random_obstacles.yaml```. You can set the following in the ```random_obstacles``` node:
 - ```init_num```: Number of random obstacles to start with the testing;
-- ```max_num```: Maximal number of random obstacles to be added;
+- ```max_num```: Maximum number of random obstacles to be added;
 - ```max_vel```: Maximal velocity of each obstacle in [m/s];
 - ```max_acc```: Maximal acceleration of each obstacle in [m/s²];
 - ```dim```: Dimensions of each random obstacle in [m].
 
-For example, if you set ```init_num: 1``` and ```max_num: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. That will specify only their initial position. Note that in case you do not want to use random obstacles, just set ```init_num: 0``` and ```max_num: 0```.
+For example, if you set ```init_num: 1``` and ```max_num: 100```, the number of obstacles will be: 1, 2, 3, ..., 10, 20, 30, ..., 100. On the other hand, you can optionally add predefined obstacles within ```obstacles```, as described in Subsection 3.2. This will specify only their initial position. Note that if you do not want to use random obstacles, just set ```init_num: 0``` and ```max_num: 0```.
 
-You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line (when ```max_acc``` is set to 0) until it reaches the workspace limit, when it returns back by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_vel```.
+You can define the way how obstacles move within the file ```Environment.cpp``` in the function ```updateEnvironment```. Currently, each obstacle follows a straight random line (when ```max_acc``` is set to 0) until it reaches the workspace limit, when it returns by randomly changing direction. During the motion, each obstacle can randomly change its velocity between zero and ```max_vel```.
 
-Additionally, if you want a start ```q_start``` and a goal ```q_goal``` configuration to be generated randomly, you can define a minimal workspace distance ```min_dist_start_goal``` between them within ```robot``` node. If you set ```min_dist_start_goal: 0```, the start and goal configuration will be fixed, thus they must be specified within ```q_start``` and ```q_goal```. The workspace distance between two configurations is computed as a sum of distances between their skeleton points over a middle skeleton, which is determined by an averaged configuration between the start and the goal. 
+Additionally, if you want a start ```q_start``` and a goal ```q_goal``` configuration to be generated randomly, you can define a minimal workspace distance ```min_dist_start_goal``` between them within the ```robot``` node. If you set ```min_dist_start_goal: 0```, the start and goal configurations will be fixed; thus, they must be specified within ```q_start``` and ```q_goal```. The workspace distance between two configurations is computed as a sum of distances between their skeleton points over a middle skeleton, which is determined by an averaged configuration between the start and the goal. 
 
 Moreover, you can set the following in the ```testing``` node:
-- ```init_num```: Number of testing to start with (default: 1);
+- ```init_num```: Number of tests to start with (default: 1);
 - ```init_num_success```: Initial number of already achieved successful tests (default: 0);
-- ```max_num```: Maximal number of tests that should be carried out;
+- ```max_num```: Maximum number of tests that should be carried out;
 - ```reach_successful_tests```: If true, run totally ```max_num``` successful tests.
 
-Parameters ```init_num``` and ```init_num_success``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left just by setting these two parameters.
+Parameters ```init_num``` and ```init_num_success``` are useful if you suddenly abort the testing. Afterwards, you can continue where you left off just by setting these two parameters.
 
 In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the following DRGBT parameters:
 - ```MAX_NUM_ITER```: Maximal number of algorithm iterations;
-- ```MAX_ITER_TIME```: Maximal runtime of a single iteration in [s]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [m] during a single iteration;
+- ```MAX_ITER_TIME```: Maximum runtime of a single iteration in [s]. Be aware that the obstacle covers a distance of ```max_vel * MAX_ITER_TIME``` (when ```max_acc``` is set to 0) in [m] during a single iteration;
 - ```MAX_PLANNING_TIME```: Maximal algorithm runtime in [s];
 - ```INIT_HORIZON_SIZE```: Initial horizon size. Default: 10.
 - ```TRESHOLD_WEIGHT```: Treshold for the replanning assessment. Range: between 0 and 1. Default: 0.5;
@@ -143,18 +148,18 @@ In the file ```/data/configurations/configuration_drgbt.yaml```, you can set the
 - ```MAX_NUM_MODIFY_ATTEMPTS```: Maximal number of attempts when modifying bad or critical states. Default: 10;
 - ```STATIC_PLANNER_TYPE```: Type of a static planner (for obtaining the predefined path). Available planners: "RGBMT*", "RGBT-Connect", "RBT-Connect" and "RRT-Connect";
 - ```REAL_TIME_SCHEDULING```: Available real-time scheduling is "FPS" - Fixed Priority Scheduling; If you set "None", no real-time scheduling will be used;
-- ```MAX_TIME_TASK1```: Maximal time in [s] which Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
-- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: "None", "Spline" or "Ruckig". If "None" is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by maximal robot's velocity. On the other hand, if "Spline" is used, then a quartic/quintic spline from 'q_current' to 'q_next' is computed in order to satisfy all constaints on robot's maximal velocity, acceleration and jerk. If "Ruckig" is used, then trajectory is generated using Ruckig library. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_trajectory.yaml```.
-- ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for environment. If collision eventually occurs, it will be at robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications, thus it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to "Spline".
+- ```MAX_TIME_TASK1```: Maximum time in [s] that Task 1 (computing the next configuration) can take from the processor. It must be less than ```MAX_ITER_TIME```. Default: 0.020;
+- ```TRAJECTORY_INTERPOLATION```: Method for interpolation of trajectory: "None", "Spline" or "Ruckig". If "None" is used, the robot always moves at its highest speed, i.e., an advancing step for moving from 'q_current' towards 'q_next' in C-space is determined by the robot's maximal velocity. On the other hand, if "Spline" is used, then a quartic/quintic spline from 'q_current' to 'q_next' is computed by the CFS45 trajectory generation method. All constraints on the robot's maximal velocity, acceleration, and jerk will be guaranteed to be satisfied. If "Ruckig" is used, then the trajectory is generated using the Ruckig library. All configuration parameters considering splines can be set in the file ```/data/configurations/configuration_trajectory.yaml```.
+- ```GUARANTEED_SAFE_MOTION```: Whether robot motion is surely safe for the environment. If a collision eventually occurs, it will be at the robot's zero velocity, meaning that an obstacle hit the robot, and not vice versa. This feature is intended to be used only for real/practical applications; thus, it can be used only when ```TRAJECTORY_INTERPOLATION``` is set to "Spline".
 
 Finally, in the file ```/apps/test_drgbt_random_obstacles.cpp```, you can set via ```routines``` which routines' execution times should be stored during the testing. File ```/data/xarm6/scenario_random_obstacles/DRGBT_data_<TRAJECTORY_INTERPOLATION>/results_<num_obstacles>obs_<MAX_ITER_TIME>ms.log``` will contain all logged execution times.
 
 ## 3.4 Test planners
-All test files are available within the folder ```/apps```. For example, open ```test_rgbmtstar.cpp```. You can set the file path of desired scenario via ```scenario_file_path```, and maximal number of tests in ```max_num_tests```. 
+All test files are available within the folder ```/apps```. For example, open ```test_rgbmtstar.cpp```. You can set the file path of the desired scenario via ```scenario_file_path```, and the maximum number of tests in ```max_num_tests```. 
 
-In the new tab type:
+In the new tab, type:
 ```
-cd ~/RPMPLv2/build/rpmpl_library/apps
+cd ~/RPMPLv2/build/apps
 ```
 
 Test RRT-Connect:
@@ -188,31 +193,31 @@ Test DRGBT with random obstacles:
 ```
 ./test_drgbt_random_obstacles
 ```
-For more details about DRGBT, see [video](https://www.youtube.com/watch?v=EGJnvsyMNa8) (see simulations from 09:05).
+For more details about DRGBT, see [video1](https://www.youtube.com/watch?v=EGJnvsyMNa8) (see simulations from 09:05) and [video2](https://youtu.be/lG7q0PuFhG0?si=cGKo0uQuO2cGnwCd).
 
-After the planning is finished, all log files (containing all details about the planning) will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/RGBTConnect_data/test1.log```).
+After the planning is finished, all log files (containing all details about the planning) will be stored in the ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/RGBTConnect_data/test1.log```).
 
 ## 3.5 Visualize the robot and environment
-In the new tab type:
+In the new tab, type:
 ```
-cd ~/RPMPLv2/build/rpmpl_library/apps
+cd ~/RPMPLv2/build/apps
 ```
 
-Visualize plannar_2dof robot:
+Visualize the planar_2dof robot:
 ```
 python3 visualizer/run_visualizer_planar_2dof.py
 ```
 ![scenario2_planar_2dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/89c7e908-ca23-4bdc-9b89-9803051749a5)
 ![scenario_test_planar_2dof_nice_example](https://github.com/roboticsETF/RPMPLv2/assets/126081373/cfc0aba7-4b0c-4b4f-bfaf-d10afc184f4b)
 
-Visualize plannar_10dof robot:
+Visualize the planar_10dof robot:
 ```
 python3 visualizer/run_visualizer_planar_10dof.py
 ```
 ![scenario1_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/209d7ec7-f91d-4ce7-a339-df1705e71fc4)
 ![scenario2_planar_10dof](https://github.com/roboticsETF/RPMPLv2/assets/126081373/24e6bde6-841a-4a64-b3b0-7254f41d7e07)
 
-Visualize xarm6 robot:
+Visualize the xarm6 robot:
 ```
 python3 visualizer/run_visualizer_xarm6.py
 ```
@@ -220,18 +225,18 @@ python3 visualizer/run_visualizer_xarm6.py
 ![scenario2_xarm6_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/40e71a54-a7b3-4546-a4c6-f052a7c426d4)
 ![scenario_test_xarm6_nice_example_v2](https://github.com/roboticsETF/RPMPLv2/assets/126081373/2289cdba-4b2b-49b7-a517-79ed6387d988)
 
-The visualization gif files will be stored in ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
+The visualization GIF files will be stored in the ```/data``` folder (e.g., ```/data/planar_2dof/scenario_test/scenario_test_planar_2dof.gif```).
 
 ## 3.6 Test trajectory generation
-To test trajectory generation (both by Splines approach and by Ruckig approach) in static environments, open ```test_trajectory.cpp``` and in the new tab run the following:
+To test trajectory generation (both by the CFS45 approach and by the Ruckig approach) in static environments, open ```test_trajectory.cpp``` and, in a new tab, run the following:
 ```
-cd ~/RPMPLv2/build/rpmpl_library/apps
+cd ~/RPMPLv2/build/apps
 ./test_trajectory
 ```
 
-Note: If any problems occur regarding which version of Ruckig is built (local version from external/ruckig folder or ros-humble-ruckig version), just type the following in terminal:
+Note: If any problems occur regarding which version of Ruckig is built (local version from external/ruckig folder or ros-humble-ruckig version), just type the following in the terminal:
 ```
-export LD_LIBRARY_PATH=<absolute_path_to_your_build_directory>/build/rpmpl_library/external/ruckig:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=<absolute_path_to_your_build_directory>/build/external/ruckig:$LD_LIBRARY_PATH
 ```
 
 Before running Ruckig, you need to source the environment with:
@@ -240,20 +245,22 @@ source /opt/ros/humble/setup.bash
 source ./install/setup.bash
 ```
 
-To implement trajectory generation (both by Splines approach and by Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
+To implement trajectory generation (both by the CFS45 approach and by the Ruckig approach) in dynamic environments, open and examine the file ```src/planners/drbt/RT_RGBT.cpp```, which implements a real-time RGBT-based dynamic planner. This planner can be run as follows:
 ```
-cd ~/RPMPLv2/build/rpmpl_library/apps
+cd ~/RPMPLv2/build/apps
 ./test_rt_rgbt
 ```
 
-For more details, you can examine the files ```src/planners/drbt/DRGBT.cpp``` and ```src/planners/rrtx/RRTx.cpp```. The main class for updating current state of the robot is ```src/planners/trajectory/UpdatingState.cpp```, which is utilized by all dynamic planners.
+For more details, you can examine the files ```src/planners/drbt/DRGBT.cpp``` and ```src/planners/rrtx/RRTx.cpp```. The main class for updating the current state of the robot is ```src/planners/trajectory/UpdatingState.cpp```, which is utilized by all dynamic planners.
 
-For instance, generating trajectories for a planar 2-DoF manipulator by both Splines and Ruckig methods is available in the following video:
+For instance, generating trajectories for a planar 2-DoF manipulator by both CFS45 and Ruckig methods is available in the following video:
 
 https://github.com/user-attachments/assets/eb3269f0-1e35-40a6-bd35-4d9f75a66d50
 
-For instance, generating trajectories for xArm6 manipulator by both Splines and Ruckig methods is available in the following videos:
+For instance, generating trajectories for the xArm6 manipulator using both CFS45 and Ruckig methods is available in the following videos:
 
 https://github.com/user-attachments/assets/d372f2d6-a75b-4d3a-a624-b637ac0fa995
 
 https://github.com/user-attachments/assets/2c7c2b44-1a35-40da-b955-163f82844f88
+
+For more details about CFS45 and Ruckig methods, please see [video](https://youtu.be/Qwsu-ytHNy8?si=o8amKfCYbQImh6Jt).
