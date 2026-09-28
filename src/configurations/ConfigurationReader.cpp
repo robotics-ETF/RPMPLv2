@@ -137,6 +137,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND is not defined! Using default value of " << RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND;
 
+    if (RGBMTStarConfigRoot["TERMINATE_EPS_ZONE"].IsDefined())
+        RGBMTStarConfig::TERMINATE_EPS_ZONE = RGBMTStarConfigRoot["TERMINATE_EPS_ZONE"].as<float>();
+    else
+        LOG(INFO) << "RGBMTStarConfig::TERMINATE_EPS_ZONE is not defined! Using default value of " << RGBMTStarConfig::TERMINATE_EPS_ZONE;
+
     if (RGBMTStarConfigRoot["SAFETY_FACTOR"].IsDefined())
         RGBMTStarConfig::SAFETY_FACTOR = RGBMTStarConfigRoot["SAFETY_FACTOR"].as<float>();
     else
