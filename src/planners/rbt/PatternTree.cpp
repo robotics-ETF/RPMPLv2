@@ -17,6 +17,18 @@ size_t planning::rbt::PatternTree::getNumNodes(int num_layers_)
 	return num_nodes;
 }
 
+size_t planning::rbt::PatternTree::getNumPaths(int num_layers_)
+{
+	if (num_layers_ == -1)
+		num_layers_ = num_layers;
+	
+	size_t num_paths { 2*ss->num_dimensions };
+	for (size_t i = 1; i < size_t(num_layers_); i++)
+		num_paths *= 2*ss->num_dimensions - 1;
+	
+	return num_paths;
+}
+
 const std::vector<std::shared_ptr<base::State>> planning::rbt::PatternTree::generateGBur(const std::shared_ptr<base::State> q_root, float delta)
 {
 	std::shared_ptr<base::State> q_parent { q_root->getParent() };

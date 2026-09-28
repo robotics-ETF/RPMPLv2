@@ -31,8 +31,8 @@ robot:
   max_jerk: [100, 100]                                      # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
-  max_num: 1000                                             # Maximal number of tests that should be carried out
-  max_edge_length: 0.1                                      # Maximal edge length for advancing over the obtained path
+  max_num: 10000                                             # Maximal number of tests that should be carried out
+  max_edge_length: 0.5                                      # Maximal edge length for advancing over the obtained path
   num_layers: 3                                             # Number of layers for creating a pattern tree
   write_header: true                                        # Whether to write a header to the dataset table
   
