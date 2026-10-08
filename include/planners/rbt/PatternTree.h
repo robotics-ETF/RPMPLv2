@@ -18,6 +18,7 @@ namespace planning::rbt
 		const std::vector<std::shared_ptr<base::State>> generateGBur(const std::shared_ptr<base::State> q_root, float delta = RBTConnectConfig::DELTA);
 		const std::shared_ptr<base::Tree> generateLocalTree(const std::shared_ptr<base::State> q_root);
 		size_t getNumNodes(int num_layers_ = -1);
+		size_t getNumPaths(int num_layers_ = -1);
 	
 	private:
 		size_t num_layers;
