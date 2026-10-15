@@ -49,9 +49,6 @@ int main(int argc, char **argv)
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 	std::shared_ptr<planning::rbt::PatternTree> pattern_tree { std::make_shared<planning::rbt::PatternTree>(ss, num_layers) };
-	std::vector<size_t> num_nodes(num_layers+1, 1);
-	for (size_t i = 1; i <= num_layers; i++)
-		num_nodes[i] = pattern_tree->getNumNodes(i);
 	
 	std::ofstream output_file {};
 	output_file.open(directory_path + "/dataset.csv", std::ofstream::app);
@@ -65,10 +62,10 @@ int main(int argc, char **argv)
 		for (size_t j = 0; j < ss->num_dimensions; j++)
 			output_file << "goal_node(" << j+1 << "),";
 
-		for (size_t i = 1; i < num_nodes[num_layers]; i++)
+		for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
 			output_file << "spine_length" << i << ",";
 
-		for (size_t i = 0; i < num_nodes[num_layers-1]; i++)
+		for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 		{
 			// output_file << "dc" << i << ","; 	// If only distance to obstacles is used
 			
@@ -76,7 +73,7 @@ int main(int argc, char **argv)
 				output_file << "dc" << i << "_link" << j+1 << ",";
 		}
 
-		for (size_t i = 0; i < num_nodes[num_layers-1]; i++)
+		for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 		{
 			for (size_t j = 0; j < ss->num_dimensions; j++)
 			{
@@ -89,7 +86,7 @@ int main(int argc, char **argv)
 		// for (size_t j = 0; j < ss->num_dimensions; j++)
 		// 	output_file << "next_vector(" << j+1 << "),";
 
-		for (size_t i = 1; i < num_nodes[num_layers-1]; i++)
+		for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			output_file << "prob" << i << ",";
 
 		output_file << "\n";
@@ -126,10 +123,10 @@ int main(int argc, char **argv)
 			for (size_t j = 0; j < ss->num_dimensions; j++)
 				output_file << q_goal->getCoord(j) << ",";
 
-			for (size_t i = 1; i < num_nodes[num_layers]; i++)
+			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
 				output_file << (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm() << ",";
 
-			for (size_t i = 0; i < num_nodes[num_layers-1]; i++)
+			for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				// output_file << tree->getState(i)->getDistance() << ",";	// If only distance to obstacles is used
 
@@ -138,7 +135,7 @@ int main(int argc, char **argv)
 					output_file << d_c_profile[j] << ",";
 			}
 
-			for (size_t i = 0; i < num_nodes[num_layers-1]; i++)
+			for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { tree->getState(i)->getNearestPoints() };
 				Eigen::Vector3f R {}, R_min {}, O {}, O_min {}, OR {};
@@ -169,8 +166,8 @@ int main(int argc, char **argv)
 			// 	output_file << new_path[idx+1]->getCoord(j) - new_path[idx]->getCoord(j) << ",";
 
 			// 2. option (probabilities of each node from the pattern tree)
-			std::vector<float> weights(num_nodes[num_layers-1]-1, 0.0);
-			for (size_t i = 1; i < num_nodes[num_layers-1]; i++)
+			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
+			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				float cost = (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm(); 	// Initial cost 
 				if (cost > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
@@ -198,7 +195,7 @@ int main(int argc, char **argv)
 
 			size_t start_i { 0 };
 			size_t num { 2*ss->num_dimensions };
-			while (start_i < num_nodes[num_layers-1]-1)
+			while (start_i < pattern_tree->getNumNodes(num_layers-1)-1)
 			{
 				float weights_sum = std::accumulate(weights.begin() + start_i, weights.begin() + start_i + num, 0.0f);
 				if (weights_sum == 0) 	// Just to avoid "0/0" case.
