@@ -1,16 +1,28 @@
 environment:
   - box:
       dim: [0.5, 0.5, 0.1]
-      pos: [1, 1, 0]
+      pos: [1.5, 0.7, 0]
   - box:
       dim: [0.5, 0.5, 0.1]
-      pos: [-1, 1, 0]
+      pos: [1.5, -0.7, 0]
   - box:
       dim: [0.5, 0.5, 0.1]
-      pos: [1, -1, 0]
+      pos: [-1.5, -0.7, 0]
   - box:
       dim: [0.5, 0.5, 0.1]
-      pos: [-1, -1, 0]
+      pos: [-1.5, 0.7, 0]
+#   - box:
+#       dim: [0.5, 0.5, 0.1]
+#       pos: [0.6, 1.5, 0]
+#   - box:
+#       dim: [0.5, 0.5, 0.1]
+#       pos: [0.6, -1.5, 0]
+#   - box:
+#       dim: [0.5, 0.5, 0.1]
+#       pos: [-0.6, 1.5, 0]
+#   - box:
+#       dim: [0.5, 0.5, 0.1]
+#       pos: [-0.6, -1.5, 0]
 
 random_obstacles:
   num: 0	                        # Number of random obstacles to be added
@@ -31,7 +43,7 @@ robot:
   max_jerk: [100, 100]                                      # Maximal jerk of each robot's joint in [rad/s³]
 
 testing:
-  max_num: 10000                                             # Maximal number of tests that should be carried out
+  max_num: 100                                              # Maximal number of tests that should be carried out
   max_edge_length: 0.5                                      # Maximal edge length for advancing over the obtained path
   num_layers: 3                                             # Number of layers for creating a pattern tree
   write_header: true                                        # Whether to write a header to the dataset table
