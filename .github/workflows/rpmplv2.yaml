@@ -13,10 +13,10 @@ jobs:
         with:
           submodules: true        # make sure submodules are fetched
           fetch-depth: 0          # fetch full history (needed for submodules)
-          
+      
       - name: Init submodules
         run: git submodule update --init --recursive
-  
+
       - name: Install dependencies
         run: |
           sudo apt update && sudo apt upgrade && sudo apt install -y libunwind-dev apt-transport-https \
@@ -26,9 +26,29 @@ jobs:
           && pip3 install trimesh urdfpy
         shell: bash
 
-      - name: Configure with CMake
+      - name: Install ONNX Runtime
+        shell: bash
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          curl -fL --retry 3 \
+            https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-1.22.0.tgz \
+            -o "$RUNNER_TEMP/onnxruntime.tgz"
+
+          mkdir -p "$GITHUB_WORKSPACE/external/onnxruntime"
+
+          tar -xzf "$RUNNER_TEMP/onnxruntime.tgz" \
+            -C "$GITHUB_WORKSPACE/external/onnxruntime" \
+            --strip-components=1
+
+          test -f "$GITHUB_WORKSPACE/external/onnxruntime/include/onnxruntime_cxx_api.h"
+          test -f "$GITHUB_WORKSPACE/external/onnxruntime/lib/libonnxruntime.so"
+      
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DONNXRUNTIME_ROOT="$GITHUB_WORKSPACE/external/onnxruntime"
+      
       - name: Build
         run: |
           cmake --build build --config Release
