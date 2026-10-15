@@ -38,7 +38,6 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
 	float min_dist_start_goal { node["robot"]["min_dist_start_goal"].as<float>() };
-	float max_edge_length { node["testing"]["max_edge_length"].as<float>() };
 	size_t num_layers { node["testing"]["num_layers"].as<size_t>() };
 	bool write_header { node["testing"]["write_header"].as<bool>() };
 
