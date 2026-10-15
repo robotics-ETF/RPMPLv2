@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 				// First option (generating here in the code):
 				// if (min_dist_start_goal > 0)
 				// 	generateRandomStartAndGoal(scenario, min_dist_start_goal);
-				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs, 6 * DRGBTConfig::D_CRIT);
 				// ------------------------------------------------------------------------------- //
 
 				// Second option (reading from a yaml file):
@@ -140,7 +140,8 @@ int main(int argc, char **argv)
 				
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
+				LOG(INFO) << "Algorithm time:       " << RRTxConfig::MAX_ITER_TIME * planner->getPlannerInfo()->getNumIterations() << " [s]";
+				LOG(INFO) << "Execution time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log");
 

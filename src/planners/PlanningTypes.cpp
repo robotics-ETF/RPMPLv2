@@ -30,6 +30,10 @@ namespace planning
 				os << "DRGBT";
 				break;
 			
+			case planning::PlannerType::SL_DRGBT:
+				os << "SL_DRGBT";
+				break;
+			
 			case planning::PlannerType::RRTx:
 				os << "RRTx";
 				break;

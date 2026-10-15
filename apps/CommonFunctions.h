@@ -74,57 +74,26 @@ float getStd(std::vector<float> &v)
 	return std::sqrt(sum / v.size());
 }
 
-void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
+// Initialize random obstacles. If 'max_vel' > 0 then the obstacles are dynamic, otherwise they are static. 
+// The random obstacles are added to the environment of the given scenario.
+void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario,
+	float max_vel = 0, float max_acc = 0, float min_dist_start_obstacles = DRGBTConfig::D_CRIT)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
 
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	const Eigen::Vector3f WS_center { env->getWSCenter() };
+	const bool dynamic { max_vel > 0 };
 
-	Eigen::Vector3f pos {};
-	float r { 0 }, fi { 0 }, theta { 0 };
-	size_t num_obs { env->getNumObjects() };
-	std::random_device rd {};
-	std::mt19937 generator(rd());
-	std::uniform_real_distribution<float> distribution(0.0, 1.0);
-	std::shared_ptr<env::Object> object { nullptr };
-	
-	for (size_t i = num_obs; i < num_obs + num_obstacles; i++)
+	std::vector<std::shared_ptr<env::Object>> fixed_objects {};
+	if (dynamic)
 	{
-		r = distribution(generator) * env->getWSRadius();
-		fi = distribution(generator) * 2 * M_PI;
-		theta = distribution(generator) * M_PI;
-		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
-		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
-		pos.z() = WS_center.z() + r * std::cos(theta);
-
-		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "random_obstacle");
-		env->addObject(object);
-
-		if (!env->isValid(pos, 0) || !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal()) ||
-			ss->robot->checkSelfCollision(scenario.getStart()) || ss->robot->checkSelfCollision(scenario.getGoal()))
-		{
-			env->removeObject(i);
-			i--;
-		}
-		// else std::cout << "Added " << i << ". " << object;
+		fixed_objects = env->getObjects();
+		env->removeAllObjects();
 	}
-}
 
-void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
-	float max_vel, float max_acc)
-{
-	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
-
-	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
-	const Eigen::Vector3f WS_center { env->getWSCenter() };
-
-	std::vector<std::shared_ptr<env::Object>> fixed_objects { env->getObjects() };
-	env->removeAllObjects();
-
-	Eigen::Vector3f pos {}, vel {}, acc {};
+	Eigen::Vector3f pos {}, vel { Eigen::Vector3f::Zero() };
 	size_t num_obs { env->getNumObjects() };
 	float r { 0 }, fi { 0 }, theta { 0 };
 	std::random_device rd {};
@@ -139,41 +108,40 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 		theta = distribution(generator) * M_PI;
 		pos.x() = WS_center.x() + r * std::cos(fi) * std::sin(theta);
 		pos.y() = WS_center.y() + r * std::sin(fi) * std::sin(theta);
-		pos.z() = WS_center.z() + r * std::cos(theta);
+		pos.z() = (ss->num_dimensions > 2) ? WS_center.z() + r * std::cos(theta) : WS_center.z(); 	// For 2D case, the obstacles are always in the plane of the robot's motion (z = 0)
 
-		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(), "dynamic_obstacle");
-		object->setMaxVel(max_vel);
-		object->setMaxAcc(max_acc);
-
-		vel = Eigen::Vector3f::Random(3);
-		vel.normalize();
-		vel *= distribution(generator) * max_vel;
-
-		acc = Eigen::Vector3f::Random(3);
-		acc.normalize();
-		acc *= distribution(generator) * max_acc;
-		
+		object = std::make_shared<env::Box>(dim, pos, Eigen::Quaternionf::Identity(),
+			dynamic ? "dynamic_obstacle" : "random_static_obstacle");
+		if (dynamic)
+		{
+			object->setMaxVel(max_vel);
+			object->setMaxAcc(max_acc);
+			vel = Eigen::Vector3f::Random(3).normalized() * (distribution(generator) * max_vel);
+		}		
 		env->addObject(object, vel);
-		// env->addObject(object, vel, acc);
 
-		if (!env->isValid(pos, vel.norm()) || 
-			ss->computeDistance(scenario.getStart(), true) < 6 * DRGBTConfig::D_CRIT) // Just to ensure safety of init. conf.
+		if (!env->isValid(pos, vel.norm()) ||
+			(dynamic ? ss->computeDistance(scenario.getStart(), true) < min_dist_start_obstacles :
+					   !ss->isValid(scenario.getStart()) || !ss->isValid(scenario.getGoal())))
 		{
 			env->removeObject(i);
 			i--;
 		}
-		// else
-    	// 	std::cout << "Added " << i << ". " << object;
+		else
+			std::cout << "Added " << i << ". " << object;
 	}
 
 	// Restore deleted fixed objects from the beginning
 	for (std::shared_ptr<env::Object> obj : fixed_objects)
         env->addObject(obj);
 	
-	// Reset all additional data set before for start conf.
+	// Reset all additional data set before for start and goal configurations, since the obstacle set has changed.
 	scenario.getStart()->setDistance(-1);
 	scenario.getStart()->setDistanceProfile(std::vector<float>());
 	scenario.getStart()->setNearestPoints(nullptr);
+	scenario.getGoal()->setDistance(-1);
+	scenario.getGoal()->setDistanceProfile(std::vector<float>());
+	scenario.getGoal()->setNearestPoints(nullptr);
 }
 
 void generateRandomStartAndGoal(scenario::Scenario &scenario, float min_dist_start_goal)
@@ -193,10 +161,6 @@ void generateRandomStartAndGoal(scenario::Scenario &scenario, float min_dist_sta
 	{
 		q_start = ss->getRandomState();
 		q_goal = ss->getRandomState();
-		// if (ss->computeDistance(q_start, true) <= 0 || ss->computeDistance(q_start, true) > DRGBTConfig::D_CRIT || 
-		// 	ss->computeDistance(q_goal, true) < DRGBTConfig::D_CRIT ||
-		// 	ss->robot->checkSelfCollision(q_start) || ss->robot->checkSelfCollision(q_goal))
-		// 	continue;
 		if (ss->computeDistance(q_start, true) < DRGBTConfig::D_CRIT || ss->computeDistance(q_goal, true) < DRGBTConfig::D_CRIT ||
 			ss->robot->checkSelfCollision(q_start) || ss->robot->checkSelfCollision(q_goal))
 			continue;

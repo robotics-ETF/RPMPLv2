@@ -89,6 +89,10 @@ target_compile_features(generate_dataset PRIVATE cxx_std_17)
 target_link_libraries(generate_dataset PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 target_include_directories(generate_dataset PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
+add_executable(test_onnx_cnn test_onnx_cnn.cpp)
+target_compile_features(test_onnx_cnn PRIVATE cxx_std_17)
+target_link_libraries(test_onnx_cnn PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(test_onnx_cnn PUBLIC ${PROJECT_SOURCE_DIR}/apps)
 
 install(TARGETS
   test_nanoflann
@@ -110,4 +114,5 @@ install(TARGETS
   test_trajectory
   generate_random_scenarios
   generate_dataset
+  test_onnx_cnn
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
