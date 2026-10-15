@@ -139,7 +139,8 @@ int main(int argc, char **argv)
 				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 				LOG(INFO) << "Real success:         " << real_result;
 				LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-				LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
+				LOG(INFO) << "Algorithm time:       " << RT_RGBTConfig::MAX_ITER_TIME * planner->getPlannerInfo()->getNumIterations() << " [s]";
+				LOG(INFO) << "Execution time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 				// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log";
 				// planner->outputPlannerData(directory_path + "/test" + std::to_string(init_num_obs) + "_" + std::to_string(num_test) + ".log");
 
