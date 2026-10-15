@@ -165,11 +165,12 @@ int main(int argc, char **argv)
 			// 2. option (probabilities of each node from the pattern tree)
 			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
 			bool path_found { false };
+			tree->getState(0)->setCost(0);
 
 			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				float cost = (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm(); 	// Initial cost 
-				if (cost > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+				if (cost > RealVectorSpaceConfig::EQUALITY_THRESHOLD && tree->getState(i)->getParent()->getCost() >= 0)
 				{
 					LOG(INFO) << "Planning from node " << i << ": " << tree->getState(i)->getCoord().transpose();
 					planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, ss->getNewState(tree->getState(i)->getCoord()), scenario.getGoal());
@@ -179,6 +180,7 @@ int main(int argc, char **argv)
 					if (result)
 					{
 						path_found = true;
+						tree->getState(i)->setCost(cost);
 						std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { tree->getState(i)->getChildren() };
 						float clearance_factor { 1.0f };
 						for (const std::shared_ptr<base::State> &child : *children)
