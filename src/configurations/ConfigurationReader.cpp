@@ -8,6 +8,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
     YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
+    YAML::Node SL_DRGBTConfigRoot           { YAML::LoadFile(root_path + "/data/configurations/configuration_sl_drgbt.yaml") };
     YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
     YAML::Node TrajectoryConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_trajectory.yaml") };
     YAML::Node RT_RGBTConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_rt_rgbt.yaml") };
@@ -208,6 +209,17 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
 
+    // SL_DRGBTConfigRoot
+    if (SL_DRGBTConfigRoot["NUM_LAYERS"].IsDefined())
+        SL_DRGBTConfig::NUM_LAYERS = SL_DRGBTConfigRoot["NUM_LAYERS"].as<std::size_t>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::NUM_LAYERS is not defined! Using default value of " << SL_DRGBTConfig::NUM_LAYERS;
+
+    if (SL_DRGBTConfigRoot["PROBABILITY_THRESHOLD"].IsDefined())
+        SL_DRGBTConfig::PROBABILITY_THRESHOLD = SL_DRGBTConfigRoot["PROBABILITY_THRESHOLD"].as<float>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::PROBABILITY_THRESHOLD is not defined! Using default value of " << SL_DRGBTConfig::PROBABILITY_THRESHOLD;
+    
     // RRTxConfigRoot
     if (RRTxConfigRoot["MAX_NUM_ITER"].IsDefined())
         RRTxConfig::MAX_NUM_ITER = RRTxConfigRoot["MAX_NUM_ITER"].as<size_t>();

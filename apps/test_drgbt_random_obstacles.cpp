@@ -1,4 +1,5 @@
 #include "DRGBT.h"
+#include "SL_DRGBT.h"
 #include "ConfigurationReader.h"
 #include "CommonFunctions.h"
 
@@ -57,6 +58,7 @@ int main(int argc, char **argv)
     if (DRGBTConfig::STATIC_PLANNER_TYPE == planning::PlannerType::RGBMTStar) {
         RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 	}
+	SL_DRGBTConfig::ONNX_MODEL_PATH = project_path + node["onnx"]["model_path"].as<std::string>();
 
 	while (init_num_obs <= max_num_obs)
 	{
@@ -69,6 +71,7 @@ int main(int argc, char **argv)
 				+ std::to_string(size_t(DRGBTConfig::MAX_ITER_TIME * 1000)) + "ms.log", std::ofstream::out);
 			output_file << "Using scenario:                                         " << scenario_file_path << std::endl;
 			output_file << "Dynamic planner:                                        " << planning::PlannerType::DRGBT << std::endl;
+			// output_file << "Dynamic planner:                                        " << planning::PlannerType::SL_DRGBT << std::endl;
 			output_file << "Static planner for replanning:                          " << DRGBTConfig::STATIC_PLANNER_TYPE << std::endl;
 			output_file << "Maximal algorithm time [s]:                             " << DRGBTConfig::MAX_PLANNING_TIME << std::endl;
 			output_file << "Initial horizon size:                                   " << DRGBTConfig::INIT_HORIZON_SIZE << std::endl;
@@ -81,6 +84,7 @@ int main(int argc, char **argv)
 			output_file << "Resolution for collision checking [m]:                  " << DRGBTConfig::RESOLUTION_COLL_CHECK << std::endl;
 			output_file << "Trajectory interpolation:                               " << DRGBTConfig::TRAJECTORY_INTERPOLATION << std::endl;
 			output_file << "Guaranteed safe motion:                                 " << (DRGBTConfig::GUARANTEED_SAFE_MOTION ? "true" : "false") << std::endl;
+			// output_file << "ONNX model path:                                        " << SL_DRGBTConfig::ONNX_MODEL_PATH << std::endl;
 			output_file << "--------------------------------------------------------------------\n";
 			output_file << "Real-time scheduling:                                   " << DRGBTConfig::REAL_TIME_SCHEDULING << std::endl;
 			output_file	<< "Maximal iteration time [s]:                             " << DRGBTConfig::MAX_ITER_TIME << std::endl;
@@ -160,6 +164,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Goal:              " << scenario.getGoal();
 				
 				planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
+				planner = std::make_unique<planning::drbt::SL_DRGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
 				float real_result { std::max(0.0f, 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm()) };
 				num_real_success_tests += real_result;
