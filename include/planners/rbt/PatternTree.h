@@ -22,6 +22,8 @@ namespace planning::rbt
 	
 	private:
 		size_t num_layers;
+		std::vector<size_t> num_nodes;
+		std::vector<size_t> num_paths;
 		std::shared_ptr<base::Tree> tree;
 	};
 }
