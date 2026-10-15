@@ -47,8 +47,6 @@ int main(int argc, char** argv)
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-	std::shared_ptr<base::State> q_start { scenario.getStart() };
-	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	if (ss->num_dimensions != 2 || num_layers != 3)
 	{
@@ -68,9 +66,6 @@ int main(int argc, char** argv)
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
 
 			generateRandomStartAndGoal(scenario, min_dist_start_goal);
-			q_start = scenario.getStart();
-			q_goal = scenario.getGoal();
-
 			if (num_random_obstacles > 0)
 				initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 
@@ -82,16 +77,16 @@ int main(int argc, char** argv)
 			LOG(INFO) << "Goal:              " << scenario.getGoal();
 			
 			// Generate input data:
-			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(q_start) };
+			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };
 			// LOG(INFO) << *tree;
             std::vector<float> input {};
             input.reserve(Predictor::InputCount);
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-				input.emplace_back(q_start->getCoord(j));
+				input.emplace_back(scenario.getStart()->getCoord(j));
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-				input.emplace_back(q_goal->getCoord(j));
+				input.emplace_back(scenario.getGoal()->getCoord(j));
 
 			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
 				input.emplace_back((tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm());

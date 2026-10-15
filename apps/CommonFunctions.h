@@ -74,6 +74,7 @@ float getStd(std::vector<float> &v)
 	return std::sqrt(sum / v.size());
 }
 
+// Initialize random static obstacles
 void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario)
 {
 	LOG(INFO) << "Adding " << num_obstacles << " random obstacles...";
@@ -110,8 +111,17 @@ void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scena
 		}
 		// else std::cout << "Added " << i << ". " << object;
 	}
+
+	// Reset all additional data set before for start conf.
+	scenario.getStart()->setDistance(-1);
+	scenario.getStart()->setDistanceProfile(std::vector<float>());
+	scenario.getStart()->setNearestPoints(nullptr);
+	scenario.getGoal()->setDistance(-1);
+	scenario.getGoal()->setDistanceProfile(std::vector<float>());
+	scenario.getGoal()->setNearestPoints(nullptr);
 }
 
+// Initialize random dynamic obstacles
 void initRandomObstacles(size_t num_obstacles, const Eigen::Vector3f &dim, scenario::Scenario &scenario, 
 	float max_vel, float max_acc)
 {

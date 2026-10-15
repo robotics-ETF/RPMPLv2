@@ -5,6 +5,8 @@ environment:
 
 random_obstacles:
   num: 0	                        # Number of random obstacles to be added
+  max_vel: 0.1 			              # Maximal velocity of each obstacle in [m/s]
+  max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
   dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
 
 robot:

@@ -25,7 +25,9 @@ environment:
   #     pos: [-0.6, -1.5, 0]
 
 random_obstacles:
-  num: 0	                        # Number of random obstacles to be added
+  num: 2	                        # Number of random obstacles to be added
+  max_vel: 0.1 			              # Maximal velocity of each obstacle in [m/s]
+  max_acc: 0 			                # Maximal acceleration of each obstacle in [m/s²]
   dim: [0.01, 0.01, 0.01]         # Dimensions of each random obstacle in [m]
 
 robot:
@@ -46,4 +48,5 @@ testing:
   max_num: 100                                              # Maximal number of tests that should be carried out
   num_layers: 3                                             # Number of layers for creating a pattern tree
   write_header: true                                        # Whether to write a header to the dataset table
+  motion_type: "circular"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.
   

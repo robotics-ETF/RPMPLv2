@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
 	const size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
+	const float max_vel_obs { node["random_obstacles"]["max_vel"].as<float>() };
+	const float max_acc_obs { node["random_obstacles"]["max_acc"].as<float>() };
 	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
@@ -43,8 +45,6 @@ int main(int argc, char **argv)
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-	std::shared_ptr<base::State> q_start { scenario.getStart() };
-	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 	std::shared_ptr<planning::rbt::PatternTree> pattern_tree { std::make_shared<planning::rbt::PatternTree>(ss, num_layers) };
@@ -98,12 +98,12 @@ int main(int argc, char **argv)
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
 
-			generateRandomStartAndGoal(scenario, min_dist_start_goal);
-			q_start = scenario.getStart();
-			q_goal = scenario.getGoal();
+			env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
+			env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 
+			generateRandomStartAndGoal(scenario, min_dist_start_goal);
 			if (num_random_obstacles > 0)
-				initRandomObstacles(num_random_obstacles, obs_dim, scenario);
+				initRandomObstacles(num_random_obstacles, obs_dim, scenario, max_vel_obs, max_acc_obs);
 
 			LOG(INFO) << "Using scenario:    " << project_path + scenario_file_path;
 			LOG(INFO) << "Environment parts: " << env->getNumObjects();
@@ -112,15 +112,15 @@ int main(int argc, char **argv)
 			LOG(INFO) << "Start:             " << scenario.getStart();
 			LOG(INFO) << "Goal:              " << scenario.getGoal();
 
-			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(q_start) };
+			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };
 			// LOG(INFO) << *tree;
 			
 			// Generate input data:
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-				output_file << q_start->getCoord(j) << ",";
+				output_file << scenario.getStart()->getCoord(j) << ",";
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
-				output_file << q_goal->getCoord(j) << ",";
+				output_file << scenario.getGoal()->getCoord(j) << ",";
 
 			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
 				output_file << (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm() << ",";
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
 				if (cost > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
 				{
 					LOG(INFO) << "Planning from node " << i << ": " << tree->getState(i)->getCoord().transpose();
-					planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, ss->getNewState(tree->getState(i)->getCoord()), q_goal);
+					planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, ss->getNewState(tree->getState(i)->getCoord()), scenario.getGoal());
 					bool result { planner->solve() };
 					LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 					
