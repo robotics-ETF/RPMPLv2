@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 				// First option (generating here in the code):
 				// if (min_dist_start_goal > 0)
 				// 	generateRandomStartAndGoal(scenario, min_dist_start_goal);
-				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs, 6 * DRGBTConfig::D_CRIT);
 				// ------------------------------------------------------------------------------- //
 
 				// Second option (reading from a yaml file):

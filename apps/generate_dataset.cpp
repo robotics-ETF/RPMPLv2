@@ -34,8 +34,6 @@ int main(int argc, char **argv)
 
 	const size_t max_num_tests { node["testing"]["max_num"].as<size_t>() };
 	const size_t num_random_obstacles { node["random_obstacles"]["num"].as<size_t>() };
-	const float max_vel_obs { node["random_obstacles"]["max_vel"].as<float>() };
-	const float max_acc_obs { node["random_obstacles"]["max_acc"].as<float>() };
 	Eigen::Vector3f obs_dim {};
 	for (size_t i = 0; i < 3; i++)
 		obs_dim(i) = node["random_obstacles"]["dim"][i].as<float>();
@@ -43,68 +41,68 @@ int main(int argc, char **argv)
 	size_t num_layers { node["testing"]["num_layers"].as<size_t>() };
 	bool write_header { node["testing"]["write_header"].as<bool>() };
 
-	scenario::Scenario scenario(scenario_file_path, project_path);
-	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
-	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
-	std::shared_ptr<planning::rbt::PatternTree> pattern_tree { std::make_shared<planning::rbt::PatternTree>(ss, num_layers) };
-	
 	std::ofstream output_file {};
 	output_file.open(directory_path + "/dataset.csv", std::ofstream::app);
 	
-	if (write_header)
-	{
-		// Input:
-		for (size_t j = 0; j < ss->num_dimensions; j++)
-			output_file << "start_node(" << j+1 << "),";
-
-		for (size_t j = 0; j < ss->num_dimensions; j++)
-			output_file << "goal_node(" << j+1 << "),";
-
-		for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
-			output_file << "spine_length" << i << ",";
-
-		for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
-		{
-			// output_file << "dc" << i << ","; 	// If only distance to obstacles is used
-			
-			for (size_t j = 0; j < ss->num_dimensions; j++)
-				output_file << "dc" << i << "_link" << j+1 << ",";
-		}
-
-		for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
-		{
-			for (size_t j = 0; j < ss->num_dimensions; j++)
-			{
-				for (size_t k = 0; k < 3; k++)
-					output_file << "OR_vector" << i << "_link" << j+1 << "(" << k+1 << "),";
-			}
-		}
-
-		// Output:
-		// for (size_t j = 0; j < ss->num_dimensions; j++)
-		// 	output_file << "next_vector(" << j+1 << "),";
-
-		for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
-			output_file << "prob" << i << ",";
-
-		output_file << "\n";
-	}
-
 	size_t num_test { 0 };
 	while (num_test++ < max_num_tests)
 	{
 		try
 		{
-			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
+			scenario::Scenario scenario(scenario_file_path, project_path);
+			std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
+			std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
+			std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
+			std::shared_ptr<planning::rbt::PatternTree> pattern_tree { std::make_shared<planning::rbt::PatternTree>(ss, num_layers) };
+			
+			if (write_header && num_test == 1)
+			{
+				// Input:
+				for (size_t j = 0; j < ss->num_dimensions; j++)
+					output_file << "start_node(" << j+1 << "),";
+
+				for (size_t j = 0; j < ss->num_dimensions; j++)
+					output_file << "goal_node(" << j+1 << "),";
+
+				for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers); i++)
+					output_file << "spine_length" << i << ",";
+
+				for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
+				{
+					// output_file << "dc" << i << ","; 	// If only distance to obstacles is used
+					
+					for (size_t j = 0; j < ss->num_dimensions; j++)
+						output_file << "dc" << i << "_link" << j+1 << ",";
+				}
+
+				for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
+				{
+					for (size_t j = 0; j < ss->num_dimensions; j++)
+					{
+						for (size_t k = 0; k < 3; k++)
+							output_file << "OR_vector" << i << "_link" << j+1 << "(" << k+1 << "),";
+					}
+				}
+
+				// Output:
+				// for (size_t j = 0; j < ss->num_dimensions; j++)
+				// 	output_file << "next_vector(" << j+1 << "),";
+
+				for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
+					output_file << "prob" << i << ",";
+
+				output_file << "\n";
+			}
 
 			env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
 			env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 
-			generateRandomStartAndGoal(scenario, min_dist_start_goal);
+			if (min_dist_start_goal > 0)
+				generateRandomStartAndGoal(scenario, min_dist_start_goal);
 			if (num_random_obstacles > 0)
-				initRandomObstacles(num_random_obstacles, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 
+			LOG(INFO) << "Test number    	 " << num_test << " of " << max_num_tests;
 			LOG(INFO) << "Using scenario:    " << project_path + scenario_file_path;
 			LOG(INFO) << "Environment parts: " << env->getNumObjects();
 			LOG(INFO) << "Number of DOFs:    " << ss->num_dimensions;
@@ -166,6 +164,8 @@ int main(int argc, char **argv)
 
 			// 2. option (probabilities of each node from the pattern tree)
 			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
+			bool path_found { false };
+
 			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				float cost = (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm(); 	// Initial cost 
@@ -178,6 +178,7 @@ int main(int argc, char **argv)
 					
 					if (result)
 					{
+						path_found = true;
 						std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { tree->getState(i)->getChildren() };
 						float clearance_factor { 1.0f };
 						for (const std::shared_ptr<base::State> &child : *children)
@@ -188,6 +189,12 @@ int main(int argc, char **argv)
 
 						std::cout << "Clearance factor: " << clearance_factor << "\t";
 						std::cout << "Final cost: " << cost / clearance_factor << "\n";
+					}
+
+					if (!path_found && i == pattern_tree->getNumNodes(1))
+					{
+						LOG(INFO) << "No path found from any first-layer node of the pattern tree!";
+						break;
 					}
 				}
 			}

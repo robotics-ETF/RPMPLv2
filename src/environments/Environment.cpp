@@ -63,13 +63,10 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
         if (node_robot["ground_included"].IsDefined())
             ground_included = node_robot["ground_included"].as<size_t>();
-        else if (node_robot["type"].as<std::string>() == "xarm6")
-        {
+        else
             ground_included = 0;
-            throw std::domain_error("It is not defined whether ground is included! Thus, it will not be included. ");
-        }
 
-        if (node_robot["WS_center"].IsDefined())
+        if (node_robot["WS_center"].IsDefined() && node_robot["WS_radius"].IsDefined())
         {
             for (size_t i = 0; i < 3; i++)
                 WS_center(i) = node_robot["WS_center"][i].as<float>();
@@ -77,7 +74,7 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
             WS_radius = node_robot["WS_radius"].as<float>();
         }
         else
-            throw std::domain_error("Workspace center point is not defined! ");
+            throw std::domain_error("Workspace center point and/or workspace radius are not defined! ");
 
         sign = Eigen::VectorXi::Ones(node_env.size());
         path_len = Eigen::VectorXf::Zero(node_env.size());

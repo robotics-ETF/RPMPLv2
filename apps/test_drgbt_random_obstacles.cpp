@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 				// First option (generating here in the code):
 				// if (min_dist_start_goal > 0)
 				// 	generateRandomStartAndGoal(scenario, min_dist_start_goal);
-				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				// initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs, 6 * DRGBTConfig::D_CRIT);
 				// ------------------------------------------------------------------------------- //
 
 				// Second option (reading from a yaml file):
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 				LOG(INFO) << "Goal:              " << scenario.getGoal();
 				
 				planner = std::make_unique<planning::drbt::DRGBT>(ss, scenario.getStart(), scenario.getGoal());
-				planner = std::make_unique<planning::drbt::SL_DRGBT>(ss, scenario.getStart(), scenario.getGoal());
+				// planner = std::make_unique<planning::drbt::SL_DRGBT>(ss, scenario.getStart(), scenario.getGoal());
 				bool result { planner->solve() };
 				float real_result { std::max(0.0f, 1 - (goal - planner->getPath().back()->getCoord()).norm() / (goal - start).norm()) };
 				num_real_success_tests += real_result;
