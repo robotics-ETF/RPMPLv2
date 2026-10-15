@@ -38,7 +38,7 @@ cd /external/ruckig && git checkout v0.15.3 && cd ../..
 ## 2.4 Install required packages
 For planning:
 ```
-sudo apt install libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev libyaml-cpp-dev liburdf-dev
+sudo apt install libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev libyaml-cpp-dev liburdf-dev libfcl-dev libnanoflann-dev libgtest-dev
 ```
 For visualization:
 ```
