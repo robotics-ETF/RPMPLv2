@@ -29,12 +29,12 @@ bool planning::drbt::SL_DRGBT::solve()
     while (true)
     {
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
-        // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
-        // std::cout << "q_current: " << q_current << "\n";
+        std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+        std::cout << "q_current: " << q_current << "\n";
 
         if (std::get<0>(extendGenSpine(q_current, q_goal)) == base::State::Status::Reached)
         {
-            // std::cout << "Reaching goal... \n";
+            std::cout << "Reaching goal... \n";
             q_next = std::make_shared<planning::drbt::HorizonState>(ss->getNewState(q_goal->getCoord()), -1);
         }
         else
@@ -205,23 +205,23 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
 
     if (use_layers > 1)
     {
-    float distance_best = ss->getNorm(q_best, q_goal);
-    int best_index = first;
-    const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
-    for (int i = 0; i < 4; ++i)
-    {
-        if (i == first || output[i] <= probability_cutoff)
-            continue;
-
-        const auto q_candidate = computeCandidate(i);
-        const float distance = ss->getNorm(q_candidate, q_goal);
-        if (distance < distance_best)
+        float distance_best = ss->getNorm(q_best, q_goal);
+        int best_index = first;
+        const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
+        for (int i = 0; i < 4; ++i)
         {
-            q_best = q_candidate;
-            distance_best = distance;
-            best_index = i;
+            if (i == first || output[i] <= probability_cutoff)
+                continue;
+
+            const auto q_candidate = computeCandidate(i);
+            const float distance = ss->getNorm(q_candidate, q_goal);
+            if (distance < distance_best)
+            {
+                q_best = q_candidate;
+                distance_best = distance;
+                best_index = i;
+            }
         }
-    }
 
         if (best_index != first)
             std::cout << "Best prob. is: " << output[first] 
