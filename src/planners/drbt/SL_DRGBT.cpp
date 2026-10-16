@@ -152,8 +152,8 @@ void planning::drbt::SL_DRGBT::generateInput(const std::shared_ptr<base::State> 
     }
 }
 
-std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState(const Ort::ShapeInferContext::Floats &input, 
-                                                                        const Predictor::Probabilities &output)
+std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
+    (const Ort::ShapeInferContext::Floats &input, const Predictor::Probabilities &output, const size_t use_layers)
 {
     // Left, right, down, up.
     const int directions[4][2] = {
@@ -202,6 +202,9 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState(const Or
     };
 
     auto q_best = computeCandidate(first);
+
+    if (use_layers > 1)
+    {
     float distance_best = ss->getNorm(q_best, q_goal);
     int best_index = first;
     const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
@@ -220,9 +223,10 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState(const Or
         }
     }
 
-    // if (best_index != first)
-    //     std::cout << "Best prob. is: " << output[first] 
-    //               << ", but choosing the closest node to the goal with prob: " << output[best_index] << "\n";
+        if (best_index != first)
+            std::cout << "Best prob. is: " << output[first] 
+                << ", but choosing the closest node to the goal with prob: " << output[best_index] << "\n";
+    }
     
     return q_best;
 }
