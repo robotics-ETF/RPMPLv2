@@ -41,11 +41,26 @@ bool planning::drbt::SL_DRGBT::solve()
         {
             // ------------------------------------------------------------------------------- //
             // Generate input data and predict the best next state
-            std::vector<float> input {};
-            generateInput(q_current, input);
-            const auto output = onnx_model.predict(input);
-            std::shared_ptr<base::State> q_next_temp = computeNextState(input, output);
-            q_next = std::make_shared<planning::drbt::HorizonState>(ss->getNewState(q_next_temp->getCoord()), -1);
+            std::shared_ptr<base::State> q_current_temp = q_current;
+            size_t num { 0 }, num_steps { 10 };
+
+            while (num++ < num_steps)
+            {
+                std::vector<float> input {};
+                generateInput(q_current_temp, input);
+
+                // std::cout << "\t dist: " << q_current_temp->getDistance() << "\t input data: " << "\n";
+                // for (auto in : input)
+                //     std::cout << in << ", ";
+                    
+                const auto output = onnx_model.predict(input);
+                std::shared_ptr<base::State> q_next_temp = computeNextState(input, output, 2);
+                q_current_temp = ss->interpolateEdge(q_current_temp, q_next_temp, RRTConnectConfig::EPS_STEP * rand() / RAND_MAX);
+                // std::cout << "q_next_temp_" << num << ":    " << q_next_temp << "\n";
+                // std::cout << "q_current_temp_" << num << ": " << q_current_temp << "\n";
+            }
+            
+            q_next = std::make_shared<planning::drbt::HorizonState>(ss->getNewState(q_current_temp->getCoord()), -1);
         }
 
         computeReachedState(q_next);
@@ -63,10 +78,10 @@ bool planning::drbt::SL_DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
         float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
-        // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
+        std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
-        // if (time_iter_remain < 0)
-        //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
+        if (time_iter_remain < 0)
+            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
@@ -97,14 +112,14 @@ bool planning::drbt::SL_DRGBT::solve()
         if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
 
-        // std::cout << "----------------------------------------------------------------------------------------\n";
+        std::cout << "----------------------------------------------------------------------------------------\n";
     }
 }
 
 void planning::drbt::SL_DRGBT::generateInput(const std::shared_ptr<base::State> &q_root, std::vector<float> &input)
 {
     std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(q_root) };
-    // LOG(INFO) << *tree;
+    // std::cout << *tree << "\n";
     
     for (size_t j = 0; j < ss->num_dimensions; j++)
         input.emplace_back(q_root->getCoord(j));
@@ -191,7 +206,7 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
                 child = j;
 
         const int second = children[first_index][child];
-        const float second_step = output[offset + child] * input[8 + 3 * first_index + child];
+        const float second_step = (use_layers > 1) ? output[offset + child] * input[8 + 3 * first_index + child] : 0.0f;
         Eigen::VectorXf coord = q_current->getCoord();
         for (int axis = 0; axis < 2; ++axis)
         {
@@ -202,31 +217,28 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
     };
 
     auto q_best = computeCandidate(first);
+    float distance_best = ss->getNorm(q_best, q_goal);
+    int best_index = first;
+    // const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
+    // for (int i = 0; i < 4; ++i)
+    // {
+    //     if (i == first || output[i] <= probability_cutoff)
+    //         continue;
 
-    if (use_layers > 1)
-    {
-        float distance_best = ss->getNorm(q_best, q_goal);
-        int best_index = first;
-        const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
-        for (int i = 0; i < 4; ++i)
-        {
-            if (i == first || output[i] <= probability_cutoff)
-                continue;
+    //     const auto q_candidate = computeCandidate(i);
+    //     const float distance = ss->getNorm(q_candidate, q_goal);
+    //     if (distance < distance_best)
+    //     {
+    //         q_best = q_candidate;
+    //         distance_best = distance;
+    //         best_index = i;
+    //     }
+    // }
 
-            const auto q_candidate = computeCandidate(i);
-            const float distance = ss->getNorm(q_candidate, q_goal);
-            if (distance < distance_best)
-            {
-                q_best = q_candidate;
-                distance_best = distance;
-                best_index = i;
-            }
-        }
-
-        if (best_index != first)
-            std::cout << "Best prob. is: " << output[first] 
-                << ", but choosing the closest node to the goal with prob: " << output[best_index] << "\n";
-    }
+    std::cout << "Best direction: " << best_index << "\n";
+    // if (best_index != first)
+    //     std::cout << "Best prob. is: " << output[first] 
+    //               << ", but choosing the closest node to the goal with prob: " << output[best_index] << "\n";
     
     return q_best;
 }
