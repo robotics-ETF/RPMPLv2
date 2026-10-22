@@ -63,8 +63,9 @@ find_package(fcl 0.7 REQUIRED)
 find_package(nanoflann REQUIRED)
 
 add_subdirectory(external/ruckig)
+include(cmake/OnnxRuntime.cmake)
 
-set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig::ruckig)
+set(PROJECT_LIBRARIES gtest glog gflags nanoflann::nanoflann kdl_parser orocos-kdl fcl ccd yaml-cpp ruckig::ruckig ONNXRuntime::ONNXRuntime)
 
 set(MAIN_PROJECT_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 

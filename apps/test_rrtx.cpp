@@ -91,7 +91,8 @@ int main(int argc, char **argv)
 			
 			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
 			LOG(INFO) << "Number of iterations: " << planner->getPlannerInfo()->getNumIterations();
-			LOG(INFO) << "Algorithm time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
+			LOG(INFO) << "Algorithm time:       " << RRTxConfig::MAX_ITER_TIME * planner->getPlannerInfo()->getNumIterations() << " [s]";
+			LOG(INFO) << "Execution time:       " << planner->getPlannerInfo()->getPlanningTime() << " [s]";
 			// LOG(INFO) << "Planner data is saved at: " << directory_path + "/test" + std::to_string(num_test) + ".log";
 			// planner->outputPlannerData(directory_path + "/test" + std::to_string(num_test) + ".log");
 

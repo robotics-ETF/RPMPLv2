@@ -103,9 +103,7 @@ bool planning::drbt::DRGBT::solve()
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
 
         // ------------------------------------------------------------------------------- //
-        if (status != base::State::Status::Advanced)
-            generateHorizon();
-            
+        generateHorizon();            
         updateHorizon();
         generateGBur();
         computeNextState();
@@ -176,6 +174,9 @@ bool planning::drbt::DRGBT::solve()
 // Only states from predefined path that come after 'q_next' are remained in the horizon. Other states are deleted.
 void planning::drbt::DRGBT::generateHorizon()
 {
+    if (status == base::State::Status::Advanced)
+        return;
+
     // std::cout << "Generating horizon... \n";
     // auto time_generateHorizon { std::chrono::steady_clock::now() };
 

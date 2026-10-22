@@ -1,0 +1,2 @@
+NUM_LAYERS: 3                                           # Number of layers for generating the pattern tree
+PROBABILITY_THRESHOLD: 0.1                              # Maximum probability gap for considering alternative first-layer nodes
