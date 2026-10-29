@@ -15,7 +15,7 @@ planning::drbt::SL_DRGBT::SL_DRGBT(const std::shared_ptr<base::StateSpace> ss_, 
 	// std::cout << "Initializing SL_DRGBT planner... \n";
     planner_type = planning::PlannerType::SL_DRGBT;
     pattern_tree = std::make_shared<planning::rbt::PatternTree>(ss, SL_DRGBTConfig::NUM_LAYERS);
-
+    status = base::State::Status::Advanced;
     // std::cout << "SL_DRGBT planner initialized! \n";
 }
 
@@ -29,48 +29,24 @@ bool planning::drbt::SL_DRGBT::solve()
     while (true)
     {
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
-        std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
-        std::cout << "q_current: " << q_current << "\n";
-
-        if (std::get<0>(extendGenSpine(q_current, q_goal)) == base::State::Status::Reached)
-        {
-            std::cout << "Reaching goal... \n";
-            q_next = std::make_shared<planning::drbt::HorizonState>(ss->getNewState(q_goal->getCoord()), -1);
-        }
-        else
-        {
-            // ------------------------------------------------------------------------------- //
-            // Generate input data and predict the best next state
-            std::shared_ptr<base::State> q_current_temp = q_current;
-            size_t num { 0 }, num_steps { 10 };
-
-            while (num++ < num_steps)
-            {
-                std::vector<float> input {};
-                generateInput(q_current_temp, input);
-
-                // std::cout << "\t dist: " << q_current_temp->getDistance() << "\t input data: " << "\n";
-                // for (auto in : input)
-                //     std::cout << in << ", ";
-                    
-                const auto output = onnx_model.predict(input);
-                std::shared_ptr<base::State> q_next_temp = computeNextState(input, output, 2);
-                q_current_temp = ss->interpolateEdge(q_current_temp, q_next_temp, RRTConnectConfig::EPS_STEP * rand() / RAND_MAX);
-                // std::cout << "q_next_temp_" << num << ":    " << q_next_temp << "\n";
-                // std::cout << "q_current_temp_" << num << ": " << q_current_temp << "\n";
-            }
-            
-            q_next = std::make_shared<planning::drbt::HorizonState>(ss->getNewState(q_current_temp->getCoord()), -1);
-        }
-
-        computeReachedState(q_next);
-        // std::cout << "q_next: " << q_next << "\n";
+        // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
+        // std::cout << "q_current: " << q_current << "\n";
+                
+        // ------------------------------------------------------------------------------- //
+        generateHorizon();
+        updateHorizon();
+        generateGBur();
+        DRGBT::computeNextState();
+        
+        std::cout << "q_next: " << q_next << "\n";
         
         // ------------------------------------------------------------------------------- //
         // Compute a trajectory and update current state
         // auto time_updateCurrentState { std::chrono::steady_clock::now() };
         visited_states = { q_next };
-        updating_state->setNonZeroFinalVel(false);
+        // updating_state->setNonZeroFinalVel(false);
+        updating_state->setNonZeroFinalVel(q_next->getIsReached() && q_next->getIndex() != -1 && 
+                                           q_next->getStatus() != planning::drbt::HorizonState::Status::Goal);
         updating_state->setTimeIterStart(time_iter_start);
         updating_state->update(q_previous, q_current, q_next->getState(), q_next->getStateReached(), status);
         // planner_info->addRoutineTime(getElapsedTime(time_updateCurrentState, planning::TimeUnit::us), 5);
@@ -78,10 +54,10 @@ bool planning::drbt::SL_DRGBT::solve()
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
         float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
-        std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
+        // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
-        if (time_iter_remain < 0)
-            std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
+        // if (time_iter_remain < 0)
+        //     std::cout << "*************** Real-time is broken. " << -time_iter_remain << " [ms] exceeded!!! *************** \n";
 
         // ------------------------------------------------------------------------------- //
         // Update environment and check if the collision occurs
@@ -114,6 +90,83 @@ bool planning::drbt::SL_DRGBT::solve()
 
         std::cout << "----------------------------------------------------------------------------------------\n";
     }
+}
+
+// Generate a horizon using a local path generated by neural network.
+void planning::drbt::SL_DRGBT::generateHorizon()
+{
+    // std::cout << "Status: " << status << "\n";
+    // std::cout << "Generating horizon... \n";
+    // auto time_generateHorizon { std::chrono::steady_clock::now() };
+
+    // If horizon is not empty, then 'q_next' is reached and 'status' is not trapped
+    int q_next_idx { getIndexInHorizon(q_next) };
+    if (status == base::State::Status::Reached)
+        horizon.erase(horizon.begin() + q_next_idx);
+
+    int last_horizon_idx { 0 };
+    for (size_t i = horizon.size(); i > 0;)
+    {
+        i--;
+        if (horizon[i]->getIndex() > -1)
+        {
+            last_horizon_idx = horizon[i]->getIndex();
+            break;
+        }
+    }
+    
+    // Delete too old states in the horizon
+    for (size_t i = horizon.size(); i > 0;)
+    {
+        i--;
+        if (horizon[i]->getIndex() > 0 && horizon[i]->getIndex() != q_next_idx &&
+            last_horizon_idx - horizon[i]->getIndex() > SL_DRGBTConfig::STATE_MAX_HISTORY)
+        {
+            std::cout << "Deleting old state with index " << horizon[i]->getIndex() << "\n";
+            horizon.erase(horizon.begin() + i);
+        }
+    }
+
+    if (status == base::State::Status::Trapped)
+        return;
+
+    // Generate input data for each current state and predict the best next state, thus forming a local path
+    std::shared_ptr<base::State> q_current_temp { q_current };
+    size_t num { 0 };
+    std::cout << "Adding " << SL_DRGBTConfig::NUM_NEW_STATES << " new states from the local path... \n";
+
+    while (num++ < SL_DRGBTConfig::NUM_NEW_STATES)
+    {
+        std::vector<float> input {};
+        generateInput(q_current_temp, input);
+        const auto output = onnx_model.predict(input);
+        std::shared_ptr<base::State> q_next_temp { nullptr };
+        base::State::Status status_ { base::State::Status::None };
+        q_next_temp = std::get<0>(computeNextState(input, output));
+        tie(status_, q_current_temp) = extendGenSpine(q_current_temp, q_next_temp);
+        if (status_ != base::State::Status::Trapped)
+            horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_current_temp, last_horizon_idx + num));
+        else
+            break;
+        
+        // std::cout << "q_current_temp_" << num << ": " << q_current_temp << "\n";
+        // std::cout << "q_next_temp_" << num << ":    " << q_next_temp << "\n";
+    }
+    // horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_current_temp, last_horizon_idx + 1));
+
+    if (std::get<0>(extendGenSpine(q_current, q_goal)) == base::State::Status::Reached)
+    {
+        std::cout << "Goal is visible. Adding goal to the horizon... \n";
+        horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_goal, 0));    // 'index' = 0 is reserved for 'q_goal' here, so it can be reached!
+    }
+
+    // addRandomStates(num_states);
+
+    std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
+    for (size_t i = 0; i < horizon.size(); i++)
+        std::cout << i << ". state:\n" << horizon[i] << "\n";
+    
+    // planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
 }
 
 void planning::drbt::SL_DRGBT::generateInput(const std::shared_ptr<base::State> &q_root, std::vector<float> &input)
@@ -167,7 +220,7 @@ void planning::drbt::SL_DRGBT::generateInput(const std::shared_ptr<base::State> 
     }
 }
 
-std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
+std::tuple<std::shared_ptr<base::State>, float> planning::drbt::SL_DRGBT::computeNextState
     (const Ort::ShapeInferContext::Floats &input, const Predictor::Probabilities &output, const size_t use_layers)
 {
     // Left, right, down, up.
@@ -182,64 +235,60 @@ std::shared_ptr<base::State> planning::drbt::SL_DRGBT::computeNextState
         {0, 1, 3}
     };
 
-    // Find the highest first-layer probability to define the candidate cutoff.
-    int first = 0;
-    for (int i = 1; i < 4; ++i)
-        if (output[i] > output[first])
-            first = i;
+    const auto sampleIndex = [&](int offset, int count)
+    {
+        double total { 0.0 };
+        int last_positive { 0 };
+        for (int i = 0; i < count; ++i)
+        {
+            total += output[offset + i];
+            if (output[offset + i] > 0)
+                last_positive = i;
+        }
+
+        const double draw = std::rand() / (static_cast<double>(RAND_MAX) + 1.0);
+        if (total == 0.0)
+            return static_cast<int>(draw * count);
+
+        const double threshold = draw * total;
+        double cumulative { 0.0 };
+        for (int i = 0; i < count; ++i)
+        {
+            cumulative += output[offset + i];
+            if (threshold < cumulative)
+                return i;
+        }
+        return last_positive;
+    };
+
+    const int first_idx = sampleIndex(0, 4);
 
     // std::cout << "Output probabilities: " << std::setprecision(4);
     // for (std::size_t i = 0; i < output.size(); ++i) 
     // {
-    //     if (i) std::cout << ' ';
+    //     if (i) std::cout << ", ";
     //     std::cout << output[i];
     // }
-    // std::cout << '\n';
+    // std::cout << "\tSelected direction: " << first_idx << "\n";
 
-    auto computeCandidate = [&](int first_index)
+    Eigen::VectorXf coord { q_current->getCoord() };
+    float probability { output[first_idx] };
+    for (int axis = 0; axis < 2; ++axis)
+        coord(axis) += input[4 + first_idx] * directions[first_idx][axis];
+
+    if (use_layers > 1)
     {
-        // Select the best second-layer child for this first-layer node.
-        const int offset = 4 + 3 * first_index;
-        int child = 0;
-        for (int j = 1; j < 3; ++j)
-            if (output[offset + j] > output[offset + child])
-                child = j;
+        // Second-layer probabilities are conditional on the selected first-layer node.
+        const int offset = 4 + 3 * first_idx;
+        const int child = sampleIndex(offset, 3);
 
-        const int second = children[first_index][child];
-        const float second_step = (use_layers > 1) ? output[offset + child] * input[8 + 3 * first_index + child] : 0.0f;
-        Eigen::VectorXf coord = q_current->getCoord();
+        probability *= output[offset + child];
+        const int second = children[first_idx][child];
+        const float second_step = output[offset + child] * input[8 + 3 * first_idx + child];
         for (int axis = 0; axis < 2; ++axis)
-        {
-            coord(axis) += input[4 + first_index] * directions[first_index][axis];
             coord(axis) += second_step * directions[second][axis];
-        }
-        return ss->getNewState(coord);
-    };
+    }
 
-    auto q_best = computeCandidate(first);
-    float distance_best = ss->getNorm(q_best, q_goal);
-    int best_index = first;
-    // const float probability_cutoff = output[first] - SL_DRGBTConfig::PROBABILITY_THRESHOLD;
-    // for (int i = 0; i < 4; ++i)
-    // {
-    //     if (i == first || output[i] <= probability_cutoff)
-    //         continue;
-
-    //     const auto q_candidate = computeCandidate(i);
-    //     const float distance = ss->getNorm(q_candidate, q_goal);
-    //     if (distance < distance_best)
-    //     {
-    //         q_best = q_candidate;
-    //         distance_best = distance;
-    //         best_index = i;
-    //     }
-    // }
-
-    std::cout << "Best direction: " << best_index << "\n";
-    // if (best_index != first)
-    //     std::cout << "Best prob. is: " << output[first] 
-    //               << ", but choosing the closest node to the goal with prob: " << output[best_index] << "\n";
-    
-    return q_best;
+    return { ss->getNewState(coord), probability };
 }
 

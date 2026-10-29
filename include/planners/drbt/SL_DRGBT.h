@@ -27,8 +27,9 @@ namespace planning::drbt
         
         bool solve() override;
         void generateInput(const std::shared_ptr<base::State> &q_root, std::vector<float> &input);
-        std::shared_ptr<base::State> computeNextState(const Ort::ShapeInferContext::Floats &input, 
-            const Predictor::Probabilities &output, const size_t use_layers = 2);
+        std::tuple<std::shared_ptr<base::State>, float> computeNextState(const Ort::ShapeInferContext::Floats &input,
+            const Predictor::Probabilities &output, const size_t use_layers = SL_DRGBTConfig::NUM_LAYERS - 1);
+        void generateHorizon() override;
 
     protected:
 	    std::shared_ptr<planning::rbt::PatternTree> pattern_tree;
