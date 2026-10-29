@@ -325,7 +325,7 @@ void planning::drbt::DRGBT::shortenHorizon(size_t num)
             {
                 return left->getWeight() < right->getWeight() && left->getWeight() > -1;
             });
-        std::cout << "Deleting state " << (*worst)->getCoord().transpose() << " with weight " << (*worst)->getWeight() << "\n";
+        // std::cout << "Deleting state " << (*worst)->getCoord().transpose() << " with weight " << (*worst)->getWeight() << "\n";
         horizon.erase(worst);
         num_deleted++;
     }

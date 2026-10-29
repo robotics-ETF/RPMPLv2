@@ -36,9 +36,8 @@ bool planning::drbt::SL_DRGBT::solve()
         generateHorizon();
         updateHorizon();
         generateGBur();
-        DRGBT::computeNextState();
-        
-        std::cout << "q_next: " << q_next << "\n";
+        DRGBT::computeNextState();        
+        // std::cout << "q_next: " << q_next << "\n";
         
         // ------------------------------------------------------------------------------- //
         // Compute a trajectory and update current state
@@ -88,7 +87,7 @@ bool planning::drbt::SL_DRGBT::solve()
         if (checkTerminatingCondition(status))
             return planner_info->getSuccessState();
 
-        std::cout << "----------------------------------------------------------------------------------------\n";
+        // std::cout << "----------------------------------------------------------------------------------------\n";
     }
 }
 
@@ -122,7 +121,7 @@ void planning::drbt::SL_DRGBT::generateHorizon()
         if (horizon[i]->getIndex() > 0 && horizon[i]->getIndex() != q_next_idx &&
             last_horizon_idx - horizon[i]->getIndex() > SL_DRGBTConfig::STATE_MAX_HISTORY)
         {
-            std::cout << "Deleting old state with index " << horizon[i]->getIndex() << "\n";
+            // std::cout << "Deleting old state with index " << horizon[i]->getIndex() << "\n";
             horizon.erase(horizon.begin() + i);
         }
     }
@@ -133,7 +132,7 @@ void planning::drbt::SL_DRGBT::generateHorizon()
     // Generate input data for each current state and predict the best next state, thus forming a local path
     std::shared_ptr<base::State> q_current_temp { q_current };
     size_t num { 0 };
-    std::cout << "Adding " << SL_DRGBTConfig::NUM_NEW_STATES << " new states from the local path... \n";
+    // std::cout << "Adding " << SL_DRGBTConfig::NUM_NEW_STATES << " new states from the local path... \n";
 
     while (num++ < SL_DRGBTConfig::NUM_NEW_STATES)
     {
@@ -156,15 +155,15 @@ void planning::drbt::SL_DRGBT::generateHorizon()
 
     if (std::get<0>(extendGenSpine(q_current, q_goal)) == base::State::Status::Reached)
     {
-        std::cout << "Goal is visible. Adding goal to the horizon... \n";
+        // std::cout << "Goal is visible. Adding goal to the horizon... \n";
         horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_goal, 0));    // 'index' = 0 is reserved for 'q_goal' here, so it can be reached!
     }
 
-    // addRandomStates(num_states);
+    // addRandomStates(num_states);     // TODO
 
-    std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
-    for (size_t i = 0; i < horizon.size(); i++)
-        std::cout << i << ". state:\n" << horizon[i] << "\n";
+    // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
+    // for (size_t i = 0; i < horizon.size(); i++)
+    //     std::cout << i << ". state:\n" << horizon[i] << "\n";
     
     // planner_info->addRoutineTime(getElapsedTime(time_generateHorizon, planning::TimeUnit::us), 3);
 }
