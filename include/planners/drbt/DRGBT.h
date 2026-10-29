@@ -37,7 +37,7 @@ namespace planning::drbt
         bool changeNextState();
 
     protected:
-        void generateHorizon();
+        virtual void generateHorizon();
         void updateHorizon();
         void generateGBur();
         void shortenHorizon(size_t num);
