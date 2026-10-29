@@ -48,8 +48,8 @@ robot:
 testing:
   max_num: 1                                                # Maximal number of tests that should be carried out
   num_layers: 3
-  max_vel_obs: 0.1          # Maximal velocity for each obstacle from "environment"
+  max_vel_obs: 0.5          # Maximal velocity for each obstacle from "environment"
   motion_type: "circular"   # Options: "straight", "circular", "two_tunnels", "random_directions", "light_directions". See 'Environment.cpp' for more details.
 
 onnx:
-  model_path: "/data/planar_2dof/onnx_models/GNN_8obs.onnx"   # Path to the GNN model for the prediction of the next best node. The model should be in ONNX format.
+  model_path: "/data/planar_2dof/onnx_models/GCNN_combined_obs.onnx"   # Path to the GNN model for the prediction of the next best node. The model should be in ONNX format.

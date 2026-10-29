@@ -221,6 +221,12 @@ void env::Environment::updateEnvironment(float delta_time)
 
 void env::Environment::moveStraight(float delta_time)
 {
+    const float x_amplitude { 1.0f };
+    const float y_amplitude { 1.0f };
+    const float z_amplitude { 1.0f };
+    const fcl::Vector3f amplitude { x_amplitude, y_amplitude, z_amplitude };    // Maximum displacement from the initial position in [m]
+    const Eigen::Index axis { 1 };    // Motion axis: 0 = x, 1 = y, 2 = z
+
     fcl::Vector3f pos {};
     for (size_t i = 0; i < objects.size(); i++)
     {
@@ -228,7 +234,25 @@ void env::Environment::moveStraight(float delta_time)
             continue;
 
         pos = objects[i]->getPosition();
-        pos.x() -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
+        const fcl::Vector3f pos_min { objects[i]->getInitialPosition() - amplitude };
+        const fcl::Vector3f pos_max { objects[i]->getInitialPosition() + amplitude };
+        // Store the direction in each object's velocity so it persists between updates.
+        int sign { objects[i]->getVelocity()(axis) > 0 ? 1 : -1 };
+        pos(axis) += sign * delta_time * objects[i]->getMaxVel();
+        if (pos(axis) > pos_max(axis))
+        {
+            pos(axis) = pos_max(axis);
+            sign = -1;
+        }
+        else if (pos(axis) < pos_min(axis))
+        {
+            pos(axis) = pos_min(axis);
+            sign = 1;
+        }
+
+        fcl::Vector3f velocity { fcl::Vector3f::Zero() };
+        velocity(axis) = sign * objects[i]->getMaxVel();
+        objects[i]->setVelocity(velocity);
         objects[i]->setPosition(pos);
         // std::cout << i << ". " << objects[i];
     }

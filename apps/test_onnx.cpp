@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 		// "/data/xarm6/scenario3/scenario3.yaml"
 	};
 
-    const std::string onnx_model_path { "/data/planar_2dof/onnx_models/GNN_8obs.onnx" };
+    const std::string onnx_model_path { "/data/planar_2dof/onnx_models/GCNN_4obs.onnx" };
 
 	initGoogleLogging(argv);
 	int clp = commandLineParser(argc, argv, scenario_file_path);
@@ -65,7 +65,11 @@ int main(int argc, char** argv)
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
 
-			generateRandomStartAndGoal(scenario, min_dist_start_goal);
+			env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
+			env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
+
+			if (min_dist_start_goal > 0)
+				generateRandomStartAndGoal(scenario, min_dist_start_goal);
 			if (num_random_obstacles > 0)
 				initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 
@@ -127,13 +131,12 @@ int main(int argc, char** argv)
 				}
 			}
 
-            std::cout << "Raw input (" << input.size() << " values): \n";
+			std::ofstream output_file {};
+			output_file.open(project_path + onnx_model_path.substr(0, onnx_model_path.size()-5) + "_test_input.csv", std::ofstream::app);
             for (std::size_t i = 0; i < input.size(); ++i) 
-            {
-                if (i) std::cout << ';';
-                std::cout << input[i];
-            }
-            std::cout << '\n';
+				output_file << input[i] << ",";
+			output_file << "\n";
+			output_file.close();
 
             const auto output = onnxcnn.predict(input);
             std::cout << "Output probabilities: " << std::setprecision(4);

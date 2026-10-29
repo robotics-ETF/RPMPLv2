@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
 		// "/data/planar_2dof/scenario1/scenario1.yaml"
 		"/data/planar_2dof/scenario2/scenario2.yaml"
+		// "/data/planar_2dof/scenario3/scenario3.yaml"
 
 		// "/data/xarm6/scenario_test/scenario_test.yaml"
 		// "/data/xarm6/scenario1/scenario1.yaml"

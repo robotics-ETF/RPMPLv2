@@ -23,6 +23,7 @@ namespace env
         inline const std::string &getLabel() const { return label; }
 		inline std::shared_ptr<fcl::CollisionObject<float>> getCollObject() const { return coll_object; }
         inline const fcl::Vector3f &getPosition() const { return position; }
+        inline const fcl::Vector3f &getInitialPosition() const { return initial_position; }
         inline const fcl::Vector3f &getVelocity() const { return velocity; }
         inline const fcl::Vector3f &getAcceleration() const { return acceleration; }
         inline float getMaxVel() const { return max_vel; }
@@ -44,6 +45,7 @@ namespace env
         std::string label;
 		std::shared_ptr<fcl::CollisionObject<float>> coll_object;
 		fcl::Vector3f position; 									// Position vector in [m]
+        fcl::Vector3f initial_position;                          // Initial position, used as the center of straight oscillation
 		fcl::Vector3f velocity; 									// Velocity vector in [m/s]
 		fcl::Vector3f acceleration; 						   		// Acceleration vector in [m/s²]
 		float max_vel; 										    	// Maximal velocity in [m/s]

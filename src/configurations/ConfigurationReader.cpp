@@ -174,6 +174,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "DRGBTConfig::TRESHOLD_WEIGHT is not defined! Using default value of " << DRGBTConfig::TRESHOLD_WEIGHT;
     
+    if (DRGBTConfigRoot["GREEDY_FACTOR"].IsDefined())
+        DRGBTConfig::GREEDY_FACTOR = DRGBTConfigRoot["GREEDY_FACTOR"].as<float>();
+    else
+        LOG(INFO) << "DRGBTConfig::GREEDY_FACTOR is not defined! Using default value of " << DRGBTConfig::GREEDY_FACTOR;
+
     if (DRGBTConfigRoot["D_CRIT"].IsDefined())
         DRGBTConfig::D_CRIT = DRGBTConfigRoot["D_CRIT"].as<float>();
     else
@@ -215,11 +220,16 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "SL_DRGBTConfig::NUM_LAYERS is not defined! Using default value of " << SL_DRGBTConfig::NUM_LAYERS;
 
-    if (SL_DRGBTConfigRoot["PROBABILITY_THRESHOLD"].IsDefined())
-        SL_DRGBTConfig::PROBABILITY_THRESHOLD = SL_DRGBTConfigRoot["PROBABILITY_THRESHOLD"].as<float>();
+    if (SL_DRGBTConfigRoot["NUM_NEW_STATES"].IsDefined())
+        SL_DRGBTConfig::NUM_NEW_STATES = SL_DRGBTConfigRoot["NUM_NEW_STATES"].as<std::size_t>();
     else
-        LOG(INFO) << "SL_DRGBTConfig::PROBABILITY_THRESHOLD is not defined! Using default value of " << SL_DRGBTConfig::PROBABILITY_THRESHOLD;
-    
+        LOG(INFO) << "SL_DRGBTConfig::NUM_NEW_STATES is not defined! Using default value of " << SL_DRGBTConfig::NUM_NEW_STATES;
+
+    if (SL_DRGBTConfigRoot["STATE_MAX_HISTORY"].IsDefined())
+        SL_DRGBTConfig::STATE_MAX_HISTORY = SL_DRGBTConfigRoot["STATE_MAX_HISTORY"].as<std::size_t>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::STATE_MAX_HISTORY is not defined! Using default value of " << SL_DRGBTConfig::STATE_MAX_HISTORY;
+
     // RRTxConfigRoot
     if (RRTxConfigRoot["MAX_NUM_ITER"].IsDefined())
         RRTxConfig::MAX_NUM_ITER = RRTxConfigRoot["MAX_NUM_ITER"].as<size_t>();

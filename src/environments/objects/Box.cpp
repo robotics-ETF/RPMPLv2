@@ -6,6 +6,7 @@ env::Box::Box(const fcl::Vector3f &dim, const fcl::Vector3f &pos, const fcl::Qua
     coll_object = std::make_shared<fcl::CollisionObject<float>>(fcl_box, rot.matrix(), pos);
     coll_object->computeAABB();
     position = pos;
+    initial_position = pos;
     velocity = fcl::Vector3f::Zero();
     acceleration = fcl::Vector3f::Zero();
     max_vel = 0;
