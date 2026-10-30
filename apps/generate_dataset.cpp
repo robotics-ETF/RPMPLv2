@@ -114,7 +114,6 @@ int main(int argc, char **argv)
 
 			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };			
 			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
-			bool path_found { false };
 			bool sol_found { false };
 			tree->getState(0)->setCost(0);
 
@@ -135,7 +134,6 @@ int main(int argc, char **argv)
 				
 				if (result)
 				{
-					path_found = true;
 					std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { tree->getState(i)->getChildren() };
 					float clearance_factor { 1.0f };
 					for (const std::shared_ptr<base::State> &child : *children)
@@ -152,12 +150,6 @@ int main(int argc, char **argv)
 
 					std::cout << "Clearance factor: " << clearance_factor << "\t";
 					std::cout << "Final cost: " << cost / clearance_factor << "\n";
-				}
-
-				if (!path_found && i == pattern_tree->getNumNodes(1)-1)
-				{
-					LOG(INFO) << "No path found from any first-layer node of the pattern tree!";
-					break;
 				}
 			}
 
