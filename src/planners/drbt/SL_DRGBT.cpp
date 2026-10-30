@@ -31,7 +31,7 @@ bool planning::drbt::SL_DRGBT::solve()
         time_iter_start = std::chrono::steady_clock::now();     // Start the iteration clock
         // std::cout << "Iteration: " << planner_info->getNumIterations() << "\n";
         // std::cout << "q_current: " << q_current << "\n";
-                
+        
         // ------------------------------------------------------------------------------- //
         generateHorizon();
         updateHorizon();
@@ -52,7 +52,7 @@ bool planning::drbt::SL_DRGBT::solve()
 
         // ------------------------------------------------------------------------------- //
         // Checking the real-time execution
-        float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
+        // float time_iter_remain = DRGBTConfig::MAX_ITER_TIME * 1e3 - getElapsedTime(time_iter_start, planning::TimeUnit::ms);
         // std::cout << "Time elapsed: " << getElapsedTime(time_iter_start, planning::TimeUnit::ms) << " [ms] \n";
         // std::cout << "Remaining iteration time is " << time_iter_remain << " [ms] \n";
         // if (time_iter_remain < 0)
@@ -159,7 +159,7 @@ void planning::drbt::SL_DRGBT::generateHorizon()
         horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_goal, 0));    // 'index' = 0 is reserved for 'q_goal' here, so it can be reached!
     }
 
-    // addRandomStates(num_states);     // TODO
+    // addRandomStates(SL_DRGBTConfig::NUM_NEW_STATES);     // TODO
 
     // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
     // for (size_t i = 0; i < horizon.size(); i++)
