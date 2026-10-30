@@ -17,6 +17,7 @@ public:
     static float MAX_PLANNING_TIME;                                         // Maximal algorithm runtime
     static size_t INIT_HORIZON_SIZE;                                        // Initial horizon size
     static float TRESHOLD_WEIGHT;                                           // Treshold for the replanning assessment. Range: between 0 and 1
+    static float GREEDY_FACTOR;                                             // Higher values give more importance to choosing 'q_next' closer to the goal
     static float D_CRIT;                                                    // Critical distance in W-space to compute critical nodes
     static float RESOLUTION_COLL_CHECK;                                     // Perform collision check when obstacle moves at most 'RESOLUTION_COLL_CHECK' in [m]
     static size_t MAX_NUM_MODIFY_ATTEMPTS;                                  // Maximal number of attempts when modifying bad or critical states

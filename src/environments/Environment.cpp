@@ -63,13 +63,10 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
 
         if (node_robot["ground_included"].IsDefined())
             ground_included = node_robot["ground_included"].as<size_t>();
-        else if (node_robot["type"].as<std::string>() == "xarm6")
-        {
+        else
             ground_included = 0;
-            throw std::domain_error("It is not defined whether ground is included! Thus, it will not be included. ");
-        }
 
-        if (node_robot["WS_center"].IsDefined())
+        if (node_robot["WS_center"].IsDefined() && node_robot["WS_radius"].IsDefined())
         {
             for (size_t i = 0; i < 3; i++)
                 WS_center(i) = node_robot["WS_center"][i].as<float>();
@@ -77,23 +74,25 @@ env::Environment::Environment(const std::string &config_file_path, const std::st
             WS_radius = node_robot["WS_radius"].as<float>();
         }
         else
-            throw std::domain_error("Workspace center point is not defined! ");
+            throw std::domain_error("Workspace center point and/or workspace radius are not defined! ");
 
         sign = Eigen::VectorXi::Ones(node_env.size());
         path_len = Eigen::VectorXf::Zero(node_env.size());
 
+        motion_type = MotionType::light_directions;
         YAML::Node node_testing { node["testing"] };
-        if (node_testing.IsDefined())
+        if (node_testing.IsDefined() && node_testing["motion_type"].IsDefined())
         {
-            if (node_testing["motion_type"].as<std::string>() == "straight")
+            const std::string motion_type_name { node_testing["motion_type"].as<std::string>() };
+            if (motion_type_name == "straight")
                 motion_type = MotionType::straight;
-            else if (node_testing["motion_type"].as<std::string>() == "circular")
+            else if (motion_type_name == "circular")
                 motion_type = MotionType::circular;
-            else if (node_testing["motion_type"].as<std::string>() == "two_tunnels")
+            else if (motion_type_name == "two_tunnels")
                 motion_type = MotionType::two_tunnels;
-            else if (node_testing["motion_type"].as<std::string>() == "random_directions")
+            else if (motion_type_name == "random_directions")
                 motion_type = MotionType::random_directions;
-            else if (node_testing["motion_type"].as<std::string>() == "light_directions")
+            else if (motion_type_name == "light_directions")
                 motion_type = MotionType::light_directions;
             else
             {
@@ -222,6 +221,12 @@ void env::Environment::updateEnvironment(float delta_time)
 
 void env::Environment::moveStraight(float delta_time)
 {
+    const float x_amplitude { 1.0f };
+    const float y_amplitude { 1.0f };
+    const float z_amplitude { 1.0f };
+    const fcl::Vector3f amplitude { x_amplitude, y_amplitude, z_amplitude };    // Maximum displacement from the initial position in [m]
+    const Eigen::Index axis { 1 };    // Motion axis: 0 = x, 1 = y, 2 = z
+
     fcl::Vector3f pos {};
     for (size_t i = 0; i < objects.size(); i++)
     {
@@ -229,7 +234,25 @@ void env::Environment::moveStraight(float delta_time)
             continue;
 
         pos = objects[i]->getPosition();
-        pos.x() -= delta_time * objects[i]->getMaxVel();    // Move along x-axis
+        const fcl::Vector3f pos_min { objects[i]->getInitialPosition() - amplitude };
+        const fcl::Vector3f pos_max { objects[i]->getInitialPosition() + amplitude };
+        // Store the direction in each object's velocity so it persists between updates.
+        int sign { objects[i]->getVelocity()(axis) > 0 ? 1 : -1 };
+        pos(axis) += sign * delta_time * objects[i]->getMaxVel();
+        if (pos(axis) > pos_max(axis))
+        {
+            pos(axis) = pos_max(axis);
+            sign = -1;
+        }
+        else if (pos(axis) < pos_min(axis))
+        {
+            pos(axis) = pos_min(axis);
+            sign = 1;
+        }
+
+        fcl::Vector3f velocity { fcl::Vector3f::Zero() };
+        velocity(axis) = sign * objects[i]->getMaxVel();
+        objects[i]->setVelocity(velocity);
         objects[i]->setPosition(pos);
         // std::cout << i << ". " << objects[i];
     }

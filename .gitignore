@@ -6,3 +6,4 @@ log
 .ccache
 vgcore*
 *.csv
+/external/

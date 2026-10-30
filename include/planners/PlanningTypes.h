@@ -35,6 +35,7 @@ namespace planning
 		RGBTConnect,
 		RGBMTStar,
 		DRGBT,
+		SL_DRGBT,
 		RRTx,
 		RT_RGBT
 	};
@@ -47,6 +48,7 @@ namespace planning
 		{ "RGBT-Connect", planning::PlannerType::RGBTConnect },
 		{ "RGBMT*", planning::PlannerType::RGBMTStar },
 		{ "DRGBT", planning::PlannerType::DRGBT },
+		{ "SL_DRGBT", planning::PlannerType::SL_DRGBT },
 		{ "RRTx", planning::PlannerType::RRTx },
 		{ "RT-RGBT", planning::PlannerType::RT_RGBT }
 	};

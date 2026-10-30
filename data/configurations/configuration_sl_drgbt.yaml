@@ -1,0 +1,3 @@
+NUM_LAYERS: 3                                           # Number of layers for generating the pattern tree
+NUM_NEW_STATES: 8                                       # Number of new states predicted by NN that are added to the horizon
+STATE_MAX_HISTORY: 10                                   # Maximum history a state may remain in the horizon, measured by state index difference

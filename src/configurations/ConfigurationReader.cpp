@@ -8,6 +8,7 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     YAML::Node RGBTConnectConfigRoot        { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbtconnect.yaml") };
     YAML::Node RGBMTStarConfigRoot          { YAML::LoadFile(root_path + "/data/configurations/configuration_rgbmtstar.yaml") };
     YAML::Node DRGBTConfigRoot              { YAML::LoadFile(root_path + "/data/configurations/configuration_drgbt.yaml") };
+    YAML::Node SL_DRGBTConfigRoot           { YAML::LoadFile(root_path + "/data/configurations/configuration_sl_drgbt.yaml") };
     YAML::Node RRTxConfigRoot               { YAML::LoadFile(root_path + "/data/configurations/configuration_rrtx.yaml") };
     YAML::Node TrajectoryConfigRoot         { YAML::LoadFile(root_path + "/data/configurations/configuration_trajectory.yaml") };
     YAML::Node RT_RGBTConfigRoot            { YAML::LoadFile(root_path + "/data/configurations/configuration_rt_rgbt.yaml") };
@@ -137,6 +138,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND is not defined! Using default value of " << RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND;
 
+    if (RGBMTStarConfigRoot["TERMINATE_EPS_ZONE"].IsDefined())
+        RGBMTStarConfig::TERMINATE_EPS_ZONE = RGBMTStarConfigRoot["TERMINATE_EPS_ZONE"].as<float>();
+    else
+        LOG(INFO) << "RGBMTStarConfig::TERMINATE_EPS_ZONE is not defined! Using default value of " << RGBMTStarConfig::TERMINATE_EPS_ZONE;
+
     if (RGBMTStarConfigRoot["SAFETY_FACTOR"].IsDefined())
         RGBMTStarConfig::SAFETY_FACTOR = RGBMTStarConfigRoot["SAFETY_FACTOR"].as<float>();
     else
@@ -168,6 +174,11 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
     else
         LOG(INFO) << "DRGBTConfig::TRESHOLD_WEIGHT is not defined! Using default value of " << DRGBTConfig::TRESHOLD_WEIGHT;
     
+    if (DRGBTConfigRoot["GREEDY_FACTOR"].IsDefined())
+        DRGBTConfig::GREEDY_FACTOR = DRGBTConfigRoot["GREEDY_FACTOR"].as<float>();
+    else
+        LOG(INFO) << "DRGBTConfig::GREEDY_FACTOR is not defined! Using default value of " << DRGBTConfig::GREEDY_FACTOR;
+
     if (DRGBTConfigRoot["D_CRIT"].IsDefined())
         DRGBTConfig::D_CRIT = DRGBTConfigRoot["D_CRIT"].as<float>();
     else
@@ -202,6 +213,22 @@ void ConfigurationReader::initConfiguration(const std::string &root_path)
         DRGBTConfig::GUARANTEED_SAFE_MOTION = DRGBTConfigRoot["GUARANTEED_SAFE_MOTION"].as<bool>();
     else
         LOG(INFO) << "DRGBTConfig::GUARANTEED_SAFE_MOTION is not defined! Using default value of " << DRGBTConfig::GUARANTEED_SAFE_MOTION;
+
+    // SL_DRGBTConfigRoot
+    if (SL_DRGBTConfigRoot["NUM_LAYERS"].IsDefined())
+        SL_DRGBTConfig::NUM_LAYERS = SL_DRGBTConfigRoot["NUM_LAYERS"].as<std::size_t>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::NUM_LAYERS is not defined! Using default value of " << SL_DRGBTConfig::NUM_LAYERS;
+
+    if (SL_DRGBTConfigRoot["NUM_NEW_STATES"].IsDefined())
+        SL_DRGBTConfig::NUM_NEW_STATES = SL_DRGBTConfigRoot["NUM_NEW_STATES"].as<std::size_t>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::NUM_NEW_STATES is not defined! Using default value of " << SL_DRGBTConfig::NUM_NEW_STATES;
+
+    if (SL_DRGBTConfigRoot["STATE_MAX_HISTORY"].IsDefined())
+        SL_DRGBTConfig::STATE_MAX_HISTORY = SL_DRGBTConfigRoot["STATE_MAX_HISTORY"].as<std::size_t>();
+    else
+        LOG(INFO) << "SL_DRGBTConfig::STATE_MAX_HISTORY is not defined! Using default value of " << SL_DRGBTConfig::STATE_MAX_HISTORY;
 
     // RRTxConfigRoot
     if (RRTxConfigRoot["MAX_NUM_ITER"].IsDefined())

@@ -3,18 +3,35 @@
 planning::rbt::PatternTree::PatternTree(const std::shared_ptr<base::StateSpace> ss_, size_t num_layers_) : RGBTConnect(ss_) 
 {
 	num_layers = num_layers_;
-}
+	num_nodes.emplace_back(1);
+	num_nodes.emplace_back(1 + 2*ss->num_dimensions);
 
+	num_paths.emplace_back(0);
+	num_paths.emplace_back(2*ss->num_dimensions);
+
+	for (size_t i = 2; i <= num_layers; i++)
+	{
+		num_nodes.emplace_back(num_nodes[i-1] + 2*ss->num_dimensions * std::pow(2*ss->num_dimensions - 1, i-1));
+		num_paths.emplace_back(num_paths[i-1] * (2*ss->num_dimensions - 1));
+	}
+}	
+
+// Get number of nodes in the pattern tree with 'num_layers_' number of layers
 size_t planning::rbt::PatternTree::getNumNodes(int num_layers_)
 {
 	if (num_layers_ == -1)
 		num_layers_ = num_layers;
+		
+	return num_nodes[num_layers_];
+}
+
+// Get number of paths in the pattern tree with 'num_layers_' number of layers
+size_t planning::rbt::PatternTree::getNumPaths(int num_layers_)
+{
+	if (num_layers_ == -1)
+		num_layers_ = num_layers;
 	
-	size_t num_nodes { 1 + 2*ss->num_dimensions };
-	for (size_t i = 1; i < size_t(num_layers_); i++)
-		num_nodes += 2*ss->num_dimensions * std::pow(2*ss->num_dimensions - 1, i);
-	
-	return num_nodes;
+	return num_paths[num_layers_];
 }
 
 const std::vector<std::shared_ptr<base::State>> planning::rbt::PatternTree::generateGBur(const std::shared_ptr<base::State> q_root, float delta)

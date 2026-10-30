@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 					output_file << scenario.getGoal()->getCoord(idx) << (idx < ss->num_dimensions-1 ? ", " : "");
 				output_file << "]\n";
 
-				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs);
+				initRandomObstacles(init_num_obs, obs_dim, scenario, max_vel_obs, max_acc_obs, 6 * DRGBTConfig::D_CRIT);
 				std::vector<std::shared_ptr<env::Object>> objects { env->getObjects() };
 				for (size_t idx = 0; idx < objects.size(); idx++)
 				{

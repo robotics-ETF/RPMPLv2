@@ -32,6 +32,7 @@ bool planning::rbt_star::RGBMTStar::solve()
     std::vector<size_t> trees_reached {};                          // List of reached trees
     std::vector<size_t> trees_connected {};                        // List of connected trees
     std::vector<std::shared_ptr<base::State>> states_reached {};   // Reached states from other trees
+    float cost_opt2 { INFINITY };
 
     while (true)
     {
@@ -136,9 +137,19 @@ bool planning::rbt_star::RGBMTStar::solve()
                     
                     if (q_new->getCost() < cost_opt)    // The optimal connection between main trees is stored
                     {
+                        // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << q_new->getCost() << "\n";
+                        if (RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND ||
+                            (std::abs(q_new->getCost() - cost_opt) < RGBMTStarConfig::TERMINATE_EPS_ZONE && 
+                            std::abs(cost_opt2 - cost_opt) < RGBMTStarConfig::TERMINATE_EPS_ZONE))
+                        {
+                            // std::cout << "Path converged! \n";
+                            planner_info->setSuccessState(true);
+                        }
+                        
                         q_con_opt = q_new;
+                        cost_opt2 = cost_opt;
                         cost_opt = q_new->getCost();
-                        // std::cout << "Cost after " << planner_info->getNumStates() << " states is " << cost_opt << "\n";
+                        
                         // planner_info->setSuccessState(true);
                         // computePath(q_con_opt);
                         // outputPlannerData("/home/nermin/RPMPLv2/data/planar_2dof/scenario1_tests/plannerData" + 
@@ -428,7 +439,7 @@ bool planning::rbt_star::RGBMTStar::checkTerminatingCondition([[maybe_unused]] b
     if (getElapsedTime(time_alg_start) >= RGBMTStarConfig::MAX_PLANNING_TIME ||
         planner_info->getNumStates() >= RGBMTStarConfig::MAX_NUM_STATES ||
         planner_info->getNumIterations() >= RGBMTStarConfig::MAX_NUM_ITER ||
-        (RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND && cost_opt < INFINITY))
+        planner_info->getSuccessState())
     {
         if (cost_opt < INFINITY)
         {

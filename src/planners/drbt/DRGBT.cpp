@@ -103,9 +103,7 @@ bool planning::drbt::DRGBT::solve()
         // std::cout << "d_c: " << q_current->getDistance() << " [m] \n";
 
         // ------------------------------------------------------------------------------- //
-        if (status != base::State::Status::Advanced)
-            generateHorizon();
-            
+        generateHorizon();            
         updateHorizon();
         generateGBur();
         computeNextState();
@@ -176,22 +174,23 @@ bool planning::drbt::DRGBT::solve()
 // Only states from predefined path that come after 'q_next' are remained in the horizon. Other states are deleted.
 void planning::drbt::DRGBT::generateHorizon()
 {
+    if (status == base::State::Status::Advanced)
+        return;
+
     // std::cout << "Generating horizon... \n";
     // auto time_generateHorizon { std::chrono::steady_clock::now() };
 
+    // If horizon is not empty, then 'q_next' is reached, predefined path was not replanned, and 'status' is not trapped
     // Deleting states which are left behind 'q_next', and do not belong to the predefined path
-    int q_next_idx { q_next->getIndex() };
-    if (!horizon.empty())   // 'q_next' is reached. Predefined path was not replanned nor 'status' is trapped
+    for (size_t i = horizon.size(); i > 0;)
     {
-        for (int i = horizon.size() - 1; i >= 0; i--)
-        {
-            if (horizon[i]->getIndex() <= q_next_idx)
+        i--;
+        if (horizon[i]->getIndex() <= q_next->getIndex())
             {
                 horizon.erase(horizon.begin() + i);
                 // std::cout << "Deleting state " << i << ". Horizon size is " << horizon.size() << "\n";
             }
         }
-    }
 
     // Generating horizon
     size_t num_states { horizon_size - (horizon.size() + num_lateral_states) };
@@ -201,7 +200,7 @@ void planning::drbt::DRGBT::generateHorizon()
         if (!horizon.empty())
             idx = horizon.back()->getIndex() + 1;
         else
-            idx = q_next_idx + 1;
+            idx = q_next->getIndex() + 1;
         
         // std::cout << "Adding states from the predefined path starting from " << idx << ". state... \n";
         if (idx + num_states <= predefined_path.size())
@@ -226,10 +225,6 @@ void planning::drbt::DRGBT::generateHorizon()
         addRandomStates(num_states);
     }
     
-    // Set the next state just for obtaining lateral spines later, since 'q_next' is not set
-    if (!horizon.empty())
-        q_next = horizon.front();
-
     // std::cout << "Initial horizon consists of " << horizon.size() << " states: \n";
     // for (size_t i = 0; i < horizon.size(); i++)
     //     std::cout << i << ". state:\n" << horizon[i] << "\n";
@@ -289,7 +284,7 @@ void planning::drbt::DRGBT::generateGBur()
         {
             // Check whether the elapsed time for Task 1 is exceeded
             time_elapsed = getElapsedTime(time_iter_start);
-            if (time_elapsed >= max_time && idx < horizon.size() - 1)
+            if (time_elapsed >= max_time)
             {
                 // Delete horizon states for which there is no enough remaining time to be processed
                 // This is OK since better states are usually located at the beginning of horizon
@@ -319,41 +314,20 @@ void planning::drbt::DRGBT::generateGBur()
     // planner_info->addRoutineTime(getElapsedTime(time_generateGBur, planning::TimeUnit::ms), 2);
 }
 
-// Shorten the horizon by removing 'num' states. Excess states are deleted, and best states holds priority.
+// Remove 'num' states with the lowest weights.
 void planning::drbt::DRGBT::shortenHorizon(size_t num)
 {
     size_t num_deleted { 0 };
-    for (int i = horizon.size() - 1; i >= 0; i--)
+    while (num_deleted < num && !horizon.empty())
     {
-        if (horizon[i]->getStatus() == planning::drbt::HorizonState::Status::Bad)
-        {
-            horizon.erase(horizon.begin() + i);
-            num_deleted++;
-            // std::cout << "Deleting state " << i << " in stage 1 \n";
-        }
-        if (num_deleted == num)
-            return;
-    }
-
-    for (int i = horizon.size() - 1; i >= 0; i--)
-    {
-        if (horizon[i]->getIndex() == -1)
-        {
-            horizon.erase(horizon.begin() + i);
-            num_deleted++;
-            // std::cout << "Deleting state " << i << " in stage 2 \n";
-        }
-        if (num_deleted == num)
-            return;
-    }
-
-    for (int i = horizon.size() - 1; i >= 0; i--)
-    {
-        horizon.erase(horizon.begin() + i);
+        const auto worst = std::min_element(horizon.begin(), horizon.end(),
+            [](const auto &left, const auto &right)
+            {
+                return left->getWeight() < right->getWeight() && left->getWeight() > -1;
+            });
+        // std::cout << "Deleting state " << (*worst)->getCoord().transpose() << " with weight " << (*worst)->getWeight() << "\n";
+        horizon.erase(worst);
         num_deleted++;
-        // std::cout << "Deleting state " << i << " in stage 3 \n";
-        if (num_deleted == num)
-            return;
     }
 }
 
@@ -370,19 +344,33 @@ void planning::drbt::DRGBT::addRandomStates(size_t num)
 
 void planning::drbt::DRGBT::addLateralStates()
 {
+    // Set the next state just for obtaining lateral spines, in case 'q_next' is not set
+    if (ss->isEqual(q_current, q_next->getState()))
+    {
+        if (!horizon.empty())
+            q_next = horizon.front();
+        else
+        {
+            addRandomStates(num_lateral_states);
+            return;
+        }
+    }
+
     size_t num_added { 0 };
+    const Eigen::VectorXf direction { q_next->getCoord() - q_current->getCoord() };
     if (ss->num_dimensions == 2)   // In 2D C-space only two possible lateral spines exist
     {
-        std::shared_ptr<base::State> q_new;
-        Eigen::Vector2f new_vec;
-        for (int coord = -1; coord <= 1; coord += 2)
+        const float length { direction.norm() };
+        if (std::isfinite(length) && length > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
         {
-            new_vec(0) = -coord;
-            new_vec(1) = coord * (q_next->getCoord(0) - q_current->getCoord(0)) / (q_next->getCoord(1) - q_current->getCoord(1));
-            q_new = ss->getNewState(q_current->getCoord() + new_vec);
+            const Eigen::Vector2f lateral(-direction.y() / length, direction.x() / length);
+            std::shared_ptr<base::State> q_new { nullptr };
+            for (int sign : {-1, 1})
+            {
+                q_new = ss->getNewState(q_current->getCoord() + sign * lateral);
             q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
             q_new = ss->pruneEdge(q_current, q_new);
-            if (!ss->isEqual(q_current, q_new))
+                if (q_new->getCoord().allFinite() && !ss->isEqual(q_current, q_new))
             {
                 horizon.emplace_back(std::make_shared<planning::drbt::HorizonState>(q_new, -1));
                 num_added++;
@@ -390,12 +378,13 @@ void planning::drbt::DRGBT::addLateralStates()
             }
         }
     }
+    }
     else
     {
         size_t idx { 0 };
         for (idx = 0; idx < ss->num_dimensions; idx++)
         {
-            if (std::abs(q_next->getCoord(idx) - q_current->getCoord(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+            if (std::abs(direction(idx)) > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
                 break;
         }
             
@@ -406,9 +395,7 @@ void planning::drbt::DRGBT::addLateralStates()
             for (size_t i = 0; i < num_lateral_states; i++)
             {
                 q_new = ss->getRandomState(q_current);
-                coord = q_current->getCoord(idx) + q_new->getCoord(idx) -
-                        (q_next->getCoord() - q_current->getCoord()).dot(q_new->getCoord()) /
-                        (q_next->getCoord(idx) - q_current->getCoord(idx));
+                coord = q_new->getCoord(idx) - direction.dot(q_new->getCoord() - q_current->getCoord()) / direction(idx);
                 q_new->setCoord(coord, idx);
                 q_new = ss->interpolateEdge(q_current, q_new, RBTConnectConfig::DELTA);
                 q_new = ss->pruneEdge(q_current, q_new);
@@ -490,7 +477,7 @@ void planning::drbt::DRGBT::computeReachedState(const std::shared_ptr<planning::
     q->setDistance(d_c_temp);
     
     // Check whether the goal is reached
-    if (q->getIndex() != -1 && ss->isEqual(q_reached, q_goal))
+    if (ss->isEqual(q_reached, q_goal))
         q->setStatus(planning::drbt::HorizonState::Status::Goal);
 }
 
@@ -499,25 +486,16 @@ void planning::drbt::DRGBT::computeNextState()
 {
     std::vector<float> dist_to_goal(horizon.size());
     float d_goal_min { INFINITY };
-    size_t d_goal_min_idx { 0 };
     float d_c_max { 0 };
 
     for (size_t i = 0; i < horizon.size(); i++)
     {
-        dist_to_goal[i] = ss->getNorm(horizon[i]->getStateReached(), q_goal);
+        dist_to_goal[i] = std::max(ss->getNorm(horizon[i]->getStateReached(), q_goal), RealVectorSpaceConfig::EQUALITY_THRESHOLD); // If 'q_goal' lies in the horizon, the distance will be zero.
         if (dist_to_goal[i] < d_goal_min)
-        {
             d_goal_min = dist_to_goal[i];
-            d_goal_min_idx = i;
-        }
+        
         if (horizon[i]->getDistance() > d_c_max)
             d_c_max = horizon[i]->getDistance();
-    }
-    
-    if (d_goal_min < RealVectorSpaceConfig::EQUALITY_THRESHOLD) // 'q_goal' lies in the horizon
-    {
-        d_goal_min = RealVectorSpaceConfig::EQUALITY_THRESHOLD; // Only to avoid "0/0" when 'dist_to_goal[i] < RealVectorSpaceConfig::EQUALITY_THRESHOLD'
-        dist_to_goal[d_goal_min_idx] = d_goal_min;
     }
 
     std::vector<float> weights_dist(horizon.size());
@@ -529,6 +507,13 @@ void planning::drbt::DRGBT::computeNextState()
     float max_weight { 0 };
     float weight { 0 };
     int idx_best { -1 };
+
+    const auto isEligible = [](const std::shared_ptr<planning::drbt::HorizonState> &q)
+    {
+        return q != nullptr && q->getWeight() > 0 &&
+               (q->getStatus() == planning::drbt::HorizonState::Status::Good ||
+                q->getStatus() == planning::drbt::HorizonState::Status::Goal);
+    };
 
     for (size_t i = 0; i < horizon.size(); i++)
     {
@@ -553,7 +538,7 @@ void planning::drbt::DRGBT::computeNextState()
         
         horizon[i]->setWeight(weight);
 
-        if (weight > max_weight)
+        if (weight > max_weight && isEligible(horizon[i]))
         {
             max_weight = weight;
             idx_best = i;
@@ -568,27 +553,28 @@ void planning::drbt::DRGBT::computeNextState()
         // Do the following only if 'q_next' belongs to the predefined path
         if (q_next->getIndex() != -1)
         {
-            float hysteresis = 0.1 * DRGBTConfig::TRESHOLD_WEIGHT;  // Hysteresis size when choosing the next state
-
-            // "The best" state nearest to the goal is chosen as the next state
+            // Larger GREEDY_FACTOR allows a larger weight gap to favor states closer to the goal.
             for (size_t i = 0; i < horizon.size(); i++)
             {
-                if (std::abs(q_next->getWeight() - horizon[i]->getWeight()) < hysteresis && dist_to_goal[i] < d_min)
+                if (isEligible(horizon[i]) &&
+                    max_weight - horizon[i]->getWeight() < DRGBTConfig::GREEDY_FACTOR && 
+                    dist_to_goal[i] < d_min)
                 {
                     d_min = dist_to_goal[i];
                     q_next = horizon[i];
                 }
             }
 
-            // If weights of 'q_next_previous' and 'q_next' are close, 'q_next_previous' remains the next state
+            // Retain the previous state only if it is eligible and within GREEDY_FACTOR of the maximum weight.
             if (q_next != q_next_previous &&
-                std::abs(q_next->getWeight() - q_next_previous->getWeight()) < hysteresis &&
                 q_next->getStatus() != planning::drbt::HorizonState::Status::Goal &&
+                isEligible(q_next_previous) &&
+                max_weight - q_next_previous->getWeight() < DRGBTConfig::GREEDY_FACTOR &&
                 getIndexInHorizon(q_next_previous) != -1)
                     q_next = q_next_previous;
         }
     }
-    else if (predefined_path.empty())   // All states are critical, and 'q_next' cannot be updated!
+    else    // All states are critical, and 'q_next' cannot be updated!
     {
         // std::cout << "All states are critical, and q_next cannot be updated! \n";
         horizon.clear();

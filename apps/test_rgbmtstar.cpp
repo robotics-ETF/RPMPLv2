@@ -39,8 +39,6 @@ int main(int argc, char **argv)
 
 	scenario::Scenario scenario(scenario_file_path, project_path);
 	std::shared_ptr<base::StateSpace> ss { scenario.getStateSpace() };
-	std::shared_ptr<base::State> q_start { scenario.getStart() };
-	std::shared_ptr<base::State> q_goal { scenario.getGoal() };
 	std::shared_ptr<env::Environment> env { scenario.getEnvironment() };
 	std::unique_ptr<planning::AbstractPlanner> planner { nullptr };
 
@@ -50,7 +48,7 @@ int main(int argc, char **argv)
 	{
 		env->removeObjects(num_obs);
 		initRandomObstacles(num_random_obstacles, obs_dim, scenario);
-		planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);
+		planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());
 		RGBMTStarConfig::TERMINATE_WHEN_PATH_IS_FOUND = true;
 		result = planner->solve();
 		LOG(INFO) << "A path to the goal can " << (result ? "" : "not ") << "be found!";
@@ -61,8 +59,8 @@ int main(int argc, char **argv)
 	LOG(INFO) << "Environment parts: " << env->getNumObjects();
 	LOG(INFO) << "Number of DOFs: " << ss->num_dimensions;
 	LOG(INFO) << "State space type: " << ss->getStateSpaceType();
-	LOG(INFO) << "Start: " << q_start;
-	LOG(INFO) << "Goal: " << q_goal;
+	LOG(INFO) << "Start: " << scenario.getStart();
+	LOG(INFO) << "Goal: " << scenario.getGoal();
 
 	std::vector<float> initial_costs {};
 	std::vector<float> final_costs {};
@@ -81,7 +79,7 @@ int main(int argc, char **argv)
 		try
 		{
 			LOG(INFO) << "Test number " << num_test << " of " << max_num_tests;
-			planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, q_start, q_goal);					
+			planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, scenario.getStart(), scenario.getGoal());					
 			result = planner->solve();
 
 			LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");

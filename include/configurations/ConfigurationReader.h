@@ -19,6 +19,7 @@
 #include "RGBTConnectConfig.h"
 #include "RGBMTStarConfig.h"
 #include "DRGBTConfig.h"
+#include "SL_DRGBTConfig.h"
 #include "RRTxConfig.h"
 #include "TrajectoryConfig.h"
 #include "RT_RGBTConfig.h"
