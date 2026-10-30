@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
 	std::string scenario_file_path
 	{
-		"/data/planar_2dof/scenario_test/scenario_test.yaml"
+		// "/data/planar_2dof/scenario_test/scenario_test.yaml"
 		// "/data/planar_2dof/scenario1/scenario1.yaml"
 		// "/data/planar_2dof/scenario2/scenario2.yaml"
 		// "/data/planar_2dof/scenario3/scenario3.yaml"
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 		// "/data/planar_10dof/scenario1/scenario1.yaml"
 		// "/data/planar_10dof/scenario2/scenario2.yaml"
 
-		// "/data/xarm6/scenario_test/scenario_test.yaml"
+		"/data/xarm6/scenario_test/scenario_test.yaml"
 		// "/data/xarm6/scenario1/scenario1.yaml"
 		// "/data/xarm6/scenario2/scenario2.yaml"
 		// "/data/xarm6/scenario3/scenario3.yaml"
@@ -94,6 +94,7 @@ int main(int argc, char **argv)
 				output_file << "\n";
 			}
 
+			// -------------------------------------------------------------------------------------- //
 			env->setBaseRadius(std::max(ss->robot->getCapsuleRadius(0), ss->robot->getCapsuleRadius(1)) + obs_dim.norm());
 			env->setRobotMaxVel(ss->robot->getMaxVel(0)); 	// Only velocity of the first joint matters
 
@@ -102,6 +103,7 @@ int main(int argc, char **argv)
 			if (num_random_obstacles > 0)
 				initRandomObstacles(num_random_obstacles, obs_dim, scenario);
 
+			// -------------------------------------------------------------------------------------- //
 			LOG(INFO) << "Test number    	 " << num_test << " of " << max_num_tests;
 			LOG(INFO) << "Using scenario:    " << project_path + scenario_file_path;
 			LOG(INFO) << "Environment parts: " << env->getNumObjects();
@@ -110,10 +112,60 @@ int main(int argc, char **argv)
 			LOG(INFO) << "Start:             " << scenario.getStart();
 			LOG(INFO) << "Goal:              " << scenario.getGoal();
 
-			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };
-			// LOG(INFO) << *tree;
-			
-			// Generate input data:
+			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };			
+			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
+			bool path_found { false };
+			bool sol_found { false };
+			tree->getState(0)->setCost(0);
+
+			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
+			{
+				float cost = (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm(); 	// Initial cost 
+				if (i >= pattern_tree->getNumNodes(1) &&
+					(cost < RealVectorSpaceConfig::EQUALITY_THRESHOLD || tree->getState(i)->getParent()->getCost() <= 0))
+				{
+					std::cout << "Skipping planning from node " << i << "\n";
+					continue;
+				}
+				
+				LOG(INFO) << "Planning from node " << i << ": " << tree->getState(i)->getCoord().transpose();
+				planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, ss->getNewState(tree->getState(i)->getCoord()), scenario.getGoal());
+				bool result { planner->solve() };
+				LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
+				
+				if (result)
+				{
+					path_found = true;
+					std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { tree->getState(i)->getChildren() };
+					float clearance_factor { 1.0f };
+					for (const std::shared_ptr<base::State> &child : *children)
+						clearance_factor *= (child->getCoord() - tree->getState(i)->getCoord()).norm();
+					
+					if (clearance_factor > RealVectorSpaceConfig::EQUALITY_THRESHOLD)
+					{
+						weights[i-1] = clearance_factor / cost;
+						tree->getState(i)->setCost(weights[i-1]);
+						sol_found = true;
+					}
+					else
+						clearance_factor = 0;
+
+					std::cout << "Clearance factor: " << clearance_factor << "\t";
+					std::cout << "Final cost: " << cost / clearance_factor << "\n";
+				}
+
+				if (!path_found && i == pattern_tree->getNumNodes(1)-1)
+				{
+					LOG(INFO) << "No path found from any first-layer node of the pattern tree!";
+					break;
+				}
+			}
+
+			if (!sol_found)
+				continue;
+
+			// -------------------------------------------------------------------------------------- //
+			// Write input data:
 			for (size_t j = 0; j < ss->num_dimensions; j++)
 				output_file << scenario.getStart()->getCoord(j) << ",";
 
@@ -135,6 +187,13 @@ int main(int argc, char **argv)
 			for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { tree->getState(i)->getNearestPoints() };
+				if (nearest_points == nullptr)
+				{
+					for (size_t j = 0; j < ss->num_dimensions; j++)
+						output_file << "0,0,0,";
+					continue;
+				}
+
 				Eigen::Vector3f R {}, R_min {}, O {}, O_min {}, OR {};
 				for (size_t j = 0; j < ss->num_dimensions; j++)
 				{
@@ -157,50 +216,13 @@ int main(int argc, char **argv)
 				}
 			}
 
-			// Generate output data:
+			// -------------------------------------------------------------------------------------- //
+			// Write output data:
 			// 1. option (next target vector)
 			// for (size_t j = 0; j < ss->num_dimensions; j++)
 			// 	output_file << new_path[idx+1]->getCoord(j) - new_path[idx]->getCoord(j) << ",";
 
 			// 2. option (probabilities of each node from the pattern tree)
-			std::vector<float> weights(pattern_tree->getNumNodes(num_layers-1)-1, 0.0);
-			bool path_found { false };
-			tree->getState(0)->setCost(0);
-
-			for (size_t i = 1; i < pattern_tree->getNumNodes(num_layers-1); i++)
-			{
-				float cost = (tree->getState(i)->getCoord() - tree->getState(i)->getParent()->getCoord()).norm(); 	// Initial cost 
-				if (cost > RealVectorSpaceConfig::EQUALITY_THRESHOLD && tree->getState(i)->getParent()->getCost() >= 0)
-				{
-					LOG(INFO) << "Planning from node " << i << ": " << tree->getState(i)->getCoord().transpose();
-					planner = std::make_unique<planning::rbt_star::RGBMTStar>(ss, ss->getNewState(tree->getState(i)->getCoord()), scenario.getGoal());
-					bool result { planner->solve() };
-					LOG(INFO) << planner->getPlannerType() << " planning finished with " << (result ? "SUCCESS!" : "FAILURE!");
-					
-					if (result)
-					{
-						path_found = true;
-						tree->getState(i)->setCost(cost);
-						std::shared_ptr<std::vector<std::shared_ptr<base::State>>> children { tree->getState(i)->getChildren() };
-						float clearance_factor { 1.0f };
-						for (const std::shared_ptr<base::State> &child : *children)
-							clearance_factor *= (child->getCoord() - tree->getState(i)->getCoord()).norm();
-						
-						if (clearance_factor > 0)
-							weights[i-1] = clearance_factor / cost;
-
-						std::cout << "Clearance factor: " << clearance_factor << "\t";
-						std::cout << "Final cost: " << cost / clearance_factor << "\n";
-					}
-
-					if (!path_found && i == pattern_tree->getNumNodes(1))
-					{
-						LOG(INFO) << "No path found from any first-layer node of the pattern tree!";
-						break;
-					}
-				}
-			}
-
 			size_t start_i { 0 };
 			size_t num { 2*ss->num_dimensions };
 			while (start_i < pattern_tree->getNumNodes(num_layers-1)-1)
