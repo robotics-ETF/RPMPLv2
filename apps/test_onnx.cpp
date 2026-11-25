@@ -107,6 +107,12 @@ int main(int argc, char** argv)
 			for (size_t i = 0; i < pattern_tree->getNumNodes(num_layers-1); i++)
 			{
 				std::shared_ptr<std::vector<Eigen::MatrixXf>> nearest_points { tree->getState(i)->getNearestPoints() };
+				if (nearest_points == nullptr)	// The state is in collision. OR-vectors are zero, as in 'generate_dataset.cpp'.
+				{
+					input.insert(input.end(), 3 * ss->num_dimensions, 0);
+					continue;
+				}
+
 				Eigen::Vector3f R {}, R_min {}, O {}, O_min {}, OR {};
 				for (size_t j = 0; j < ss->num_dimensions; j++)
 				{
