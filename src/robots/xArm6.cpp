@@ -19,6 +19,7 @@ robots::xArm6::xArm6(const std::string &robot_desc, float gripper_length_, size_
 	std::vector<urdf::LinkSharedPtr> links_;
 	model.getLinks(links_);
 	robot_tree.getChain("link_base", "link_eef", robot_chain);
+	fk_solver = std::make_unique<KDL::ChainFkSolverPos_recursive>(robot_chain);
 	num_DOFs = robot_chain.getNrOfJoints();
 	float lower { 0 };
 	float upper { 0 };
@@ -111,25 +112,19 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::xArm6::computeForwardKinematics
 	if (q->getFrames() != nullptr)		// It has been already computed!
 		return q->getFrames();
 
-	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::vector<KDL::Frame> frames_fk(num_DOFs);
-	robot_tree.getChain("link_base", "link_eef", robot_chain);
 	KDL::JntArray joint_pos { KDL::JntArray(num_DOFs) };
-
 	for (size_t i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
 
-	for (size_t i = 0; i < num_DOFs; i++)
-	{
-		KDL::Frame cart_pos {};
-		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		frames_fk[i] = cart_pos;
-		// std::cout << "Frame R" << i << ": " << frames_fk[i].M << "\n";
-		// std::cout << "Frame p" << i << ": " << frames_fk[i].p << "\n";
-	}
-	frames_fk.back().p += gripper_length * frames_fk.back().M.UnitZ();
+	// Frames of all chain segments in a single pass (the last segment is the fixed 'link_eef', which is not used).
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk { std::make_shared<std::vector<KDL::Frame>>(robot_chain.getNrOfSegments()) };
+	if (fk_solver->JntToCart(joint_pos, *frames_fk) < 0)
+		throw std::runtime_error("Failed to compute forward kinematics");
 
-	q->setFrames(std::make_shared<std::vector<KDL::Frame>>(frames_fk));
+	frames_fk->resize(num_DOFs);
+	frames_fk->back().p += gripper_length * frames_fk->back().M.UnitZ();
+
+	q->setFrames(frames_fk);
 	return q->getFrames();
 }
 
@@ -137,10 +132,8 @@ std::shared_ptr<base::State> robots::xArm6::computeInverseKinematics(const KDL::
 																	 const std::shared_ptr<base::State> q_init)
 {
 	KDL::Vector p_new { p - gripper_length * R.UnitZ() };
-	robot_tree.getChain("link_base", "link_eef", robot_chain);
-	KDL::ChainFkSolverPos_recursive fk_solver(robot_chain);
 	KDL::ChainIkSolverVel_pinv ik_solver(robot_chain);
-	KDL::ChainIkSolverPos_NR ik_solver_pos(robot_chain, fk_solver, ik_solver, 1000, 1e-5);
+	KDL::ChainIkSolverPos_NR ik_solver_pos(robot_chain, *fk_solver, ik_solver, 1000, 1e-5);
 
 	KDL::JntArray q_in(num_DOFs);
 	KDL::JntArray q_out(num_DOFs);
@@ -446,6 +439,10 @@ bool robots::xArm6::checkRealSelfCollision(const std::shared_ptr<base::State> q,
 		rot.col(1) = (rot.col(2).cross(rot.col(0)).normalized());
 
 		// Gripper is approximated by an enclosing capsule
+		// TODO: The AABB of 'gripper_fcl' is computed in its constructor from the uninitialised 'fcl::Transform3f()', and it is
+		// not recomputed by 'setTranslation'/'setRotation'. Thus, the broad phase in 'checkCollisionFCL' uses a garbage AABB,
+		// and the result depends on uninitialised memory. Fix: call 'gripper_fcl->computeAABB()' after setting the pose.
+		// Note that the fix changes self-collision results (e.g., of xArm6 datasets generated with the gripper attached).
 		CollisionGeometryPtr gripper(new fcl::Capsulef(getCapsuleRadius(num_DOFs-1), 0.7 * gripper_length));
 		std::unique_ptr<fcl::CollisionObjectf> gripper_fcl(new fcl::CollisionObjectf(gripper, fcl::Transform3f()));
 		gripper_fcl->setTranslation(trans);

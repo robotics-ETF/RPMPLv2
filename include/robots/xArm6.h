@@ -53,6 +53,7 @@ namespace robots
 		std::vector<KDL::Frame> init_poses;
 		KDL::Tree robot_tree;
 		KDL::Chain robot_chain;
+		std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver;	// Built once on 'robot_chain' (it keeps a reference to it)
 		std::vector<float> capsules_radius_new;
 	};
 }

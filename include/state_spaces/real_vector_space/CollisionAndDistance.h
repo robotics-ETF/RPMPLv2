@@ -36,6 +36,12 @@ namespace base
 			(const Eigen::Vector3f &A, const Eigen::Vector3f &B, float radius, Eigen::VectorXf &obs);
 
     private:
+		// Small matrices with dynamic size, but bounded maximal size, are stored without heap allocation, while Eigen evaluates
+		// them exactly as 'Eigen::MatrixXf'. Fixed-size types would change the summation order in norms, and thus the results.
+		template <typename Scalar, int MaxRows, int MaxCols>
+		using SmallMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, 0, MaxRows, MaxCols>;
+		using LineSegments = SmallMatrix<float, 3, 24>;	// Columns (2k, 2k+1) determine k-th line segment
+
 		static float checkCases(const Eigen::Vector3f &A, const Eigen::Vector3f &B, Eigen::Vector4f &rec, Eigen::Vector2f &point, 
                                 float obs_coord, size_t coord);
 		static const Eigen::Vector3f get3DPoint(const Eigen::Vector2f &point, float coord_value, size_t coord);
@@ -45,18 +51,18 @@ namespace base
         private:
             std::shared_ptr<Eigen::MatrixXf> nearest_pts;
             Eigen::Vector3f A, B, P1, P2;
-            Eigen::MatrixXi projections;					// Determines whether projections on obs exist. First column is for point 'A', and second is for point 'B'
+            SmallMatrix<int, 6, 2> projections;				// Determines whether projections on obs exist. First column is for point 'A', and second is for point 'B'
             Eigen::Vector2f dist_AB_obs;					// Distances of 'A' and 'B' to 'obs' (if projections exist)
-            Eigen::MatrixXf AB;								// Contains points 'A' and 'B'
-            Eigen::VectorXf obs;
+            SmallMatrix<float, 3, 2> AB;					// Contains points 'A' and 'B'
+            Eigen::VectorXf &obs;							// Refers to the caller's obstacle, which outlives this object
             float d_c;
             float radius;
 
             void projectionLineSegOnSide(size_t min1, size_t min2, size_t min3, size_t max1, size_t max2, size_t max3);
             void checkEdges(Eigen::Vector3f &point, size_t k);
-            std::shared_ptr<Eigen::MatrixXf> getLineSegments(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, 
-                                                             float coord_value, size_t coord);
-            void distanceToMoreLineSegments(const Eigen::MatrixXf &line_segments);
+            LineSegments getLineSegments(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, 
+                                         float coord_value, size_t coord);
+            void distanceToMoreLineSegments(const LineSegments &line_segments);
             void checkOtherCases();
 
         public:

@@ -6,6 +6,11 @@ add_executable(test_kdl_parser test_kdl_parser.cpp)
 target_compile_features(test_kdl_parser PRIVATE cxx_std_17)
 target_link_libraries(test_kdl_parser PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
 
+add_executable(benchmark_fk benchmark_fk.cpp)
+target_compile_features(benchmark_fk PRIVATE cxx_std_17)
+target_link_libraries(benchmark_fk PUBLIC rpmpl_library ${PROJECT_LIBRARIES})
+target_include_directories(benchmark_fk PUBLIC ${PROJECT_SOURCE_DIR}/apps)
+
 add_executable(test_planar_2dof test_planar_2dof.cpp)
 target_compile_features(test_planar_2dof PRIVATE cxx_std_17)
 target_link_libraries(test_planar_2dof PUBLIC rpmpl_library ${PROJECT_LIBRARIES})

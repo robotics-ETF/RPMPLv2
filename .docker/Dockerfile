@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as rpmplv2-dev-container
+FROM ubuntu:22.04 AS rpmplv2-base
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,12 +14,41 @@ RUN apt-get update \
     cmake ccache \
     lsb-release \
     software-properties-common \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libeigen3-dev libkdl-parser-dev libgflags-dev libgoogle-glog-dev liborocos-kdl-dev \
-    libgtest-dev libyaml-cpp-dev liburdf-dev python3-pip libfcl-dev libnanoflann-dev \
+    libgtest-dev libyaml-cpp-dev liburdf-dev libfcl-dev libnanoflann-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ONNX Runtime (CPU) used by SL_DRGBT. The microsoft/onnxruntime GitHub repository (and its release tarballs) no longer
+# exists, so headers and library are taken from Microsoft's official NuGet package. When changing the version, update
+# the checksum as well (sha256sum of the downloaded .nupkg). cmake/OnnxRuntime.cmake picks up $ONNXRUNTIME_ROOT.
+ARG ONNXRUNTIME_VERSION=1.23.2
+ARG ONNXRUNTIME_SHA256=25fe172f7fcdf34f2b5b02c8b997f6b88abc282956849d4af4335af23d0c4e4a
+RUN curl -fsSL -o /tmp/ort.nupkg https://www.nuget.org/api/v2/package/Microsoft.ML.OnnxRuntime/${ONNXRUNTIME_VERSION} \
+    && echo "${ONNXRUNTIME_SHA256}  /tmp/ort.nupkg" | sha256sum -c - \
+    && unzip -q /tmp/ort.nupkg 'build/native/include/*' 'runtimes/linux-x64/native/*' -d /tmp/ort \
+    && mkdir -p /opt/onnxruntime \
+    && mv /tmp/ort/build/native/include /opt/onnxruntime/include \
+    && mv /tmp/ort/runtimes/linux-x64/native /opt/onnxruntime/lib \
+    && ln -s libonnxruntime.so /opt/onnxruntime/lib/libonnxruntime.so.1 \
+    && rm -rf /tmp/ort /tmp/ort.nupkg
+ENV ONNXRUNTIME_ROOT=/opt/onnxruntime
+
+# Headless image for building and running the tests.
+FROM rpmplv2-base AS rpmplv2-test
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends g++ valgrind \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM rpmplv2-base AS rpmplv2-dev-container
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3-pip \
     && pip3 install trimesh urdfpy \
     && rm -rf /var/lib/apt/lists/*
 

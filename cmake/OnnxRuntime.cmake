@@ -1,5 +1,11 @@
 # Include this before add_subdirectory(src) and add_subdirectory(apps).
-set(ONNXRUNTIME_ROOT "${PROJECT_SOURCE_DIR}/external/onnxruntime"
+# The Docker images export ONNXRUNTIME_ROOT; otherwise the package is expected in external/onnxruntime.
+if(DEFINED ENV{ONNXRUNTIME_ROOT})
+    set(ONNXRUNTIME_DEFAULT_ROOT "$ENV{ONNXRUNTIME_ROOT}")
+else()
+    set(ONNXRUNTIME_DEFAULT_ROOT "${PROJECT_SOURCE_DIR}/external/onnxruntime")
+endif()
+set(ONNXRUNTIME_ROOT "${ONNXRUNTIME_DEFAULT_ROOT}"
     CACHE PATH "Path to the extracted ONNX Runtime CPU package")
 get_filename_component(ONNXRUNTIME_ROOT "${ONNXRUNTIME_ROOT}" ABSOLUTE)
 
