@@ -53,6 +53,7 @@ robots::Planar2DOF::Planar2DOF(const std::string &robot_desc, size_t num_DOFs_)
 	}
 	
 	robot_tree.getChain("base_link", "tool", robot_chain);
+	fk_solver = std::make_unique<KDL::ChainFkSolverPos_recursive>(robot_chain);
 	Eigen::VectorXf state { Eigen::VectorXf::Zero(num_DOFs) };
 	setState(std::make_shared<base::RealVectorSpaceState>(state));
 	self_collision_checking = false;
@@ -86,24 +87,16 @@ std::shared_ptr<std::vector<KDL::Frame>> robots::Planar2DOF::computeForwardKinem
 	if (q->getFrames() != nullptr)		// It has been already computed!
 		return q->getFrames();
 
-	KDL::TreeFkSolverPos_recursive tree_fk_solver(robot_tree);
-	std::vector<KDL::Frame> frames_fk(robot_tree.getNrOfSegments());
-	robot_tree.getChain("base_link", "tool", robot_chain);
 	KDL::JntArray joint_pos { KDL::JntArray(num_DOFs) };
-
 	for (size_t i = 0; i < num_DOFs; i++)
 		joint_pos(i) = q->getCoord(i);
-	
-	for (size_t i = 0; i < robot_tree.getNrOfSegments(); i++)
-	{
-		KDL::Frame cart_pos {};
-		tree_fk_solver.JntToCart(joint_pos, cart_pos, robot_chain.getSegment(i).getName());
-		frames_fk[i] = cart_pos;
-		// std::cout << "Frame R" << i << ": " << frames_fk[i].M << "\n";
-		// std::cout << "Frame p" << i << ": " << frames_fk[i].p << "\n";
-	}
-	
-	q->setFrames(std::make_shared<std::vector<KDL::Frame>>(frames_fk));
+
+	// Frames of all chain segments in a single pass.
+	std::shared_ptr<std::vector<KDL::Frame>> frames_fk { std::make_shared<std::vector<KDL::Frame>>(robot_chain.getNrOfSegments()) };
+	if (fk_solver->JntToCart(joint_pos, *frames_fk) < 0)
+		throw std::runtime_error("Failed to compute forward kinematics");
+
+	q->setFrames(frames_fk);
 	return q->getFrames();
 }
 

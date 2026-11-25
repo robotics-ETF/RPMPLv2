@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 			std::shared_ptr<base::Tree> tree { pattern_tree->generateLocalTree(scenario.getStart()) };
 			// LOG(INFO) << *tree;
             std::vector<float> input {};
-            input.reserve(Predictor::InputCount);
+            input.reserve(onnxcnn.getInputCount());
 
 			for (size_t j = 0; j < ss->num_dimensions; j++)
 				input.emplace_back(scenario.getStart()->getCoord(j));

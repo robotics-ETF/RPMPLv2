@@ -219,7 +219,7 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 {
     float d_c { RealVectorSpaceConfig::MAX_DISTANCE };
     std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
-    std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp { std::make_shared<Eigen::MatrixXf>(3, 2) };
+    SmallMatrix<float, 3, 2> nearest_pts_temp(3, 2);
     float alpha1 { (B - A).squaredNorm() };
     float alpha2 { (B - A).dot(D - C) };
     float beta1  { (C - D).dot(B - A) };
@@ -252,67 +252,67 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 			{
 				if (i == 0 || i == 2)     	// s = 0, t = 0
 				{
-					nearest_pts_temp->col(0) = A;
-					nearest_pts_temp->col(1) = C; 
+					nearest_pts_temp.col(0) = A;
+					nearest_pts_temp.col(1) = C; 
 				}
                 else if (i == 1)      		// s = 1, t = 0
 				{
-					nearest_pts_temp->col(0) = A;
-                    nearest_pts_temp->col(1) = D; 
+					nearest_pts_temp.col(0) = A;
+                    nearest_pts_temp.col(1) = D; 
 				}
                 else                      	// t = 1, s = 0
 				{
-					nearest_pts_temp->col(0) = B;
-                    nearest_pts_temp->col(1) = C; 
+					nearest_pts_temp.col(0) = B;
+                    nearest_pts_temp.col(1) = C; 
 				}
 			}
             else if (opt(i) > 1)
 			{
 				if (i == 1 || i == 3)    	// s = 1, t = 1
 				{
-					nearest_pts_temp->col(0) = B;
-					nearest_pts_temp->col(1) = D; 
+					nearest_pts_temp.col(0) = B;
+					nearest_pts_temp.col(1) = D; 
 				}
                 else if (i == 0)        	// s = 0, t = 1
 				{
-					nearest_pts_temp->col(0) = B;
-					nearest_pts_temp->col(1) = C; 
+					nearest_pts_temp.col(0) = B;
+					nearest_pts_temp.col(1) = C; 
 				}                    
                 else                    	// t = 0, s = 1
 				{
-					nearest_pts_temp->col(0) = A;
-					nearest_pts_temp->col(1) = D; 
+					nearest_pts_temp.col(0) = A;
+					nearest_pts_temp.col(1) = D; 
 				}
 			}
             else
 			{
 				if (i == 0)                	// s = 0, t € [0, 1]
 				{
-					nearest_pts_temp->col(0) = A + opt(i) * (B - A);
-					nearest_pts_temp->col(1) = C; 
+					nearest_pts_temp.col(0) = A + opt(i) * (B - A);
+					nearest_pts_temp.col(1) = C; 
 				}                    
                 else if (i == 1)       		// s = 1, t € [0, 1]
 				{
-					nearest_pts_temp->col(0) = A + opt(i) * (B - A);
-                    nearest_pts_temp->col(1) = D; 
+					nearest_pts_temp.col(0) = A + opt(i) * (B - A);
+                    nearest_pts_temp.col(1) = D; 
 				}
                 else if (i == 2)           	// t = 0, s € [0, 1]
 				{
-					nearest_pts_temp->col(0) = A;
-                    nearest_pts_temp->col(1) = C + opt(i) * (D - C); 
+					nearest_pts_temp.col(0) = A;
+                    nearest_pts_temp.col(1) = C + opt(i) * (D - C); 
 				}
                 else                       	// t = 1, s € [0, 1]
 				{
-					nearest_pts_temp->col(0) = B;
-                    nearest_pts_temp->col(1) = C + opt(i) * (D - C); 
+					nearest_pts_temp.col(0) = B;
+                    nearest_pts_temp.col(1) = C + opt(i) * (D - C); 
 				}
 			}
             
-            d_c_temp = (nearest_pts_temp->col(1) - nearest_pts_temp->col(0)).norm();
+            d_c_temp = (nearest_pts_temp.col(1) - nearest_pts_temp.col(0)).norm();
             if (d_c_temp < d_c)
 			{
                 d_c = d_c_temp;
-				*nearest_pts = *nearest_pts_temp;
+				*nearest_pts = nearest_pts_temp;
 			}
         }
     }
@@ -393,16 +393,16 @@ std::tuple<float, std::shared_ptr<Eigen::MatrixXf>> base::CollisionAndDistance::
 
 // ------------------------------------------------ Class CapsuleToBox -------------------------------------------------------//
 base::CollisionAndDistance::CapsuleToBox::CapsuleToBox(const Eigen::Vector3f &A_, const Eigen::Vector3f &B_, float radius_, Eigen::VectorXf &obs_)
+	: obs(obs_)
 {
 	A = A_;
 	B = B_;
-	AB = Eigen::MatrixXf(3, 2);
+	AB.resize(3, 2);
 	AB << A_, B_;
 	radius = radius_;
-	obs = obs_;
 	d_c = RealVectorSpaceConfig::MAX_DISTANCE;
     nearest_pts = std::make_shared<Eigen::MatrixXf>(3, 2);
-	projections = Eigen::MatrixXi::Zero(6, 2);
+	projections.setZero(6, 2);
 	dist_AB_obs = Eigen::Vector2f(RealVectorSpaceConfig::MAX_DISTANCE, RealVectorSpaceConfig::MAX_DISTANCE);
 }
 
@@ -475,7 +475,7 @@ void base::CollisionAndDistance::CapsuleToBox::projectionLineSegOnSide(size_t mi
 
 void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point, size_t idx)
 {
-	std::shared_ptr<Eigen::MatrixXf> line_segments { nullptr };
+	LineSegments line_segments {};
 	if (projections(0, idx))  		// Projection on x_min
 	{
 		if (!collisionCapsuleToRectangle(A, B, 0, obs, 0))
@@ -536,44 +536,44 @@ void base::CollisionAndDistance::CapsuleToBox::checkEdges(Eigen::Vector3f &point
 			return;
 		}
 	}
-	distanceToMoreLineSegments(*line_segments);
+	distanceToMoreLineSegments(line_segments);
 }
 
-std::shared_ptr<Eigen::MatrixXf> base::CollisionAndDistance::CapsuleToBox::getLineSegments
+base::CollisionAndDistance::LineSegments base::CollisionAndDistance::CapsuleToBox::getLineSegments
 	(const Eigen::Vector2f &point, float min1, float min2, float max1, float max2, float coord_value, size_t coord)
 {
-	std::shared_ptr<Eigen::MatrixXf> line_segments { std::make_shared<Eigen::MatrixXf>(3, 2) };
+	LineSegments line_segments(3, 2);
 	size_t num { 0 };
 
 	if (point(0) < min1)
 	{
-		line_segments->col(0) = get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
-		line_segments->col(1) = get3DPoint(Eigen::Vector2f(min1, max2), coord_value, coord);
+		line_segments.col(0) = get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
+		line_segments.col(1) = get3DPoint(Eigen::Vector2f(min1, max2), coord_value, coord);
 		num += 2;
 	}
 	else if (point(0) > max1)
 	{
-		line_segments->col(0) = get3DPoint(Eigen::Vector2f(max1, min2), coord_value, coord);
-		line_segments->col(1) = get3DPoint(Eigen::Vector2f(max1, max2), coord_value, coord);
+		line_segments.col(0) = get3DPoint(Eigen::Vector2f(max1, min2), coord_value, coord);
+		line_segments.col(1) = get3DPoint(Eigen::Vector2f(max1, max2), coord_value, coord);
 		num += 2;
 	}
 				
 	if (point(1) < min2)
 	{
-		line_segments->conservativeResize(3, 2 + num);
-		line_segments->col(num) 	= get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
-		line_segments->col(num + 1) = get3DPoint(Eigen::Vector2f(max1, min2), coord_value, coord);
+		line_segments.conservativeResize(3, 2 + num);
+		line_segments.col(num) 	= get3DPoint(Eigen::Vector2f(min1, min2), coord_value, coord);
+		line_segments.col(num + 1) = get3DPoint(Eigen::Vector2f(max1, min2), coord_value, coord);
 	}
 	else if (point(1) > max2)
 	{
-		line_segments->conservativeResize(3, 2 + num);
-		line_segments->col(num) 	= get3DPoint(Eigen::Vector2f(min1, max2), coord_value, coord);
-		line_segments->col(num + 1) = get3DPoint(Eigen::Vector2f(max1, max2), coord_value, coord);
+		line_segments.conservativeResize(3, 2 + num);
+		line_segments.col(num) 	= get3DPoint(Eigen::Vector2f(min1, max2), coord_value, coord);
+		line_segments.col(num + 1) = get3DPoint(Eigen::Vector2f(max1, max2), coord_value, coord);
 	}
 	return line_segments;	
 }
 	
-void base::CollisionAndDistance::CapsuleToBox::distanceToMoreLineSegments(const Eigen::MatrixXf &line_segments)
+void base::CollisionAndDistance::CapsuleToBox::distanceToMoreLineSegments(const LineSegments &line_segments)
 {
 	float d_c_temp { 0 };
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts_temp { nullptr };
@@ -628,7 +628,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 																 	   Eigen::Vector3f(obs(0), obs(4), obs(5)));
 			else    									// < x_min
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(0), obs(0), obs(0), obs(0), obs(0), obs(0), obs(0), obs(0), 
 								 obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), obs(1), obs(1), 
 								 obs(2), obs(2), obs(2), obs(5), obs(5), obs(5), obs(5), obs(2);
@@ -669,7 +669,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 																 	   Eigen::Vector3f(obs(3), obs(4), obs(5)));
 			else    									// > x_max
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(3), obs(3), obs(3), obs(3), obs(3), obs(3), obs(3), obs(3), 
 								 obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), obs(1), obs(1), 
 								 obs(2), obs(2), obs(2), obs(5), obs(5), obs(5), obs(5), obs(2);
@@ -690,7 +690,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 																 	   Eigen::Vector3f(obs(3), obs(1), obs(5))); 
 			else    									// < y_min
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0),
 								 obs(1), obs(1), obs(1), obs(1), obs(1), obs(1), obs(1), obs(1),
 								 obs(2), obs(2), obs(2), obs(5), obs(5), obs(5), obs(5), obs(2);
@@ -707,7 +707,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 																 	   Eigen::Vector3f(obs(3), obs(4), obs(5)));                             
 			else    									// > y_max
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0),
 								 obs(4), obs(4), obs(4), obs(4), obs(4), obs(4), obs(4), obs(4),
 								 obs(2), obs(2), obs(2), obs(5), obs(5), obs(5), obs(5), obs(2);
@@ -718,7 +718,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 		{
 			if (A(2) < obs(2) && B(2) < obs(2)) 		// < z_min
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0), 
 								 obs(1), obs(1), obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), 
 								 obs(2), obs(2), obs(2), obs(2), obs(2), obs(2), obs(2), obs(2);
@@ -727,7 +727,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 											
 			else if (A(2) > obs(5) && B(2) > obs(5)) 	// > z_max
 			{
-				Eigen::MatrixXf line_segments(3, 8);
+				LineSegments line_segments(3, 8);
 				line_segments << obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0), 
 								 obs(1), obs(1), obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), 
 								 obs(5), obs(5), obs(5), obs(5), obs(5), obs(5), obs(5), obs(5);
@@ -744,7 +744,7 @@ void base::CollisionAndDistance::CapsuleToBox::checkOtherCases()
 						return;
 					}
 				}
-				Eigen::MatrixXf line_segments(3, 24);
+				LineSegments line_segments(3, 24);
 				line_segments << obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0), obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0), obs(0), obs(0), obs(0), obs(3), obs(3), obs(3), obs(3), obs(0), obs(0),
 								 obs(1), obs(1), obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), obs(1), obs(1), obs(1), obs(4), obs(4), obs(4), obs(4), obs(1), obs(1), obs(1), obs(1), obs(1), obs(4), obs(4), obs(4), obs(4),
 								 obs(2), obs(2), obs(2), obs(2), obs(2), obs(2), obs(2), obs(2), obs(5), obs(5), obs(5), obs(5), obs(5), obs(5), obs(5), obs(5), obs(2), obs(5), obs(2), obs(5), obs(2), obs(5), obs(2), obs(5);

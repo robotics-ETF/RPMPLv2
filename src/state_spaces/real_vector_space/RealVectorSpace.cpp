@@ -277,6 +277,7 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q1, const
 bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 {
 	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
+	Eigen::VectorXf obs(6);
 	
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
@@ -291,7 +292,6 @@ bool base::RealVectorSpace::isValid(const std::shared_ptr<base::State> q)
 				// std::cout << "skeleton(i):   " << skeleton->col(i).transpose() << std::endl;
 				// std::cout << "skeleton(i+1): " << skeleton->col(i+1).transpose() << std::endl;
 				fcl::AABB AABB { env->getCollObject(j)->getAABB() };
-				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
 				if (collisionCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs))
 					return false;
@@ -327,6 +327,7 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
 		(env->getNumObjects(), Eigen::MatrixXf(6, robot->getNumLinks())) };
 	std::shared_ptr<Eigen::MatrixXf> nearest_pts { std::make_shared<Eigen::MatrixXf>(3, 2) };
 	std::shared_ptr<Eigen::MatrixXf> skeleton { robot->computeSkeleton(q) };
+	Eigen::VectorXf obs(6);
 
 	for (size_t i = 0; i < robot->getNumLinks(); i++)
 	{
@@ -342,7 +343,6 @@ float base::RealVectorSpace::computeDistance(const std::shared_ptr<base::State> 
             else if (env->getCollObject(j)->getNodeType() == fcl::NODE_TYPE::GEOM_BOX)
 			{
 				fcl::AABB AABB { env->getCollObject(j)->getAABB() };
-				Eigen::VectorXf obs(6);
 				obs << AABB.min_[0], AABB.min_[1], AABB.min_[2], AABB.max_[0], AABB.max_[1], AABB.max_[2];
                 tie(d_c_temp, nearest_pts) = distanceCapsuleToBox(skeleton->col(i), skeleton->col(i+1), robot->getCapsuleRadius(i), obs);
 				
